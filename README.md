@@ -11,7 +11,7 @@ pip install python-telegram-bot
 ```
 
 A telegram bot is needed that the script will connect to. https://botsfortelegram.com/project/the-bot-father/
-The chatid is ruquired for the bot to know where to post the RSS feeds. https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id
+The chatid is required for the bot to know where to post the RSS feeds. https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id
 
 1. Clone the script
 2. Replace your chatID and Token on the top of the script.

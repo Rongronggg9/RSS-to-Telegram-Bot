@@ -23,13 +23,20 @@ The chatid is ruquired for the bot to know where to post the RSS feeds. https://
 send /help to the bot to get this message: 
 
 >RSS to Telegram bot
+
 >After successfully adding a RSS link, the bot starts fetching the feed every 60 seconds. (This can be set) ⏰⏰⏰
 >Titles are used to easily manage RSS feeds and need to contain only one word 📝📝📝
+
 >commands:
+
 >**/add** title http://www(.)URL(.)com
+
 >**/help** Shows this text 
+
 >**/remove** !Title! removes the RSS link
+
 >**/list** Lists all the titles and the RSS links from the DB
+
 >**/test** Inbuilt command that fetches a post from Reddits RSS.
 
 

@@ -30,7 +30,8 @@ def sqlite_load_all():
 def sqlite_write(name, link, last):
     sqlite_connect()
     c = conn.cursor()
-    c.execute('''INSERT INTO rss('name','link','last') VALUES('%s','%s','%s')''' % (name, link, last))
+    q = [(name), (link), (last)]
+    c.execute('''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
     conn.commit()
     conn.close()
 
@@ -81,8 +82,9 @@ def cmd_rss_add(bot, update, args):
 def cmd_rss_remove(bot, update, args):
     conn = sqlite3.connect('rss.db')
     c = conn.cursor()
+    q = (args[0],)
     try:
-        c.execute("DELETE FROM rss WHERE name = '%s'" % (args[0]))
+        c.execute("DELETE FROM rss WHERE name = ?", q)
         conn.commit()
         conn.close()
     except sqlite3.Error as e:
@@ -110,9 +112,9 @@ def rss_monitor(bot, job):
         rss_d = feedparser.parse(url_list[0])
         if (url_list[1] != rss_d.entries[0]['link']):
             conn = sqlite3.connect('rss.db')
+            q = [(name), (url_list[0]), (str(rss_d.entries[0]['link']))]
             c = conn.cursor()
-            c.execute('''INSERT INTO rss('name','link','last') VALUES('%s','%s','%s')'''
-                % (name, url_list[0], str(rss_d.entries[0]['link'])))
+            c.execute('''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
             conn.commit()
             conn.close()
             rss_load()

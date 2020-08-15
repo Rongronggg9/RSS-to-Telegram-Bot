@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.7-slim
+FROM python:3.8-alpine
 
 # Set the working directory to /app
 WORKDIR /app
@@ -8,7 +8,10 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r /app/requirements.txt
+RUN apk --update add --virtual build-dependencies python-dev build-base wget gcc libffi-dev openssl-dev \
+    && pip install --trusted-host pypi.python.org -r requirements.txt \
+    && apk del build-dependencies
+
 # Define environment variable
 ENV TOKEN X
 ENV CHATID X

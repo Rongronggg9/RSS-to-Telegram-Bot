@@ -1,3 +1,5 @@
+![RSSTT](rsstt.png)
+
 # RSS to Telegram bot
 
 A self-hosted telegram python bot that dumps posts from RSS feeds to a telegram chat. This script was created because all the third party services were unreliable.

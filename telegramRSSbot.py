@@ -3,6 +3,9 @@ import logging
 import sqlite3
 import os
 from telegram.ext import Updater, CommandHandler
+from pathlib import Path
+
+Path("config").mkdir(parents=True, exist_ok=True)
 
 # Docker env
 if os.environ.get('TOKEN'):
@@ -27,7 +30,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 def sqlite_connect():
     global conn
-    conn = sqlite3.connect('rss.db', check_same_thread=False)
+    conn = sqlite3.connect('config/rss.db', check_same_thread=False)
 
 
 def sqlite_load_all():
@@ -94,7 +97,7 @@ def cmd_rss_add(update, context):
 
 
 def cmd_rss_remove(update, context):
-    conn = sqlite3.connect('rss.db')
+    conn = sqlite3.connect('config/rss.db')
     c = conn.cursor()
     q = (context.args[0],)
     try:
@@ -127,7 +130,7 @@ def rss_monitor(context):
     for name, url_list in rss_dict.items():
         rss_d = feedparser.parse(url_list[0])
         if (url_list[1] != rss_d.entries[0]['link']):
-            conn = sqlite3.connect('rss.db')
+            conn = sqlite3.connect('config/rss.db')
             q = [(name), (url_list[0]), (str(rss_d.entries[0]['link']))]
             c = conn.cursor()
             c.execute(
@@ -146,7 +149,7 @@ def cmd_test(update, context):
 
 
 def init_sqlite():
-    conn = sqlite3.connect('rss.db')
+    conn = sqlite3.connect('config/rss.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE rss (name text, link text, last text)''')
 

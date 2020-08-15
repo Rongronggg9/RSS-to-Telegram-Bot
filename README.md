@@ -55,6 +55,15 @@ send /help to the bot to get this message:
 
 If the bot is set to for example 5 minutes and one feed manages to get 2 new posts before the bot can check. Only the newest post will show up on telegram.
 
-docker pull bokker/rss.to.telegram
+# Docker
 
-docker run -e "TOKEN=InsertToken" -e "CHATID=InsertChatID" -e "DELAY=InsertSeconds" bokker/rss.to.telegram
+```
+docker create \
+  --name=rss.to.telegram \
+  -e DELAY=60 \
+  -e TOKEN=InsertToken \
+  -e CHATID=InsertChatID \
+  -v /path/to/host/config:/config \
+  --restart unless-stopped \
+  bokker/rss.to.telegram
+```

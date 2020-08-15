@@ -10,9 +10,11 @@ delay = 60
 rss_dict = {}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                     level=logging.INFO)
+                    level=logging.INFO)
 
 # SQLITE
+
+
 def sqlite_connect():
     global conn
     conn = sqlite3.connect('rss.db', check_same_thread=False)
@@ -97,8 +99,8 @@ def cmd_help(bot, update):
     update.message.reply_text(
         "RSS to Telegram bot" +
         "\n\nAfter successfully adding a RSS link, the bot starts fetching the feed every "
-         + str(delay) + " seconds. (This can be set) ⏰⏰⏰" +
-        "\n\nTitles are used to easily manage RSS feeds and need to contain only one word 📝📝📝" +
+        + str(delay) + " seconds. (This can be set)" +
+        "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
         "\n\ncommands:" +
         "\n/help Posts this help message" +
         "\n/add title http://www(.)RSS-URL(.)com" +
@@ -114,7 +116,8 @@ def rss_monitor(bot, job):
             conn = sqlite3.connect('rss.db')
             q = [(name), (url_list[0]), (str(rss_d.entries[0]['link']))]
             c = conn.cursor()
-            c.execute('''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
+            c.execute(
+                '''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
             conn.commit()
             conn.close()
             rss_load()

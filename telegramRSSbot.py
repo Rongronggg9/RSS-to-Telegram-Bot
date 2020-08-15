@@ -1,11 +1,21 @@
 import feedparser
 import logging
 import sqlite3
+import os
 from telegram.ext import Updater, CommandHandler
 
-Token = ""
-chatid = ""
-delay = 60
+# Docker env
+if os.environ.get('TOKEN'):
+    Token = os.environ['TOKEN']
+    chatid = os.environ['CHATID']
+    delay = int(os.environ['DELAY'])
+else:
+    Token = "X"
+    chatid = "X"
+    delay = 60
+
+if Token == "X":
+    print("Token not set!")
 
 rss_dict = {}
 

@@ -4,6 +4,7 @@ import sqlite3
 import os
 from telegram.ext import Updater, CommandHandler
 from pathlib import Path
+import message
 
 Path("config").mkdir(parents=True, exist_ok=True)
 
@@ -138,14 +139,16 @@ def rss_monitor(context):
             conn.commit()
             conn.close()
             rss_load()
-            context.bot.send_message(chatid, rss_d.entries[0]['link'])
+            # context.bot.send_message(chatid, rss_d.entries[0]['link'])
+            message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
 
 
 def cmd_test(update, context):
-    url = "https://www.reddit.com/r/funny/new/.rss"
+    url = "https://uneasy.win/rss/weibo/user/2612249974/1"
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
-    update.effective_message.reply_text(rss_d.entries[0]['link'])
+    # update.effective_message.reply_text(rss_d.entries[0]['link'])
+    message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
 
 
 def init_sqlite():

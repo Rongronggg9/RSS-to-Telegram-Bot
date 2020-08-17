@@ -1,2 +1,3 @@
 feedparser
 python-telegram-bot
+html2text

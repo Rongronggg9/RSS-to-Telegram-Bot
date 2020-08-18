@@ -2,9 +2,9 @@
 
 ![每日羊角观察](resources/GZMTR_Pill.png)
 
-**这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot。**
+**这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot 。**
 
-目前尚存在测试中，未投入生产。
+目前尚在测试中，未投入生产。
 
 本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，亦不打算往源项目发送 Pull Request ，因此复制成独立的 Repository 。
 
@@ -12,13 +12,16 @@
 
 - 将 RSS 全文转发到 Telegram (包含所有图片)
 - 转发时不丢失原有格式
-- 转发失败时向 `MANAGER` 发送提示 (未设定则直接发送至 `CHATID` )
+- 超长消息自动分割 (含图消息编码后大于 1024 字，无图消息编码后大于 4096 字)
+- 自动缩小大于 2MB 限制的图片 (仅限微博图源，其他图源的过大图片将被直接丢弃)
+- 转发失败时向 `MANAGER` 发送含错误信息的提示 (未设定则直接发送至 `CHATID` )
 
 <img src="resources/example1.png" width = "449" height = "337" /><img src="resources/example2.png" width = "452" height = "656" />
 
 ## 已知的问题
 
 - 针对 RSSHub 生成的微博 RSS 源编写，对于其他 RSS 源可能出现不可预料的问题
+- 非微博图源的过大图片将被直接丢弃
 - 用于频道时，无法接受频道内的命令，需直接对 bot 在私人对话中发送命令
 - 没有多用户功能，仅可向一个用户/频道 ( `CHATID` ) 推送 RSS
 - bot 会响应所有人发送的命令 (将在未来修复)
@@ -27,7 +30,7 @@
 
 > RSS to Telegram bot
 >
-> After successfully adding a RSS link, the bot starts fetching the feed every 120 seconds. (This can be set)
+> After successfully adding a RSS link, the bot starts fetching the feed every 300 seconds. (This can be set)
 >
 > Titles are used to easily manage RSS feeds and need to contain only one word
 >

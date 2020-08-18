@@ -12,7 +12,8 @@ RUN pip install --trusted-host pypi.python.org -r /app/requirements.txt
 # Define environment variable
 ENV TOKEN X
 ENV CHATID X
-ENV DELAY 60
+ENV MANAGER X
+ENV DELAY 120
 
 # Run app.py when the container launches
 CMD ["python", "telegramRSSbot.py"]

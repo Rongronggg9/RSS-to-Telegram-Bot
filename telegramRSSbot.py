@@ -143,16 +143,19 @@ def rss_monitor(context):
     for name, url_list in rss_dict.items():
         rss_d = feedparser.parse(url_list[0])
         if url_list[1] != rss_d.entries[0]['link']:
+            print('Updating', name)
             update_flag = True
             for entry in rss_d.entries:  # push all messages not pushed
                 if url_list[1] == entry['link']:  # finish if current message already sent
                     break
                 # context.bot.send_message(chatid, rss_d.entries[0]['link'])
+                print('\tPushing', entry['link'])
                 message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
 
             sqlite_write(name, url_list[0], str(rss_d.entries[0]['link']), True)  # update db
 
     if update_flag:
+        print('Updated.')
         rss_load()  # update rss_dict
 
 

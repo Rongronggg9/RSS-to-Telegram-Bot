@@ -7,24 +7,23 @@ isBrokenLink = (
     (re.compile(r'(via )?\[.+?\]$'), re.compile(r'^\(.+?\)')),
     (re.compile(r'(via )?\[[^\]]*?$'), re.compile(r'^.*?\]\(.+?\)'))
 )
+deleteBlockquote = re.compile(r'</?blockquote>')
 
 # html2text configuration
 html2text.config.IGNORE_IMAGES = True
-html2text.config.OPEN_QUOTE = ''
-html2text.config.CLOSE_QUOTE = ''
 html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([_\*\[\]\(\)~`>#\+-=\|\{\}\.!])')
 html2text.config.ESCAPE_SNOB = True
 md_ize = html2text.HTML2Text()
 
 
-def get_md(html, feed_title, url, split_length=4096):
-    pre_processed = html.replace('blockquote', 'q')
+def get_md(xml, feed_title, url, split_length=4096):
+    pre_processed = deleteBlockquote.sub('', xml)
     md = md_ize.handle(pre_processed).strip() + f'\n\nvia [{feed_title}]({url})'
     return split_text(md, split_length)
 
 
 def split_text(text, length):
-    reduced_length = length - length % 100  # generally, length should be 1024 or 4096, reduce to ensure valid
+    reduced_length = length - length % 100  # generally, length should be 1024 or 4096, preventatively reduced
 
     if len(text) <= reduced_length:
         return [text]

@@ -139,10 +139,11 @@ def cmd_help(update, context):
 
 
 def rss_monitor(context):
+    update_flag = False
     for name, url_list in rss_dict.items():
         rss_d = feedparser.parse(url_list[0])
         if url_list[1] != rss_d.entries[0]['link']:
-
+            update_flag = True
             for entry in rss_d.entries:  # push all messages not pushed
                 if url_list[1] == entry['link']:  # finish if current message already sent
                     break
@@ -150,7 +151,9 @@ def rss_monitor(context):
                 message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
 
             sqlite_write(name, url_list[0], str(rss_d.entries[0]['link']), True)  # update db
-            rss_load()  # update rss_dict
+
+    if update_flag:
+        rss_load()  # update rss_dict
 
 
 def cmd_test(update, context):

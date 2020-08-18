@@ -11,8 +11,7 @@
 - 将 RSS 全文转发到 Telegram (包含所有图片)
 - 转发时不丢失原有格式
 
-![](resources/example1.png)
-![](resources/example2.png)
+<img src="resources/example1.png" width = "449" height = "337" /><img src="resources/example2.png" width = "452" height = "656" />
 
 - 转发失败时向 `MANAGER` 发送提示 (未设定则直接发送至 `CHATID` )
 

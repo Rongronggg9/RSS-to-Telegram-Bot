@@ -1,6 +1,6 @@
 # RSS to Telegram bot
 
-![每日羊角观察](resources/GZMTR_Pill.png)
+![每日羊角观察](https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/GZMTR_Pill.png)
 
 **这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot 。**
 
@@ -16,7 +16,8 @@
 - 自动缩小大于 2MB 限制的图片 (仅限微博图源，其他图源的过大图片将被直接丢弃)
 - 转发失败时向 `MANAGER` 发送含错误信息的提示 (未设定则直接发送至 `CHATID` )
 
-<img src="resources/example1.png" width = "449" height = "337" /><img src="resources/example2.png" width = "452" height = "656" />
+<img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example1.png" width = "449" height = "337"  alt="example1"/>
+<img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example2.png" width = "452" height = "656"  alt="example2"/>
 
 ## 已知的问题
 

@@ -16,7 +16,7 @@ if os.environ.get('TOKEN'):
 else:
     Token = "X"
     chatid = "X"
-    delay = 60
+    delay = 120
 
 # TODO: only respond to commands sent by manager
 if os.environ.get('MANAGER'):
@@ -50,11 +50,15 @@ def sqlite_load_all():
     return rows
 
 
-def sqlite_write(name, link, last):
+def sqlite_write(name, link, last, update=False):
     sqlite_connect()
     c = conn.cursor()
-    q = [(name), (link), (last)]
-    c.execute('''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
+    p = [last, name]
+    q = [name, link, last]
+    if update:
+        c.execute('''UPDATE rss SET last = ? WHERE name = ?;''', p)
+    else:
+        c.execute('''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
     conn.commit()
     conn.close()
 
@@ -121,40 +125,32 @@ def cmd_rss_remove(update, context):
 def cmd_help(update, context):
     print(context.chat_data)
     update.effective_message.reply_text(
-        "RSS to Telegram bot" +
-        "\n\nAfter successfully adding a RSS link, the bot starts fetching the feed every "
-        + str(delay) + " seconds. (This can be set)" +
-        "\n\nTitles are used to easily manage RSS feeds and need to contain only one word" +
-        "\n\ncommands:" +
-        "\n/help Posts this help message" +
-        "\n/add title http://www(.)RSS-URL(.)com" +
-        "\n/remove !Title! removes the RSS link" +
-        "\n/list Lists all the titles and the RSS links from the DB" +
-        "\n/test Inbuilt command that fetches a post from Reddits RSS." +
-        "\n\nThe current chatId is: " + str(update.message.chat.id))
+        f"""RSS to Telegram bot
+\nAfter successfully adding a RSS link, the bot starts fetching the feed every {delay} seconds. (This can be set)
+\nTitles are used to easily manage RSS feeds and need to contain only one word
+\ncommands:
+/help : Posts this help message.
+/add title http://www(.)RSS-URL(.)com
+/remove !Title! : Removes the RSS link.
+/list : Lists all the titles and the RSS links from the DB.
+/test : Inbuilt command that fetches a post from Reddits RSS.
+\nThe current chatId is: {update.message.chat.id}"""
+    )
 
 
 def rss_monitor(context):
     for name, url_list in rss_dict.items():
         rss_d = feedparser.parse(url_list[0])
-        for entry in rss_d.entries:  # push all messages not pushed
-            if url_list[1] == entry['link']:  # finish if current message already sent
-                break
-            conn = sqlite3.connect('config/rss.db')
-            q = [(name), (url_list[0]), (str(entry['link']))]
-            c = conn.cursor()
-            c.execute(
-                '''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
-            conn.commit()
-            conn.close()
-            rss_load()
-            # context.bot.send_message(chatid, rss_d.entries[0]['link'])
-            try:
+        if url_list[1] != rss_d.entries[0]['link']:
+
+            for entry in rss_d.entries:  # push all messages not pushed
+                if url_list[1] == entry['link']:  # finish if current message already sent
+                    break
+                # context.bot.send_message(chatid, rss_d.entries[0]['link'])
                 message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
-            except:
-                # send an error message to manager (if set) or chatid
-                message.send(manager, f'Something went wrong while sending this message. Please check the logs.',
-                             rss_d.feed.title, entry['link'], context)
+
+            sqlite_write(name, url_list[0], str(rss_d.entries[0]['link']), True)  # update db
+            rss_load()  # update rss_dict
 
 
 def cmd_test(update, context):
@@ -162,11 +158,7 @@ def cmd_test(update, context):
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    try:
-        message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
-    except:
-        message.send(manager, f'Something went wrong while sending this message. Please check the logs.',
-                     rss_d.feed.title, rss_d.entries[0]['link'], context)
+    message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
 
 
 def init_sqlite():

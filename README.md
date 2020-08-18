@@ -2,9 +2,11 @@
 
 ![每日羊角观察](resources/GZMTR_Pill.png)
 
-这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot。
+**这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot。**
 
-本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，亦不打算往源项目发送 Pull Request ，因此已单独复制成独立的 Repository 。
+目前尚存在测试中，未投入生产。
+
+本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，亦不打算往源项目发送 Pull Request ，因此复制成独立的 Repository 。
 
 ## 功能
 
@@ -63,7 +65,7 @@ Python 3.6+
 ```sh
 pip install feedparser
 pip install python-telegram-bot
-html2text
+pip install html2text
 ```
 
 A telegram bot is needed that the script will connect to. https://botsfortelegram.com/project/the-bot-father/

@@ -18,6 +18,12 @@ else:
     chatid = "X"
     delay = 60
 
+# TODO: only respond to commands sent by manager
+if os.environ.get('MANAGER'):
+    manager = os.environ['MANAGER']
+else:
+    manager = chatid
+
 if Token == "X":
     print("Token not set!")
 
@@ -25,6 +31,7 @@ rss_dict = {}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
+
 
 # SQLITE
 
@@ -130,9 +137,11 @@ def cmd_help(update, context):
 def rss_monitor(context):
     for name, url_list in rss_dict.items():
         rss_d = feedparser.parse(url_list[0])
-        if (url_list[1] != rss_d.entries[0]['link']):
+        for entry in rss_d.entries:  # push all messages not pushed
+            if url_list[1] == entry['link']:  # finish if current message already sent
+                break
             conn = sqlite3.connect('config/rss.db')
-            q = [(name), (url_list[0]), (str(rss_d.entries[0]['link']))]
+            q = [(name), (url_list[0]), (str(entry['link']))]
             c = conn.cursor()
             c.execute(
                 '''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
@@ -140,7 +149,12 @@ def rss_monitor(context):
             conn.close()
             rss_load()
             # context.bot.send_message(chatid, rss_d.entries[0]['link'])
-            message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
+            try:
+                message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
+            except:
+                # send an error message to manager (if set) or chatid
+                message.send(manager, f'Something went wrong while sending this message. Please check the logs.',
+                             rss_d.feed.title, entry['link'], context)
 
 
 def cmd_test(update, context):
@@ -148,7 +162,11 @@ def cmd_test(update, context):
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
+    try:
+        message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
+    except:
+        message.send(manager, f'Something went wrong while sending this message. Please check the logs.',
+                     rss_d.feed.title, rss_d.entries[0]['link'], context)
 
 
 def init_sqlite():

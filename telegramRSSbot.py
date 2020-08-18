@@ -188,6 +188,7 @@ def main():
         pass
     rss_load()
 
+    rss_monitor(updater)
     job_queue.run_repeating(rss_monitor, delay)
 
     updater.start_polling()

@@ -28,6 +28,7 @@
 > RSS to Telegram bot
 >
 > After successfully adding a RSS link, the bot starts fetching the feed every 120 seconds. (This can be set)
+>
 > Titles are used to easily manage RSS feeds and need to contain only one word
 >
 > commands:
@@ -50,6 +51,7 @@ For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 
 ```
 docker run -d \
+    --name rss-to-telegram \
     -v [config path]:/app/config \
     -e DELAY=[delay] \
     -e TOKEN=[bot token] \

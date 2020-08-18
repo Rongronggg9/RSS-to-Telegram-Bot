@@ -10,10 +10,9 @@
 
 - 将 RSS 全文转发到 Telegram (包含所有图片)
 - 转发时不丢失原有格式
+- 转发失败时向 `MANAGER` 发送提示 (未设定则直接发送至 `CHATID` )
 
 <img src="resources/example1.png" width = "449" height = "337" /><img src="resources/example2.png" width = "452" height = "656" />
-
-- 转发失败时向 `MANAGER` 发送提示 (未设定则直接发送至 `CHATID` )
 
 ## 已知的问题
 
@@ -21,6 +20,27 @@
 - 用于频道时，无法接受频道内的命令，需直接对 bot 在私人对话中发送命令
 - 没有多用户功能，仅可向一个用户/频道 ( `CHATID` ) 推送 RSS
 - bot 会响应所有人发送的命令 (将在未来修复)
+
+## Usage
+
+> RSS to Telegram bot
+>
+> After successfully adding a RSS link, the bot starts fetching the feed every 120 seconds. (This can be set)
+> Titles are used to easily manage RSS feeds and need to contain only one word
+>
+> commands:
+>
+> **/add** title http://www(.)URL(.)com
+>
+> **/help** Shows this text
+>
+> **/remove** !Title! removes the RSS link
+>
+> **/list** Lists all the titles and the RSS links from the DB
+>
+> **/test** Inbuilt command that fetches a post from Reddits RSS.
+>
+> The current chatId is: *********
 
 ### Docker
 
@@ -56,27 +76,6 @@ Running the script and typing in /help will reveal the current chatId, this need
 5. Use the telegram commands to manage feeds
 
 Warning! Without chatID the bot wont be able to send automated messages and will only be able to respond to messages.
-
-# Usage
-
-> RSS to Telegram bot
->
-> After successfully adding a RSS link, the bot starts fetching the feed every 120 seconds. (This can be set)
-> Titles are used to easily manage RSS feeds and need to contain only one word
->
-> commands:
->
-> **/add** title http://www(.)URL(.)com
->
-> **/help** Shows this text
->
-> **/remove** !Title! removes the RSS link
->
-> **/list** Lists all the titles and the RSS links from the DB
->
-> **/test** Inbuilt command that fetches a post from Reddits RSS.
->
-> The current chatId is: *********
 
 
 

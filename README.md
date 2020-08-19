@@ -11,10 +11,11 @@
 ## 功能
 
 - 将 RSS 全文转发到 Telegram (包含所有图片)
+- **(alpha)** 支持微博视频转发
 - 转发时不丢失原有格式
 - 超长消息自动分割 (含图消息编码后大于 1024 字，无图消息编码后大于 4096 字)
-- 自动缩小大于 2MB 限制的图片 (仅限微博图源，其他图源的过大图片将被直接丢弃)
-- 转发失败时向 `MANAGER` 发送含错误信息的提示 (未设定则直接发送至 `CHATID` )
+- 自动缩小大于 5MB 限制的图片 (仅限微博图源，其他图源的过大图片将被直接丢弃)
+- 转发失败时向 `MANAGER` 发送含错误信息的提示 **(未设定则直接发送至 `CHATID` )**
 
 <img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example1.png" width = "449" height = "337"  alt="example1"/>
 <img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example2.png" width = "452" height = "656"  alt="example2"/>

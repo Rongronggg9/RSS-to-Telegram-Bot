@@ -5,7 +5,8 @@ from urllib import request
 from htmlparser import get_md
 from telegramRSSbot import manager
 
-isPic = re.compile(r'<img src="(.+?)"')
+getPic = re.compile(r'<img src="(.+?)"')
+getVideo = re.compile(r'<video src="(.+?)"')
 getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
 sizes = ['large', 'mw2048', 'mw1024', 'mw720']
 sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720)(/\w+\.\w+$)')
@@ -24,8 +25,14 @@ def send(chatid, xml, feed_title, url, context):
 
 
 def send_message(chatid, xml, feed_title, url, context):
-    if isPic.search(xml):
-        pics = validate_pics(isPic.findall(xml))
+    if getVideo.search(xml):
+        video = validate_medium(getVideo.findall(xml)[0], 20971520)
+        if video:
+            send_media_message(chatid, xml, feed_title, url, video, context)
+            return  # for weibo, only 1 video can be attached, without any other pics
+
+    if getPic.search(xml):
+        pics = validate_media(getPic.findall(xml))
         if pics:
             send_media_message(chatid, xml, feed_title, url, pics, context)
             return
@@ -33,24 +40,25 @@ def send_message(chatid, xml, feed_title, url, context):
     send_text_message(chatid, xml, feed_title, url, False, context)
 
 
-def validate_pic_url(url):  # warning: only design for weibo
+def validate_medium(url, max_size=5242880):  # warning: only design for weibo
+    max_size -= max_size % 1000
     headers = request.urlopen(url).info()
     size = getSize.search(str(headers)).group(1)
-    if int(size) > 2090000:  # should be 2097152, but preventatively set to 2090000
+    if int(size) > 5240000:  # should be 5242880, but preventatively set to 5240000
         if sizeParser.search(url):  # is a large weibo pic
             parsed = sizeParser.search(url).groups()
             reduced = parsed[0] + sizes[sizes.index(parsed[1]) + 1] + parsed[2]
-            return validate_pic_url(reduced)
+            return validate_medium(reduced)
         else:  # TODO: reduce non-weibo pic size
             return None
     else:
         return url
 
 
-def validate_pics(pics):  # reduce pic size to <2MB
+def validate_media(media):  # reduce pic size to <5MB
     reduced_pics = []
-    for url in pics:
-        reduced = validate_pic_url(url)
+    for url in media:
+        reduced = validate_medium(url)
         if reduced:  # warning: too large non-weibo pic will be discarded
             reduced_pics.append(reduced)
     return reduced_pics
@@ -71,7 +79,7 @@ def send_text_message(chatid, xml, feed_title, url, is_tail, context):
         context.bot.send_message(chatid, head + text_list[i], parse_mode='MarkdownV2', disable_web_page_preview=True)
 
 
-def send_media_message(chatid, xml, feed_title, url, pics, context):
+def send_media_message(chatid, xml, feed_title, url, media, context):
     text_list = get_md(xml, feed_title, url, 1024)
     number = len(text_list)
 
@@ -79,10 +87,13 @@ def send_media_message(chatid, xml, feed_title, url, pics, context):
     if number > 1:
         head = rf'\(1/{number}\)' + '\n'
 
-    if len(pics) == 1:
-        context.bot.send_photo(chatid, pics[0], head + text_list[0], parse_mode='MarkdownV2')
+    if type(media) == str:  # TODO: just a temporary workaround
+        context.bot.send_video(chatid, media, caption=head + text_list[0], parse_mode='MarkdownV2',
+                               supports_streaming=True)
+    elif len(media) == 1:
+        context.bot.send_photo(chatid, media[0], head + text_list[0], parse_mode='MarkdownV2')
     else:
-        pic_objs = get_pic_objs(pics, head + text_list[0])
+        pic_objs = get_pic_objs(media, head + text_list[0])
         context.bot.send_media_group(chatid, pic_objs)
 
     if number > 1:

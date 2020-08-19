@@ -23,26 +23,26 @@ def get_md(xml, feed_title, url, split_length=4096):
 
 
 def split_text(text, length):
-    reduced_length = length - length % 100  # generally, length should be 1024 or 4096, preventatively reduced
+    length -= length % 100  # generally, length should be 1024 or 4096, preventatively reduced
 
-    if len(text) <= reduced_length:
+    if len(text) <= length:
         return [text]
 
     else:
         result = []
         latter = text
         while True:
-            former = latter[:reduced_length]
-            latter = latter[reduced_length:]
+            former = latter[:length]
+            latter = latter[length:]
             for sub in isBrokenLink:
                 if sub[0].search(former) and sub[1].search(latter):
                     latter = sub[0].search(former).group(0) + latter
                     former = sub[0].sub('', former)
                     break
             result.append(former.strip('\n'))
-            if len(latter) <= reduced_length:
+            if len(latter) <= length:
                 result.append(latter.strip('\n'))
                 break
-            if reduced_length == 1000:  # media message only
-                reduced_length = 4000
+            if length == 1000:  # media message only
+                length = 4000
     return result

@@ -16,4 +16,4 @@ ENV MANAGER X
 ENV DELAY 300
 
 # Run app.py when the container launches
-CMD ["python", "telegramRSSbot.py"]
+CMD ["python", "-u", "telegramRSSbot.py"]

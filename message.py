@@ -16,12 +16,11 @@ def send(chatid, xml, feed_title, url, context):
     try:
         send_message(chatid, xml, feed_title, url, context)
     except Exception as e:
+        print(f'\t\tPush {url} failed!')
         traceback.print_exc()
         # send an error message to manager (if set) or chatid
         send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
                      traceback.format_exc(), feed_title, url, context)
-        print()
-        pass
 
 
 def send_message(chatid, xml, feed_title, url, context):
@@ -40,19 +39,43 @@ def send_message(chatid, xml, feed_title, url, context):
     send_text_message(chatid, xml, feed_title, url, False, context)
 
 
+def get_pic_info(url):
+    urlopen = request.urlopen(url)
+    headers = urlopen.info()
+    pic_header = urlopen.read(256)
+
+    size = getSize.search(str(headers)).group(1)
+
+    height = width = -1
+    if url.find('jpg') == -1 and url.find('jpeg') == -1:  # only for jpg
+        return size, width, height
+
+    pointer = -1
+    if pic_header.find(b'\xff\xc2') != -1:
+        pointer = pic_header.find(b'\xff\xc2')
+    elif pic_header.find(b'\xff\xc0') != - 1:
+        pointer = pic_header.find(b'\xff\xc0') + 1
+    if pointer != -1:
+        width = int(pic_header[pointer + 7:pointer + 9].hex(), 16)
+        height = int(pic_header[pointer + 5:pointer + 7].hex(), 16)
+
+    return size, width, height
+
+
 def validate_medium(url, max_size=5242880):  # warning: only design for weibo
     max_size -= max_size % 1000
-    headers = request.urlopen(url).info()
-    size = getSize.search(str(headers)).group(1)
-    if int(size) > max_size:  # should be 5242880, but preventatively set to 5240000
+    size, width, height = get_pic_info(url)
+
+    if int(size) > max_size or width > 4000 or height > 3000:
         if sizeParser.search(url):  # is a large weibo pic
             parsed = sizeParser.search(url).groups()
+            if parsed == sizes[-1]:
+                return None
             reduced = parsed[0] + sizes[sizes.index(parsed[1]) + 1] + parsed[2]
             return validate_medium(reduced)
         else:  # TODO: reduce non-weibo pic size
             return None
-    else:
-        return url
+    return url
 
 
 def validate_media(media):  # reduce pic size to <5MB

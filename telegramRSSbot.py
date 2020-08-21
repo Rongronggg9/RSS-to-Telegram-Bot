@@ -142,7 +142,10 @@ def rss_monitor(context):
     update_flag = False
     for name, url_list in rss_dict.items():
         rss_d = feedparser.parse(url_list[0])
-        if rss_d.entries and url_list[1] != rss_d.entries[0]['link']:
+        if not rss_d.entries:
+            print(f'Get {name} feed failed!')
+            break
+        if url_list[1] != rss_d.entries[0]['link']:
             print('Updating', name)
             update_flag = True
             for entry in rss_d.entries:  # push all messages not pushed

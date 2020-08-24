@@ -1,4 +1,5 @@
 import re
+import json
 import html2text
 
 # re
@@ -17,8 +18,9 @@ md_ize = html2text.HTML2Text()
 
 
 def get_md(xml, feed_title, url, split_length=4096):
-    pre_processed = deleteBlockquote.sub('', xml)
-    md = md_ize.handle(pre_processed).strip() + f'\n\nvia [{feed_title}]({url})'
+    preprocessed = deleteBlockquote.sub('', xml)
+    emojified = emojify(preprocessed)
+    md = md_ize.handle(emojified).strip() + f'\n\nvia [{feed_title}]({url})'
     return split_text(md, split_length)
 
 
@@ -46,3 +48,13 @@ def split_text(text, length):
             if length == 1000:  # media message only
                 length = 4000
     return result
+
+
+def emojify(xml):  # note: get all emoticons on https://api.weibo.com/2/emotions.json?source=1362404091
+    for emoticon, emoji in emoji_dict.items():
+        xml = xml.replace(f'[{emoticon}]', emoji)
+    return xml
+
+
+with open('emojify.json', 'r', encoding='utf-8') as emojify_json:
+    emoji_dict = json.load(emojify_json)

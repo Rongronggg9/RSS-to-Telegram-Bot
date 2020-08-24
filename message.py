@@ -2,7 +2,7 @@ import re
 import traceback
 import telegram.ext
 from urllib import request
-from htmlparser import get_md
+from xmlparser import get_md
 from telegramRSSbot import manager
 
 getPic = re.compile(r'<img src="(.+?)"')

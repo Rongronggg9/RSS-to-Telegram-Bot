@@ -16,7 +16,7 @@ def send(chatid, xml, feed_title, url, context):
     try:
         send_message(chatid, xml, feed_title, url, context)
     except Exception as e:
-        print(f'\t\tPush {url} failed!')
+        print(f'\t\t- Push {url} failed!')
         traceback.print_exc()
         # send an error message to manager (if set) or chatid
         send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +

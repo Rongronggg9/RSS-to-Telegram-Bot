@@ -1,9 +1,9 @@
 # RSS to Telegram bot
 
-![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/rongronggg9/rss-to-telegram)
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/rongronggg9/rss-to-telegram)
-![Docker Pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram)
-![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)
+[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/rongronggg9/rss-to-telegram)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/rongronggg9/rss-to-telegram)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
+[![Docker Pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
+[![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
 
 [![每日羊角观察](https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/GZMTR_Pill.png)](https://t.me/GZMTR_Pill)
 
@@ -35,7 +35,7 @@
 - 针对 RSSHub 生成的微博 RSS 源编写，对于其他 RSS 源可能出现不可预料的问题
     - 非微博图源的过大图片/视频将被直接丢弃
     - 图片至多 10 张 (考虑到微博已推出超九图功能，将在未来修复)
-- 微博视频转发清晰度较低，若视频过大
+- 微博视频转发清晰度较低，若视频过大也将被直接丢弃
 - 用于频道时，无法接受频道内的命令，需直接对 bot 在私人对话中发送命令
 - 没有多用户功能，仅可向一个用户/频道 ( `CHATID` ) 推送 RSS
 - bot 会响应所有人发送的命令 (将在未来修复)

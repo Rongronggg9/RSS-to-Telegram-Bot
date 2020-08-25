@@ -1,30 +1,41 @@
 # RSS to Telegram bot
 
-![每日羊角观察](https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/GZMTR_Pill.png)
+![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/rongronggg9/rss-to-telegram)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/rongronggg9/rss-to-telegram)
+![Docker Pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram)
+![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)
+
+[![每日羊角观察](https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/GZMTR_Pill.png)](https://t.me/GZMTR_Pill)
 
 **这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot 。**
 
-目前尚在测试中，未投入生产。
-
-本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，亦不打算往源项目发送 Pull Request ，因此复制成独立的 Repository 。
+本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，
+亦不打算往源项目发送 Pull Request ，因此复制成独立的 repository 。
 
 ## 功能
 
-- 将 RSS 全文转发到 Telegram (包含所有图片)
+- 将 RSS 全文转发到 Telegram
+    - 转发时不丢失原有格式
+    - 转发时自动将微博表情转化为同义 emoji
+        - 仅限有同义 emoji 的微博表情
+    - 超长消息自动分割
+        - 多媒体消息编码后大于 1024 字，无图消息编码后大于 4096 字
+- 支持含图消息转发
+    - 至多 10 张图片
+    - 自动缩小大于 5MB 或尺寸过大的图片
+        - 仅限微博图源，其他图源的过大图片将被直接丢弃
+        - Telegram 文档中只给出图片大小 5MB 限制，但实际上存在尺寸限制
 - **(alpha)** 支持微博视频转发
-- 转发时不丢失原有格式
-- 转发时自动将微博表情转化为同义 emoji (仅限有同义 emoji 的微博表情)
-- 超长消息自动分割 (含图消息编码后大于 1024 字，无图消息编码后大于 4096 字)
-- 自动缩小大于 5MB 限制的图片 (仅限微博图源，其他图源的过大图片将被直接丢弃)
 - 转发失败时向 `MANAGER` 发送含错误信息的提示 **(未设定则直接发送至 `CHATID` )**
 
 <img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example1.png" width = "449" height = "337"  alt="example1"/>
-<img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example2.png" width = "452" height = "656"  alt="example2"/>
 
 ## 已知的问题
 
 - 针对 RSSHub 生成的微博 RSS 源编写，对于其他 RSS 源可能出现不可预料的问题
-- 非微博图源的过大图片将被直接丢弃
+    - 非微博图源的过大图片/视频将被直接丢弃
+    - 图片至多 10 张 (考虑到微博已推出超九图功能，将在未来修复)
+- 微博视频转发清晰度较低，若视频过大
 - 用于频道时，无法接受频道内的命令，需直接对 bot 在私人对话中发送命令
 - 没有多用户功能，仅可向一个用户/频道 ( `CHATID` ) 推送 RSS
 - bot 会响应所有人发送的命令 (将在未来修复)
@@ -56,14 +67,18 @@
 For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 
 ```
-docker run -d \
+docker create \
     --name rss-to-telegram \
+    --restart unless-stopped \
     -v [config path]:/app/config \
     -e DELAY=[delay] \
     -e TOKEN=[bot token] \
     -e CHATID=[target user chatid / @channelusername] \
     -e MANAGER=[bot manager chatid] \
     rongronggg9/rss-to-telegram
+```
+```
+docker run -d rss-to-telegram
 ```
 
 ### Installation

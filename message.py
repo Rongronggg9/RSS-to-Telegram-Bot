@@ -66,7 +66,7 @@ def validate_medium(url, max_size=5242880):  # warning: only design for weibo
     max_size -= max_size % 1000
     size, width, height = get_pic_info(url)
 
-    if int(size) > max_size or width > 4000 or height > 3000:
+    if int(size) > max_size or width + height > 10000:
         if sizeParser.search(url):  # is a large weibo pic
             parsed = sizeParser.search(url).groups()
             if parsed[1] == sizes[-1]:

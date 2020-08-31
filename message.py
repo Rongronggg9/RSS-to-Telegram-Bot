@@ -8,7 +8,7 @@ from telegramRSSbot import manager
 getPic = re.compile(r'<img src="(.+?)"')
 getVideo = re.compile(r'<video src="(.+?)"')
 getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
-sizes = ['large', 'mw2048', 'mw1024', 'mw720']
+sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
 sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720)(/\w+\.\w+$)')
 
 

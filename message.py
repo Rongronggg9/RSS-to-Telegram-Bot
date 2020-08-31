@@ -9,7 +9,7 @@ getPic = re.compile(r'<img src="(.+?)"')
 getVideo = re.compile(r'<video src="(.+?)"')
 getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
 sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
-sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720)(/\w+\.\w+$)')
+sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720|middle)(/\w+\.\w+$)')
 
 
 def send(chatid, xml, feed_title, url, context):
@@ -51,10 +51,10 @@ def get_pic_info(url):
         return size, width, height
 
     pointer = -1
-    if pic_header.find(b'\xff\xc2') != -1:
-        pointer = pic_header.find(b'\xff\xc2')
-    elif pic_header.find(b'\xff\xc0') != - 1:
-        pointer = pic_header.find(b'\xff\xc0') + 1
+    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
+        p = pic_header.find(marker)
+        if p != -1:
+            pointer = p
     if pointer != -1:
         width = int(pic_header[pointer + 7:pointer + 9].hex(), 16)
         height = int(pic_header[pointer + 5:pointer + 7].hex(), 16)
@@ -75,6 +75,7 @@ def validate_medium(url, max_size=5242880):  # warning: only design for weibo
             return validate_medium(reduced)
         else:  # TODO: reduce non-weibo pic size
             return None
+
     return url
 
 

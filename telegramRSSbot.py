@@ -76,13 +76,13 @@ def rss_load():
 def cmd_rss_list(update, context):
     if bool(rss_dict) is False:
 
-        update.effective_message.reply_text("The database is empty")
+        update.effective_message.reply_text('数据库为空')
     else:
         for title, url_list in rss_dict.items():
             update.effective_message.reply_text(
-                "Title: " + title +
-                "\nrss url: " + url_list[0] +
-                "\nlast checked article: " + url_list[1])
+                '标题: ' + title +
+                '\nRSS 源: ' + url_list[0] +
+                '\n最后检查的文章: ' + url_list[1])
 
 
 def cmd_rss_add(update, context):
@@ -91,7 +91,7 @@ def cmd_rss_add(update, context):
         context.args[1]
     except IndexError:
         update.effective_message.reply_text(
-            "ERROR: The format needs to be: /add title http://www.URL.com")
+            'ERROR: 格式需要为: /add 标题 RSS')
         raise
     # try if the url is a valid RSS feed
     try:
@@ -99,13 +99,13 @@ def cmd_rss_add(update, context):
         rss_d.entries[0]['title']
     except IndexError:
         update.effective_message.reply_text(
-            "ERROR: The link does not seem to be a RSS feed or is not supported")
+            'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
         raise
     sqlite_write(context.args[0], context.args[1],
                  str(rss_d.entries[0]['link']))
     rss_load()
     update.effective_message.reply_text(
-        "added \nTITLE: %s\nRSS: %s" % (context.args[0], context.args[1]))
+        '已添加 \n标题: %s\nRSS 源: %s' % (context.args[0], context.args[1]))
 
 
 def cmd_rss_remove(update, context):
@@ -119,22 +119,23 @@ def cmd_rss_remove(update, context):
     except sqlite3.Error as e:
         print('Error %s:' % e.args[0])
     rss_load()
-    update.effective_message.reply_text("Removed: " + context.args[0])
+    update.effective_message.reply_text("已移除: " + context.args[0])
 
 
 def cmd_help(update, context):
     print(context.chat_data)
     update.effective_message.reply_text(
-        f"""RSS to Telegram bot
-\nAfter successfully adding a RSS link, the bot starts fetching the feed every {delay} seconds. (This can be set)
-\nTitles are used to easily manage RSS feeds and need to contain only one word
-\ncommands:
-/help : Posts this help message.
-/add title http://www(.)RSS-URL(.)com
-/remove !Title! : Removes the RSS link.
-/list : Lists all the titles and the RSS links from the DB.
-/test : Inbuilt command that fetches a post from Reddits RSS.
-\nThe current chatId is: {update.message.chat.id}"""
+        f"""RSS to Telegram bot (Weibo Ver.)
+\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 (可修改)
+\n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
+\n命令:
+*/help* : 发送这条消息
+*/add 标题 RSS* : 添加订阅
+*/remove 标题* : 移除订阅
+*/list* : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
+*/test* : 内置命令，将会获取广州地铁的最新一条微博
+\n您的 chatid 是: {update.message.chat.id}""",
+        parse_mode='Markdown'
     )
 
 
@@ -144,9 +145,11 @@ def rss_monitor(context):
         rss_d = feedparser.parse(url_list[0])
         if not rss_d.entries:
             # print(f'Get {name} feed failed!')
-            print('.', end='')
+            print('x', end='')
             break
-        if url_list[1] != rss_d.entries[0]['link']:
+        if url_list[1] == rss_d.entries[0]['link']:
+            print('-', end='')
+        else:
             print('\nUpdating', name)
             update_flag = True
             for entry in rss_d.entries:  # push all messages not pushed

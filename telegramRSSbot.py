@@ -164,7 +164,7 @@ def rss_monitor(context):
 
 
 def cmd_test(update, context):
-    url = "https://uneasy.win/rss/weibo/user/2612249974/1"
+    url = "https://rsshub.app/weibo/user/2612249974/1"
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])

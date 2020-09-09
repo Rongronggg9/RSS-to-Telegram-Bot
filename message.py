@@ -20,7 +20,7 @@ def send(chatid, xml, feed_title, url, context):
         traceback.print_exc()
         # send an error message to manager (if set) or chatid
         send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
-                     traceback.format_exc().replace('/n', '<br>'), feed_title, url, context)
+                     traceback.format_exc().replace('\n', '<br>'), feed_title, url, context)
 
 
 def send_message(chatid, xml, feed_title, url, context):

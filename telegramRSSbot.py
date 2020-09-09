@@ -152,12 +152,20 @@ def rss_monitor(context):
         else:
             print('\nUpdating', name)
             update_flag = True
-            for entry in rss_d.entries:  # push all messages not pushed
-                if url_list[1] == entry['link']:  # finish if current message already sent
-                    break
-                # context.bot.send_message(chatid, rss_d.entries[0]['link'])
-                print('\t- Pushing', entry['link'])
-                message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
+            # workaround, avoiding deleted weibo causing the bot send all posts in the feed
+            # TODO: log recently sent weibo, so deleted weibo won't be harmful. (If a weibo was deleted while another
+            #  weibo was sent between delay duration, the latter won't be fetched.) BTW, if your bot has stopped for
+            #  too long that last fetched post do not exist in current RSS feed, all posts won't be fetched and last
+            #  fetched post will be reset to the newest post (through it is not fetched).
+            last_flag = False
+            for entry in rss_d.entries[::-1]:  # push all messages not pushed
+                if last_flag:
+                    # context.bot.send_message(chatid, rss_d.entries[0]['link'])
+                    print('\t- Pushing', entry['link'])
+                    message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
+
+                if url_list[1] == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
+                    last_flag = True
 
             sqlite_write(name, url_list[0], str(rss_d.entries[0]['link']), True)  # update db
 

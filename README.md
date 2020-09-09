@@ -10,7 +10,7 @@
 **这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot 。**
 
 本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，
-亦不打算往源项目发送 Pull Request ，因此复制成独立的 repository 。
+因此复制成独立的 repository 。
 
 ## 功能
 
@@ -40,33 +40,40 @@
 - 没有多用户功能，仅可向一个用户/频道 ( `CHATID` ) 推送 RSS
 - bot 会响应所有人发送的命令 (将在未来修复)
 
-## Usage
+## 使用
 
-> RSS to Telegram bot
+> RSS to Telegram bot (Weibo Ver.)
+> 
+> 成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 600 秒一次。 (可修改)
+> 
+> 标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
+> 
+> 命令:
 >
-> After successfully adding a RSS link, the bot starts fetching the feed every 300 seconds. (This can be set)
+> **/help** : 发送这条消息
 >
-> Titles are used to easily manage RSS feeds and need to contain only one word
+> **/add 标题 RSS** : 添加订阅
 >
-> commands:
+> **/remove 标题** : 移除订阅
 >
-> **/add** title http://www(.)URL(.)com
+> **/list** : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
 >
-> **/help** Shows this text
->
-> **/remove** !Title! removes the RSS link
->
-> **/list** Lists all the titles and the RSS links from the DB
->
-> **/test** Inbuilt command that fetches a post from Reddits RSS.
->
-> The current chatId is: *********
+> **/test** : 内置命令，将会获取广州地铁的最新一条微博
+> 
+> 您的 chatid 是: 0123456789
+
+### 准备
+
+1. 前往 [@BotFather](https://t.me/BotFather) 创建一个 bot ，并记录下 token
+2. 获得您的 chatid (可通过运行 bot 并发送 `/help` 获取) 并记录下来
+    - 您也可使用一个频道来接收推送，此时 chatid 格式为 `@channelusername` (不要忘记将 bot 添加到频道里!)
+
 
 ### Docker
 
 For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 
-```
+```sh
 docker create \
     --name rss-to-telegram \
     --restart unless-stopped \
@@ -77,7 +84,7 @@ docker create \
     -e MANAGER=[bot manager chatid] \
     rongronggg9/rss-to-telegram
 ```
-```
+```sh
 docker run -d rss-to-telegram
 ```
 

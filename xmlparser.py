@@ -3,10 +3,11 @@ import json
 import html2text
 
 # re
-isBrokenLink = (
+isBrokenDivision = (
     (re.compile(r'(via )?\[.+?\]\([^\)]*?$'), re.compile(r'^.*?\)')),
     (re.compile(r'(via )?\[.+?\]$'), re.compile(r'^\(.+?\)')),
-    (re.compile(r'(via )?\[[^\]]*?$'), re.compile(r'^.*?\]\(.+?\)'))
+    (re.compile(r'(via )?\[[^\]]*?$'), re.compile(r'^.*?\]\(.+?\)')),
+    (re.compile(r'\\$'), re.compile(r'^.*'))
 )
 deleteBlockquote = re.compile(r'</?blockquote>')
 
@@ -36,7 +37,7 @@ def split_text(text, length):
         while True:
             former = latter[:length]
             latter = latter[length:]
-            for sub in isBrokenLink:
+            for sub in isBrokenDivision:
                 if sub[0].search(former) and sub[1].search(latter):
                     latter = sub[0].search(former).group(0) + latter
                     former = sub[0].sub('', former)

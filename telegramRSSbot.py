@@ -189,6 +189,8 @@ def init_sqlite():
 
 
 def main():
+    print(f'CHATID: {chatid}\nDELAY: {delay}s\n')
+
     updater = Updater(token=Token, use_context=True)
     job_queue = updater.job_queue
     dp = updater.dispatcher

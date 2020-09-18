@@ -7,7 +7,7 @@ isBrokenDivision = (
     (re.compile(r'(via )?\[.+?\]\([^\)]*?$'), re.compile(r'^.*?\)')),
     (re.compile(r'(via )?\[.+?\]$'), re.compile(r'^\(.+?\)')),
     (re.compile(r'(via )?\[[^\]]*?$'), re.compile(r'^.*?\]\(.+?\)')),
-    (re.compile(r'\\$'), re.compile(r'^.*'))
+    (re.compile(r'(\\|\\\\)$'), re.compile(r'^.*'))
 )
 deleteBlockquote = re.compile(r'</?blockquote>')
 

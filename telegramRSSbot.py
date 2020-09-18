@@ -18,9 +18,8 @@ else:
     chatid = "X"
     delay = 120
 
-# TODO: only respond to commands sent by manager
-if os.environ.get('MANAGER'):
-    manager = os.environ['MANAGER']
+if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
+    manager = int(os.environ['MANAGER'])
 else:
     manager = chatid
 
@@ -33,9 +32,23 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 
 
+# MANAGER
+def is_manager(update):
+    chat = update.message.chat
+    userid = chat.id
+    username = chat.username
+    name = chat.first_name + ' ' + chat.last_name
+    command = update.message.text
+    print(f'\n{name} ({username}/{userid}) attempted to use "{command}", ', end='')
+    if manager != userid and manager != chatid:
+        update.effective_message.reply_text('您没有权限使用这个机器人。')
+        print('forbade.')
+        raise
+    else:
+        print('allowed.')
+
+
 # SQLITE
-
-
 def sqlite_connect():
     global conn
     conn = sqlite3.connect('config/rss.db', check_same_thread=False)
@@ -74,8 +87,9 @@ def rss_load():
 
 
 def cmd_rss_list(update, context):
-    if bool(rss_dict) is False:
+    is_manager(update)
 
+    if bool(rss_dict) is False:
         update.effective_message.reply_text('数据库为空')
     else:
         for title, url_list in rss_dict.items():
@@ -86,6 +100,8 @@ def cmd_rss_list(update, context):
 
 
 def cmd_rss_add(update, context):
+    is_manager(update)
+
     # try if there are 2 arguments passed
     try:
         context.args[1]
@@ -109,6 +125,8 @@ def cmd_rss_add(update, context):
 
 
 def cmd_rss_remove(update, context):
+    is_manager(update)
+
     conn = sqlite3.connect('config/rss.db')
     c = conn.cursor()
     q = (context.args[0],)
@@ -123,7 +141,8 @@ def cmd_rss_remove(update, context):
 
 
 def cmd_help(update, context):
-    print(context.chat_data)
+    is_manager(update)
+
     update.effective_message.reply_text(
         f"""RSS to Telegram bot (Weibo Ver.)
 \n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 (可修改)
@@ -137,6 +156,16 @@ def cmd_help(update, context):
 \n您的 chatid 是: {update.message.chat.id}""",
         parse_mode='Markdown'
     )
+
+
+def cmd_test(update, context):
+    is_manager(update)
+
+    url = "https://rsshub.app/weibo/user/2612249974/1"
+    rss_d = feedparser.parse(url)
+    rss_d.entries[0]['link']
+    # update.effective_message.reply_text(rss_d.entries[0]['link'])
+    message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
 
 
 def rss_monitor(context):
@@ -174,14 +203,6 @@ def rss_monitor(context):
         rss_load()  # update rss_dict
 
 
-def cmd_test(update, context):
-    url = "https://rsshub.app/weibo/user/2612249974/1"
-    rss_d = feedparser.parse(url)
-    rss_d.entries[0]['link']
-    # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
-
-
 def init_sqlite():
     conn = sqlite3.connect('config/rss.db')
     c = conn.cursor()
@@ -196,6 +217,7 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("add", cmd_rss_add))
+    dp.add_handler(CommandHandler("start", cmd_help))
     dp.add_handler(CommandHandler("help", cmd_help))
     dp.add_handler(CommandHandler("test", cmd_test, ))
     dp.add_handler(CommandHandler("list", cmd_rss_list))

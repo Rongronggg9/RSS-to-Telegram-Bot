@@ -27,6 +27,7 @@
         - Telegram 文档中只给出图片大小 5MB 限制，但实际上需要`宽度 + 高度 <= 10000`
 - **(alpha)** 支持微博视频转发
 - 转发失败时向 `MANAGER` 发送含错误信息的提示 **(未设定则直接发送至 `CHATID` )**
+- **设定 `MANAGER` 时只会响应对应用户的命令 (未设定则只响应 `CHATID` 对应用户的命令)**
 
 <img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/example1.png" width = "449" height = "337"  alt="example1"/>
 
@@ -37,8 +38,8 @@
     - 图片至多 10 张 (考虑到微博已推出超九图功能，将在未来修复)
 - 微博视频转发清晰度较低，若视频过大也将被直接丢弃
 - 用于频道时，无法接受频道内的命令，需直接对 bot 在私人对话中发送命令
+    - **必须设定 `MANAGER` 并使用其对应的用户操作，否则不会响应**
 - 没有多用户功能，仅可向一个用户/频道 ( `CHATID` ) 推送 RSS
-- bot 会响应所有人发送的命令 (将在未来修复)
 
 ## 使用
 
@@ -64,9 +65,10 @@
 
 ### 准备
 
-1. 前往 [@BotFather](https://t.me/BotFather) 创建一个 bot ，并记录下 token
-2. 获得您的 chatid (可通过运行 bot 并发送 `/help` 获取) 并记录下来
-    - 您也可使用一个频道来接收推送，此时 chatid 格式为 `@channelusername` (不要忘记将 bot 添加到频道里!)
+1. 前往 [@BotFather](https://t.me/BotFather) 创建一个 bot ，并记录下 token ，稍后填入 `TOKEN`
+2. 获得您的 userid (可使用 [@userinfobot](https://t.me/userinfobot) 获取) 并记录下来，稍后填入 `CHATID`
+    - 您也可使用一个频道来接收推送，此时 `CHATID` 格式为 `@channelusername` (不要忘记将 bot 添加到频道里!)
+3. 获得管理员 (通常为您) 的 userid ，方法同上，稍后填入 `MANAGER`
 
 
 ### Docker

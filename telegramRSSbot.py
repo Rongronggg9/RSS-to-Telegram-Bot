@@ -40,7 +40,7 @@ def is_manager(update):
     name = chat.first_name + ' ' + chat.last_name
     command = update.message.text
     print(f'\n{name} ({username}/{userid}) attempted to use "{command}", ', end='')
-    if manager != userid and manager != chatid:
+    if manager != userid:
         update.effective_message.reply_text('您没有权限使用这个机器人。')
         print('forbade.')
         raise
@@ -210,7 +210,7 @@ def init_sqlite():
 
 
 def main():
-    print(f'CHATID: {chatid}\nDELAY: {delay}s\n')
+    print(f'CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\n')
 
     updater = Updater(token=Token, use_context=True)
     job_queue = updater.job_queue

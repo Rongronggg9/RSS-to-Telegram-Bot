@@ -79,11 +79,11 @@ For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 docker create \
     --name rss-to-telegram \
     --restart unless-stopped \
-    -v [config path]:/app/config \
+    -v [configuration path]:/app/config \
     -e DELAY=[delay] \
     -e TOKEN=[bot token] \
-    -e CHATID=[target user chatid / @channelusername] \
-    -e MANAGER=[bot manager chatid] \
+    -e CHATID=[target user userid / @channelusername] \
+    -e MANAGER=[bot manager userid] \
     rongronggg9/rss-to-telegram
 ```
 ```sh

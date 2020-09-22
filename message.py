@@ -44,7 +44,7 @@ def get_pic_info(url):
     headers = urlopen.info()
     pic_header = urlopen.read(256)
 
-    size = getSize.search(str(headers)).group(1)
+    size = int(getSize.search(str(headers)).group(1))
 
     height = width = -1
     if url.find('jpg') == -1 and url.find('jpeg') == -1:  # only for jpg
@@ -66,14 +66,16 @@ def validate_medium(url, max_size=5242880):  # warning: only design for weibo
     max_size -= max_size % 1000
     size, width, height = get_pic_info(url)
 
-    if int(size) > max_size or width + height > 10000:
+    if size > max_size or width + height > 10000:
         if sizeParser.search(url):  # is a large weibo pic
             parsed = sizeParser.search(url).groups()
             if parsed[1] == sizes[-1]:
+                print('\t\t-Medium too large, dropped: reduced size still too large.')
                 return None
             reduced = parsed[0] + sizes[sizes.index(parsed[1]) + 1] + parsed[2]
             return validate_medium(reduced)
         else:  # TODO: reduce non-weibo pic size
+            print('\t\t-Medium too large, dropped: non-weibo medium.')
             return None
 
     return url

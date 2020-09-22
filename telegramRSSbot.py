@@ -19,7 +19,7 @@ else:
     delay = 120
 
 if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
-    manager = int(os.environ['MANAGER'])
+    manager = os.environ['MANAGER']
 else:
     manager = chatid
 
@@ -35,7 +35,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 # MANAGER
 def is_manager(update):
     chat = update.message.chat
-    userid = chat.id
+    userid = str(chat.id)
     username = chat.username
     name = chat.first_name + ' ' + chat.last_name
     command = update.message.text
@@ -161,7 +161,7 @@ def cmd_help(update, context):
 def cmd_test(update, context):
     is_manager(update)
 
-    url = "https://rsshub.app/weibo/user/2612249974/1"
+    url = "https://uneasy.win/rss/weibo/user/2612249974/1"
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])

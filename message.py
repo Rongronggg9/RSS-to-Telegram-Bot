@@ -13,14 +13,16 @@ sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw7
 
 
 def send(chatid, xml, feed_title, url, context):
-    try:
-        send_message(chatid, xml, feed_title, url, context)
-    except Exception as e:
-        print(f'\t\t- Push {url} failed!')
-        traceback.print_exc()
-        # send an error message to manager (if set) or chatid
-        send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
-                     traceback.format_exc().replace('\n', '<br>'), feed_title, url, context)
+    for _ in range(2):
+        try:
+            send_message(chatid, xml, feed_title, url, context)
+            break
+        except Exception as e:
+            print(f'\t\t- Push {url} failed!')
+            traceback.print_exc()
+            # send an error message to manager (if set) or chatid
+            send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
+                         traceback.format_exc().replace('\n', '<br>'), feed_title, url, context)
 
 
 def send_message(chatid, xml, feed_title, url, context):
@@ -103,6 +105,7 @@ def send_text_message(chatid, xml, feed_title, url, is_tail, context):
         if number > 1:
             head = rf'\({i + 1}/{number}\)' + '\n'
         context.bot.send_message(chatid, head + text_list[i], parse_mode='MarkdownV2', disable_web_page_preview=True)
+        print('\t\tText message.')
 
 
 def send_media_message(chatid, xml, feed_title, url, media, context):
@@ -116,11 +119,14 @@ def send_media_message(chatid, xml, feed_title, url, media, context):
     if type(media) == str:  # TODO: just a temporary workaround
         context.bot.send_video(chatid, media, caption=head + text_list[0], parse_mode='MarkdownV2',
                                supports_streaming=True)
+        print('\t\tVideo message.')
     elif len(media) == 1:
         context.bot.send_photo(chatid, media[0], head + text_list[0], parse_mode='MarkdownV2')
+        print('\t\tSingle pic message.')
     else:
         pic_objs = get_pic_objs(media, head + text_list[0])
         context.bot.send_media_group(chatid, pic_objs)
+        print(f'\t\t{len(pic_objs)} pics message.')
 
     if number > 1:
         send_text_message(chatid, text_list, feed_title, url, True, context)

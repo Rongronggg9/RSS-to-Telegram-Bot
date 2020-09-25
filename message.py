@@ -27,18 +27,23 @@ def send(chatid, xml, feed_title, url, context):
 
 def send_message(chatid, xml, feed_title, url, context):
     if getVideo.search(xml):
+        print('\t\t-Detected video, ', end="")
         video = validate_medium(getVideo.findall(xml)[0], 20971520)
         if video:
             send_media_message(chatid, xml, feed_title, url, video, context)
+            print('send video message(s).')
             return  # for weibo, only 1 video can be attached, without any other pics
 
     if getPic.search(xml):
         pics = validate_media(getPic.findall(xml))
+        print('\t\t-Detected pic(s), ', end="")
         if pics:
             send_media_message(chatid, xml, feed_title, url, pics, context)
+            print('send pic(s) message(s).')
             return
 
     send_text_message(chatid, xml, feed_title, url, False, context)
+    print('\t\t-Detected nothing, send text message(s).')
 
 
 def get_pic_info(url):
@@ -105,7 +110,7 @@ def send_text_message(chatid, xml, feed_title, url, is_tail, context):
         if number > 1:
             head = rf'\({i + 1}/{number}\)' + '\n'
         context.bot.send_message(chatid, head + text_list[i], parse_mode='MarkdownV2', disable_web_page_preview=True)
-        print('\t\tText message.')
+        print('\t\t\t-Text message.')
 
 
 def send_media_message(chatid, xml, feed_title, url, media, context):
@@ -119,14 +124,14 @@ def send_media_message(chatid, xml, feed_title, url, media, context):
     if type(media) == str:  # TODO: just a temporary workaround
         context.bot.send_video(chatid, media, caption=head + text_list[0], parse_mode='MarkdownV2',
                                supports_streaming=True)
-        print('\t\tVideo message.')
+        print('\t\t\t-Video message.')
     elif len(media) == 1:
         context.bot.send_photo(chatid, media[0], head + text_list[0], parse_mode='MarkdownV2')
-        print('\t\tSingle pic message.')
+        print('\t\t\t-Single pic message.')
     else:
         pic_objs = get_pic_objs(media, head + text_list[0])
         context.bot.send_media_group(chatid, pic_objs)
-        print(f'\t\t{len(pic_objs)} pics message.')
+        print(f'\t\t\t-{len(pic_objs)} pics message.')
 
     if number > 1:
         send_text_message(chatid, text_list, feed_title, url, True, context)

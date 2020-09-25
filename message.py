@@ -27,23 +27,25 @@ def send(chatid, xml, feed_title, url, context):
 
 def send_message(chatid, xml, feed_title, url, context):
     if getVideo.search(xml):
-        print('\t\t-Detected video, ', end="")
         video = validate_medium(getVideo.findall(xml)[0], 20971520)
+        print('\t\t-Detected video, ', end="")
         if video:
-            send_media_message(chatid, xml, feed_title, url, video, context)
             print('send video message(s).')
+            send_media_message(chatid, xml, feed_title, url, video, context)
             return  # for weibo, only 1 video can be attached, without any other pics
+        else:
+            print('but too large.')
 
     if getPic.search(xml):
         pics = validate_media(getPic.findall(xml))
         print('\t\t-Detected pic(s), ', end="")
         if pics:
-            send_media_message(chatid, xml, feed_title, url, pics, context)
             print('send pic(s) message(s).')
+            send_media_message(chatid, xml, feed_title, url, pics, context)
             return
 
-    send_text_message(chatid, xml, feed_title, url, False, context)
     print('\t\t-Detected nothing, send text message(s).')
+    send_text_message(chatid, xml, feed_title, url, False, context)
 
 
 def get_pic_info(url):

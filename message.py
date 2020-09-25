@@ -5,8 +5,8 @@ from urllib import request
 from xmlparser import get_md
 from telegramRSSbot import manager
 
-getPic = re.compile(r'<img src="(.+?)"')
-getVideo = re.compile(r'<video src="(.+?)"')
+getPic = re.compile(r'<img[^>]*\bsrc="([^"]*)"')
+getVideo = re.compile(r'<video[^>]*\bsrc="([^"]*)"')
 getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
 sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
 sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720|middle)(/\w+\.\w+$)')

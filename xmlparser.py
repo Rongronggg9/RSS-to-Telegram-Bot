@@ -13,7 +13,7 @@ deleteBlockquote = re.compile(r'</?blockquote>')
 
 # html2text configuration
 html2text.config.IGNORE_IMAGES = True
-html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([_\*\[\]\(\)~`>#\+-=\|\{\}\.!])')
+html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([_\*\[\]\(\)~`>#\+\-=\|\{\}\.!])')
 html2text.config.ESCAPE_SNOB = True
 md_ize = html2text.HTML2Text()
 

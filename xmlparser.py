@@ -15,7 +15,7 @@ deleteBlockquote = re.compile(r'</?blockquote>')
 # html2text configuration
 html2text.config.IGNORE_IMAGES = True
 html2text.config.IGNORE_TABLES = True
-html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([\\\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!])')
+html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!])')
 html2text.config.ESCAPE_SNOB = True
 md_ize = html2text.HTML2Text(bodywidth=0)
 
@@ -23,8 +23,8 @@ md_ize = html2text.HTML2Text(bodywidth=0)
 def get_md(xml, feed_title, url, split_length=4096):
     preprocessed = deleteBlockquote.sub('', xml)
     emojified = emojify(preprocessed)
-    title = md_ize.handle(feed_title).strip()  # escape feed_title
-    md = md_ize.handle(emojified).strip() + f'\n\nvia [{title}]({url})'
+    via = md_ize.handle(f'via <a href="{url}">{feed_title}</a>').strip()  # escape 'via [feed_title](post_url)'
+    md = md_ize.handle(emojified).strip() + f'\n\n{via}'
     return split_text(md, split_length)
 
 

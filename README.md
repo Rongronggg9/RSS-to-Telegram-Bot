@@ -77,7 +77,7 @@ For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 
 ```sh
 docker create \
-    --name rss-to-telegram \
+    --name [container name] \
     --restart unless-stopped \
     -v [configuration path]:/app/config \
     -e DELAY=[delay] \
@@ -87,7 +87,7 @@ docker create \
     rongronggg9/rss-to-telegram
 ```
 ```sh
-docker run -d rss-to-telegram
+docker start [container name]
 ```
 
 ### Installation

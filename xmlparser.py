@@ -4,6 +4,7 @@ import html2text
 
 # re
 isBrokenDivision = (
+    (re.compile(r'((via )|(via)|(vi)|(v))$'), re.compile(r'^((ia )|(a )|( )|(\[))')),
     (re.compile(r'(via )?\[.+?\]\([^\)]*?$'), re.compile(r'^.*?\)')),
     (re.compile(r'(via )?\[.+?\]$'), re.compile(r'^\(.+?\)')),
     (re.compile(r'(via )?\[[^\]]*?$'), re.compile(r'^.*?\]\(.+?\)')),
@@ -13,15 +14,17 @@ deleteBlockquote = re.compile(r'</?blockquote>')
 
 # html2text configuration
 html2text.config.IGNORE_IMAGES = True
-html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([_\*\[\]\(\)~`>#\+\-=\|\{\}\.!])')
+html2text.config.IGNORE_TABLES = True
+html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([\\\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!])')
 html2text.config.ESCAPE_SNOB = True
-md_ize = html2text.HTML2Text()
+md_ize = html2text.HTML2Text(bodywidth=0)
 
 
 def get_md(xml, feed_title, url, split_length=4096):
     preprocessed = deleteBlockquote.sub('', xml)
     emojified = emojify(preprocessed)
-    md = md_ize.handle(emojified).strip() + f'\n\nvia [{feed_title}]({url})'
+    title = md_ize.handle(feed_title).strip()  # escape feed_title
+    md = md_ize.handle(emojified).strip() + f'\n\nvia [{title}]({url})'
     return split_text(md, split_length)
 
 

@@ -28,7 +28,7 @@ def send(chatid, xml, feed_title, url, context):
 def send_message(chatid, xml, feed_title, url, context):
     if getVideo.search(xml):
         video = validate_medium(getVideo.findall(xml)[0], 20971520)
-        print('\t\t-Detected video, ', end="")
+        print('\t\t- Detected video, ', end="")
         if video:
             print('send video message(s).')
             send_media_message(chatid, xml, feed_title, url, video, context)
@@ -38,13 +38,15 @@ def send_message(chatid, xml, feed_title, url, context):
 
     if getPic.search(xml):
         pics = validate_media(getPic.findall(xml))
-        print('\t\t-Detected pic(s), ', end="")
+        print('\t\t- Detected pic(s), ', end="")
         if pics:
             print('send pic(s) message(s).')
             send_media_message(chatid, xml, feed_title, url, pics, context)
             return
+        else:
+            print('but too large.')
 
-    print('\t\t-Detected nothing, send text message(s).')
+    print('\t\t- No media, send text message(s).')
     send_text_message(chatid, xml, feed_title, url, False, context)
 
 
@@ -79,12 +81,12 @@ def validate_medium(url, max_size=5242880):  # warning: only design for weibo
         if sizeParser.search(url):  # is a large weibo pic
             parsed = sizeParser.search(url).groups()
             if parsed[1] == sizes[-1]:
-                print('\t\t-Medium too large, dropped: reduced size still too large.')
+                print('\t\t- Medium too large, dropped: reduced, but still too large.')
                 return None
             reduced = parsed[0] + sizes[sizes.index(parsed[1]) + 1] + parsed[2]
             return validate_medium(reduced)
         else:  # TODO: reduce non-weibo pic size
-            print('\t\t-Medium too large, dropped: non-weibo medium.')
+            print('\t\t- Medium too large, dropped: non-weibo medium.')
             return None
 
     return url
@@ -112,7 +114,7 @@ def send_text_message(chatid, xml, feed_title, url, is_tail, context):
         if number > 1:
             head = rf'\({i + 1}/{number}\)' + '\n'
         context.bot.send_message(chatid, head + text_list[i], parse_mode='MarkdownV2', disable_web_page_preview=True)
-        print('\t\t\t-Text message.')
+        print('\t\t\t- Text message.')
 
 
 def send_media_message(chatid, xml, feed_title, url, media, context):
@@ -126,14 +128,14 @@ def send_media_message(chatid, xml, feed_title, url, media, context):
     if type(media) == str:  # TODO: just a temporary workaround
         context.bot.send_video(chatid, media, caption=head + text_list[0], parse_mode='MarkdownV2',
                                supports_streaming=True)
-        print('\t\t\t-Video message.')
+        print('\t\t\t- Video message.')
     elif len(media) == 1:
         context.bot.send_photo(chatid, media[0], head + text_list[0], parse_mode='MarkdownV2')
         print('\t\t\t-Single pic message.')
     else:
         pic_objs = get_pic_objs(media, head + text_list[0])
         context.bot.send_media_group(chatid, pic_objs)
-        print(f'\t\t\t-{len(pic_objs)} pics message.')
+        print(f'\t\t\t- {len(pic_objs)} pics message.')
 
     if number > 1:
         send_text_message(chatid, text_list, feed_title, url, True, context)

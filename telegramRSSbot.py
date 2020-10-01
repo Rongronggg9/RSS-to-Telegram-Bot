@@ -144,24 +144,31 @@ def cmd_help(update, context):
     is_manager(update)
 
     update.effective_message.reply_text(
-        f"""RSS to Telegram bot (Weibo Ver.)
-\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 (可修改)
+        f"""RSS to Telegram bot \(Weibo Ver\.\)
+\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 \(可修改\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:
-*/help* : 发送这条消息
-*/add 标题 RSS* : 添加订阅
-*/remove 标题* : 移除订阅
-*/list* : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
-*/test* : 内置命令，将会获取广州地铁的最新一条微博
+__*/help*__ : 发送这条消息
+__*/add 标题 RSS*__ : 添加订阅
+__*/remove 标题*__ : 移除订阅
+__*/list*__ : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
+__*/test RSS*__ : 测试命令，将会从提供的 RSS 源处获取最新一条 post
 \n您的 chatid 是: {update.message.chat.id}""",
-        parse_mode='Markdown'
+        parse_mode='MarkdownV2'
     )
 
 
 def cmd_test(update, context):
     is_manager(update)
 
-    url = "https://uneasy.win/rss/weibo/user/2612249974/1"
+    # try if there are 2 arguments passed
+    try:
+        context.args[0]
+    except IndexError:
+        update.effective_message.reply_text(
+            'ERROR: 格式需要为: /test RSS')
+        raise
+    url = context.args[0]
     rss_d = feedparser.parse(url)
     rss_d.entries[0]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])

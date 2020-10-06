@@ -82,9 +82,10 @@ with open('emojify.json', 'r', encoding='utf-8') as emojify_json:
 
 if __name__ == '__main__':
     import feedparser
-    url = input('Please input an RSS feed:')
-    d = feedparser.parse(url)
-    text = d.entries[0]['summary']
+    url = input('Please input an RSS feed: ')
+    test_d = feedparser.parse(url)
+    print(f'Got {len(test_d.entries)} post(s).')
+    index = int(input('Please input post index: '))
+    text = test_d.entries[index]['summary']
     preprocessed = preprocess(text)
-    print(preprocessed)
     print(repr(md_ize.handle(preprocessed)))

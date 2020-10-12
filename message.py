@@ -21,13 +21,9 @@ def send(chatid, xml, feed_title, url, context):
 def send_message(chatid, xml, feed_title, url, context):
     video, pics = get_valid_media(xml)
     if video:
-        print('\t\t- Detected video, ', end="")
-        if video:
-            print('send video message(s).')
-            send_media_message(chatid, xml, feed_title, url, video, context)
-            return  # for weibo, only 1 video can be attached, without any other pics
-        else:
-            print('but too large.')
+        print('\t\t- Detected video, send video message(s).')
+        send_media_message(chatid, xml, feed_title, url, video, context)
+        return  # for weibo, only 1 video can be attached, without any other pics
 
     if pics:
         print('\t\t- Detected pic(s), ', end="")

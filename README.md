@@ -9,6 +9,8 @@
 
 **这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot 。**
 
+在频道中使用时，希望您能说明使用了本项目，并附上到本项目的链接。
+
 本项目原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的 fork ，考虑到改动较大，
 因此复制成独立的 repository 。
 
@@ -51,15 +53,15 @@
 > 
 > 命令:
 >
-> **/help** : 发送这条消息
+> **<u>/help</u>** : 发送这条消息
 >
-> **/add 标题 RSS** : 添加订阅
+> **<u>/add 标题 RSS</u>** : 添加订阅
 >
-> **/remove 标题** : 移除订阅
+> **<u>/remove 标题</u>** : 移除订阅
 >
-> **/list** : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
+> **<u>/list</u>** : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
 >
-> **/test** : 内置命令，将会获取广州地铁的最新一条微博
+> **<u>/test RSS 编号(可选)</u>** : 从 RSS 源处获取一条 post (编号为 0-based, 不填或超出范围默认为 0)
 > 
 > 您的 chatid 是: 0123456789
 
@@ -79,7 +81,7 @@ For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 docker create \
     --name [container name] \
     --restart unless-stopped \
-    -v [configuration path]:/app/config \
+    -v [path to config]:/app/config \
     -e DELAY=[delay] \
     -e TOKEN=[bot token] \
     -e CHATID=[target user userid / @channelusername] \
@@ -98,6 +100,7 @@ Python 3.6+
 pip install feedparser
 pip install python-telegram-bot
 pip install html2text
+pip install bs4
 ```
 
 A telegram bot is needed that the script will connect to. https://botsfortelegram.com/project/the-bot-father/

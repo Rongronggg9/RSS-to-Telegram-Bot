@@ -1,15 +1,8 @@
-import re
 import traceback
 import telegram.ext
-from urllib import request
+from media import get_valid_media
 from xmlparser import get_md
 from telegramRSSbot import manager
-
-getPic = re.compile(r'<img[^>]*\bsrc="([^"]*)"')
-getVideo = re.compile(r'<video[^>]*\bsrc="([^"]*)"')
-getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
-sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
-sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720|middle)(/\w+\.\w+$)')
 
 
 def send(chatid, xml, feed_title, url, context):
@@ -18,7 +11,7 @@ def send(chatid, xml, feed_title, url, context):
             send_message(chatid, xml, feed_title, url, context)
             break
         except Exception as e:
-            print(f'\t\t- Push {url} failed!')
+            print(f'\t\t- Send {url} failed!')
             traceback.print_exc()
             # send an error message to manager (if set) or chatid
             send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
@@ -26,8 +19,8 @@ def send(chatid, xml, feed_title, url, context):
 
 
 def send_message(chatid, xml, feed_title, url, context):
-    if getVideo.search(xml):
-        video = validate_medium(getVideo.findall(xml)[0], 20971520)
+    video, pics = get_valid_media(xml)
+    if video:
         print('\t\t- Detected video, ', end="")
         if video:
             print('send video message(s).')
@@ -36,8 +29,7 @@ def send_message(chatid, xml, feed_title, url, context):
         else:
             print('but too large.')
 
-    if getPic.search(xml):
-        pics = validate_media(getPic.findall(xml))
+    if pics:
         print('\t\t- Detected pic(s), ', end="")
         if pics:
             print('send pic(s) message(s).')
@@ -48,57 +40,6 @@ def send_message(chatid, xml, feed_title, url, context):
 
     print('\t\t- No media, send text message(s).')
     send_text_message(chatid, xml, feed_title, url, False, context)
-
-
-def get_pic_info(url):
-    urlopen = request.urlopen(url)
-    headers = urlopen.info()
-    pic_header = urlopen.read(256)
-
-    size = int(getSize.search(str(headers)).group(1))
-
-    height = width = -1
-    if url.find('jpg') == -1 and url.find('jpeg') == -1:  # only for jpg
-        return size, width, height
-
-    pointer = -1
-    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
-        p = pic_header.find(marker)
-        if p != -1:
-            pointer = p
-    if pointer != -1:
-        width = int(pic_header[pointer + 7:pointer + 9].hex(), 16)
-        height = int(pic_header[pointer + 5:pointer + 7].hex(), 16)
-
-    return size, width, height
-
-
-def validate_medium(url, max_size=5242880):  # warning: only design for weibo
-    max_size -= max_size % 1000
-    size, width, height = get_pic_info(url)
-
-    if size > max_size or width + height > 10000:
-        if sizeParser.search(url):  # is a large weibo pic
-            parsed = sizeParser.search(url).groups()
-            if parsed[1] == sizes[-1]:
-                print('\t\t- Medium too large, dropped: reduced, but still too large.')
-                return None
-            reduced = parsed[0] + sizes[sizes.index(parsed[1]) + 1] + parsed[2]
-            return validate_medium(reduced)
-        else:  # TODO: reduce non-weibo pic size
-            print('\t\t- Medium too large, dropped: non-weibo medium.')
-            return None
-
-    return url
-
-
-def validate_media(media):  # reduce pic size to <5MB
-    reduced_pics = []
-    for url in media:
-        reduced = validate_medium(url)
-        if reduced:  # warning: too large non-weibo pic will be discarded
-            reduced_pics.append(reduced)
-    return reduced_pics
 
 
 def send_text_message(chatid, xml, feed_title, url, is_tail, context):

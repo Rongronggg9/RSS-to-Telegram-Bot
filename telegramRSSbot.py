@@ -144,15 +144,15 @@ def cmd_help(update, context):
     is_manager(update)
 
     update.effective_message.reply_text(
-        f"""RSS to Telegram bot \(Weibo Ver\.\)
-\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 \(可修改\)
+        f"""RSS to Telegram bot \\(Weibo Ver\\.\\)
+\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:
 __*/help*__ : 发送这条消息
 __*/add 标题 RSS*__ : 添加订阅
 __*/remove 标题*__ : 移除订阅
 __*/list*__ : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
-__*/test RSS*__ : 测试命令，将会从提供的 RSS 源处获取最新一条 post
+__*/test RSS 编号\\(可选\\)*__ : 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
 \n您的 chatid 是: {update.message.chat.id}""",
         parse_mode='MarkdownV2'
     )
@@ -166,13 +166,17 @@ def cmd_test(update, context):
         context.args[0]
     except IndexError:
         update.effective_message.reply_text(
-            'ERROR: 格式需要为: /test RSS')
+            'ERROR: 格式需要为: /test RSS 条目编号(可选)')
         raise
     url = context.args[0]
     rss_d = feedparser.parse(url)
-    rss_d.entries[0]['link']
+    if len(context.args) < 2 or len(rss_d.entries) <= int(context.args[1]):
+        index = 0
+    else:
+        index = int(context.args[1])
+    rss_d.entries[index]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(chatid, rss_d.entries[0]['summary'], rss_d.feed.title, rss_d.entries[0]['link'], context)
+    message.send(chatid, rss_d.entries[index]['summary'], rss_d.feed.title, rss_d.entries[index]['link'], context)
 
 
 def rss_monitor(context):

@@ -1,6 +1,7 @@
 import re
 import json
 import html2text
+from bs4 import BeautifulSoup
 
 # re
 isBrokenDivision = (
@@ -10,9 +11,7 @@ isBrokenDivision = (
     (re.compile(r'(via )?\[[^\]]*?$'), re.compile(r'^.*?\]\(.+?\)')),
     (re.compile(r'(\\|\\\\)$'), re.compile(r'^.*'))
 )
-deleteBlockquote = re.compile(r'</?blockquote>')
-deleteHr = re.compile(r'<hr ?/?>')
-isHn = (re.compile(r'<h\d>'), re.compile(r'</h\d>'))
+deleteTags = ('hr', 'blockquote')
 
 # html2text configuration
 html2text.config.RE_MD_CHARS_MATCHER_ALL = re.compile(r'([\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!])')
@@ -20,21 +19,44 @@ md_ize = html2text.HTML2Text()
 md_ize.body_width = 0
 md_ize.strong_mark = '*'
 md_ize.ul_item_mark = '•'
-md_ize.emphasis_mark = "__"
+md_ize.emphasis_mark = '__'
 md_ize.ignore_images = True
 md_ize.ignore_tables = True
 md_ize.escape_snob = True
 md_ize.use_automatic_links = False
 
+# load emoji dict
+with open('emojify.json', 'r', encoding='utf-8') as emojify_json:
+    emoji_dict = json.load(emojify_json)
+
+
+def get_media(xml):
+    soup = BeautifulSoup(xml, 'html.parser')
+    video = None
+    if soup.video:
+        video = soup.video['src']
+    pics = [img['src'] for img in soup('img')]
+
+    return video, pics
+
 
 def preprocess(xml):
-    result = xml
-    delete = (deleteHr, deleteBlockquote)
-    for d in delete:
-        result = d.sub('', result)
-    for i in range(2):
-        result = isHn[i].sub(f'{"<u><b>" * (1-i) }{"</b></u>" * i}', result)
-    return result
+    soup = BeautifulSoup(xml, 'html.parser')
+    for d in soup(deleteTags):  # delete unsupported tags
+        d.unwrap()
+    for pre in soup('pre'):  # code block
+        pre.code.unwrap()
+        pre.unwrap()
+    for hn in soup(re.compile(r'h\d')):  # replace <h*> with <b><i>
+        hn.name = 'i'
+        hn.wrap(soup.new_tag('b'))
+    return str(soup)
+
+
+def emojify(xml):  # note: get all emoticons on https://api.weibo.com/2/emotions.json?source=1362404091
+    for emoticon, emoji in emoji_dict.items():
+        xml = xml.replace(f'[{emoticon}]', emoji)
+    return xml
 
 
 def get_md(xml, feed_title, url, split_length=4096):
@@ -71,21 +93,13 @@ def split_text(text, length):
     return result
 
 
-def emojify(xml):  # note: get all emoticons on https://api.weibo.com/2/emotions.json?source=1362404091
-    for emoticon, emoji in emoji_dict.items():
-        xml = xml.replace(f'[{emoticon}]', emoji)
-    return xml
-
-
-with open('emojify.json', 'r', encoding='utf-8') as emojify_json:
-    emoji_dict = json.load(emojify_json)
-
 if __name__ == '__main__':
     import feedparser
-    url = input('Please input an RSS feed: ')
-    test_d = feedparser.parse(url)
+
+    _url = input('Please input an RSS feed: ')
+    test_d = feedparser.parse(_url)
     print(f'Got {len(test_d.entries)} post(s).')
     index = int(input('Please input post index: '))
-    text = test_d.entries[index]['summary']
-    preprocessed = preprocess(text)
-    print(repr(md_ize.handle(preprocessed)))
+    _xml = test_d.entries[index]['summary']
+    print(get_media(_xml))
+    print(repr(get_md(_xml, test_d.feed.title, _url)))

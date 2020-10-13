@@ -29,7 +29,8 @@ if Token == "X":
 rss_dict = {}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.WARNING)
+# logging.getLogger('apscheduler.executors.default').propagate = False  # to use this line, set log level to INFO
 
 
 # MANAGER

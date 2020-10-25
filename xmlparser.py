@@ -50,7 +50,7 @@ def preprocess(xml):
     for hn in soup(re.compile(r'h\d')):  # replace <h*> with <b><i>
         hn.name = 'i'
         hn.wrap(soup.new_tag('b'))
-    return str(soup)
+    return soup.decode(formatter=None)
 
 
 def emojify(xml):  # note: get all emoticons on https://api.weibo.com/2/emotions.json?source=1362404091

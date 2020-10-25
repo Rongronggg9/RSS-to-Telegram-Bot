@@ -14,8 +14,12 @@ def send(chatid, xml, feed_title, url, context):
             print(f'\t\t- Send {url} failed!')
             traceback.print_exc()
             # send an error message to manager (if set) or chatid
-            send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
-                         traceback.format_exc().replace('\n', '<br>'), feed_title, url, context)
+            try:
+                send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
+                             traceback.format_exc().replace('\n', '<br>'), feed_title, url, context)
+            except:
+                send_message(manager, 'Something went wrong while sending this message, but error msg sent failed.\n'
+                                      'Please check logs manually.', feed_title, url, context)
 
 
 def send_message(chatid, xml, feed_title, url, context):

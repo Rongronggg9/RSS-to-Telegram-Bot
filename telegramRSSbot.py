@@ -38,7 +38,10 @@ def is_manager(update):
     chat = update.message.chat
     userid = str(chat.id)
     username = chat.username
-    name = chat.first_name + ' ' + chat.last_name
+    if chat.last_name:
+        name = chat.first_name + ' ' + chat.last_name
+    else:
+        name = chat.first_name
     command = update.message.text
     print(f'\n{name} ({username}/{userid}) attempted to use "{command}", ', end='')
     if manager != userid:

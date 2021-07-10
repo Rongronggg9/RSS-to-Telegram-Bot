@@ -23,6 +23,11 @@ if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
 else:
     manager = chatid
 
+if os.environ.get('PROXY') and os.environ['PROXY'] != 'X':
+    proxy = os.environ['PROXY']
+else:
+    proxy = ''
+
 if Token == "X":
     print("Token not set!")
 
@@ -225,9 +230,9 @@ def init_sqlite():
 
 
 def main():
-    print(f'CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\n')
+    print(f'CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\nPROXY: {proxy}\n')
 
-    updater = Updater(token=Token, use_context=True)
+    updater = Updater(token=Token, use_context=True, request_kwargs={'proxy_url': proxy})
     job_queue = updater.job_queue
     dp = updater.dispatcher
 

@@ -86,11 +86,15 @@ docker create \
     -e TOKEN=[bot token] \
     -e CHATID=[target user userid / @channelusername] \
     -e MANAGER=[bot manager userid] \
+    -e PROXY=[scheme://host:port/]
     rongronggg9/rss-to-telegram
 ```
 ```sh
 docker start [container name]
 ```
+- 方括号`[]`不是命令的一部分
+- 请务必设置`-v [path to config]:/app/config`，否则重新配置容器后订阅数据将丢失
+- 代理仅对 Telegram Bot API 生效，对 RSS 订阅不生效。考虑到 DNS 污染问题，请尽量使用 socks5 代理，并在填入的代理 URL 里使用`socks5h`而不是`socks5`，示例: `socks5h://127.0.0.1:1080/`
 
 ### Installation
 

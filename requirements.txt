@@ -2,3 +2,4 @@ feedparser
 python-telegram-bot
 html2text
 bs4
+PySocks

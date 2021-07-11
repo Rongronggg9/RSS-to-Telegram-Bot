@@ -1,5 +1,7 @@
-feedparser
-python-telegram-bot
-html2text
-bs4
-PySocks
+python-telegram-bot==13.7
+html2text==2020.1.16
+feedparser==6.0.8
+bs4==0.0.1
+beautifulsoup4==4.9.3
+requests[socks]==2.25.1
+

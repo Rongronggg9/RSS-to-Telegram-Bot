@@ -14,7 +14,8 @@ ENV TOKEN X
 ENV CHATID X
 ENV MANAGER X
 ENV DELAY 300
-ENV PROXY X
+ENV T_PROXY X
+ENV R_PROXY X
 
 # Run app.py when the container launches
 CMD ["python", "-u", "telegramRSSbot.py"]

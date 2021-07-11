@@ -33,7 +33,7 @@ else:
 
 if os.environ.get('R_PROXY') and os.environ['R_PROXY'] != 'X':
     requests_proxies = {
-        'all': telegram_proxy
+        'all': os.environ['R_PROXY']
     }
 else:
     requests_proxies = {}

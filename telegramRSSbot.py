@@ -2,8 +2,11 @@ import feedparser
 import logging
 import sqlite3
 import os
+import requests
+from requests.adapters import HTTPAdapter
 from telegram.ext import Updater, CommandHandler
 from pathlib import Path
+from io import BytesIO
 import message
 
 Path("config").mkdir(parents=True, exist_ok=True)
@@ -23,10 +26,17 @@ if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
 else:
     manager = chatid
 
-if os.environ.get('PROXY') and os.environ['PROXY'] != 'X':
-    proxy = os.environ['PROXY']
+if os.environ.get('T_PROXY') and os.environ['T_PROXY'] != 'X':
+    telegram_proxy = os.environ['T_PROXY']
 else:
-    proxy = ''
+    telegram_proxy = ''
+
+if os.environ.get('R_PROXY') and os.environ['R_PROXY'] != 'X':
+    requests_proxies = {
+        'all': telegram_proxy
+    }
+else:
+    requests_proxies = {}
 
 if Token == "X":
     print("Token not set!")
@@ -35,6 +45,11 @@ rss_dict = {}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.WARNING)
+
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+
+
 # logging.getLogger('apscheduler.executors.default').propagate = False  # to use this line, set log level to INFO
 
 
@@ -85,6 +100,36 @@ def sqlite_write(name, link, last, update=False):
     conn.close()
 
 
+# REQUESTS
+def web_get(url):
+    session = requests.Session()
+    session.mount('http://', HTTPAdapter(max_retries=1))
+    session.mount('https://', HTTPAdapter(max_retries=1))
+
+    response = session.get(url, timeout=(10, 10), proxies=requests_proxies)
+    content = BytesIO(response.content)
+    return content
+
+
+def feed_get(url, update=None, verbose=False):
+    # try if the url is a valid RSS feed
+    try:
+        rss_content = web_get(url)
+        rss_d = feedparser.parse(rss_content)
+        rss_d.entries[0]['title']
+    except IndexError as e:
+        if verbose:
+            update.effective_message.reply_text('ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
+            print('Feed ERROR:', e)
+        raise IndexError(e)
+    except requests.exceptions.RequestException as e:
+        if verbose:
+            update.effective_message.reply_text('ERROR: 网络超时')
+            print('Network ERROR:', e)
+        raise requests.exceptions.RequestException(e)
+    return rss_d
+
+
 # RSS________________________________________
 def rss_load():
     # if the dict is not empty, empty it.
@@ -113,24 +158,20 @@ def cmd_rss_add(update, context):
 
     # try if there are 2 arguments passed
     try:
-        context.args[1]
+        title = context.args[0]
+        url = context.args[1]
     except IndexError:
         update.effective_message.reply_text(
             'ERROR: 格式需要为: /add 标题 RSS')
         raise
-    # try if the url is a valid RSS feed
     try:
-        rss_d = feedparser.parse(context.args[1])
-        rss_d.entries[0]['title']
-    except IndexError:
-        update.effective_message.reply_text(
-            'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
-        raise
-    sqlite_write(context.args[0], context.args[1],
-                 str(rss_d.entries[0]['link']))
+        rss_d = feed_get(url, update, verbose=True)
+    except (IndexError, requests.exceptions.RequestException):
+        return
+    sqlite_write(title, url, str(rss_d.entries[0]['link']))
     rss_load()
     update.effective_message.reply_text(
-        '已添加 \n标题: %s\nRSS 源: %s' % (context.args[0], context.args[1]))
+        '已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
 def cmd_rss_remove(update, context):
@@ -172,13 +213,15 @@ def cmd_test(update, context):
 
     # try if there are 2 arguments passed
     try:
-        context.args[0]
+        url = context.args[0]
     except IndexError:
         update.effective_message.reply_text(
             'ERROR: 格式需要为: /test RSS 条目编号(可选)')
         raise
-    url = context.args[0]
-    rss_d = feedparser.parse(url)
+    try:
+        rss_d = feed_get(url, update, verbose=True)
+    except (IndexError, requests.exceptions.RequestException):
+        return
     if len(context.args) < 2 or len(rss_d.entries) <= int(context.args[1]):
         index = 0
     else:
@@ -190,13 +233,18 @@ def cmd_test(update, context):
 
 def rss_monitor(context):
     update_flag = False
-    for name, url_list in rss_dict.items():
-        rss_d = feedparser.parse(url_list[0])
-        if not rss_d.entries:
+    for name, (feed_url, last_url) in rss_dict.items():
+        try:
+            rss_d = feed_get(feed_url)
+        except IndexError:
             # print(f'Get {name} feed failed!')
-            print('x', end='')
-            break
-        if url_list[1] == rss_d.entries[0]['link']:
+            print('F', end='')
+            continue
+        except requests.exceptions.RequestException:
+            print('N', end='')
+            continue
+
+        if last_url == rss_d.entries[0]['link']:
             print('-', end='')
         else:
             print('\nUpdating', name)
@@ -213,10 +261,10 @@ def rss_monitor(context):
                     print('\t- Pushing', entry['link'])
                     message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
 
-                if url_list[1] == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
+                if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                     last_flag = True
 
-            sqlite_write(name, url_list[0], str(rss_d.entries[0]['link']), True)  # update db
+            sqlite_write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
 
     if update_flag:
         print('Updated.')
@@ -230,9 +278,11 @@ def init_sqlite():
 
 
 def main():
-    print(f'CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\nPROXY: {proxy}\n')
+    print(
+        f"CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\nT_PROXY (for Telegram): {telegram_proxy}\n"
+        f"R_PROXY (for RSS): {requests_proxies['all'] if requests_proxies else ''}\n")
 
-    updater = Updater(token=Token, use_context=True, request_kwargs={'proxy_url': proxy})
+    updater = Updater(token=Token, use_context=True, request_kwargs={'proxy_url': telegram_proxy})
     job_queue = updater.job_queue
     dp = updater.dispatcher
 

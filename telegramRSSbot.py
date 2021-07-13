@@ -228,7 +228,7 @@ def cmd_test(update, context):
         index = int(context.args[1])
     rss_d.entries[index]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(chatid, rss_d.entries[index]['summary'], rss_d.feed.title, rss_d.entries[index]['link'], context)
+    message.send(chatid, rss_d.entries[index], rss_d.feed.title, context)
 
 
 def rss_monitor(context):
@@ -259,7 +259,7 @@ def rss_monitor(context):
                 if last_flag:
                     # context.bot.send_message(chatid, rss_d.entries[0]['link'])
                     print('\t- Pushing', entry['link'])
-                    message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
+                    message.send(chatid, entry, rss_d.feed.title, context)
 
                 if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                     last_flag = True

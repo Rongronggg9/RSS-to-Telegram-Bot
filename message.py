@@ -5,10 +5,14 @@ from xmlparser import get_md
 from telegramRSSbot import manager
 
 
-def send(chatid, xml, feed_title, url, context):
+def send(chatid, post, feed_title, context):
+    xml = post['summary']
+    url = post['link']
+    author = post['author'] if ('author' in post and type(post['author']) is str) else None
+    title = post['title']
     for _ in range(2):
         try:
-            send_message(chatid, xml, feed_title, url, context)
+            send_message(chatid, xml, feed_title, url, context, title=title, author=author)
             break
         except Exception as e:
             print(f'\t\t- Send {url} failed!')
@@ -22,29 +26,29 @@ def send(chatid, xml, feed_title, url, context):
                                       'Please check logs manually.', feed_title, url, context)
 
 
-def send_message(chatid, xml, feed_title, url, context):
+def send_message(chatid, xml, feed_title, url, context, title=None, author=None):
     video, pics = get_valid_media(xml)
     if video:
         print('\t\t- Detected video, send video message(s).')
-        send_media_message(chatid, xml, feed_title, url, video, context)
+        send_media_message(chatid, xml, feed_title, url, video, context, title=title, author=author)
         return  # for weibo, only 1 video can be attached, without any other pics
 
     if pics:
         print('\t\t- Detected pic(s), ', end="")
         if pics:
             print('send pic(s) message(s).')
-            send_media_message(chatid, xml, feed_title, url, pics, context)
+            send_media_message(chatid, xml, feed_title, url, pics, context, title=title, author=author)
             return
         else:
             print('but too large.')
 
     print('\t\t- No media, send text message(s).')
-    send_text_message(chatid, xml, feed_title, url, False, context)
+    send_text_message(chatid, xml, feed_title, url, False, context, title=title, author=author)
 
 
-def send_text_message(chatid, xml, feed_title, url, is_tail, context):
+def send_text_message(chatid, xml, feed_title, url, is_tail, context, title=None, author=None):
     if not is_tail:
-        text_list = get_md(xml, feed_title, url)
+        text_list = get_md(xml, feed_title, url, _title=title, _author=author)
     else:
         text_list = xml
 
@@ -58,8 +62,8 @@ def send_text_message(chatid, xml, feed_title, url, is_tail, context):
         print('\t\t\t- Text message.')
 
 
-def send_media_message(chatid, xml, feed_title, url, media, context):
-    text_list = get_md(xml, feed_title, url, 1024)
+def send_media_message(chatid, xml, feed_title, url, media, context, title=None, author=None):
+    text_list = get_md(xml, feed_title, url, 1024, _title=title, _author=author)
     number = len(text_list)
 
     head = ''

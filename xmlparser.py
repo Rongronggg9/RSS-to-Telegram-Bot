@@ -61,14 +61,17 @@ def emojify(xml):  # note: get all emoticons on https://api.weibo.com/2/emotions
 
 def get_text(xml):
     soup = BeautifulSoup(xml, 'html.parser')
-    return soup.text
+    return soup.get_text(strip=True).replace('\n', '')
+
 
 def get_md(xml, feed_title, url, split_length=4096, _title=None, _author=None):
     preprocessed = preprocess(xml)
     emojified = emojify(preprocessed)
     _title = None if _title is None else _title.replace('[图片]', '').replace('[视频]', '').strip()
-    isDuplicatedTitle = _title is None or (len(_title) > 10 and get_text(_title)[:-5] in get_text(xml))
-    isDuplicatedAuthor = _author is None or get_text(_author) in get_text(feed_title)
+    _title_text = _title is None or get_text(_title).rstrip('.').rstrip('…')
+    xml_text = get_text(xml)
+    isDuplicatedTitle = (_title is None) or (_title_text in xml_text[0:min(len(_title_text) + 10, len(xml_text))])
+    isDuplicatedAuthor = (_author is None) or (get_text(_author) in get_text(feed_title))
     title = '' if isDuplicatedTitle else md_ize.handle(f'<b><i>{_title}</i></b>').strip()
     via = md_ize.handle(f'via <a href="{url}">{feed_title}</a>').strip()  # escape 'via [feed_title](post_url)'
     author = '' if isDuplicatedAuthor else md_ize.handle(f' (作者: {_author})').strip()

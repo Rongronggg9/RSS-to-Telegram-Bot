@@ -95,7 +95,8 @@ def split_text(text, length):
                     break
             result.append(former.strip('\n'))
             if len(latter) <= length:
-                result.append(latter.strip('\n'))
+                if len(latter) > 0:
+                    result.append(latter.strip('\n'))
                 break
             if length == 1000:  # media message only
                 length = 4000

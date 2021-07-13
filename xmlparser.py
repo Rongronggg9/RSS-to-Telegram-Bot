@@ -66,7 +66,7 @@ def get_text(xml):
 def get_md(xml, feed_title, url, split_length=4096, _title=None, _author=None):
     preprocessed = preprocess(xml)
     emojified = emojify(preprocessed)
-    _title = None if _title is None else _title.replace('[图片]').replace('[视频]')
+    _title = None if _title is None else _title.replace('[图片]').replace('[视频]').strip()
     isDuplicatedTitle = _title is None or (len(_title) > 10 and get_text(_title)[:-5] in get_text(xml))
     isDuplicatedAuthor = _author is None or get_text(_author) in get_text(feed_title)
     title = '' if isDuplicatedTitle else md_ize.handle(f'<b><i>{_title}</i></b>').strip()

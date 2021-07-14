@@ -3,5 +3,5 @@ html2text==2020.1.16
 feedparser==6.0.8
 bs4==0.0.1
 beautifulsoup4==4.9.3
-requests[socks]==2.25.1
+requests[socks]==2.26.0
 

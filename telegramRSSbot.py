@@ -169,10 +169,10 @@ def cmd_help(update, context):
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:
 __*/help*__ : 发送这条消息
-__*/add 标题 RSS*__ : 添加订阅
-__*/remove 标题*__ : 移除订阅
+__*/add*__ __*标题*__ __*RSS*__ : 添加订阅
+__*/remove*__ __*标题*__ : 移除订阅
 __*/list*__ : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
-__*/test RSS 编号\\(可选\\)*__ : 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
+__*/test*__ __*RSS*__ __*编号\\(可选\\)*__ : 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
 \n您的 chatid 是: {update.message.chat.id}""",
         parse_mode='MarkdownV2'
     )

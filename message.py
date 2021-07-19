@@ -2,7 +2,7 @@ import traceback
 import telegram.ext
 from media import get_valid_media
 from xmlparser import get_md
-from telegramRSSbot import manager
+import env
 
 
 def send(chatid, post, feed_title, context):
@@ -21,10 +21,10 @@ def send(chatid, post, feed_title, context):
             traceback.print_exc()
             # send an error message to manager (if set) or chatid
             try:
-                send_message(manager, 'Something went wrong while sending this message. Please check:<br><br>' +
+                send_message(env.manager, 'Something went wrong while sending this message. Please check:<br><br>' +
                              traceback.format_exc().replace('\n', '<br>'), feed_title, url, context)
             except:
-                send_message(manager, 'Something went wrong while sending this message, but error msg sent failed.\n'
+                send_message(env.manager, 'Something went wrong while sending this message, but error msg sent failed.\n'
                                       'Please check logs manually.', feed_title, url, context)
 
 

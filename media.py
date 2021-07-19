@@ -2,7 +2,7 @@ import requests
 import xmlparser
 import re
 from requests.adapters import HTTPAdapter
-from telegramRSSbot import requests_proxies
+import env
 
 # getPic = re.compile(r'<img[^>]*\bsrc="([^"]*)"')
 # getVideo = re.compile(r'<video[^>]*\bsrc="([^"]*)"')
@@ -25,7 +25,7 @@ def get_pic_info(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    with session.get(url, timeout=(10, 10), proxies=requests_proxies, stream=True) as response:
+    with session.get(url, timeout=(10, 10), proxies=env.requests_proxies, stream=True) as response:
         size = int(response.headers['Content-Length']) if 'Content-Length' in response.headers else -1
         content_type = response.headers.get('Content-Type')
         pic_header = response.raw.read(256)

@@ -1,45 +1,15 @@
 import feedparser
 import logging
 import sqlite3
-import os
 import requests
 from requests.adapters import HTTPAdapter
 from telegram.ext import Updater, CommandHandler
 from pathlib import Path
 from io import BytesIO
 import message
+import env
 
 Path("config").mkdir(parents=True, exist_ok=True)
-
-# Docker env
-if os.environ.get('TOKEN'):
-    Token = os.environ['TOKEN']
-    chatid = os.environ['CHATID']
-    delay = int(os.environ['DELAY'])
-else:
-    Token = "X"
-    chatid = "X"
-    delay = 120
-
-if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
-    manager = os.environ['MANAGER']
-else:
-    manager = chatid
-
-if os.environ.get('T_PROXY') and os.environ['T_PROXY'] != 'X':
-    telegram_proxy = os.environ['T_PROXY']
-else:
-    telegram_proxy = ''
-
-if os.environ.get('R_PROXY') and os.environ['R_PROXY'] != 'X':
-    requests_proxies = {
-        'all': os.environ['R_PROXY']
-    }
-else:
-    requests_proxies = {}
-
-if Token == "X":
-    print("Token not set!")
 
 rss_dict = {}
 
@@ -64,7 +34,7 @@ def is_manager(update):
         name = chat.first_name
     command = update.message.text
     print(f'\n{name} ({username}/{userid}) attempted to use "{command}", ', end='')
-    if manager != userid:
+    if env.manager != userid:
         update.effective_message.reply_text('您没有权限使用这个机器人。')
         print('forbade.')
         raise
@@ -106,7 +76,7 @@ def web_get(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=(10, 10), proxies=requests_proxies)
+    response = session.get(url, timeout=(10, 10), proxies=env.requests_proxies)
     content = BytesIO(response.content)
     return content
 
@@ -195,7 +165,7 @@ def cmd_help(update, context):
 
     update.effective_message.reply_text(
         f"""RSS to Telegram bot \\(Weibo Ver\\.\\)
-\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 \\(可修改\\)
+\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.delay} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:
 __*/help*__ : 发送这条消息
@@ -228,7 +198,7 @@ def cmd_test(update, context):
         index = int(context.args[1])
     rss_d.entries[index]['link']
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(chatid, rss_d.entries[index], rss_d.feed.title, context)
+    message.send(env.chatid, rss_d.entries[index], rss_d.feed.title, context)
 
 
 def rss_monitor(context):
@@ -259,7 +229,7 @@ def rss_monitor(context):
                 if last_flag:
                     # context.bot.send_message(chatid, rss_d.entries[0]['link'])
                     print('\t- Pushing', entry['link'])
-                    message.send(chatid, entry, rss_d.feed.title, context)
+                    message.send(env.chatid, entry, rss_d.feed.title, context)
 
                 if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                     last_flag = True
@@ -278,11 +248,13 @@ def init_sqlite():
 
 
 def main():
-    print(
-        f"CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\nT_PROXY (for Telegram): {telegram_proxy}\n"
-        f"R_PROXY (for RSS): {requests_proxies['all'] if requests_proxies else ''}\n")
+    print(f"""CHATID: {env.chatid}
+MANAGER: {env.manager}
+DELAY: {env.delay}s
+T_PROXY (for Telegram): {env.telegram_proxy}
+R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}\n""")
 
-    updater = Updater(token=Token, use_context=True, request_kwargs={'proxy_url': telegram_proxy})
+    updater = Updater(token=env.token, use_context=True, request_kwargs={'proxy_url': env.telegram_proxy})
     job_queue = updater.job_queue
     dp = updater.dispatcher
 
@@ -300,7 +272,7 @@ def main():
         pass
     rss_load()
 
-    job_queue.run_repeating(rss_monitor, delay)
+    job_queue.run_repeating(rss_monitor, env.delay)
     rss_monitor(updater)
 
     updater.start_polling()

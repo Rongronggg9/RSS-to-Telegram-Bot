@@ -1,12 +1,15 @@
-from urllib import request
+import requests
 import xmlparser
 import re
+from requests.adapters import HTTPAdapter
+from telegramRSSbot import requests_proxies
 
 # getPic = re.compile(r'<img[^>]*\bsrc="([^"]*)"')
 # getVideo = re.compile(r'<video[^>]*\bsrc="([^"]*)"')
-getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
+# getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
 sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
 sizeParser = re.compile(r'(^https?://\w+\.sinaimg\.\S+/)(large|mw2048|mw1024|mw720|middle)(/\w+\.\w+$)')
+
 
 def get_valid_media(xml):
     video, pics = xmlparser.get_media(xml)
@@ -18,14 +21,17 @@ def get_valid_media(xml):
 
 
 def get_pic_info(url):
-    urlopen = request.urlopen(url)
-    headers = urlopen.info()
-    pic_header = urlopen.read(256)
+    session = requests.Session()
+    session.mount('http://', HTTPAdapter(max_retries=1))
+    session.mount('https://', HTTPAdapter(max_retries=1))
 
-    size = int(getSize.search(str(headers)).group(1))
+    with session.get(url, timeout=(10, 10), proxies=requests_proxies, stream=True) as response:
+        size = int(response.headers['Content-Length']) if 'Content-Length' in response.headers else -1
+        content_type = response.headers.get('Content-Type')
+        pic_header = response.raw.read(256)
 
     height = width = -1
-    if url.find('jpg') == -1 and url.find('jpeg') == -1:  # only for jpg
+    if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
         return size, width, height
 
     pointer = -1
@@ -44,9 +50,10 @@ def validate_medium(url, max_size=5242880):  # warning: only design for weibo
     max_size -= max_size % 1000
     try:
         size, width, height = get_pic_info(url)
-    except:
+    except Exception as e:
         print('\t\t- Get Medium failed, dropped.\n'
-              f'\t\t\t- {url}')
+              f'\t\t\t- {url}\n'
+              f'\t\t\t\t- {e}')
         return None
 
     if size > max_size or width + height > 10000:

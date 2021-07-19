@@ -6,7 +6,9 @@ from telegramRSSbot import manager
 
 
 def send(chatid, post, feed_title, context):
-    xml = post['summary']
+    xml = post['content'][0]['value'] \
+        if ('content' in post) and (len(post['content']) > 0) \
+        else post['summary']
     url = post['link']
     author = post['author'] if ('author' in post and type(post['author']) is str) else None
     title = post['title']

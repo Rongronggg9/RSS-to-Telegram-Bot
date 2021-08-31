@@ -3,8 +3,10 @@ import logging
 import sqlite3
 import os
 import requests
+import telegram
 from requests.adapters import HTTPAdapter
 from telegram.ext import Updater, CommandHandler
+from telegram.error import TelegramError
 from pathlib import Path
 from io import BytesIO
 import message
@@ -292,6 +294,16 @@ def main():
     dp.add_handler(CommandHandler("test", cmd_test, ))
     dp.add_handler(CommandHandler("list", cmd_rss_list))
     dp.add_handler(CommandHandler("remove", cmd_rss_remove))
+
+    commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
+                telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),
+                telegram.BotCommand(command="list", description="列出数据库中的所有订阅，包括它们的标题和 RSS 源"),
+                telegram.BotCommand(command="test", description="+RSS 编号(可选) : 从 RSS 源处获取一条 post"),
+                telegram.BotCommand(command="help", description="发送这条消息")]
+    try:
+        updater.bot.set_my_commands(commands)
+    except TelegramError as e:
+        logging.warning(e.message)
 
     # try to create a database if missing
     try:

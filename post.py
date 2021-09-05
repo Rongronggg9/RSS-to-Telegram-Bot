@@ -59,6 +59,7 @@ class Post:
         """
         self.retries = 0
         self.all_media_invalidated = False
+        xml = xml.replace('\n', '')
         xml = emojify(xml)
         self.soup = BeautifulSoup(xml, 'html.parser')
         self.media: List[Medium] = []
@@ -232,7 +233,7 @@ class Post:
             parent = soup.parent.name
             text = self._get_item(soup.children)
             if text:
-                return Text([text, Br()]) if parent != 'li' else text
+                return Text([Br(), text, Br()]) if parent != 'li' else text
             else:
                 return None
 
@@ -280,18 +281,18 @@ class Post:
 
         if tag == 'h1':
             text = self._get_item(soup.children)
-            return Text([Bold(Underline(text)), Br()]) if text else None
+            return Text([Br(), Bold(Underline(text)), Br()]) if text else None
 
         if tag == 'h2':
             text = self._get_item(soup.children)
-            return Text([Bold(text), Br()]) if text else None
+            return Text([Br(), Bold(text), Br()]) if text else None
 
         if tag == 'hr':
             return Hr()
 
         if tag.startswith('h') and len(tag) == 2:
             text = self._get_item(soup.children)
-            return Text([Underline(text), Br()]) if text else None
+            return Text([Br(), Underline(text), Br()]) if text else None
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:

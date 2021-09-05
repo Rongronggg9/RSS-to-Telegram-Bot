@@ -88,7 +88,7 @@ def feed_get(url, update=None, verbose=False):
     # try if the url is a valid RSS feed
     try:
         rss_content = web_get(url)
-        rss_d = feedparser.parse(rss_content)
+        rss_d = feedparser.parse(rss_content, sanitize_html=False, resolve_relative_uris=False)
         rss_d.entries[0]['title']
     except IndexError as e:
         if verbose:

@@ -2,19 +2,22 @@ import feedparser
 import logging
 import sqlite3
 import requests
+import telegram
 from requests.adapters import HTTPAdapter
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, Filters
 from pathlib import Path
 from io import BytesIO
-import message
+
 import env
+from post import Post, get_post_from_entry
 
 Path("config").mkdir(parents=True, exist_ok=True)
 
 rss_dict = {}
 
+# TODO: use logging to log
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.WARNING)
+                    level=logging.INFO)
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
@@ -110,7 +113,7 @@ def rss_load():
         rss_dict[row[0]] = (row[1], row[2])
 
 
-def cmd_rss_list(update, context):
+def cmd_rss_list(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     if bool(rss_dict) is False:
@@ -123,7 +126,7 @@ def cmd_rss_list(update, context):
                 '\n最后检查的文章: ' + url_list[1])
 
 
-def cmd_rss_add(update, context):
+def cmd_rss_add(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     # try if there are 2 arguments passed
@@ -144,7 +147,7 @@ def cmd_rss_add(update, context):
         '已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
-def cmd_rss_remove(update, context):
+def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     conn = sqlite3.connect('config/rss.db')
@@ -160,7 +163,7 @@ def cmd_rss_remove(update, context):
     update.effective_message.reply_text("已移除: " + context.args[0])
 
 
-def cmd_help(update, context):
+def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     update.effective_message.reply_text(
@@ -172,33 +175,46 @@ __*/help*__ : 发送这条消息
 __*/add*__ __*标题*__ __*RSS*__ : 添加订阅
 __*/remove*__ __*标题*__ : 移除订阅
 __*/list*__ : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
-__*/test*__ __*RSS*__ __*编号\\(可选\\)*__ : 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
+__*/test*__ __*RSS*__ __*编号起点\\(可选\\)*__ __*编号终点\\(可选\\)*__: 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
 \n您的 chatid 是: {update.message.chat.id}""",
         parse_mode='MarkdownV2'
     )
 
 
-def cmd_test(update, context):
+def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     # try if there are 2 arguments passed
     try:
         url = context.args[0]
     except IndexError:
-        update.effective_message.reply_text(
-            'ERROR: 格式需要为: /test RSS 条目编号(可选)')
+        update.effective_message.reply_text('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         raise
     try:
         rss_d = feed_get(url, update, verbose=True)
     except (IndexError, requests.exceptions.RequestException):
+        update.effective_message.reply_text('ERROR: 获取订阅失败')
         return
-    if len(context.args) < 2 or len(rss_d.entries) <= int(context.args[1]):
-        index = 0
-    else:
-        index = int(context.args[1])
-    rss_d.entries[index]['link']
+    index1 = 0
+    index2 = 1
+    if context.args[1] == 'all':
+        index1 = 0
+        index2 = None
+    elif len(context.args) == 2 and len(rss_d.entries) > int(context.args[1]):
+        index1 = int(context.args[1])
+        index2 = int(context.args[1]) + 1
+    elif len(context.args) > 2:
+        index1 = int(context.args[1])
+        index2 = int(context.args[2]) + 1
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(env.chatid, rss_d.entries[index], rss_d.feed.title, context)
+    # message.send(env.chatid, rss_d.entries[index], rss_d.feed.title, context)
+    try:
+        for entry in rss_d.entries[index1:index2]:
+            post = get_post_from_entry(entry, rss_d.feed.title)
+            post.send_message(update.effective_chat.id)
+    except:
+        update.effective_message.reply_text('ERROR: 内部错误')
+        raise
 
 
 def rss_monitor(context):
@@ -229,7 +245,9 @@ def rss_monitor(context):
                 if last_flag:
                     # context.bot.send_message(chatid, rss_d.entries[0]['link'])
                     print('\t- Pushing', entry['link'])
-                    message.send(env.chatid, entry, rss_d.feed.title, context)
+                    # message.send(env.chatid, entry, rss_d.feed.title, context)
+                    post = get_post_from_entry(entry, rss_d.feed.title)
+                    post.send_message(env.chatid)
 
                 if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                     last_flag = True
@@ -247,6 +265,10 @@ def init_sqlite():
     c.execute('''CREATE TABLE rss (name text, link text, last text)''')
 
 
+def error_handler(update: telegram.Update, context: telegram.ext.CallbackContext):
+    raise context.error
+
+
 def main():
     print(f"""CHATID: {env.chatid}
 MANAGER: {env.manager}
@@ -255,15 +277,18 @@ T_PROXY (for Telegram): {env.telegram_proxy}
 R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}\n""")
 
     updater = Updater(token=env.token, use_context=True, request_kwargs={'proxy_url': env.telegram_proxy})
+    env.bot = updater.bot
     job_queue = updater.job_queue
     dp = updater.dispatcher
 
-    dp.add_handler(CommandHandler("add", cmd_rss_add))
-    dp.add_handler(CommandHandler("start", cmd_help))
-    dp.add_handler(CommandHandler("help", cmd_help))
-    dp.add_handler(CommandHandler("test", cmd_test, ))
-    dp.add_handler(CommandHandler("list", cmd_rss_list))
-    dp.add_handler(CommandHandler("remove", cmd_rss_remove))
+    dp.add_handler(CommandHandler("add", cmd_rss_add, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("start", cmd_help, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("help", cmd_help, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("test", cmd_test, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("list", cmd_rss_list, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("remove", cmd_rss_remove, filters=~Filters.update.edited_message))
+    if env.debug:
+        dp.add_error_handler(error_handler)
 
     # try to create a database if missing
     try:

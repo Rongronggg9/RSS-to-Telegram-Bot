@@ -1,4 +1,5 @@
 import os
+import telegram
 
 if os.environ.get('TOKEN'):
     token = os.environ['TOKEN']
@@ -26,5 +27,12 @@ if os.environ.get('R_PROXY') and os.environ['R_PROXY'] != 'X':
 else:
     requests_proxies = {}
 
+if os.environ.get('DEBUG', ''):
+    debug = True
+else:
+    debug = False
+
 if token == "X":
     print("Token not set!")
+
+bot = telegram.Bot  # placeholder

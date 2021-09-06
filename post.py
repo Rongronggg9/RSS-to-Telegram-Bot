@@ -4,12 +4,20 @@ import telegram.error
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import Optional, Union, List
-from fuzzywuzzy import fuzz
 from emoji import emojize
 
 import message
 import env
 from medium import Video, Image, Medium
+
+# python-Levenshtein cannot handle UTF-8 input properly, mute the annoying warning from fuzzywuzzy
+import warnings
+
+warnings.original_warn = warnings.warn
+warnings.warn = lambda *args, **kwargs: None
+from fuzzywuzzy import fuzz
+
+warnings.warn = warnings.original_warn
 
 stripNewline = re.compile(r'\n{3,}', )
 stripLineEnd = re.compile(r'[ \t]+\n')

@@ -1,6 +1,8 @@
 import json
 import re
+import traceback
 import telegram.error
+
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import Optional, Union, List
@@ -97,7 +99,7 @@ class Post:
                     user_success_count += 1
                     tot_success_count += 1
                 except telegram.error.BadRequest as e:
-                    error_caption = str(e)
+                    error_caption = e.message
                     if error_caption.startswith('Have no rights to send a message'):
                         chat_ids.pop(0)
                         break  # TODO: disable all feeds for this chat_id
@@ -113,13 +115,18 @@ class Post:
                         self.send_message(chat_ids)
                         return
 
-                    if error_caption.startswith("Can't parse entities"):
-                        pass
-                    pass  # TODO: retry once
+                    print(e)
+                    error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
+                                         traceback.format_exc(),
+                                         self.title, self.feed_title, self.link, self.author)
+                    error_message.send_message(env.manager)
+
                 except Exception as e:
                     print(e)
-                    if sum(bool(m) for m in self.media):  # no media
-                        pass
+                    error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
+                                         traceback.format_exc().replace('\n', '<br>'),
+                                         self.title, self.feed_title, self.link, self.author)
+                    error_message.send_message(env.manager)
 
             chat_ids.pop(0)
 

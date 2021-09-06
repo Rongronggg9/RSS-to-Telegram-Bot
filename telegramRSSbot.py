@@ -197,13 +197,13 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
         return
     index1 = 0
     index2 = 1
-    if context.args[1] == 'all':
+    if len(context.args) > 1 and context.args[1] == 'all':
         index1 = 0
         index2 = None
     elif len(context.args) == 2 and len(rss_d.entries) > int(context.args[1]):
         index1 = int(context.args[1])
         index2 = int(context.args[1]) + 1
-    elif len(context.args) > 2:
+    elif len(context.args) > 2 and len(rss_d.entries) > int(context.args[1]):
         index1 = int(context.args[1])
         index2 = int(context.args[2]) + 1
     # update.effective_message.reply_text(rss_d.entries[0]['link'])

@@ -56,7 +56,7 @@ class Message:
 
 class TextMsg(Message):
     def _send(self, chat_id: Union[str, int]):
-        env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode)
+        env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode, disable_web_page_preview=True)
 
 
 class PhotoMsg(Message):

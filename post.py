@@ -191,7 +191,7 @@ class Post:
             if similarity < 90:
                 self._add_title(self.title)
         if self.feed_title:
-            author = self.author if self.author not in self.feed_title else None
+            author = self.author if self.author and self.author not in self.feed_title else None
             self._add_via(self.feed_title, self.link, author)
 
     def _add_title(self, title: str):

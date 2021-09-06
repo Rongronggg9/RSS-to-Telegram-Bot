@@ -10,7 +10,7 @@ from emoji import emojize
 
 import message
 import env
-from medium import Video, Image, Medium
+from medium import Video, Image, Media
 
 # python-Levenshtein cannot handle UTF-8 input properly, mute the annoying warning from fuzzywuzzy
 import warnings
@@ -22,7 +22,7 @@ from fuzzywuzzy import fuzz
 warnings.warn = warnings.original_warn
 
 stripNewline = re.compile(r'\n{3,}', )
-stripLineEnd = re.compile(r'[ \t]+\n')
+stripLineEnd = re.compile(r'[ \t\xa0]+\n')
 isEmoticon = re.compile(r'(width|height): ?[012]?\dpx')
 
 # load emoji dict
@@ -68,11 +68,10 @@ class Post:
         :param plain: do not need to be parsed?
         """
         self.retries = 0
-        self.all_media_invalidated = False
         xml = xml.replace('\n', '')
         xml = emojify(xml)
         self.soup = BeautifulSoup(xml, 'html.parser')
-        self.media: List[Medium] = []
+        self.media: Media = Media()
         self.text = Text(self._get_item(self.soup))
         self.title = title
         self.feed_title = feed_title
@@ -107,8 +106,8 @@ class Post:
                             or error_caption.startswith('Failed to get http url content') \
                             or error_caption.startswith('Wrong type of the web page content') \
                             or error_caption.startswith('Group send failed'):
-                        # TODO: change sinaimg server, or download the media then upload
-                        if self.all_media_invalidated:
+                        if self.media.change_all_sinaimg_server():
+                            self.send_message(chat_ids)
                             return
                         self.invalidate_all_media()
                         self.generate_message()
@@ -135,11 +134,11 @@ class Post:
         self._add_metadata()
 
     def generate_message(self):
-        media = tuple(m for m in self.media if m)
-        media_count = len(media)
+        media_tuple = self.media.get_valid_media()
+        media_count = len(media_tuple)
         self.messages = []
 
-        if not media:  # only text
+        if not media_tuple:  # only text
             self.messages = [message.TextMsg(text) for text in self.get_split_html(4096)]
             return
 
@@ -147,17 +146,17 @@ class Post:
         _flag = True
         if media_count == 1:  # single media
             for text in self.get_split_html(1024):
-                if _flag and media[0].type == 'image':
-                    self.messages.append(message.PhotoMsg(text, media))
+                if _flag and media_tuple[0].type == 'image':
+                    self.messages.append(message.PhotoMsg(text, media_tuple))
                     _flag = False
-                elif _flag and media[0].type == 'video':
-                    self.messages.append(message.VideoMsg(text, media))
+                elif _flag and media_tuple[0].type == 'video':
+                    self.messages.append(message.VideoMsg(text, media_tuple))
                     _flag = False
                 else:
                     self.messages.append(message.TextMsg(text))
             return
         # multiple media
-        media_list = [media[_i:_i + 10] for _i in range(0, media_count, 10)]
+        media_list = [media_tuple[_i:_i + 10] for _i in range(0, media_count, 10)]
         for text in self.get_split_html(1024):
             if media_list:
                 curr_media = media_list.pop(0)
@@ -167,8 +166,7 @@ class Post:
         return
 
     def invalidate_all_media(self):
-        any(map(lambda m: m.invalidate(), self.media))
-        self.all_media_invalidated = True
+        self.media.invalidate_all()
         self.text = self.origin_text
         self._add_metadata()
         self._add_invalid_media()
@@ -212,11 +210,9 @@ class Post:
 
     def _add_invalid_media(self):
         links = []
-        for medium in self.media:
-            link = medium.get_link()
-            if link:
-                links.append(link)
-                links.append(Br())
+        for link in self.media.get_invalid_link():
+            links.append(link)
+            links.append(Br())
         if not links:
             return
         text_invalid_media = Text([Text('\n\nInvalid media:\n')] + links[:-1])
@@ -270,16 +266,16 @@ class Post:
             src, alt, _class, style = soup.get('src'), soup.get('alt'), soup.get('class', ''), soup.get('style', '')
             if not src:
                 return None
-            if alt and (isEmoticon.search(style) or 'emoji' in _class):
+            if alt and (isEmoticon.search(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':'))):
                 return Text(alt)
-            self.media.append(Image(src))
+            self.media.add(Image(src))
             return None
 
         if tag == 'video':
             src = soup.get('src')
             if not src:
                 return None
-            self.media.append(Video(src))
+            self.media.add(Video(src))
             return None
 
         if tag == 'b' or tag == 'strong':

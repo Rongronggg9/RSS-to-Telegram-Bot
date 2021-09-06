@@ -59,11 +59,23 @@ def emojify(xml):  # note: get all emoticons on https://api.weibo.com/2/emotions
     return xml
 
 
-def get_md(xml, feed_title, url, split_length=4096):
+def get_text(xml):
+    soup = BeautifulSoup(xml, 'html.parser')
+    return soup.get_text(strip=True).replace('\n', '')
+
+
+def get_md(xml, feed_title, url, split_length=4096, _title=None, _author=None):
     preprocessed = preprocess(xml)
     emojified = emojify(preprocessed)
+    _title = None if _title is None else _title.replace('[图片]', '').replace('[视频]', '').strip()
+    _title_text = _title is None or get_text(_title).rstrip('.').rstrip('…')
+    xml_text = get_text(xml)
+    isDuplicatedTitle = (_title is None) or (_title_text in xml_text[0:min(len(_title_text) + 10, len(xml_text))])
+    isDuplicatedAuthor = (_author is None) or (get_text(_author) in get_text(feed_title))
+    title = '' if isDuplicatedTitle else md_ize.handle(f'<b><i>{_title}</i></b>').strip()
     via = md_ize.handle(f'via <a href="{url}">{feed_title}</a>').strip()  # escape 'via [feed_title](post_url)'
-    md = md_ize.handle(emojified).strip() + f'\n\n{via}'
+    author = '' if isDuplicatedAuthor else md_ize.handle(f' (作者: {_author})').strip()
+    md = f'{title}\n\n{md_ize.handle(emojified).strip()}\n\n{via} {author}'
     return split_text(md, split_length)
 
 
@@ -86,7 +98,8 @@ def split_text(text, length):
                     break
             result.append(former.strip('\n'))
             if len(latter) <= length:
-                result.append(latter.strip('\n'))
+                if len(latter) > 0:
+                    result.append(latter.strip('\n'))
                 break
             if length == 1000:  # media message only
                 length = 4000

@@ -23,8 +23,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
-
-# logging.getLogger('apscheduler.executors.default').propagate = False  # to use this line, set log level to INFO
+logging.getLogger('apscheduler').setLevel(logging.WARNING)
 
 
 # MANAGER
@@ -233,27 +232,28 @@ def rss_monitor(context):
 
         if last_url == rss_d.entries[0]['link']:
             print('-', end='')
-        else:
-            print('\nUpdating', name)
-            update_flag = True
-            # workaround, avoiding deleted weibo causing the bot send all posts in the feed
-            # TODO: log recently sent weibo, so deleted weibo won't be harmful. (If a weibo was deleted while another
-            #  weibo was sent between delay duration, the latter won't be fetched.) BTW, if your bot has stopped for
-            #  too long that last fetched post do not exist in current RSS feed, all posts won't be fetched and last
-            #  fetched post will be reset to the newest post (through it is not fetched).
-            last_flag = False
-            for entry in rss_d.entries[::-1]:  # push all messages not pushed
-                if last_flag:
-                    # context.bot.send_message(chatid, rss_d.entries[0]['link'])
-                    print('\t- Pushing', entry['link'])
-                    # message.send(env.chatid, entry, rss_d.feed.title, context)
-                    post = get_post_from_entry(entry, rss_d.feed.title)
-                    post.send_message(env.chatid)
+            continue
 
-                if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
-                    last_flag = True
+        print('\nUpdating', name)
+        update_flag = True
+        # workaround, avoiding deleted weibo causing the bot send all posts in the feed
+        # TODO: log recently sent weibo, so deleted weibo won't be harmful. (If a weibo was deleted while another
+        #  weibo was sent between delay duration, the latter won't be fetched.) BTW, if your bot has stopped for
+        #  too long that last fetched post do not exist in current RSS feed, all posts won't be fetched and last
+        #  fetched post will be reset to the newest post (through it is not fetched).
+        last_flag = False
+        for entry in rss_d.entries[::-1]:  # push all messages not pushed
+            if last_flag:
+                # context.bot.send_message(chatid, rss_d.entries[0]['link'])
+                print('\t- Pushing', entry['link'])
+                # message.send(env.chatid, entry, rss_d.feed.title, context)
+                post = get_post_from_entry(entry, rss_d.feed.title)
+                post.send_message(env.chatid)
 
-            sqlite_write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
+            if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
+                last_flag = True
+
+        sqlite_write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
 
     if update_flag:
         print('Updated.')
@@ -308,8 +308,8 @@ R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}
         pass
     rss_load()
 
-    job_queue.run_repeating(rss_monitor, env.delay)
     rss_monitor(updater)
+    job_queue.run_repeating(rss_monitor, env.delay)
 
     updater.start_polling()
     updater.idle()

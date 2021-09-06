@@ -1,52 +1,24 @@
 import feedparser
 import logging
 import sqlite3
-import os
 import requests
 import telegram
 from requests.adapters import HTTPAdapter
-from telegram.ext import Updater, CommandHandler
 from telegram.error import TelegramError
+from telegram.ext import Updater, CommandHandler, Filters
 from pathlib import Path
 from io import BytesIO
-import message
+
+import env
+from post import Post, get_post_from_entry
 
 Path("config").mkdir(parents=True, exist_ok=True)
 
-# Docker env
-if os.environ.get('TOKEN'):
-    Token = os.environ['TOKEN']
-    chatid = os.environ['CHATID']
-    delay = int(os.environ['DELAY'])
-else:
-    Token = "X"
-    chatid = "X"
-    delay = 120
-
-if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
-    manager = os.environ['MANAGER']
-else:
-    manager = chatid
-
-if os.environ.get('T_PROXY') and os.environ['T_PROXY'] != 'X':
-    telegram_proxy = os.environ['T_PROXY']
-else:
-    telegram_proxy = ''
-
-if os.environ.get('R_PROXY') and os.environ['R_PROXY'] != 'X':
-    requests_proxies = {
-        'all': os.environ['R_PROXY']
-    }
-else:
-    requests_proxies = {}
-
-if Token == "X":
-    print("Token not set!")
-
 rss_dict = {}
 
+# TODO: use logging to log
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.WARNING)
+                    level=logging.INFO)
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
@@ -66,7 +38,7 @@ def is_manager(update):
         name = chat.first_name
     command = update.message.text
     print(f'\n{name} ({username}/{userid}) attempted to use "{command}", ', end='')
-    if manager != userid:
+    if env.manager != userid:
         update.effective_message.reply_text('您没有权限使用这个机器人。')
         print('forbade.')
         raise
@@ -108,7 +80,7 @@ def web_get(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=(10, 10), proxies=requests_proxies)
+    response = session.get(url, timeout=(10, 10), proxies=env.requests_proxies)
     content = BytesIO(response.content)
     return content
 
@@ -117,7 +89,7 @@ def feed_get(url, update=None, verbose=False):
     # try if the url is a valid RSS feed
     try:
         rss_content = web_get(url)
-        rss_d = feedparser.parse(rss_content)
+        rss_d = feedparser.parse(rss_content, sanitize_html=False, resolve_relative_uris=False)
         rss_d.entries[0]['title']
     except IndexError as e:
         if verbose:
@@ -142,7 +114,7 @@ def rss_load():
         rss_dict[row[0]] = (row[1], row[2])
 
 
-def cmd_rss_list(update, context):
+def cmd_rss_list(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     if bool(rss_dict) is False:
@@ -155,7 +127,7 @@ def cmd_rss_list(update, context):
                 '\n最后检查的文章: ' + url_list[1])
 
 
-def cmd_rss_add(update, context):
+def cmd_rss_add(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     # try if there are 2 arguments passed
@@ -176,7 +148,7 @@ def cmd_rss_add(update, context):
         '已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
-def cmd_rss_remove(update, context):
+def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     conn = sqlite3.connect('config/rss.db')
@@ -192,45 +164,58 @@ def cmd_rss_remove(update, context):
     update.effective_message.reply_text("已移除: " + context.args[0])
 
 
-def cmd_help(update, context):
+def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     update.effective_message.reply_text(
         f"""RSS to Telegram bot \\(Weibo Ver\\.\\)
-\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {delay} 秒一次。 \\(可修改\\)
+\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.delay} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:
 __*/help*__ : 发送这条消息
-__*/add 标题 RSS*__ : 添加订阅
-__*/remove 标题*__ : 移除订阅
+__*/add*__ __*标题*__ __*RSS*__ : 添加订阅
+__*/remove*__ __*标题*__ : 移除订阅
 __*/list*__ : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
-__*/test RSS 编号\\(可选\\)*__ : 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
+__*/test*__ __*RSS*__ __*编号起点\\(可选\\)*__ __*编号终点\\(可选\\)*__: 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0\\)
 \n您的 chatid 是: {update.message.chat.id}""",
         parse_mode='MarkdownV2'
     )
 
 
-def cmd_test(update, context):
+def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     # try if there are 2 arguments passed
     try:
         url = context.args[0]
     except IndexError:
-        update.effective_message.reply_text(
-            'ERROR: 格式需要为: /test RSS 条目编号(可选)')
+        update.effective_message.reply_text('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         raise
     try:
         rss_d = feed_get(url, update, verbose=True)
     except (IndexError, requests.exceptions.RequestException):
+        update.effective_message.reply_text('ERROR: 获取订阅失败')
         return
-    if len(context.args) < 2 or len(rss_d.entries) <= int(context.args[1]):
-        index = 0
-    else:
-        index = int(context.args[1])
-    rss_d.entries[index]['link']
+    index1 = 0
+    index2 = 1
+    if context.args[1] == 'all':
+        index1 = 0
+        index2 = None
+    elif len(context.args) == 2 and len(rss_d.entries) > int(context.args[1]):
+        index1 = int(context.args[1])
+        index2 = int(context.args[1]) + 1
+    elif len(context.args) > 2:
+        index1 = int(context.args[1])
+        index2 = int(context.args[2]) + 1
     # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    message.send(chatid, rss_d.entries[index]['summary'], rss_d.feed.title, rss_d.entries[index]['link'], context)
+    # message.send(env.chatid, rss_d.entries[index], rss_d.feed.title, context)
+    try:
+        for entry in rss_d.entries[index1:index2]:
+            post = get_post_from_entry(entry, rss_d.feed.title)
+            post.send_message(update.effective_chat.id)
+    except:
+        update.effective_message.reply_text('ERROR: 内部错误')
+        raise
 
 
 def rss_monitor(context):
@@ -261,7 +246,9 @@ def rss_monitor(context):
                 if last_flag:
                     # context.bot.send_message(chatid, rss_d.entries[0]['link'])
                     print('\t- Pushing', entry['link'])
-                    message.send(chatid, entry['summary'], rss_d.feed.title, entry['link'], context)
+                    # message.send(env.chatid, entry, rss_d.feed.title, context)
+                    post = get_post_from_entry(entry, rss_d.feed.title)
+                    post.send_message(env.chatid)
 
                 if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                     last_flag = True
@@ -279,21 +266,30 @@ def init_sqlite():
     c.execute('''CREATE TABLE rss (name text, link text, last text)''')
 
 
-def main():
-    print(
-        f"CHATID: {chatid}\nMANAGER: {manager}\nDELAY: {delay}s\nT_PROXY (for Telegram): {telegram_proxy}\n"
-        f"R_PROXY (for RSS): {requests_proxies['all'] if requests_proxies else ''}\n")
+def error_handler(update: telegram.Update, context: telegram.ext.CallbackContext):
+    raise context.error
 
-    updater = Updater(token=Token, use_context=True, request_kwargs={'proxy_url': telegram_proxy})
+
+def main():
+    print(f"""CHATID: {env.chatid}
+MANAGER: {env.manager}
+DELAY: {env.delay}s
+T_PROXY (for Telegram): {env.telegram_proxy}
+R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}\n""")
+
+    updater = Updater(token=env.token, use_context=True, request_kwargs={'proxy_url': env.telegram_proxy})
+    env.bot = updater.bot
     job_queue = updater.job_queue
     dp = updater.dispatcher
 
-    dp.add_handler(CommandHandler("add", cmd_rss_add))
-    dp.add_handler(CommandHandler("start", cmd_help))
-    dp.add_handler(CommandHandler("help", cmd_help))
-    dp.add_handler(CommandHandler("test", cmd_test, ))
-    dp.add_handler(CommandHandler("list", cmd_rss_list))
-    dp.add_handler(CommandHandler("remove", cmd_rss_remove))
+    dp.add_handler(CommandHandler("add", cmd_rss_add, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("start", cmd_help, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("help", cmd_help, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("test", cmd_test, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("list", cmd_rss_list, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("remove", cmd_rss_remove, filters=~Filters.update.edited_message))
+    if env.debug:
+        dp.add_error_handler(error_handler)
 
     commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
                 telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),
@@ -312,7 +308,7 @@ def main():
         pass
     rss_load()
 
-    job_queue.run_repeating(rss_monitor, delay)
+    job_queue.run_repeating(rss_monitor, env.delay)
     rss_monitor(updater)
 
     updater.start_polling()

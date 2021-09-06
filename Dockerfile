@@ -10,6 +10,7 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r /app/requirements.txt
 # Define environment variable
+ENV PYTHONUNBUFFERED 1
 ENV TOKEN X
 ENV CHATID X
 ENV MANAGER X

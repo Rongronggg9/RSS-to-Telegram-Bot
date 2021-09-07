@@ -5,7 +5,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
 [![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
 
-[![每日羊角观察](https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/GZMTR_Pill.png)](https://t.me/GZMTR_Pill)
+<a href="https://github.com/Rongronggg9/RSS-to-Telegram-Bot"><img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/RSStT_icon.svg" width = "256" height = "256"  alt="RSStT_icon"/><a/>
 
 **这是为 [每日羊角观察](https://t.me/GZMTR_Pill) 频道的附属频道 [羊角微博观察](https://t.me/GZMTR) 编写的 RSS bot 。**
 

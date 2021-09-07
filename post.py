@@ -338,7 +338,7 @@ class Text:
         if type(content) is type(self) or type(content) is Text:
             self.content = content.content
         elif type(content) is str:
-            self.content = content.replace('<', '&lt;').replace('>', '&gt;').replace('&', '&amp;')
+            self.content = content.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         else:
             self.content = content
 

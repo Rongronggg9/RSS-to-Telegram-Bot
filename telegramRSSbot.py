@@ -167,7 +167,7 @@ def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
     is_manager(update)
 
     update.effective_message.reply_text(
-        f"""RSS to Telegram bot \\(Weibo Ver\\.\\)
+        f"""[RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
 \n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.delay} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:

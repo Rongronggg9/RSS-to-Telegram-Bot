@@ -391,14 +391,16 @@ class Text:
             for subText in self.content:
                 curr_length = len(subText)
                 if length + curr_length >= length_limit and result:
-                    stripped_result = result.strip()
+                    stripped = result.strip()
                     result = ''
                     length = 0
-                    if stripped_result:
-                        yield stripped_result
+                    if stripped:
+                        yield stripped
                 if curr_length >= length_limit:
                     for subSubText in subText.split_html(length_limit):
-                        yield subSubText
+                        stripped = subSubText.strip()
+                        if stripped:
+                            yield subSubText
                     continue
                 length += curr_length
                 result += subText.get_html()

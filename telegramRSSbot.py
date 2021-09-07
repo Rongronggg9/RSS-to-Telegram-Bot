@@ -79,7 +79,7 @@ def web_get(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=(10, 10), proxies=env.requests_proxies)
+    response = session.get(url, timeout=(10, 10), proxies=env.requests_proxies, headers=env.requests_headers)
     content = BytesIO(response.content)
     return content
 

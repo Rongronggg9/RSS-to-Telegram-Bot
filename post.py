@@ -173,7 +173,7 @@ class Post:
 
     def get_split_html(self, length_limit: int):
         split_html = [stripNewline.sub('\n\n',
-                                       stripLineEnd.sub('\n', p)).strip()
+                                       stripLineEnd.sub('\n', p))
                       for p in self.text.split_html(length_limit)]
         if env.debug:
             print(split_html)
@@ -292,18 +292,18 @@ class Post:
 
         if tag == 'h1':
             text = self._get_item(soup.children)
-            return Text([Br(), Bold(Underline(text)), Br()]) if text else None
+            return Text([Br(), Br(), Bold(Underline(text)), Br()]) if text else None
 
         if tag == 'h2':
             text = self._get_item(soup.children)
-            return Text([Br(), Bold(text), Br()]) if text else None
+            return Text([Br(), Br(), Bold(text), Br()]) if text else None
 
         if tag == 'hr':
             return Hr()
 
         if tag.startswith('h') and len(tag) == 2:
             text = self._get_item(soup.children)
-            return Text([Br(), Underline(text), Br()]) if text else None
+            return Text([Br(), Br(), Underline(text), Br()]) if text else None
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:
@@ -311,9 +311,9 @@ class Post:
             if item and (not in_list or type(child) is not NavigableString):
                 result.append(item)
         if tag == 'ol':
-            return OrderedList(result)
+            return Text([Br(), OrderedList(result), Br()])
         elif tag == 'ul':
-            return UnorderedList(result)
+            return Text([Br(), UnorderedList(result), Br()])
         else:
             return result[0] if len(result) == 1 else Text(result)
 
@@ -379,16 +379,18 @@ class Text:
             return f'<{self.tag}>{result}</{self.tag}>'
         return result
 
-    def split_html(self, length_limit: int):
+    def split_html(self, length_limit: int):  # TODO: when result to be yield < length_limit*0.5, add subSubText to it
         if type(self.content) == list:
             result = ''
             length = 0
             for subText in self.content:
                 curr_length = len(subText)
                 if length + curr_length >= length_limit and result:
-                    yield result
+                    stripped_result = result.strip()
                     result = ''
                     length = 0
+                    if stripped_result:
+                        yield stripped_result
                 if curr_length >= length_limit:
                     for subSubText in subText.split_html(length_limit):
                         yield subSubText

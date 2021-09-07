@@ -293,18 +293,18 @@ class Post:
 
         if tag == 'h1':
             text = self._get_item(soup.children)
-            return Text([Br(), Br(), Bold(Underline(text)), Br()]) if text else None
+            return Text([Br(2), Bold(Underline(text)), Br()]) if text else None
 
         if tag == 'h2':
             text = self._get_item(soup.children)
-            return Text([Br(), Br(), Bold(text), Br()]) if text else None
+            return Text([Br(2), Bold(text), Br()]) if text else None
 
         if tag == 'hr':
             return Hr()
 
         if tag.startswith('h') and len(tag) == 2:
             text = self._get_item(soup.children)
-            return Text([Br(), Br(), Underline(text), Br()]) if text else None
+            return Text([Br(2), Underline(text), Br()]) if text else None
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:
@@ -353,9 +353,13 @@ class Text:
             return self
         return type(self)(self.content.copy(), param=self.param)
 
-    def strip(self):
-        if not self.is_listed():
-            return
+    def strip(self, deep: bool = False):
+        if not self.is_nested():  # str
+            self.content.strip()
+        if not self.is_listed():  # nested
+            if not deep:
+                return
+            self.content.strip()
         while type(self.content[-1]) is Br:
             self.content.pop()
         while type(self.content[0]) is Br:
@@ -462,8 +466,8 @@ class Pre(Text):
 
 
 class Br(Text):
-    def __init__(self):
-        super().__init__('\n')
+    def __init__(self, count: int = 1):
+        super().__init__('\n' * count)
 
 
 class Hr(Text):

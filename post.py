@@ -182,12 +182,13 @@ class Post:
     def _add_metadata(self):
         plain_text = self.text.get_html(plain=True)
         if self.title and ('微博' not in self.feed_title or env.debug):
-            title = emojify(self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.').rstrip('…'))
-            similarity = fuzz.partial_ratio(title, plain_text[0:len(title) + 10])
+            title = emojify(self.title)
+            title_tbc = title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
+            similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(title) + 10])
             if env.debug:
                 print(similarity)
             if similarity < 90:
-                self._add_title(self.title)
+                self._add_title(title)
         if self.feed_title:
             author = self.author if self.author and self.author not in self.feed_title else None
             self._add_via(self.feed_title, self.link, author)

@@ -115,7 +115,8 @@ def get_medium_info(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    with session.get(url, timeout=(5, 5), proxies=env.requests_proxies, stream=True) as response:
+    with session.get(url, timeout=(5, 5), proxies=env.requests_proxies, stream=True,
+                     headers=env.requests_headers) as response:
         size = int(response.headers['Content-Length']) if 'Content-Length' in response.headers else -1
         content_type = response.headers.get('Content-Type')
         pic_header = response.raw.read(min(256, size))

@@ -36,3 +36,7 @@ if token == "X":
     print("Token not set!")
 
 bot = telegram.Bot  # placeholder
+
+requests_headers = {
+    'user-agent': 'RSStT'
+}

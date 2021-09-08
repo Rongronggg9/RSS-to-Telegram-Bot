@@ -10,7 +10,7 @@ from emoji import emojize
 
 import message
 import env
-from medium import Video, Image, Media
+from medium import Video, Image, Media, Animation
 
 # python-Levenshtein cannot handle UTF-8 input properly, mute the annoying warning from fuzzywuzzy
 import warnings
@@ -134,36 +134,36 @@ class Post:
         self._add_metadata()
 
     def generate_message(self):
-        media_tuple = self.media.get_valid_media()
-        media_count = len(media_tuple)
+        media_tuple = tuple(self.media.get_valid_media())
+        media_msg_count = len(media_tuple)
         self.messages = []
 
-        if not media_tuple:  # only text
+        # only text
+        if not media_tuple:
             self.messages = [message.TextMsg(text) for text in self.get_split_html(4096)]
             return
 
-        # TODO: text msgs after media msgs should have 4096-character length limit
-        _flag = True
-        if media_count == 1:  # single media
-            for text in self.get_split_html(1024):
-                if _flag and media_tuple[0].type == 'image':
-                    self.messages.append(message.PhotoMsg(text, media_tuple))
-                    _flag = False
-                elif _flag and media_tuple[0].type == 'video':
-                    self.messages.append(message.VideoMsg(text, media_tuple))
-                    _flag = False
-                else:
-                    self.messages.append(message.TextMsg(text))
-            return
-        # multiple media
-        media_list = [media_tuple[_i:_i + 10] for _i in range(0, media_count, 10)]
-        for text in self.get_split_html(1024):
-            if media_list:
-                curr_media = media_list.pop(0)
-                self.messages.append(message.MediaGroupMsg(text, curr_media))
-            else:
-                self.messages.append(message.TextMsg(text))
-        return
+        # containing media
+        msg_texts = self.get_split_html(1024, media_msg_count, 4096)
+        for curr in media_tuple:
+            curr_type = curr['type']
+            curr_media = curr['media']
+            curr_text = msg_texts.pop(0) if msg_texts \
+                else f'<b><i><u>Media of "{Text(self.title).get_html()}"</u></i></b>'
+            if curr_type == 'image':
+                self.messages.append(message.PhotoMsg(curr_text, curr_media))
+                continue
+            if curr_type == 'video':
+                self.messages.append(message.VideoMsg(curr_text, curr_media))
+                continue
+            if curr_type == 'animation':
+                self.messages.append(message.AnimationMsg(curr_text, curr_media))
+                continue
+            if curr_type == 'media_group':
+                self.messages.append(message.MediaGroupMsg(curr_text, curr_media))
+                continue
+        if msg_texts:
+            self.messages.extend([message.TextMsg(text) for text in msg_texts])
 
     def invalidate_all_media(self):
         self.media.invalidate_all()
@@ -171,10 +171,10 @@ class Post:
         self._add_metadata()
         self._add_invalid_media()
 
-    def get_split_html(self, length_limit: int):
+    def get_split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096):
         split_html = [stripNewline.sub('\n\n',
                                        stripLineEnd.sub('\n', p))
-                      for p in self.text.split_html(length_limit)]
+                      for p in self.text.split_html(length_limit_head, head_count, length_limit_tail)]
         if env.debug:
             print(split_html)
         return split_html
@@ -269,6 +269,9 @@ class Post:
                 return None
             if alt and (isEmoticon.search(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':'))):
                 return Text(alt)
+            if src.endswith('.gif'):
+                self.media.add(Animation(src))
+                return None
             self.media.add(Image(src))
             return None
 
@@ -384,31 +387,39 @@ class Text:
             return f'<{self.tag}>{result}</{self.tag}>'
         return result
 
-    def split_html(self, length_limit: int):  # TODO: when result to be yield < length_limit*0.5, add subSubText to it
+    def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096):
+        # TODO: when result to be yield < length_limit*0.5, add subSubText to it
         if type(self.content) == list:
+            yield_count = 0
             result = ''
             length = 0
             for subText in self.content:
                 curr_length = len(subText)
-                if length + curr_length >= length_limit and result:
+                curr_length_limit = length_limit_head if head_count == -1 or yield_count < head_count \
+                    else length_limit_tail
+                if length + curr_length >= curr_length_limit and result:
                     stripped = result.strip()
                     result = ''
                     length = 0
                     if stripped:
+                        yield_count += 1
+                        curr_length_limit = length_limit_head if head_count == -1 or yield_count < head_count \
+                            else length_limit_tail
                         yield stripped
-                if curr_length >= length_limit:
-                    for subSubText in subText.split_html(length_limit):
+                if curr_length >= curr_length_limit:
+                    for subSubText in subText.split_html(curr_length_limit):
                         stripped = subSubText.strip()
                         if stripped:
+                            yield_count += 1
                             yield subSubText
                     continue
                 length += curr_length
                 result += subText.get_html()
         elif type(self.content) == str:
             result = self.content
-            if len(result) >= length_limit:
-                for i in range(0, len(result), length_limit - 1):
-                    yield result[i:i + length_limit - 1]
+            if len(result) >= length_limit_head:
+                for i in range(0, len(result), length_limit_head - 1):
+                    yield result[i:i + length_limit_head - 1]
                 return
         else:
             result = self.content.get_html()

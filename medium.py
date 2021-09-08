@@ -22,7 +22,7 @@ serverParser = re.compile(r'(?P<url_prefix>^https?:\/\/[a-zA-Z_-]+)'
 
 class Medium:
     type = 'medium_base_class'
-    max_size = 5242880
+    max_size = 20971520
 
     def __init__(self, url: str):
         self.url = url
@@ -108,10 +108,16 @@ class Image(Medium):
 
 class Video(Medium):
     type = 'video'
-    max_size = 20971520
 
     def telegramize(self):
         return telegram.InputMediaVideo(self.url)
+
+
+class Animation(Medium):
+    type = 'animation'
+
+    def telegramize(self):
+        return telegram.InputMediaAnimation(self.url)  # hmm, you don't need it
 
 
 def get_medium_info(url):
@@ -119,16 +125,17 @@ def get_medium_info(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    with session.get(url, timeout=(5, 5), proxies=env.requests_proxies, stream=True,
-                     headers=env.requests_headers) as response:
-        size = int(response.headers['Content-Length']) if 'Content-Length' in response.headers else -1
-        content_type = response.headers.get('Content-Type')
-        pic_header = response.raw.read(min(256, size))
+    response = session.get(url, timeout=(5, 5), proxies=env.requests_proxies, stream=True, headers=env.requests_headers)
+    size = int(response.headers['Content-Length']) if 'Content-Length' in response.headers else 256
+    content_type = response.headers.get('Content-Type')
 
     height = width = -1
     if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
+        response.close()
         return size, width, height
 
+    pic_header = response.raw.read(min(256, size))
+    response.close()
     pointer = -1
     for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
         p = pic_header.find(marker)
@@ -155,7 +162,28 @@ class Media:
         any(map(lambda m: m.invalidate(), self._media))
 
     def get_valid_media(self):
-        return tuple(m for m in self._media if m)
+        result = []
+        gifs = []
+        for medium in self._media:
+            if not medium:
+                continue
+            if medium.type == 'animation':
+                # if len(result) > 0:
+                #     yield {'type': result[0].type, 'media': result[0]} if len(result) == 1 \
+                #         else {'type': 'media_group', 'media': result}
+                #     result = []
+                # yield {'type': 'animation', 'media': medium}
+                gifs.append({'type': 'animation', 'media': medium})
+                continue
+            result.append(medium)
+            if len(result) == 10:
+                yield {'type': 'media_group', 'media': result}
+                result = []
+        if result:
+            yield {'type': result[0].type, 'media': result[0]} if len(result) == 1 \
+                else {'type': 'media_group', 'media': result}
+        for gif in gifs:
+            yield gif
 
     def get_invalid_link(self):
         return tuple(m.get_link(only_invalid=True) for m in self._media if not m)

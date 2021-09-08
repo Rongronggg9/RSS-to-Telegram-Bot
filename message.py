@@ -13,7 +13,7 @@ class Message:
 
     def __init__(self,
                  text: Optional[str] = None,
-                 media: Optional[Union[List[Medium], Tuple[Medium]]] = None,
+                 media: Optional[Union[List[Medium], Tuple[Medium], Medium]] = None,
                  parse_mode: Optional[str] = 'HTML'):
         self.text = text
         self.media = media
@@ -61,14 +61,17 @@ class TextMsg(Message):
 
 class PhotoMsg(Message):
     def _send(self, chat_id: Union[str, int]):
-        env.bot.send_photo(chat_id, self.media[0].get_url(),
-                           caption=self.text, parse_mode=self.parse_mode)
+        env.bot.send_photo(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode)
 
 
 class VideoMsg(Message):
     def _send(self, chat_id: Union[str, int]):
-        env.bot.send_video(chat_id, self.media[0].get_url(),
-                           caption=self.text, parse_mode=self.parse_mode)
+        env.bot.send_video(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode)
+
+
+class AnimationMsg(Message):
+    def _send(self, chat_id: Union[str, int]):
+        env.bot.send_animation(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode)
 
 
 class MediaGroupMsg(Message):

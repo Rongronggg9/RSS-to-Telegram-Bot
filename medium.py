@@ -54,17 +54,21 @@ class Medium:
             self.valid = False
             return
 
-        if size <= max_size and height <= 10000:  # valid
+        if not (0.05 < width / height < 20):  # always invalid
+            self.valid = False
             return
 
-        if not sizeParser.search(url):  # is not a weibo pic
+        if size <= max_size and width + height < 10000:  # valid
+            return
+
+        if not sizeParser.search(url):  # invalid but is not a weibo img
             # TODO: reduce non-weibo pic size
             print('\t\t- Medium too large, dropped: non-weibo medium.\n'
                   f'\t\t\t- {url}')
             self.valid = False
             return
 
-        parsed = sizeParser.search(url).groupdict()
+        parsed = sizeParser.search(url).groupdict()  # invalid and is a weibo img
         if parsed['size'] == sizes[-1]:
             print('\t\t- Medium too large, dropped: reduced, but still too large.\n'
                   f'\t\t\t- {url}')
@@ -91,7 +95,7 @@ class Image(Medium):
         return telegram.InputMediaPhoto(self.url)
 
     def change_sinaimg_server(self):
-        if not serverParser.search(self.url):  # is not a weibo pic
+        if not serverParser.search(self.url):  # is not a weibo img
             return False
 
         parsed = serverParser.search(self.url).groupdict()

@@ -73,7 +73,7 @@ class Post:
         self.soup = BeautifulSoup(xml, 'html.parser')
         self.media: Media = Media()
         self.text = Text(self._get_item(self.soup))
-        self.title = title
+        self.title = emojify(BeautifulSoup(title).get_text())
         self.feed_title = feed_title
         self.link = link
         self.author = author
@@ -182,13 +182,12 @@ class Post:
     def _add_metadata(self):
         plain_text = self.text.get_html(plain=True)
         if self.title and ('微博' not in self.feed_title or env.debug):
-            title = emojify(self.title)
-            title_tbc = title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
-            similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(title) + 10])
+            title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
+            similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
             if env.debug:
-                print(similarity)
+                print(similarity, self.title)
             if similarity < 90:
-                self._add_title(title)
+                self._add_title(self.title)
         if self.feed_title:
             author = self.author if self.author and self.author not in self.feed_title else None
             self._add_via(self.feed_title, self.link, author)
@@ -481,6 +480,11 @@ class Pre(Text):
 class Br(Text):
     def __init__(self, count: int = 1):
         super().__init__('\n' * count)
+
+    def get_html(self, plain: bool = False):
+        if plain:
+            return ''
+        return super().get_html()
 
 
 class Hr(Text):

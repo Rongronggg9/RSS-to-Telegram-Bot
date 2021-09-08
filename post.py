@@ -73,7 +73,7 @@ class Post:
         self.soup = BeautifulSoup(xml, 'html.parser')
         self.media: Media = Media()
         self.text = Text(self._get_item(self.soup))
-        self.title = emojify(BeautifulSoup(title).get_text())
+        self.title = emojify(BeautifulSoup(title).get_text(strip=True))
         self.feed_title = feed_title
         self.link = link
         self.author = author

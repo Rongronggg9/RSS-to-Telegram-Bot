@@ -22,9 +22,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.DEBUG if env.debug else logging.INFO)
 
 logging.getLogger("telegram").setLevel(logging.INFO)
-logging.getLogger("requests").setLevel(logging.CRITICAL)
-logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-logging.getLogger('apscheduler').setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.ERROR if env.debug else logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.ERROR if env.debug else logging.CRITICAL)
+logging.getLogger('apscheduler').setLevel(logging.INFO if env.debug else logging.WARNING)
 
 # permission verification
 GROUP = 1087968824

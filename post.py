@@ -1,8 +1,8 @@
 import json
+import logging
 import re
 import traceback
 import telegram.error
-
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import Optional, Union, List
@@ -73,7 +73,7 @@ class Post:
         self.soup = BeautifulSoup(xml, 'html.parser')
         self.media: Media = Media()
         self.text = Text(self._get_item(self.soup))
-        self.title = emojify(BeautifulSoup(title).get_text(strip=True))
+        self.title = emojify(BeautifulSoup(title, 'lxml').get_text(strip=True))
         self.feed_title = feed_title
         self.link = link
         self.author = author
@@ -100,28 +100,33 @@ class Post:
                 except telegram.error.BadRequest as e:
                     error_caption = e.message
                     if error_caption.startswith('Have no rights to send a message'):
+                        logging.warning(f'Chat ID {chat_id} has banned the bot!')
                         chat_ids.pop(0)
                         break  # TODO: disable all feeds for this chat_id
+
+                    # if telegram bot api sucks
                     if error_caption.startswith('Wrong file identifier/http url specified') \
                             or error_caption.startswith('Failed to get http url content') \
                             or error_caption.startswith('Wrong type of the web page content') \
                             or error_caption.startswith('Group send failed'):
                         if self.media.change_all_sinaimg_server():
+                            logging.debug('TBA sucks! Changed sinaimg server and retrying...')
                             self.send_message(chat_ids)
                             return
+                        logging.debug('All media was set invalid because TBA cannot process some of them.')
                         self.invalidate_all_media()
                         self.generate_message()
                         self.send_message(chat_ids)
                         return
 
-                    print(e)
+                    logging.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc(),
                                          self.title, self.feed_title, self.link, self.author)
                     error_message.send_message(env.manager)
 
                 except Exception as e:
-                    print(e)
+                    logging.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
                                          self.title, self.feed_title, self.link, self.author)
@@ -175,8 +180,7 @@ class Post:
         split_html = [stripNewline.sub('\n\n',
                                        stripLineEnd.sub('\n', p))
                       for p in self.text.split_html(length_limit_head, head_count, length_limit_tail)]
-        if env.debug:
-            print(split_html)
+        logging.debug(f'{self.title} ({self.link}):\n{split_html}')
         return split_html
 
     def _add_metadata(self):
@@ -184,8 +188,7 @@ class Post:
         if self.title and ('微博' not in self.feed_title or env.debug):
             title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
             similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
-            if env.debug:
-                print(similarity, self.title)
+            logging.debug(f'{self.title} ({self.link}) is {similarity}% likely to be of no title.')
             if similarity < 90:
                 self._add_title(self.title)
         if self.feed_title:

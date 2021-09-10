@@ -1,9 +1,9 @@
-from typing import List
-
+import logging
 import requests
 import re
 import telegram
 from requests.adapters import HTTPAdapter
+from typing import List
 
 import env
 import post
@@ -48,9 +48,7 @@ class Medium:
         try:
             size, width, height = get_medium_info(url)
         except Exception as e:
-            print('\t\t- Get medium failed, dropped.\n'
-                  f'\t\t\t- {url}\n'
-                  f'\t\t\t\t- {e}')
+            logging.debug(f'Dropped medium {url}: can not be fetched.')
             self.valid = False
             return
 
@@ -63,15 +61,13 @@ class Medium:
 
         if not sizeParser.search(url):  # invalid but is not a weibo img
             # TODO: reduce non-weibo pic size
-            print('\t\t- Medium too large, dropped: non-weibo medium.\n'
-                  f'\t\t\t- {url}')
+            logging.debug(f'Dropped medium {url}: invalid.')
             self.valid = False
             return
 
         parsed = sizeParser.search(url).groupdict()  # invalid and is a weibo img
         if parsed['size'] == sizes[-1]:
-            print('\t\t- Medium too large, dropped: reduced, but still too large.\n'
-                  f'\t\t\t- {url}')
+            logging.debug(f'Dropped medium {url}: invalid.')
             self.valid = False
             return
         self.url = parsed['domain'] + sizes[sizes.index(parsed['size']) + 1] + parsed['filename']

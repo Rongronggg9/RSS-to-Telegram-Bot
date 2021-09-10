@@ -1,7 +1,7 @@
-import traceback
 import telegram.error
 import datetime
 import time
+import logging
 from typing import List, Union, Optional, Tuple
 
 from medium import Medium
@@ -22,8 +22,8 @@ class Message:
 
     def send(self, chat_id: Union[str, int]):
         if self.retries >= 3:
-            print('retried too many times! message dropped!')
-            return
+            logging.warning('Retried too many times! Message dropped!')
+            raise OverflowError
         sleep_time = (Message.retry_after - datetime.datetime.utcnow()).total_seconds()
         if sleep_time > 0:
             time.sleep(sleep_time + 1)
@@ -31,24 +31,15 @@ class Message:
             self._send(chat_id)
             self.retries = 0
         except telegram.error.RetryAfter as e:  # exceed flood control
-            if env.debug:
-                raise e
-            print(e)
+            logging.debug(e.message)
             self.retries += 1
             Message.retry_after = datetime.datetime.utcnow() + datetime.timedelta(seconds=e.retry_after)
             self.send(chat_id)
         except telegram.error.TimedOut as e:
-            if env.debug:
-                raise e
-            print(e)
+            logging.debug('Telegram Bot API timed out. Retrying...')
             self.retries += 1
             time.sleep(1)
             self.send(chat_id)
-        except Exception as e:
-            if env.debug:
-                raise e
-            traceback.print_exc()
-            raise e
 
     def _send(self, chat_id: Union[str, int]):
         pass

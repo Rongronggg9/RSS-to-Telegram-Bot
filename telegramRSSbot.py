@@ -1,6 +1,4 @@
 import functools
-from typing import Optional
-
 import feedparser
 import logging
 import sqlite3
@@ -11,6 +9,7 @@ from telegram.error import TelegramError
 from telegram.ext import Updater, CommandHandler, Filters
 from pathlib import Path
 from io import BytesIO
+from typing import Optional
 
 import env
 from post import Post, get_post_from_entry
@@ -19,13 +18,12 @@ Path("config").mkdir(parents=True, exist_ok=True)
 
 rss_dict = {}
 
-# TODO: use logging to log
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG if env.debug else logging.INFO)
 
+logging.getLogger("telegram").setLevel(logging.INFO)
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 
 # permission verification
@@ -123,13 +121,11 @@ def feed_get(url, update=None, verbose=False):
     except IndexError as e:
         if verbose:
             update.effective_message.reply_text('ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
-            print('Feed ERROR:', e)
-        raise IndexError(e)
+        raise e
     except requests.exceptions.RequestException as e:
         if verbose:
             update.effective_message.reply_text('ERROR: 网络超时')
-            print('Network ERROR:', e)
-        raise requests.exceptions.RequestException(e)
+        raise e
     return rss_d
 
 
@@ -185,7 +181,7 @@ def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContex
         conn.commit()
         conn.close()
     except sqlite3.Error as e:
-        print('Error %s:' % e.args[0])
+        logging.error('Sqlite error:', exc_info=e)
     rss_load()
     update.effective_message.reply_text("已移除: " + context.args[0])
 
@@ -248,30 +244,31 @@ def rss_monitor(context):
         try:
             rss_d = feed_get(feed_url)
         except IndexError:
-            # print(f'Get {name} feed failed!')
-            print('F', end='')
+            logging.warning(f'Feed {feed_url} fetch failed: feed error.')
             continue
         except requests.exceptions.RequestException:
-            print('N', end='')
+            logging.warning(f'Feed {feed_url} fetch failed: network error.')
+            continue
+        except Exception as e:
+            logging.warning(f'Feed {feed_url} fetch failed: ', exc_info=e)
             continue
 
         if last_url == rss_d.entries[0]['link']:
-            print('-', end='')
+            logging.info(f'Feed {feed_url} fetched, no new post.')
             continue
 
-        print('\nUpdating', name)
+        logging.info(f'Feed {feed_url} updated!')
         update_flag = True
-        # workaround, avoiding deleted weibo causing the bot send all posts in the feed
-        # TODO: log recently sent weibo, so deleted weibo won't be harmful. (If a weibo was deleted while another
-        #  weibo was sent between delay duration, the latter won't be fetched.) BTW, if your bot has stopped for
-        #  too long that last fetched post do not exist in current RSS feed, all posts won't be fetched and last
-        #  fetched post will be reset to the newest post (through it is not fetched).
+        # Workaround, avoiding deleted post causing the bot send all posts in the feed.
+        # Known issues:
+        # If a post was deleted while another post was sent between feed fetching duration,
+        #  the latter won't be sent.
+        # If your bot has stopped for too long that last sent post do not exist in current RSS feed,
+        #  all posts won't be sent and last sent post will be reset to the newest post (though not sent).
         last_flag = False
-        for entry in rss_d.entries[::-1]:  # push all messages not pushed
+        for entry in rss_d.entries[::-1]:
             if last_flag:
-                # context.bot.send_message(chatid, rss_d.entries[0]['link'])
-                print('\t- Pushing', entry['link'])
-                # message.send(env.chatid, entry, rss_d.feed.title, context)
+                logging.info(f"Sending {entry['link']}...")
                 post = get_post_from_entry(entry, rss_d.feed.title)
                 post.send_message(env.chatid)
 
@@ -281,7 +278,6 @@ def rss_monitor(context):
         sqlite_write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
 
     if update_flag:
-        print('Updated.')
         rss_load()  # update rss_dict
 
 
@@ -292,11 +288,12 @@ def init_sqlite():
 
 
 def main():
-    print(f"""CHATID: {env.chatid}
-MANAGER: {env.manager}
-DELAY: {env.delay}s
-T_PROXY (for Telegram): {env.telegram_proxy}
-R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}\n""")
+    logging.info(f"RSS-to-Telegram-Bot started!\n"
+                 f"CHATID: {env.chatid}\n"
+                 f"MANAGER: {env.manager}\n"
+                 f"DELAY: {env.delay}s\n"
+                 f"T_PROXY (for Telegram): {env.telegram_proxy}\n"
+                 f"R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}")
 
     updater = Updater(token=env.token, use_context=True, request_kwargs={'proxy_url': env.telegram_proxy})
     env.bot = updater.bot

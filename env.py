@@ -1,5 +1,6 @@
 import os
 import telegram
+import logging
 
 if os.environ.get('TOKEN'):
     token = os.environ['TOKEN']
@@ -33,7 +34,8 @@ else:
     debug = False
 
 if token == "X":
-    print("Token not set!")
+    logging.critical('TOKEN NOT SET!')
+    exit(1)
 
 bot = telegram.Bot  # placeholder
 

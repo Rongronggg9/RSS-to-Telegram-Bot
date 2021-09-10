@@ -1,3 +1,6 @@
+import functools
+from typing import Optional
+
 import feedparser
 import logging
 import sqlite3
@@ -25,24 +28,51 @@ logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 logging.getLogger('apscheduler').setLevel(logging.WARNING)
 
+# permission verification
+GROUP = 1087968824
 
-# MANAGER
-def is_manager(update):
-    chat = update.message.chat
-    userid = str(chat.id)
-    username = chat.username
-    if chat.last_name:
-        name = chat.first_name + ' ' + chat.last_name
-    else:
-        name = chat.first_name
-    command = update.message.text
-    print(f'\n{name} ({username}/{userid}) attempted to use "{command}", ', end='')
-    if env.manager != userid:
-        update.effective_message.reply_text('您没有权限使用这个机器人。')
-        print('forbade.')
-        raise
-    else:
-        print('allowed.')
+
+def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
+    if func is None:
+        return functools.partial(permission_required, only_manager=only_manager,
+                                 only_in_private_chat=only_in_private_chat)
+
+    @functools.wraps(func)
+    def wrapper(update: telegram.Update, context: Optional[telegram.ext.CallbackContext] = None, *args, **kwargs):
+        message = update.message
+        command = message.text
+        user_id = update.effective_user.id
+        user_fullname = update.effective_user.full_name
+        if only_manager and str(user_id) != env.manager:
+            update.effective_message.reply_text('此命令只可由机器人的管理员使用。\n'
+                                                'This command can be only used by the bot manager.')
+            logging.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
+            return
+
+        if message.chat.type == 'private':
+            logging.info(f'Allowed {user_fullname} ({user_id}) to use {command}.')
+            return func(update, context, *args, **kwargs)
+
+        if message.chat.type in ('supergroup', 'group'):
+            if only_in_private_chat:
+                update.effective_message.reply_text('此命令不允许在群聊中使用。\n'
+                                                    'This command can not be used in a group.')
+                logging.info(f'Refused {user_fullname} ({user_id}) to use {command} in a group chat.')
+                return
+
+            user_status = update.effective_chat.get_member(user_id).status
+            if user_id != GROUP and user_status not in ('administrator', 'creator'):
+                update.effective_message.reply_text('此命令只可由群管理员使用。\n'
+                                                    'This command can be only used by an administrator.')
+                logging.info(
+                    f'Refused {user_fullname} ({user_id}, {user_status}) to use {command} in {message.chat.title} ({message.chat.id}).')
+                return
+            logging.info(
+                f'Allowed {user_fullname} ({user_id}, {user_status}) to use {command} in {message.chat.title} ({message.chat.id}).')
+            return func(update, context, *args, **kwargs)
+        return
+
+    return wrapper
 
 
 # SQLITE
@@ -113,9 +143,8 @@ def rss_load():
         rss_dict[row[0]] = (row[1], row[2])
 
 
+@permission_required(only_manager=True)
 def cmd_rss_list(update: telegram.Update, context: telegram.ext.CallbackContext):
-    is_manager(update)
-
     if bool(rss_dict) is False:
         update.effective_message.reply_text('数据库为空')
     else:
@@ -126,9 +155,8 @@ def cmd_rss_list(update: telegram.Update, context: telegram.ext.CallbackContext)
                 '\n最后检查的文章: ' + url_list[1])
 
 
+@permission_required(only_manager=True)
 def cmd_rss_add(update: telegram.Update, context: telegram.ext.CallbackContext):
-    is_manager(update)
-
     # try if there are 2 arguments passed
     try:
         title = context.args[0]
@@ -147,9 +175,8 @@ def cmd_rss_add(update: telegram.Update, context: telegram.ext.CallbackContext):
         '已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
+@permission_required(only_manager=True)
 def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
-    is_manager(update)
-
     conn = sqlite3.connect('config/rss.db')
     c = conn.cursor()
     q = (context.args[0],)
@@ -163,9 +190,8 @@ def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContex
     update.effective_message.reply_text("已移除: " + context.args[0])
 
 
+@permission_required(only_manager=True)
 def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
-    is_manager(update)
-
     update.effective_message.reply_text(
         f"""[RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
 \n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.delay} 秒一次。 \\(可修改\\)
@@ -181,9 +207,8 @@ __*/test*__ __*RSS*__ __*编号起点\\(可选\\)*__ __*编号终点\\(可选\\)
     )
 
 
+@permission_required(only_manager=True)
 def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
-    is_manager(update)
-
     # try if there are 2 arguments passed
     try:
         url = context.args[0]
@@ -266,10 +291,6 @@ def init_sqlite():
     c.execute('''CREATE TABLE rss (name text, link text, last text)''')
 
 
-def error_handler(update: telegram.Update, context: telegram.ext.CallbackContext):
-    raise context.error
-
-
 def main():
     print(f"""CHATID: {env.chatid}
 MANAGER: {env.manager}
@@ -288,8 +309,6 @@ R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}
     dp.add_handler(CommandHandler("test", cmd_test, filters=~Filters.update.edited_message))
     dp.add_handler(CommandHandler("list", cmd_rss_list, filters=~Filters.update.edited_message))
     dp.add_handler(CommandHandler("remove", cmd_rss_remove, filters=~Filters.update.edited_message))
-    if env.debug:
-        dp.add_error_handler(error_handler)
 
     commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
                 telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),

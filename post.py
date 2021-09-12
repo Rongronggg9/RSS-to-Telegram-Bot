@@ -256,6 +256,12 @@ class Post:
             quote.strip()
             return Text([Hr(), quote, Hr()])
 
+        if tag == 'pre':
+            return Pre(self._get_item(soup.children))
+
+        if tag == 'code':
+            return Code(self._get_item(soup.children))
+
         if tag == 'br':
             return Br()
 

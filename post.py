@@ -180,7 +180,7 @@ class Post:
         split_html = [stripNewline.sub('\n\n',
                                        stripLineEnd.sub('\n', p))
                       for p in self.text.split_html(length_limit_head, head_count, length_limit_tail)]
-        logging.debug(f'{self.title} ({self.link}):\n{split_html}')
+        # logging.debug(f'{self.title} ({self.link}):\n{split_html}')
         return split_html
 
     def _add_metadata(self):
@@ -541,7 +541,7 @@ class Br(Text):
 
 
 class Hr(Text):
-    def __init__(self):
+    def __init__(self, content=None, param=None):
         super().__init__('\n----------------------\n')
 
     def get_html(self, plain: bool = False):
@@ -551,7 +551,7 @@ class Hr(Text):
 
 
 class ListItem(Text):
-    def __init__(self, content):
+    def __init__(self, content, param=None):
         super().__init__(content)
         nested_lists = self.find_instances(ListParent)
         if not nested_lists:
@@ -571,7 +571,7 @@ class ListParent(Text):
 
 
 class OrderedList(ListParent):
-    def __init__(self, content):
+    def __init__(self, content, param=None):
         super().__init__(content)
         list_items = self.find_instances(ListItem, shallow=True)
         if not list_items:
@@ -583,7 +583,7 @@ class OrderedList(ListParent):
 
 
 class UnorderedList(ListParent):
-    def __init__(self, content):
+    def __init__(self, content, param=None):
         super().__init__(content)
         list_items = self.find_instances(ListItem, shallow=True)
         if not list_items:

@@ -19,6 +19,7 @@ Path("config").mkdir(parents=True, exist_ok=True)
 rss_dict = {}
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.DEBUG if env.debug else logging.INFO)
 
 logging.getLogger("telegram").setLevel(logging.INFO)
@@ -258,7 +259,7 @@ def rss_monitor(context):
             continue
 
         if last_url == rss_d.entries[0]['link']:
-            logging.info(f'Feed {feed_url} fetched, no new post.')
+            logging.debug(f'Feed {feed_url} fetched, no new post.')
             continue
 
         logging.info(f'Feed {feed_url} updated!')

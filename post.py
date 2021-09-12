@@ -465,19 +465,23 @@ class Text:
                       else text)
                 for text in split_list]
 
-    def find_instances(self, _class) -> Optional[list]:
+    def find_instances(self, _class, shallow: Optional[bool] = False) -> Optional[list]:
         result = []
         if isinstance(self, _class):
-            return [self]
+            result.append(self)
         if self.is_listed():
-            for text in self.content:
-                instance = text.find_instances(_class)
+            if shallow:
+                return [subText for subText in self.content if isinstance(subText, _class)]
+            for subText in self.content:
+                instance = subText.find_instances(_class)
                 if instance:
                     result.extend(instance)
             return result if result else None
         if self.is_nested():
-            return self.content.contain_instances(_class)
-        return None
+            instance = self.content.contain_instances(_class, shallow)
+            if instance:
+                result.extend(instance)
+        return result if result else None
 
     def __len__(self):
         length = 0
@@ -554,7 +558,7 @@ class ListItem(Text):
             return
         for nested_list in nested_lists:
             nested_list.rstrip()
-            nested_list_items = nested_list.find_instances(ListItem)
+            nested_list_items = nested_list.find_instances(ListItem, shallow=True)
             if not nested_list_items:
                 return
             for nested_list_item in nested_list_items:
@@ -569,18 +573,20 @@ class ListParent(Text):
 class OrderedList(ListParent):
     def __init__(self, content):
         super().__init__(content)
+        list_items = self.find_instances(ListItem, shallow=True)
+        if not list_items:
+            return
         index = 1
-        for subText in self.content:
-            if type(subText) is not ListItem:
-                continue
-            subText.content = [Bold(f'{index}. '), Text(subText.content), Br()]
+        for list_item in list_items:
+            list_item.content = [Bold(f'{index}. '), Text(list_item.content), Br()]
             index += 1
 
 
 class UnorderedList(ListParent):
     def __init__(self, content):
         super().__init__(content)
-        for subText in self.content:
-            if type(subText) is not ListItem:
-                continue
-            subText.content = [Bold(f'● '), Text(subText.content), Br()]
+        list_items = self.find_instances(ListItem, shallow=True)
+        if not list_items:
+            return
+        for list_item in list_items:
+            list_item.content = [Bold(f'● '), Text(list_item.content), Br()]

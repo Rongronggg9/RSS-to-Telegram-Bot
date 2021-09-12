@@ -317,6 +317,10 @@ class Post:
             text = self._get_item(soup.children)
             return Text([Br(2), Underline(text), Br()]) if text else None
 
+        if tag == 'li':
+            text = self._get_item(soup.children)
+            return ListItem(text) if text else None
+
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:
             item = self._get_item(child)
@@ -395,49 +399,60 @@ class Text:
             return f'<{self.tag}>{result}</{self.tag}>'
         return result
 
-    def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096):
+    def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096) -> list:
+        split_list = []
         # TODO: when result to be yield < length_limit*0.5, add subSubText to it
         if type(self.content) == list:
-            yield_count = 0
+            curr_length = 0
+            subText = None
+            split_count = 0
             result = ''
             length = 0
             for subText in self.content:
                 curr_length = len(subText)
-                curr_length_limit = length_limit_head if head_count == -1 or yield_count < head_count \
+                curr_length_limit = length_limit_head if head_count == -1 or split_count < head_count \
                     else length_limit_tail
                 if length + curr_length >= curr_length_limit and result:
                     stripped = result.strip()
                     result = ''
                     length = 0
                     if stripped:
-                        yield_count += 1
-                        curr_length_limit = length_limit_head if head_count == -1 or yield_count < head_count \
+                        split_count += 1
+                        curr_length_limit = length_limit_head if head_count == -1 or split_count < head_count \
                             else length_limit_tail
-                        yield stripped
+                        split_list.append(stripped)  # split
                 if curr_length >= curr_length_limit:
                     for subSubText in subText.split_html(curr_length_limit):
-                        stripped = subSubText.strip()
-                        if stripped:
-                            yield_count += 1
-                            yield subSubText
+                        split_count += 1
+                        split_list.append(subSubText)  # split
                     continue
                 length += curr_length
                 result += subText.get_html()
-        elif type(self.content) == str:
+
+            curr_length_limit = length_limit_head if head_count == -1 or split_count < head_count \
+                else length_limit_tail
+            if length < curr_length_limit and result:
+                stripped = result.strip()
+                if stripped:
+                    split_list.append(stripped)  # split
+            elif curr_length >= curr_length_limit and subText:
+                for subSubText in subText.split_html(curr_length_limit):
+                    split_list.append(subSubText)  # split
+
+            return split_list
+
+        if type(self.content) == str:
             result = self.content
             if len(result) >= length_limit_head:
-                for i in range(0, len(result), length_limit_head - 1):
-                    yield result[i:i + length_limit_head - 1]
-                return
-        else:
-            result = self.content.get_html()
-        if result:
-            if self.attr and self.param:
-                yield f'<{self.tag} {self.attr}={self.param}>{result}</{self.tag}>'
-            elif self.tag:
-                yield f'<{self.tag}>{result}</{self.tag}>'
-            else:
-                yield result
+                split_list = [result[i:i + length_limit_head - 1]
+                              for i in range(0, len(result), length_limit_head - 1)]  # split
+        else:  # nested
+            split_list = self.content.split_html(length_limit_head)  # split
+
+        return [f'<{self.tag} {self.attr}={self.param}>{text}</{self.tag}>' if self.attr and self.param
+                else (f'<{self.tag}>{text}</{self.tag}>' if self.tag
+                      else text)
+                for text in split_list]
 
     def __len__(self):
         length = 0
@@ -506,31 +521,25 @@ class Hr(Text):
         return super().get_html()
 
 
-class OrderedList(Text):
-    def get_html(self, plain: bool = False):
-        result = ''
-        for index, subText in enumerate(self.content, start=1):
-            result += f'{index}. {subText.get_html(plain=plain)}\n'
-        return result
+class ListItem(Text):
+    pass
 
-    def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096):
-        result = ''
-        length = 0
-        for index, subText in enumerate(self.content, start=1):
-            curr_length = len(subText)
-            if length + curr_length >= length_limit_head and result:
-                yield result
-                result = ''
-                length = 0
-            length += curr_length
-            result += f'{index}. {subText.get_html()}\n'
-        if result:
-            yield result
+
+class OrderedList(Text):
+    def __init__(self, content):
+        super().__init__(content)
+        index = 1
+        for subText in self.content:
+            if type(subText) is not ListItem:
+                continue
+            subText.content = Text([Bold(f'{index}. '), Text(subText.content), Br()])
+            index += 1
 
 
 class UnorderedList(Text):
-    def get_html(self, plain: bool = False):
-        result = ''
+    def __init__(self, content):
+        super().__init__(content)
         for subText in self.content:
-            result += f'● {subText.get_html(plain=plain)}\n'
-        return result
+            if type(subText) is not ListItem:
+                continue
+            subText.content = Text([Bold(f'● '), Text(subText.content), Br()])

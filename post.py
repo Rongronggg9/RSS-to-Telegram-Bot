@@ -327,9 +327,9 @@ class Post:
             if item and (not in_list or type(child) is not NavigableString):
                 result.append(item)
         if tag == 'ol':
-            return Text([Br(), OrderedList(result), Br()])
+            return OrderedList([Br(), *result, Br()])
         elif tag == 'ul':
-            return Text([Br(), UnorderedList(result), Br()])
+            return UnorderedList([Br(), *result, Br()])
         else:
             return result[0] if len(result) == 1 else Text(result)
 
@@ -368,17 +368,28 @@ class Text:
             return self
         return type(self)(self.content.copy(), param=self.param)
 
-    def strip(self, deep: bool = False):
+    def strip(self, deeper: bool = False, strip_l: Optional[bool] = True, strip_r: Optional[bool] = True):
         if not self.is_nested():  # str
-            self.content.strip()
+            if strip_l:
+                self.content.lstrip()
+            if strip_r:
+                self.content.rstrip()
         if not self.is_listed():  # nested
-            if not deep:
+            if not deeper:
                 return
             self.content.strip()
-        while type(self.content[-1]) is Br:
-            self.content.pop()
-        while type(self.content[0]) is Br:
+        while strip_l and type(self.content[0]) is Br:
             self.content.pop(0)
+        while strip_r and type(self.content[-1]) is Br:
+            self.content.pop()
+        if deeper:
+            any(map(lambda text: text.strip(strip_l=strip_l, strip_r=strip_r), self.content))
+
+    def lstrip(self, deeper: bool = False):
+        self.strip(deeper=deeper, strip_r=False)
+
+    def rstrip(self, deeper: bool = False):
+        self.strip(deeper=deeper, strip_l=False)
 
     def get_html(self, plain: bool = False):
         if self.is_listed():
@@ -454,6 +465,20 @@ class Text:
                       else text)
                 for text in split_list]
 
+    def find_instances(self, _class) -> Optional[list]:
+        result = []
+        if isinstance(self, _class):
+            return [self]
+        if self.is_listed():
+            for text in self.content:
+                instance = text.find_instances(_class)
+                if instance:
+                    result.extend(instance)
+            return result if result else None
+        if self.is_nested():
+            return self.content.contain_instances(_class)
+        return None
+
     def __len__(self):
         length = 0
         if type(self.content) == list:
@@ -522,24 +547,40 @@ class Hr(Text):
 
 
 class ListItem(Text):
+    def __init__(self, content):
+        super().__init__(content)
+        nested_lists = self.find_instances(ListParent)
+        if not nested_lists:
+            return
+        for nested_list in nested_lists:
+            nested_list.rstrip()
+            nested_list_items = nested_list.find_instances(ListItem)
+            if not nested_list_items:
+                return
+            for nested_list_item in nested_list_items:
+                nested_list_item.content = [Text('    '), Text(nested_list_item.content)]
+            nested_list_items[-1].rstrip(deeper=True)
+
+
+class ListParent(Text):
     pass
 
 
-class OrderedList(Text):
+class OrderedList(ListParent):
     def __init__(self, content):
         super().__init__(content)
         index = 1
         for subText in self.content:
             if type(subText) is not ListItem:
                 continue
-            subText.content = Text([Bold(f'{index}. '), Text(subText.content), Br()])
+            subText.content = [Bold(f'{index}. '), Text(subText.content), Br()]
             index += 1
 
 
-class UnorderedList(Text):
+class UnorderedList(ListParent):
     def __init__(self, content):
         super().__init__(content)
         for subText in self.content:
             if type(subText) is not ListItem:
                 continue
-            subText.content = Text([Bold(f'● '), Text(subText.content), Br()])
+            subText.content = [Bold(f'● '), Text(subText.content), Br()]

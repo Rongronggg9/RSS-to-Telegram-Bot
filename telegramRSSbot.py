@@ -231,11 +231,15 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
     # message.send(env.chatid, rss_d.entries[index], rss_d.feed.title, context)
     try:
         for entry in rss_d.entries[index1:index2]:
+            logging.info(f"Sending {entry['link']}...")
             post = get_post_from_entry(entry, rss_d.feed.title)
             post.send_message(update.effective_chat.id)
-    except:
+    except Exception as e:
+        logging.warning(f"Sending failed:", exc_info=e)
         update.effective_message.reply_text('ERROR: 内部错误')
         raise
+    finally:
+        logging.info('Test finished.')
 
 
 def rss_monitor(context):

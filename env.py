@@ -42,3 +42,5 @@ bot = telegram.Bot  # placeholder
 requests_headers = {
     'user-agent': 'RSStT'
 }
+
+img_relay_server = 'https://rsstt-img-relay.rongrong.workers.dev/'

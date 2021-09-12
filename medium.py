@@ -29,6 +29,7 @@ class Medium:
         self.original_url = url
         self.valid = True
         self._validate()
+        self._server_change_count = 0
 
     def telegramize(self):
         pass
@@ -79,8 +80,12 @@ class Medium:
     def __eq__(self, other):
         return type(self) == type(other) and self.original_url == other.original_url
 
-    def change_sinaimg_server(self):
-        return False
+    def change_server(self):
+        if self._server_change_count >= 1:
+            return False
+        self._server_change_count += 1
+        self.url = env.img_relay_server + self.url
+        return True
 
 
 class Image(Medium):
@@ -90,10 +95,13 @@ class Image(Medium):
     def telegramize(self):
         return telegram.InputMediaPhoto(self.url)
 
-    def change_sinaimg_server(self):
+    def change_server(self):
         if not serverParser.search(self.url):  # is not a weibo img
-            return False
+            return super().change_server()
 
+        if self._server_change_count >= 4:
+            return False
+        self._server_change_count += 1
         parsed = serverParser.search(self.url).groupdict()
         new_server_id = int(parsed['server_id']) + 1
         if new_server_id > 4:
@@ -122,7 +130,7 @@ def get_medium_info(url):
     session.mount('https://', HTTPAdapter(max_retries=1))
 
     response = session.get(url, timeout=(5, 5), proxies=env.requests_proxies, stream=True, headers=env.requests_headers)
-    size = int(response.headers['Content-Length']) if 'Content-Length' in response.headers else 256
+    size = int(response.headers.get('Content-Length', 256))
     content_type = response.headers.get('Content-Type')
 
     height = width = -1
@@ -147,7 +155,6 @@ def get_medium_info(url):
 class Media:
     def __init__(self):
         self._media: List[Medium] = []
-        self._server_change_count = 0
 
     def add(self, medium: Medium):
         if medium in self._media:
@@ -184,8 +191,7 @@ class Media:
     def get_invalid_link(self):
         return tuple(m.get_link(only_invalid=True) for m in self._media if not m)
 
-    def change_all_sinaimg_server(self):
-        if self._server_change_count < 3 and sum(map(lambda m: m.change_sinaimg_server(), self._media)):
-            self._server_change_count += 1
+    def change_all_server(self):
+        if sum(map(lambda m: m.change_server(), self._media)):
             return True
         return False

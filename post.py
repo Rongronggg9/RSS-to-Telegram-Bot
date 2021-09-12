@@ -109,11 +109,11 @@ class Post:
                             or error_caption.startswith('Failed to get http url content') \
                             or error_caption.startswith('Wrong type of the web page content') \
                             or error_caption.startswith('Group send failed'):
-                        if self.media.change_all_sinaimg_server():
-                            logging.debug('TBA sucks! Changed sinaimg server and retrying...')
+                        if self.media.change_all_server():
+                            logging.info('TBA sucks! Changed img server and retrying...')
                             self.send_message(chat_ids)
                             return
-                        logging.debug('All media was set invalid because TBA cannot process some of them.')
+                        logging.warning('All media was set invalid because TBA cannot process some of them.')
                         self.invalidate_all_media()
                         self.generate_message()
                         self.send_message(chat_ids)
@@ -507,12 +507,12 @@ class OrderedList(Text):
             result += f'{index}. {subText.get_html(plain=plain)}\n'
         return result
 
-    def split_html(self, length_limit):
+    def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096):
         result = ''
         length = 0
         for index, subText in enumerate(self.content, start=1):
             curr_length = len(subText)
-            if length + curr_length >= length_limit and result:
+            if length + curr_length >= length_limit_head and result:
                 yield result
                 result = ''
                 length = 0

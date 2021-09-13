@@ -42,9 +42,11 @@ if env.REDIS_HOST:
 
         def write(self, name, link, last, update=False):
             self._rds.hmset(name, {'link': link, 'last': last})
+            self.feed_dict[name] = (link, last)
 
         def delete(self, name):
             self._rds.delete(name)
+            del self.feed_dict[name]
 
 
 else:
@@ -53,10 +55,10 @@ else:
         def __init__(self):
             self._conn = None
             self.feed_dict = {}
-            self.init()
+            self._init()
             self.load_all()
 
-        def init(self):
+        def _init(self):
             try:
                 self._conn = sqlite3.connect('config/rss.db', check_same_thread=False)
                 c = self._conn.cursor()

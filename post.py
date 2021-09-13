@@ -478,7 +478,7 @@ class Text:
                     result.extend(instance)
             return result if result else None
         if self.is_nested():
-            instance = self.content.contain_instances(_class, shallow)
+            instance = self.content.find_instances(_class, shallow)
             if instance:
                 result.extend(instance)
         return result if result else None

@@ -247,7 +247,8 @@ def main():
                  f"MANAGER: {env.MANAGER}\n"
                  f"DELAY: {env.DELAY}s\n"
                  f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY}\n"
-                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}")
+                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}\n"
+                 f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}")
 
     updater = Updater(token=env.TOKEN, use_context=True, request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
     env.bot = updater.bot

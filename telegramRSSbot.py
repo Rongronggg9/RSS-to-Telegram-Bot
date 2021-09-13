@@ -1,7 +1,6 @@
 import functools
 import feedparser
 import logging
-import sqlite3
 import requests
 import telegram
 from requests.adapters import HTTPAdapter
@@ -12,20 +11,19 @@ from io import BytesIO
 from typing import Optional
 
 import env
+from db import db
 from post import Post, get_post_from_entry
 
 Path("config").mkdir(parents=True, exist_ok=True)
 
-rss_dict = {}
-
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
-                    level=logging.DEBUG if env.debug else logging.INFO)
+                    level=logging.DEBUG if env.DEBUG else logging.INFO)
 
 logging.getLogger("telegram").setLevel(logging.INFO)
-logging.getLogger("requests").setLevel(logging.ERROR if env.debug else logging.CRITICAL)
-logging.getLogger("urllib3").setLevel(logging.ERROR if env.debug else logging.CRITICAL)
-logging.getLogger('apscheduler').setLevel(logging.INFO if env.debug else logging.WARNING)
+logging.getLogger("requests").setLevel(logging.ERROR if env.DEBUG else logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.ERROR if env.DEBUG else logging.CRITICAL)
+logging.getLogger('apscheduler').setLevel(logging.INFO if env.DEBUG else logging.WARNING)
 
 # permission verification
 GROUP = 1087968824
@@ -42,7 +40,7 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
         command = message.text
         user_id = update.effective_user.id
         user_fullname = update.effective_user.full_name
-        if only_manager and str(user_id) != env.manager:
+        if only_manager and str(user_id) != env.MANAGER:
             update.effective_message.reply_text('此命令只可由机器人的管理员使用。\n'
                                                 'This command can be only used by the bot manager.')
             logging.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
@@ -74,41 +72,13 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
     return wrapper
 
 
-# SQLITE
-def sqlite_connect():
-    global conn
-    conn = sqlite3.connect('config/rss.db', check_same_thread=False)
-
-
-def sqlite_load_all():
-    sqlite_connect()
-    c = conn.cursor()
-    c.execute('SELECT * FROM rss')
-    rows = c.fetchall()
-    conn.close()
-    return rows
-
-
-def sqlite_write(name, link, last, update=False):
-    sqlite_connect()
-    c = conn.cursor()
-    p = [last, name]
-    q = [name, link, last]
-    if update:
-        c.execute('''UPDATE rss SET last = ? WHERE name = ?;''', p)
-    else:
-        c.execute('''INSERT INTO rss('name','link','last') VALUES(?,?,?)''', q)
-    conn.commit()
-    conn.close()
-
-
 # REQUESTS
 def web_get(url):
     session = requests.Session()
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=(10, 10), proxies=env.requests_proxies, headers=env.requests_headers)
+    response = session.get(url, timeout=(10, 10), proxies=env.REQUESTS_PROXIES, headers=env.REQUESTS_HEADERS)
     content = BytesIO(response.content)
     return content
 
@@ -130,22 +100,12 @@ def feed_get(url, update=None, verbose=False):
     return rss_d
 
 
-# RSS________________________________________
-def rss_load():
-    # if the dict is not empty, empty it.
-    if bool(rss_dict):
-        rss_dict.clear()
-
-    for row in sqlite_load_all():
-        rss_dict[row[0]] = (row[1], row[2])
-
-
 @permission_required(only_manager=True)
 def cmd_rss_list(update: telegram.Update, context: telegram.ext.CallbackContext):
-    if bool(rss_dict) is False:
+    if not db.read_all():
         update.effective_message.reply_text('数据库为空')
     else:
-        for title, url_list in rss_dict.items():
+        for title, url_list in db.read_all().items():
             update.effective_message.reply_text(
                 '标题: ' + title +
                 '\nRSS 源: ' + url_list[0] +
@@ -166,24 +126,21 @@ def cmd_rss_add(update: telegram.Update, context: telegram.ext.CallbackContext):
         rss_d = feed_get(url, update, verbose=True)
     except (IndexError, requests.exceptions.RequestException):
         return
-    sqlite_write(title, url, str(rss_d.entries[0]['link']))
-    rss_load()
+    db.write(title, url, str(rss_d.entries[0]['link']))
     update.effective_message.reply_text(
         '已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
 @permission_required(only_manager=True)
 def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
-    conn = sqlite3.connect('config/rss.db')
-    c = conn.cursor()
-    q = (context.args[0],)
-    try:
-        c.execute("DELETE FROM rss WHERE name = ?", q)
-        conn.commit()
-        conn.close()
-    except sqlite3.Error as e:
-        logging.error('Sqlite error:', exc_info=e)
-    rss_load()
+    if not context.args:
+        update.effective_message.reply_text("ERROR: 请指定订阅名！")
+        return
+    name = context.args[0]
+    if not db.read(name):
+        update.effective_message.reply_text("ERROR: 没有这个订阅: " + context.args[0])
+        return
+    db.delete(name)
     update.effective_message.reply_text("已移除: " + context.args[0])
 
 
@@ -191,7 +148,7 @@ def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContex
 def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
     update.effective_message.reply_text(
         f"""[RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
-\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.delay} 秒一次。 \\(可修改\\)
+\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.DELAY} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 \n命令:
 __*/help*__ : 发送这条消息
@@ -245,7 +202,7 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
 
 def rss_monitor(context):
     update_flag = False
-    for name, (feed_url, last_url) in rss_dict.items():
+    for name, (feed_url, last_url) in db.read_all().items():
         try:
             rss_d = feed_get(feed_url)
         except IndexError:
@@ -275,32 +232,24 @@ def rss_monitor(context):
             if last_flag:
                 logging.info(f"Sending {entry['link']}...")
                 post = get_post_from_entry(entry, rss_d.feed.title)
-                post.send_message(env.chatid)
+                post.send_message(env.CHATID)
 
             if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                 last_flag = True
 
-        sqlite_write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
+        db.write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
 
-    if update_flag:
-        rss_load()  # update rss_dict
-
-
-def init_sqlite():
-    conn = sqlite3.connect('config/rss.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE rss (name text, link text, last text)''')
 
 
 def main():
     logging.info(f"RSS-to-Telegram-Bot started!\n"
-                 f"CHATID: {env.chatid}\n"
-                 f"MANAGER: {env.manager}\n"
-                 f"DELAY: {env.delay}s\n"
-                 f"T_PROXY (for Telegram): {env.telegram_proxy}\n"
-                 f"R_PROXY (for RSS): {env.requests_proxies['all'] if env.requests_proxies else ''}")
+                 f"CHATID: {env.CHATID}\n"
+                 f"MANAGER: {env.MANAGER}\n"
+                 f"DELAY: {env.DELAY}s\n"
+                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY}\n"
+                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}")
 
-    updater = Updater(token=env.token, use_context=True, request_kwargs={'proxy_url': env.telegram_proxy})
+    updater = Updater(token=env.TOKEN, use_context=True, request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
     env.bot = updater.bot
     job_queue = updater.job_queue
     dp = updater.dispatcher
@@ -322,19 +271,11 @@ def main():
     except TelegramError as e:
         logging.warning(e.message)
 
-    # try to create a database if missing
-    try:
-        init_sqlite()
-    except sqlite3.OperationalError:
-        pass
-    rss_load()
-
     rss_monitor(updater)
-    job_queue.run_repeating(rss_monitor, env.delay)
+    job_queue.run_repeating(rss_monitor, env.DELAY)
 
     updater.start_polling()
     updater.idle()
-    conn.close()
 
 
 if __name__ == '__main__':

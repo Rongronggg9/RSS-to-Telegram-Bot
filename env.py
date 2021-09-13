@@ -2,45 +2,42 @@ import os
 import telegram
 import logging
 
-if os.environ.get('TOKEN'):
-    token = os.environ['TOKEN']
-    chatid = os.environ['CHATID']
-    delay = int(os.environ['DELAY'])
-else:
-    token = "X"
-    chatid = "X"
-    delay = 120
+TOKEN = os.environ.get('TOKEN')
+CHATID = os.environ.get('CHATID')
+DELAY = int(os.environ.get('DELAY', 300))
 
-if os.environ.get('MANAGER') and os.environ['MANAGER'] != 'X':
-    manager = os.environ['MANAGER']
-else:
-    manager = chatid
+if TOKEN is None or CHATID is None:
+    logging.critical('TOKEN OR CHATID NOT SET!')
+    exit(1)
 
-if os.environ.get('T_PROXY') and os.environ['T_PROXY'] != 'X':
-    telegram_proxy = os.environ['T_PROXY']
-else:
-    telegram_proxy = ''
+MANAGER = os.environ.get('MANAGER', CHATID)
 
-if os.environ.get('R_PROXY') and os.environ['R_PROXY'] != 'X':
-    requests_proxies = {
+TELEGRAM_PROXY = os.environ.get('T_PROXY', '')
+
+if os.environ.get('R_PROXY'):
+    REQUESTS_PROXIES = {
         'all': os.environ['R_PROXY']
     }
 else:
-    requests_proxies = {}
+    REQUESTS_PROXIES = {}
 
-if os.environ.get('DEBUG', ''):
-    debug = True
+IMG_RELAY_SERVER = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
+if not IMG_RELAY_SERVER.endswith('/'):
+    IMG_RELAY_SERVER += '/'
+
+REDIS_HOST = os.environ.get('REDISHOST')
+REDIS_USER = os.environ.get('REDISUSER')
+REDIS_PORT = int(os.environ.get('REDISPORT', 6379))
+REDIS_PASSWORD = os.environ.get('REDISPASSWORD')
+REDIS_NUM = os.environ.get('REDIS_NUM')
+
+if os.environ.get('DEBUG'):
+    DEBUG = True
 else:
-    debug = False
-
-if token == "X":
-    logging.critical('TOKEN NOT SET!')
-    exit(1)
+    DEBUG = False
 
 bot = telegram.Bot  # placeholder
 
-requests_headers = {
+REQUESTS_HEADERS = {
     'user-agent': 'RSStT'
 }
-
-img_relay_server = 'https://rsstt-img-relay.rongrong.workers.dev/'

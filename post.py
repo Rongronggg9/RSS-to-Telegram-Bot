@@ -123,14 +123,14 @@ class Post:
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc(),
                                          self.title, self.feed_title, self.link, self.author)
-                    error_message.send_message(env.manager)
+                    error_message.send_message(env.MANAGER)
 
                 except Exception as e:
                     logging.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
                                          self.title, self.feed_title, self.link, self.author)
-                    error_message.send_message(env.manager)
+                    error_message.send_message(env.MANAGER)
 
             chat_ids.pop(0)
 
@@ -185,7 +185,7 @@ class Post:
 
     def _add_metadata(self):
         plain_text = self.text.get_html(plain=True)
-        if self.title and ('微博' not in self.feed_title or env.debug):
+        if self.title and ('微博' not in self.feed_title or env.DEBUG):
             title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
             similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
             logging.debug(f'{self.title} ({self.link}) is {similarity}% likely to be of no title.')

@@ -84,7 +84,7 @@ class Medium:
         if self._server_change_count >= 1:
             return False
         self._server_change_count += 1
-        self.url = env.img_relay_server + self.url
+        self.url = env.IMG_RELAY_SERVER + self.url
         return True
 
 
@@ -129,7 +129,7 @@ def get_medium_info(url):
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=(5, 5), proxies=env.requests_proxies, stream=True, headers=env.requests_headers)
+    response = session.get(url, timeout=(5, 5), proxies=env.REQUESTS_PROXIES, stream=True, headers=env.REQUESTS_HEADERS)
     size = int(response.headers.get('Content-Length', 256))
     content_type = response.headers.get('Content-Type')
 

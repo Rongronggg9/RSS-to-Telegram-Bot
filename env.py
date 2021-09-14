@@ -1,4 +1,6 @@
 import os
+from typing import Optional
+
 import telegram
 import logging
 
@@ -36,7 +38,7 @@ if os.environ.get('DEBUG'):
 else:
     DEBUG = False
 
-bot = telegram.Bot  # placeholder
+bot: Optional[telegram.Bot] = None  # placeholder
 
 REQUESTS_HEADERS = {
     'user-agent': 'RSStT'

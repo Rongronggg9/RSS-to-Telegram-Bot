@@ -1,19 +1,18 @@
 import functools
-import feedparser
 import logging
-import requests
 import telegram
-from requests.adapters import HTTPAdapter
 from telegram.error import TelegramError
 from telegram.ext import Updater, CommandHandler, Filters
 from pathlib import Path
-from io import BytesIO
 from typing import Optional
 
 import env
-from db import db
-from post import Post, get_post_from_entry
+from feed import Feed, Feeds
 
+# global var placeholder
+feeds: Optional[Feeds] = None
+
+# initial
 Path("config").mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -41,8 +40,8 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
         user_id = update.effective_user.id
         user_fullname = update.effective_user.full_name
         if only_manager and str(user_id) != env.MANAGER:
-            update.effective_message.reply_text('此命令只可由机器人的管理员使用。\n'
-                                                'This command can be only used by the bot manager.')
+            update.effective_chat.send_message('此命令只可由机器人的管理员使用。\n'
+                                               'This command can be only used by the bot manager.')
             logging.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
             return
 
@@ -52,101 +51,68 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 
         if message.chat.type in ('supergroup', 'group'):
             if only_in_private_chat:
-                update.effective_message.reply_text('此命令不允许在群聊中使用。\n'
-                                                    'This command can not be used in a group.')
+                update.effective_chat.send_message('此命令不允许在群聊中使用。\n'
+                                                   'This command can not be used in a group.')
                 logging.info(f'Refused {user_fullname} ({user_id}) to use {command} in a group chat.')
                 return
 
             user_status = update.effective_chat.get_member(user_id).status
             if user_id != GROUP and user_status not in ('administrator', 'creator'):
-                update.effective_message.reply_text('此命令只可由群管理员使用。\n'
-                                                    'This command can be only used by an administrator.')
+                update.effective_chat.send_message('此命令只可由群管理员使用。\n'
+                                                   'This command can be only used by an administrator.')
                 logging.info(
-                    f'Refused {user_fullname} ({user_id}, {user_status}) to use {command} in {message.chat.title} ({message.chat.id}).')
+                    f'Refused {user_fullname} ({user_id}, {user_status}) to use {command} '
+                    f'in {message.chat.title} ({message.chat.id}).')
                 return
             logging.info(
-                f'Allowed {user_fullname} ({user_id}, {user_status}) to use {command} in {message.chat.title} ({message.chat.id}).')
+                f'Allowed {user_fullname} ({user_id}, {user_status}) to use {command} '
+                f'in {message.chat.title} ({message.chat.id}).')
             return func(update, context, *args, **kwargs)
         return
 
     return wrapper
 
 
-# REQUESTS
-def web_get(url):
-    session = requests.Session()
-    session.mount('http://', HTTPAdapter(max_retries=1))
-    session.mount('https://', HTTPAdapter(max_retries=1))
-
-    response = session.get(url, timeout=(10, 10), proxies=env.REQUESTS_PROXIES, headers=env.REQUESTS_HEADERS)
-    content = BytesIO(response.content)
-    return content
-
-
-def feed_get(url, update=None, verbose=False):
-    # try if the url is a valid RSS feed
-    try:
-        rss_content = web_get(url)
-        rss_d = feedparser.parse(rss_content, sanitize_html=False, resolve_relative_uris=False)
-        rss_d.entries[0]['title']
-    except IndexError as e:
-        if verbose:
-            update.effective_message.reply_text('ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
-        raise e
-    except requests.exceptions.RequestException as e:
-        if verbose:
-            update.effective_message.reply_text('ERROR: 网络超时')
-        raise e
-    return rss_d
+@permission_required(only_manager=True)
+def cmd_list(update: telegram.Update, context: telegram.ext.CallbackContext):
+    empty_flags = True
+    for _feed in feeds:
+        empty_flags = False
+        update.effective_chat.send_message(f'标题: {_feed.name}\nRSS 源: {_feed.link}\n最后检查的文章: {_feed.last}')
+    if empty_flags:
+        update.effective_chat.send_message('数据库为空')
 
 
 @permission_required(only_manager=True)
-def cmd_rss_list(update: telegram.Update, context: telegram.ext.CallbackContext):
-    if not db.read_all():
-        update.effective_message.reply_text('数据库为空')
-    else:
-        for title, url_list in db.read_all().items():
-            update.effective_message.reply_text(
-                '标题: ' + title +
-                '\nRSS 源: ' + url_list[0] +
-                '\n最后检查的文章: ' + url_list[1])
-
-
-@permission_required(only_manager=True)
-def cmd_rss_add(update: telegram.Update, context: telegram.ext.CallbackContext):
+def cmd_add(update: telegram.Update, context: telegram.ext.CallbackContext):
     # try if there are 2 arguments passed
     try:
         title = context.args[0]
         url = context.args[1]
     except IndexError:
-        update.effective_message.reply_text(
-            'ERROR: 格式需要为: /add 标题 RSS')
-        raise
-    try:
-        rss_d = feed_get(url, update, verbose=True)
-    except (IndexError, requests.exceptions.RequestException):
+        update.effective_chat.send_message('ERROR: 格式需要为: /add 标题 RSS')
         return
-    db.write(title, url, str(rss_d.entries[0]['link']))
-    update.effective_message.reply_text(
-        '已添加 \n标题: %s\nRSS 源: %s' % (title, url))
+    if feeds.add_feed(name=title, link=url, uid=update.effective_chat.id):
+        update.effective_chat.send_message('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
+        logging.info(f'Added feed {url} for {update.effective_user.full_name} ({update.effective_user.id})')
 
 
 @permission_required(only_manager=True)
-def cmd_rss_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
+def cmd_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
     if not context.args:
-        update.effective_message.reply_text("ERROR: 请指定订阅名！")
+        update.effective_chat.send_message("ERROR: 请指定订阅名")
         return
     name = context.args[0]
-    if not db.read(name):
-        update.effective_message.reply_text("ERROR: 没有这个订阅: " + context.args[0])
+    if feeds.del_feed(name):
+        update.effective_chat.send_message("已移除: " + name)
+        logging.info(f'Removed feed {name} for {update.effective_user.full_name} ({update.effective_user.id})')
         return
-    db.delete(name)
-    update.effective_message.reply_text("已移除: " + context.args[0])
+    update.effective_chat.send_message("ERROR: 未能找到这个订阅名: " + name)
 
 
 @permission_required(only_manager=True)
 def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
-    update.effective_message.reply_text(
+    update.effective_chat.send_message(
         f"""[RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
 \n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.DELAY} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
@@ -166,82 +132,33 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
     # try if there are 2 arguments passed
     try:
         url = context.args[0]
-    except IndexError:
-        update.effective_message.reply_text('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
-        raise
-    try:
-        rss_d = feed_get(url, update, verbose=True)
-    except (IndexError, requests.exceptions.RequestException):
-        update.effective_message.reply_text('ERROR: 获取订阅失败')
+
+        if len(context.args) > 1 and context.args[1] == 'all':
+            start = 0
+            end = None
+        elif len(context.args) == 2:
+            start = int(context.args[1])
+            end = int(context.args[1]) + 1
+        elif len(context.args) == 3:
+            start = int(context.args[1])
+            end = int(context.args[2]) + 1
+        else:
+            start = 0
+            end = 1
+    except (IndexError, ValueError):
+        update.effective_chat.send_message('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         return
-    index1 = 0
-    index2 = 1
-    if len(context.args) > 1 and context.args[1] == 'all':
-        index1 = 0
-        index2 = None
-    elif len(context.args) == 2 and len(rss_d.entries) > int(context.args[1]):
-        index1 = int(context.args[1])
-        index2 = int(context.args[1]) + 1
-    elif len(context.args) > 2 and len(rss_d.entries) > int(context.args[1]):
-        index1 = int(context.args[1])
-        index2 = int(context.args[2]) + 1
-    # update.effective_message.reply_text(rss_d.entries[0]['link'])
-    # message.send(env.chatid, rss_d.entries[index], rss_d.feed.title, context)
-    try:
-        for entry in rss_d.entries[index1:index2]:
-            logging.info(f"Sending {entry['link']}...")
-            post = get_post_from_entry(entry, rss_d.feed.title)
-            post.send_message(update.effective_chat.id)
-    except Exception as e:
-        logging.warning(f"Sending failed:", exc_info=e)
-        update.effective_message.reply_text('ERROR: 内部错误')
-        raise
-    finally:
-        logging.info('Test finished.')
+
+    Feed(link=url).send(update.effective_chat.id, start, end)
+    logging.info('Test finished.')
 
 
-def rss_monitor(context):
-    update_flag = False
-    for name, (feed_url, last_url) in db.read_all().items():
-        try:
-            rss_d = feed_get(feed_url)
-        except IndexError:
-            logging.warning(f'Feed {feed_url} fetch failed: feed error.')
-            continue
-        except requests.exceptions.RequestException:
-            logging.warning(f'Feed {feed_url} fetch failed: network error.')
-            continue
-        except Exception as e:
-            logging.warning(f'Feed {feed_url} fetch failed: ', exc_info=e)
-            continue
-
-        if last_url == rss_d.entries[0]['link']:
-            logging.debug(f'Feed {feed_url} fetched, no new post.')
-            continue
-
-        logging.info(f'Feed {feed_url} updated!')
-        update_flag = True
-        # Workaround, avoiding deleted post causing the bot send all posts in the feed.
-        # Known issues:
-        # If a post was deleted while another post was sent between feed fetching duration,
-        #  the latter won't be sent.
-        # If your bot has stopped for too long that last sent post do not exist in current RSS feed,
-        #  all posts won't be sent and last sent post will be reset to the newest post (though not sent).
-        last_flag = False
-        for entry in rss_d.entries[::-1]:
-            if last_flag:
-                logging.info(f"Sending {entry['link']}...")
-                post = get_post_from_entry(entry, rss_d.feed.title)
-                post.send_message(env.CHATID)
-
-            if last_url == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
-                last_flag = True
-
-        db.write(name, feed_url, str(rss_d.entries[0]['link']), True)  # update db
-
+def rss_monitor(updater):
+    feeds.monitor()
 
 
 def main():
+    global feeds
     logging.info(f"RSS-to-Telegram-Bot started!\n"
                  f"CHATID: {env.CHATID}\n"
                  f"MANAGER: {env.MANAGER}\n"
@@ -255,12 +172,12 @@ def main():
     job_queue = updater.job_queue
     dp = updater.dispatcher
 
-    dp.add_handler(CommandHandler("add", cmd_rss_add, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("add", cmd_add, filters=~Filters.update.edited_message))
     dp.add_handler(CommandHandler("start", cmd_help, filters=~Filters.update.edited_message))
     dp.add_handler(CommandHandler("help", cmd_help, filters=~Filters.update.edited_message))
     dp.add_handler(CommandHandler("test", cmd_test, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("list", cmd_rss_list, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("remove", cmd_rss_remove, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("list", cmd_list, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("remove", cmd_remove, filters=~Filters.update.edited_message))
 
     commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
                 telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),
@@ -271,6 +188,8 @@ def main():
         updater.bot.set_my_commands(commands)
     except TelegramError as e:
         logging.warning(e.message)
+
+    feeds = Feeds()
 
     rss_monitor(updater)
     job_queue.run_repeating(rss_monitor, env.DELAY)

@@ -35,8 +35,10 @@ class Message:
             self.retries += 1
             Message.retry_after = datetime.datetime.utcnow() + datetime.timedelta(seconds=e.retry_after)
             self.send(chat_id)
-        except telegram.error.TimedOut as e:
-            logging.debug('Telegram Bot API timed out. Retrying...')
+        except telegram.error.BadRequest as e:
+            raise e
+        except telegram.error.NetworkError as e:
+            logging.warning(f'Network error({e.message}). Retrying...')
             self.retries += 1
             time.sleep(1)
             self.send(chat_id)

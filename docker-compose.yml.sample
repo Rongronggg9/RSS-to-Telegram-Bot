@@ -4,9 +4,10 @@
 # 以后如果需要更新/停止/重启等，都在这个目录里操作
 # <------ 命令 ------>
 # 启动: docker-compose up -d
-# 结束：docker-compose down
+# 结束：docker-compose down -v
 # 修改配置后更新配置: 先结束再启动
-# 更新到最新版本: 同上
+# 更新到最新版本: 先结束, 再 docker-compose pull
+# 查看日志：docker logs rsstt
 
 version: '3.6'
 

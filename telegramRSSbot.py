@@ -23,13 +23,18 @@ Path("config").mkdir(parents=True, exist_ok=True)
 class APSCFilter(logging.Filter):
     def __init__(self):
         super().__init__()
-        self.count = 0
+        self.count = -3  # first 3 times muted
 
     def filter(self, record: logging.LogRecord) -> bool:
         if 'skipped: maximum number of running instances reached' in record.msg:
             self.count += 1
             if self.count % 10 == 0:
-                env.bot.send_message(env.MANAGER, '程序可能出现问题，请记录日志并重启:\n\n' + record.msg)
+                env.bot.send_message(
+                    env.MANAGER, 'RSS 更新检查发生冲突，程序可能出现问题，请记录日志并重启。\n'
+                                 '（这也可能是由过短的检查间隔和过多的订阅引起，请适度调整后观察是否还有错误）\n\n'
+                                 + (record.msg % record.args if record.args else record.msg))
+        elif ' executed successfully' in record.msg:
+            self.count = -3
         return True
 
 

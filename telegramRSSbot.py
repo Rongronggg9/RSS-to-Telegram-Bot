@@ -36,8 +36,8 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 
     @functools.wraps(func)
     def wrapper(update: telegram.Update, context: Optional[telegram.ext.CallbackContext] = None, *args, **kwargs):
-        message = update.message
-        command = message.text
+        message = update.effective_message
+        command = message.text if message.text else '(no command, file message)'
         user_id = update.effective_user.id
         user_fullname = update.effective_user.full_name
         if only_manager and str(user_id) != env.MANAGER:

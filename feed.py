@@ -109,7 +109,7 @@ class Feeds:
         if rss_d is None:
             return None
         last = str(rss_d.entries[0]['link'])
-        fid = max(self._feeds.keys()) + 1 if self._feeds else 1
+        fid = self.current_fid
         feed = Feed(fid=fid, name=name, link=link, last=last)
 
         # acquire w lock
@@ -132,6 +132,11 @@ class Feeds:
 
         logging.info(f'Removed feed {name}.')
         return feed_to_delete
+
+    @property
+    @fasteners.lock.read_locked
+    def current_fid(self):
+        return max(self._feeds.keys()) + 1 if self._feeds else 1
 
     @fasteners.lock.read_locked
     def get_user_feeds(self) -> Optional[tuple]:

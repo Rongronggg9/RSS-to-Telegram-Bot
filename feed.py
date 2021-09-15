@@ -109,7 +109,7 @@ class Feeds:
         if rss_d is None:
             return None
         last = str(rss_d.entries[0]['link'])
-        fid = max(self._feeds.keys()) + 1
+        fid = max(self._feeds.keys()) + 1 if self._feeds else 1
         feed = Feed(fid=fid, name=name, link=link, last=last)
 
         # acquire w lock

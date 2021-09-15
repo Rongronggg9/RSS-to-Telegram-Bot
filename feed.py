@@ -84,7 +84,7 @@ class Feeds:
                        for fid, (name, (feed_url, last_url)) in enumerate(db.read_all().items())}
         self._lock = fasteners.ReaderWriterLock()
         with open('opml_template.opml', 'r') as template:
-            self._opml_template = template
+            self._opml_template = template.read()
 
     @fasteners.lock.read_locked
     def monitor(self):

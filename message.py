@@ -1,5 +1,4 @@
 import telegram.error
-import datetime
 import time
 import logging
 from typing import List, Union, Optional, Tuple
@@ -9,7 +8,7 @@ import env
 
 
 class Message:
-    retry_after: datetime.datetime = datetime.datetime.min
+    retry_after: Union[float, int] = 0.0
 
     def __init__(self,
                  text: Optional[str] = None,
@@ -24,7 +23,7 @@ class Message:
         if self.retries >= 3:
             logging.warning('Retried too many times! Message dropped!')
             raise OverflowError
-        sleep_time = (Message.retry_after - datetime.datetime.utcnow()).total_seconds()
+        sleep_time = Message.retry_after - time.time()
         if sleep_time > 0:
             time.sleep(sleep_time + 1)
         try:
@@ -33,7 +32,7 @@ class Message:
         except telegram.error.RetryAfter as e:  # exceed flood control
             logging.debug(e.message)
             self.retries += 1
-            Message.retry_after = datetime.datetime.utcnow() + datetime.timedelta(seconds=e.retry_after)
+            Message.retry_after = time.time() + e.retry_after
             self.send(chat_id)
         except telegram.error.BadRequest as e:
             raise e

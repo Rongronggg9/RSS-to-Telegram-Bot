@@ -190,7 +190,9 @@ class Feeds:
         return self._feeds[item]
 
 
-def web_get(url: str, timeout: int = 15) -> BytesIO:
+def web_get(url: str, timeout: Optional[int] = 15) -> BytesIO:
+    if timeout is None:
+        timeout = 15
     session = requests.Session()
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))

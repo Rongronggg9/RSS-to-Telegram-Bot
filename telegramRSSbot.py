@@ -1,6 +1,8 @@
 import functools
 import logging
+import socket
 import telegram
+from telegram.vendor.ptb_urllib3 import urllib3
 from telegram.error import TelegramError
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 from pathlib import Path
@@ -16,14 +18,29 @@ feeds: Optional[Feeds] = None
 # initial
 Path("config").mkdir(parents=True, exist_ok=True)
 
+
+# logging
+class APSCFilter(logging.Filter):
+    def __init__(self):
+        super().__init__()
+        self.count = 0
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if 'skipped: maximum number of running instances reached' in record.msg:
+            self.count += 1
+            if self.count % 10 == 0:
+                env.bot.send_message(env.MANAGER, '程序可能出现问题，请记录日志并重启:\n\n' + record.msg)
+        return True
+
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.DEBUG if env.DEBUG else logging.INFO)
-
 logging.getLogger("telegram").setLevel(logging.INFO)
 logging.getLogger("requests").setLevel(logging.ERROR if env.DEBUG else logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.ERROR if env.DEBUG else logging.CRITICAL)
 logging.getLogger('apscheduler').setLevel(logging.INFO if env.DEBUG else logging.WARNING)
+logging.getLogger('apscheduler.scheduler').addFilter(APSCFilter())
 
 # permission verification
 GROUP = 1087968824
@@ -159,6 +176,7 @@ def cmd_import(update: telegram.Update, context: telegram.ext.CallbackContext):
                                         reply_markup=telegram.ForceReply(selective=True,
                                                                          input_field_placeholder='OPML'))
 
+
 @permission_required(only_manager=True)
 def cmd_export(update: telegram.Update, context: telegram.ext.CallbackContext):
     opml_file = feeds.export_opml()
@@ -197,8 +215,17 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
     update.effective_message.reply_html(import_result, quote=True)
 
 
-def rss_monitor(updater):
+def rss_monitor(context: telegram.ext.CallbackContext = None):
     feeds.monitor()
+
+
+def error_handler(update: object, context: telegram.ext.CallbackContext):
+    try:
+        raise context.error
+    except (socket.timeout, urllib3.exceptions.HTTPError) as e:
+        logging.error('A uncaught Network error occured: ' + str(e))
+    except Exception as e:
+        logging.error('No error handlers are registered, logging exception.', exc_info=e)
 
 
 def main():
@@ -236,6 +263,7 @@ def main():
     dp.add_handler(MessageHandler(callback=opml_import, run_async=True,
                                   filters=Filters.document & ~Filters.update.edited_message & (
                                           Filters.reply | Filters.chat_type.private)))
+    dp.add_error_handler(error_handler, run_async=True)
 
     commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
                 telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),
@@ -256,7 +284,7 @@ def main():
 
     updater.start_polling()
     job_queue.run_repeating(rss_monitor, env.DELAY)
-    rss_monitor(updater)
+    rss_monitor()
     updater.idle()
 
 

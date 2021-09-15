@@ -159,7 +159,7 @@ def cmd_import(update: telegram.Update, context: telegram.ext.CallbackContext):
                                         reply_markup=telegram.ForceReply(selective=True,
                                                                          input_field_placeholder='OPML'))
 
-
+@permission_required(only_manager=True)
 def cmd_export(update: telegram.Update, context: telegram.ext.CallbackContext):
     opml_file = feeds.export_opml()
     update.effective_message.reply_document(opml_file,

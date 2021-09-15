@@ -2,9 +2,10 @@ import functools
 import logging
 import telegram
 from telegram.error import TelegramError
-from telegram.ext import Updater, CommandHandler, Filters
+from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
 
 import env
 from feed import Feed, Feeds
@@ -40,8 +41,8 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
         user_id = update.effective_user.id
         user_fullname = update.effective_user.full_name
         if only_manager and str(user_id) != env.MANAGER:
-            update.effective_chat.send_message('此命令只可由机器人的管理员使用。\n'
-                                               'This command can be only used by the bot manager.')
+            update.effective_message.reply_text('此命令只可由机器人的管理员使用。\n'
+                                                'This command can be only used by the bot manager.')
             logging.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
             return
 
@@ -51,15 +52,16 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 
         if message.chat.type in ('supergroup', 'group'):
             if only_in_private_chat:
-                update.effective_chat.send_message('此命令不允许在群聊中使用。\n'
-                                                   'This command can not be used in a group.')
-                logging.info(f'Refused {user_fullname} ({user_id}) to use {command} in a group chat.')
+                update.effective_message.reply_text('此命令不允许在群聊中使用。\n'
+                                                    'This command can not be used in a group.')
+                logging.info(f'Refused {user_fullname} ({user_id}) to use {command} in '
+                             f'{message.chat.title} ({message.chat.id}).')
                 return
 
             user_status = update.effective_chat.get_member(user_id).status
             if user_id != GROUP and user_status not in ('administrator', 'creator'):
-                update.effective_chat.send_message('此命令只可由群管理员使用。\n'
-                                                   'This command can be only used by an administrator.')
+                update.effective_message.reply_text('此命令只可由群管理员使用。\n'
+                                                    'This command can be only used by an administrator.')
                 logging.info(
                     f'Refused {user_fullname} ({user_id}, {user_status}) to use {command} '
                     f'in {message.chat.title} ({message.chat.id}).')
@@ -76,11 +78,11 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 @permission_required(only_manager=True)
 def cmd_list(update: telegram.Update, context: telegram.ext.CallbackContext):
     empty_flags = True
-    for _feed in feeds:
+    for feed in feeds:
         empty_flags = False
-        update.effective_chat.send_message(f'标题: {_feed.name}\nRSS 源: {_feed.link}\n最后检查的文章: {_feed.last}')
+        update.effective_message.reply_text(f'标题: {feed.name}\nRSS 源: {feed.link}\n最后检查的文章: {feed.last}')
     if empty_flags:
-        update.effective_chat.send_message('数据库为空')
+        update.effective_message.reply_text('数据库为空')
 
 
 @permission_required(only_manager=True)
@@ -90,29 +92,27 @@ def cmd_add(update: telegram.Update, context: telegram.ext.CallbackContext):
         title = context.args[0]
         url = context.args[1]
     except IndexError:
-        update.effective_chat.send_message('ERROR: 格式需要为: /add 标题 RSS')
+        update.effective_message.reply_text('ERROR: 格式需要为: /add 标题 RSS')
         return
     if feeds.add_feed(name=title, link=url, uid=update.effective_chat.id):
-        update.effective_chat.send_message('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
-        logging.info(f'Added feed {url} for {update.effective_user.full_name} ({update.effective_user.id})')
+        update.effective_message.reply_text('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
 @permission_required(only_manager=True)
 def cmd_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
     if not context.args:
-        update.effective_chat.send_message("ERROR: 请指定订阅名")
+        update.effective_message.reply_text("ERROR: 请指定订阅名")
         return
     name = context.args[0]
     if feeds.del_feed(name):
-        update.effective_chat.send_message("已移除: " + name)
-        logging.info(f'Removed feed {name} for {update.effective_user.full_name} ({update.effective_user.id})')
+        update.effective_message.reply_text("已移除: " + name)
         return
-    update.effective_chat.send_message("ERROR: 未能找到这个订阅名: " + name)
+    update.effective_message.reply_text("ERROR: 未能找到这个订阅名: " + name)
 
 
 @permission_required(only_manager=True)
 def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
-    update.effective_chat.send_message(
+    update.effective_message.reply_text(
         f"""[RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
 \n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.DELAY} 秒一次。 \\(可修改\\)
 \n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
@@ -146,11 +146,53 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
             start = 0
             end = 1
     except (IndexError, ValueError):
-        update.effective_chat.send_message('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
+        update.effective_message.reply_text('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         return
 
     Feed(link=url).send(update.effective_chat.id, start, end)
     logging.info('Test finished.')
+
+
+@permission_required(only_manager=True)
+def cmd_import(update: telegram.Update, context: telegram.ext.CallbackContext):
+    update.effective_message.reply_text('请发送需要导入的 OPML 文档',
+                                        reply_markup=telegram.ForceReply(selective=True,
+                                                                         input_field_placeholder='OPML'))
+
+
+def cmd_export(update: telegram.Update, context: telegram.ext.CallbackContext):
+    opml_file = feeds.export_opml()
+    update.effective_message.reply_document(opml_file,
+                                            filename=f"RSStT_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.opml")
+
+
+@permission_required(only_manager=True)
+def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
+    if update.effective_chat.type != 'private' and update.effective_message.reply_to_message.from_user.id != env.bot.id:
+        return
+    try:
+        opml_file = update.effective_message.document.get_file(timeout=7).download_as_bytearray()
+    except telegram.error.TelegramError as e:
+        update.effective_message.reply_text('ERROR: 获取文件失败', quote=True)
+        logging.warning(f'Failed to get opml file: ' + e.message)
+        return
+    update.effective_message.reply_text('正在处理中...\n'
+                                        '如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待', quote=True)
+    logging.info(f'Got an opml file.')
+    res = feeds.import_opml(opml_file)
+    if res is None:
+        update.effective_message.reply_text('ERROR: 解析失败或文档不含订阅', quote=True)
+        return
+
+    valid = res['valid']
+    invalid = res['invalid']
+    import_result = '<b>导入结果</b>\n\n' \
+                    + ('导入成功：\n' if valid else '') \
+                    + '\n'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in valid) \
+                    + ('\n\n' if valid and invalid else '') \
+                    + ('导入失败：\n' if invalid else '') \
+                    + '\n'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in invalid)
+    update.effective_message.reply_html(import_result, quote=True)
 
 
 def rss_monitor(updater):
@@ -167,34 +209,50 @@ def main():
                  f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}\n"
                  f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}")
 
-    updater = Updater(token=env.TOKEN, use_context=True, request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
+    updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
+                                            request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
     env.bot = updater.bot
-    job_queue = updater.job_queue
-    dp = updater.dispatcher
+    job_queue: telegram.ext.JobQueue = updater.job_queue
+    dp: telegram.ext.Dispatcher = updater.dispatcher
 
-    dp.add_handler(CommandHandler("add", cmd_add, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("start", cmd_help, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("help", cmd_help, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("test", cmd_test, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("list", cmd_list, filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("remove", cmd_remove, filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("add", callback=cmd_add, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("start", callback=cmd_help, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("help", callback=cmd_help, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("test", callback=cmd_test, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("list", callback=cmd_list, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("remove", callback=cmd_remove, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("import", callback=cmd_import, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("export", callback=cmd_export, run_async=True,
+                                  filters=~Filters.update.edited_message))
+    dp.add_handler(MessageHandler(callback=opml_import, run_async=True,
+                                  filters=Filters.document & ~Filters.update.edited_message & (
+                                          Filters.reply | Filters.chat_type.private)))
 
     commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
                 telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),
                 telegram.BotCommand(command="list", description="列出数据库中的所有订阅，包括它们的标题和 RSS 源"),
                 telegram.BotCommand(command="test", description="+RSS 编号(可选) : 从 RSS 源处获取一条 post"),
+                telegram.BotCommand(command="import", description="导入订阅"),
+                telegram.BotCommand(command="export", description="导出订阅"),
                 telegram.BotCommand(command="help", description="发送这条消息")]
     try:
         updater.bot.set_my_commands(commands)
     except TelegramError as e:
-        logging.warning(e.message)
+        logging.warning('Set command error: ' + e.message)
 
     feeds = Feeds()
 
-    rss_monitor(updater)
     job_queue.run_repeating(rss_monitor, env.DELAY)
 
     updater.start_polling()
+    rss_monitor(updater)
     updater.idle()
 
 

@@ -1,9 +1,14 @@
+import fasteners
 import feedparser
+import listparser
 import requests
 import logging
+from bs4 import BeautifulSoup
+from bs4.element import Tag
 from requests.adapters import HTTPAdapter
 from io import BytesIO
-from typing import Optional
+from typing import Optional, Dict, Union, Iterator
+from datetime import datetime
 
 import env
 from db import db
@@ -77,10 +82,15 @@ class Feeds:
     def __init__(self):
         self._feeds = {fid: Feed(fid=fid, name=name, link=feed_url, last=last_url)
                        for fid, (name, (feed_url, last_url)) in enumerate(db.read_all().items())}
+        self._lock = fasteners.ReaderWriterLock()
+        with open('opml_template.opml', 'r') as template:
+            self._opml_template = template
 
+    @fasteners.lock.read_locked
     def monitor(self):
         any(map(lambda feed: feed.monitor(), self._feeds.values()))
 
+    @fasteners.lock.read_locked
     def find(self, name: Optional[str] = None, link: Optional[str] = None, strict: bool = True) -> Optional[Feed]:
         if not (name or link):
             return
@@ -90,54 +100,101 @@ class Feeds:
                 return feed
         return None
 
-    def add_feed(self, name, link, uid: Optional[int] = None):
+    def add_feed(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10):
         if self.find(name, link, strict=False):
-            env.bot.send_message(uid, 'ERROR: 订阅名已被使用或 RSS 源已订阅')
-            return
-        rss_d = feed_get(link, uid=uid)
+            env.bot.send_message(uid, 'ERROR: 订阅名已被使用或 RSS 源已订阅') if uid else None
+            logging.warning(f'Refused to add an existing feed: {name} ({link})')
+            return None
+        rss_d = feed_get(link, uid=uid, timeout=timeout)
         if rss_d is None:
             return None
         last = str(rss_d.entries[0]['link'])
         fid = max(self._feeds.keys()) + 1
-        _feed = Feed(fid=fid, name=name, link=link, last=last)
-        self._feeds[fid] = _feed
-        db.write(name, link, last)
-        return _feed
+        feed = Feed(fid=fid, name=name, link=link, last=last)
+
+        # acquire w lock
+        with self._lock.write_lock():
+            self._feeds[fid] = feed
+            db.write(name, link, last)
+
+        logging.info(f'Added feed {link}.')
+        return feed
 
     def del_feed(self, name):
         feed_to_delete = self.find(name)
         if feed_to_delete is None:
             return None
-        self._feeds.pop(feed_to_delete.fid)
-        db.delete(name)
+
+        # acquire w lock
+        with self._lock.write_lock():
+            self._feeds.pop(feed_to_delete.fid)
+            db.delete(name)
+
+        logging.info(f'Removed feed {name}.')
         return feed_to_delete
 
+    @fasteners.lock.read_locked
     def get_user_feeds(self) -> Optional[tuple]:
         if not self._feeds:
             return None
         else:
             return tuple(self._feeds)
 
-    def __iter__(self):
+    def import_opml(self, opml_file: Union[bytearray, bytes]) -> Optional[Dict[str, list]]:
+        valid_feeds = []
+        invalid_feeds = []
+        opml_d = listparser.parse(opml_file.decode())
+        if not opml_d.feeds:
+            return None
+        for _feed in opml_d.feeds:
+            if not _feed.title:
+                _feed.title = '不支持无标题订阅！'
+                invalid_feeds.append(_feed)
+                continue
+            _feed.title = _feed.title.replace(' ', '_')
+
+            # do not need to acquire lock because add_feed will acquire one
+            successful = self.add_feed(name=_feed.title, link=_feed.url, timeout=5)
+
+            valid_feeds.append(_feed) if successful else invalid_feeds.append(_feed)
+        logging.info('Imported feed(s).')
+        return {'valid': valid_feeds, 'invalid': invalid_feeds}
+
+    @fasteners.lock.read_locked
+    def export_opml(self) -> bytes:
+        opml = BeautifulSoup(self._opml_template, 'lxml-xml')
+        create_time = Tag(name='dateCreated')
+        create_time.string = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S UTC')
+        opml.head.append(create_time)
+        for feed in self:
+            outline = Tag(name='outline', attrs={'text': feed.name, 'xmlUrl': feed.link})
+            opml.body.append(outline)
+        logging.info('Exported feed(s).')
+        return opml.prettify().encode()
+
+    @fasteners.lock.read_locked
+    def __iter__(self) -> Iterator[Feed]:
         return iter(self._feeds.values())
 
-    def __getitem__(self, item):
+    @fasteners.lock.read_locked
+    def __getitem__(self, item) -> Feed:
         return self._feeds[item]
 
 
-def web_get(url: str) -> BytesIO:
+def web_get(url: str, timeout: int = 15) -> BytesIO:
     session = requests.Session()
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=(10, 10), proxies=env.REQUESTS_PROXIES, headers=env.REQUESTS_HEADERS)
+    response = session.get(url, timeout=timeout, proxies=env.REQUESTS_PROXIES,
+                           headers=env.REQUESTS_HEADERS)
     content = BytesIO(response.content)
     return content
 
 
-def feed_get(url: str, uid: Optional[int] = None):
+def feed_get(url: str, uid: Optional[int] = None, timeout: Optional[int] = None):
     try:
-        rss_content = web_get(url)
+        rss_content = web_get(url, timeout=timeout)
         rss_d = feedparser.parse(rss_content, sanitize_html=False, resolve_relative_uris=False)
         _ = rss_d.entries[0]['title']  # try if the url is a valid RSS feed
     except IndexError:

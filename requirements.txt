@@ -6,3 +6,6 @@ requests[socks]==2.26.0
 fuzzywuzzy==0.18.0
 emoji==1.4.2
 redis==3.5.3
+listparser==0.18
+lxml==4.6.3
+fasteners==0.16.3

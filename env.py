@@ -1,8 +1,7 @@
 import os
-from typing import Optional
-
 import telegram
 import logging
+from typing import Optional
 
 TOKEN = os.environ.get('TOKEN')
 CHATID = os.environ.get('CHATID')

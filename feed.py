@@ -161,14 +161,18 @@ class Feeds:
         return {'valid': valid_feeds, 'invalid': invalid_feeds}
 
     @fasteners.lock.read_locked
-    def export_opml(self) -> bytes:
+    def export_opml(self) -> Optional[bytes]:
         opml = BeautifulSoup(self._opml_template, 'lxml-xml')
         create_time = Tag(name='dateCreated')
         create_time.string = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S UTC')
         opml.head.append(create_time)
+        empty_flags = True
         for feed in self:
+            empty_flags = False
             outline = Tag(name='outline', attrs={'text': feed.name, 'xmlUrl': feed.link})
             opml.body.append(outline)
+        if empty_flags:
+            return None
         logging.info('Exported feed(s).')
         return opml.prettify().encode()
 

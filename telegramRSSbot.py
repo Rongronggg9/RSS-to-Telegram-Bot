@@ -162,6 +162,8 @@ def cmd_import(update: telegram.Update, context: telegram.ext.CallbackContext):
 @permission_required(only_manager=True)
 def cmd_export(update: telegram.Update, context: telegram.ext.CallbackContext):
     opml_file = feeds.export_opml()
+    if opml_file is None:
+        update.effective_message.reply_text('数据库为空')
     update.effective_message.reply_document(opml_file,
                                             filename=f"RSStT_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.opml")
 

@@ -1,0 +1,41 @@
+# 请先确保依赖 Docker 和 Docker Compose 均已安装
+# 将本文件放到一个你喜欢的目录里，进入这个目录
+# 如果本文件的文件名不是 docker-compose.yml, 请复制一份并改名后再修改配置并启动
+# 以后如果需要更新/停止/重启等，都在这个目录里操作
+# <------ 命令 ------>
+# 启动: docker-compose up -d
+# 结束：docker-compose down
+# 修改配置后更新配置: 先结束再启动
+# 更新到最新版本: 同上
+
+version: '3.6'
+
+services:
+  main:
+    image: rongronggg9/rss-to-telegram  # 若要切换到 dev 分支，请替换为：rongronggg9/rss-to-telegram:dev
+    container_name: rsstt  # 如果您需要启动多个实例，请复制此文件到另外的文件夹，并修改此名字为唯一的名字
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+    environment:
+      - TOKEN=1234567890:A1BCd2EF3gH45IJK6lMN7oPqr8ST9UvWX0Yz0  # 替换为你在 @BotFather 申请到的 token
+      - CHATID=1234567890  # 替换为你在 @userinfobot 获取到的 user id，或需要推送订阅的频道的用户名
+      - MANAGER=1234567890  # 替换为你的 user id
+      - DELAY=300  # 订阅更新检查间隔（单位：秒）
+
+      # <------ 以下为可选参数，取消注释（删除行首的空格）并对应修改来启用它们 ------> #
+#      - T_PROXY=socks5h://host.docker.internal:1080  # Telegram Bot API 使用的代理，用 host.docker.internal 代替 localhost
+#      - R_PROXY=socks5h://host.docker.internal:1080  # 获取 RSS 订阅使用的代理， 用 host.docker.internal 代替 localhost
+#      - DEBUG=1  # 若要开启 debug 日志输出，请取消注释该行
+
+      # <------ 若不使用 redis 而使用 sqlite，请将此行以下全部注释，注意数据不会被自动迁移 ------> #
+      - REDISHOST=redis
+    depends_on:
+      - redis
+  redis:
+    image: redis:alpine
+    container_name: rsstt_redis  # 如果您需要启动多个实例，请复制此文件到另外的文件夹，并修改此名字为唯一的名字
+    restart: unless-stopped
+    command: redis-server --appendonly yes --appendfilename "redis_db.aof" --appendfsync everysec --no-appendfsync-on-rewrite no --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb --aof-load-truncated yes
+    volumes:
+      - ./config:/data

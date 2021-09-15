@@ -247,13 +247,15 @@ def main():
     try:
         updater.bot.set_my_commands(commands)
     except TelegramError as e:
+        if e.message == 'Unauthorized':
+            logging.critical('TELEGRAM BOT TOKEN INVALID! PLEASE CHECK YOUR SETTINGS!')
+            exit(1)
         logging.warning('Set command error: ' + e.message)
 
     feeds = Feeds()
 
-    job_queue.run_repeating(rss_monitor, env.DELAY)
-
     updater.start_polling()
+    job_queue.run_repeating(rss_monitor, env.DELAY)
     rss_monitor(updater)
     updater.idle()
 

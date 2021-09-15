@@ -8,7 +8,7 @@ CHATID = os.environ.get('CHATID')
 DELAY = int(os.environ.get('DELAY', 300))
 
 if TOKEN is None or CHATID is None:
-    logging.critical('TOKEN OR CHATID NOT SET!')
+    logging.critical('TOKEN OR CHATID NOT SET! PLEASE CHECK YOUR SETTINGS!')
     exit(1)
 
 MANAGER = os.environ.get('MANAGER', CHATID)
@@ -27,10 +27,10 @@ if not IMG_RELAY_SERVER.endswith('/'):
     IMG_RELAY_SERVER += '/'
 
 REDIS_HOST = os.environ.get('REDISHOST')
-REDIS_USER = os.environ.get('REDISUSER')
 REDIS_PORT = int(os.environ.get('REDISPORT', 6379))
+REDIS_USER = os.environ.get('REDISUSER')
 REDIS_PASSWORD = os.environ.get('REDISPASSWORD')
-REDIS_NUM = os.environ.get('REDIS_NUM')
+REDIS_NUM = os.environ.get('REDIS_NUM', 0)
 
 if os.environ.get('DEBUG'):
     DEBUG = True

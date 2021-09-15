@@ -70,10 +70,10 @@ class Post:
         self.retries = 0
         xml = xml.replace('\n', '')
         xml = emojify(xml)
-        self.soup = BeautifulSoup(xml, 'html.parser')
+        self.soup = BeautifulSoup(xml, 'lxml')
         self.media: Media = Media()
         self.text = Text(self._get_item(self.soup))
-        self.title = emojify(BeautifulSoup(title, 'html.parser').get_text(strip=True))
+        self.title = emojify(BeautifulSoup(title, 'lxml').get_text(strip=True))
         self.feed_title = feed_title
         self.link = link
         self.author = author

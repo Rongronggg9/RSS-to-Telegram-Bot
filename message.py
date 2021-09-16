@@ -9,6 +9,7 @@ import env
 
 
 class Message:
+    no_retry = False
     _lock = fasteners.ReaderWriterLock()
 
     def __init__(self,
@@ -20,7 +21,7 @@ class Message:
         self.parse_mode = parse_mode
         self.retries = 0
 
-    def send(self, chat_id: Union[str, int]):
+    def send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         if self.no_retry and self.retries >= 1:
             logging.warning('Message dropped: this message was configured not to retry.')
             return
@@ -31,7 +32,7 @@ class Message:
             raise OverflowError
 
         try:
-            self._send(chat_id)
+            self._send(chat_id, reply_to_msg_id)
         except telegram.error.RetryAfter as e:  # exceed flood control
             logging.warning(e.message)
             self.retries += 1
@@ -50,38 +51,47 @@ class Message:
             time.sleep(1)
             self.send(chat_id)
 
-    def _send(self, chat_id: Union[str, int]):
+    def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         pass
 
 
 class TextMsg(Message):
     @fasteners.lock.read_locked
-    def _send(self, chat_id: Union[str, int]):
-        env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode, disable_web_page_preview=True)
+    def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+        env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode, disable_web_page_preview=True,
+                             reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class PhotoMsg(Message):
     @fasteners.lock.read_locked
-    def _send(self, chat_id: Union[str, int]):
-        env.bot.send_photo(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode)
+    def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+        env.bot.send_photo(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode,
+                           reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class VideoMsg(Message):
     @fasteners.lock.read_locked
-    def _send(self, chat_id: Union[str, int]):
-        env.bot.send_video(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode)
+    def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+        env.bot.send_video(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode,
+                           reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class AnimationMsg(Message):
     @fasteners.lock.read_locked
-    def _send(self, chat_id: Union[str, int]):
-        env.bot.send_animation(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode)
+    def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+        env.bot.send_animation(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode,
+                               reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class MediaGroupMsg(Message):
     @fasteners.lock.read_locked
-    def _send(self, chat_id: Union[str, int]):
+    def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         media_list = list(map(lambda m: m.telegramize(), self.media))
         media_list[0].caption = self.text
         media_list[0].parse_mode = self.parse_mode
-        env.bot.send_media_group(chat_id, media_list)
+        env.bot.send_media_group(chat_id, media_list,
+                                 reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
+
+
+class BotServiceMsg(TextMsg):
+    no_retry = True

@@ -58,7 +58,8 @@ class Post:
                  feed_title: Optional[str] = None,
                  link: Optional[str] = None,
                  author: Optional[str] = None,
-                 plain: bool = False):
+                 plain: bool = False,
+                 service_msg: bool = False):
         """
         :param xml: post content (xml or html)
         :param title: post title
@@ -73,16 +74,19 @@ class Post:
         self.soup = BeautifulSoup(xml, 'lxml')
         self.media: Media = Media()
         self.text = Text(self._get_item(self.soup))
-        self.title = emojify(BeautifulSoup(title, 'lxml').get_text(strip=True))
+        self.service_msg = service_msg
+        self.messages: Optional[List[message.Message]] = None
+        self.origin_text = self.text.copy()
+        if plain:
+            return
+        self.title = emojify(BeautifulSoup(title, 'lxml').get_text(strip=True)) if title else None
         self.feed_title = feed_title
         self.link = link
         self.author = author
-        self.messages: Optional[List[message.Message]] = None
-        self.origin_text = self.text.copy()
         self._add_metadata()
         self._add_invalid_media()
 
-    def send_message(self, chat_ids: Union[List[Union[str, int]], str, int]):
+    def send_message(self, chat_ids: Union[List[Union[str, int]], str, int], reply_to_msg_id: int = None):
         if type(chat_ids) is not list:
             chat_ids = [chat_ids]
         if not self.messages:
@@ -94,7 +98,7 @@ class Post:
             user_success_count = 0
             for msg in self.messages:
                 try:
-                    msg.send(chat_id)
+                    msg.send(chat_id, reply_to_msg_id)
                     user_success_count += 1
                     tot_success_count += 1
                 except telegram.error.BadRequest as e:
@@ -139,9 +143,15 @@ class Post:
         self._add_metadata()
 
     def generate_message(self):
+        self.messages = []
+
+        # service msg
+        if self.service_msg:
+            self.messages = [message.BotServiceMsg(text) for text in self.get_split_html(4096)]
+            return
+
         media_tuple = tuple(self.media.get_valid_media())
         media_msg_count = len(media_tuple)
-        self.messages = []
 
         # only text
         if not media_tuple:

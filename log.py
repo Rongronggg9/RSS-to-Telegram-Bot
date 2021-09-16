@@ -31,7 +31,7 @@ class APSCFilter(logging.Filter):
                                  + (record.msg % record.args if record.args else record.msg)
                 )
         elif ' executed successfully' in record.msg:
-            self.count = -3  # only >= 4 concective failures lead to a manager warning
+            self.count = -3  # only >= 4 consecutive failures lead to a manager warning
         return True
 
 

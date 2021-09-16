@@ -210,15 +210,15 @@ def error_handler(update: object, context: telegram.ext.CallbackContext):
     try:
         raise context.error
     except telegram.error.BadRequest as e:
-        logger.error('A uncaught TBA error occured:', exc_info=e)
+        logger.error('A uncaught TBA error occurred:', exc_info=e)
     except (telegram.error.NetworkError, timeout, HTTPError) as e:
-        logger.error('A uncaught Network error occured: ' + str(e))
+        logger.error('A uncaught Network error occurred: ' + str(e))
     except telegram.error.Conflict as e:
         conflictCount += 1
         logger.warning('Detected getUpdates conflict error.\n'
                        'If you run this robot on railway.app, this error (<10 times) should be normal.')
         if conflictCount >= 25:
-            logger.critical('TOO MUCH GETUPDATES CONFLICT, PLEASE MAKE SURE THAT ONLY ONE BOT INSTANTCE IS RUNNING!',
+            logger.critical('TOO MUCH GETUPDATES CONFLICT, PLEASE MAKE SURE THAT ONLY ONE BOT INSTANCE IS RUNNING!',
                             exc_info=e)
             exit(1)
     except Exception as e:

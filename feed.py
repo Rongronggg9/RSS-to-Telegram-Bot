@@ -50,6 +50,8 @@ class Feed:
             if self.last == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
                 last_flag = True
 
+        if not last_flag:
+            logging.warning('Cannot find the last sent post in current feed, all posts will not be sent.')
         self.last = feed_last
         db.write(self.name, self.link, feed_last, True)  # update db
 

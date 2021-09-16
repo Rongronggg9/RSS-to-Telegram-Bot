@@ -126,14 +126,14 @@ class Post:
                     logging.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc(),
-                                         self.title, self.feed_title, self.link, self.author)
+                                         self.title, self.feed_title, self.link, self.author, service_msg=True)
                     error_message.send_message(env.MANAGER)
 
                 except Exception as e:
                     logging.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
-                                         self.title, self.feed_title, self.link, self.author)
+                                         self.title, self.feed_title, self.link, self.author, service_msg=True)
                     error_message.send_message(env.MANAGER)
 
             chat_ids.pop(0)

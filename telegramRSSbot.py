@@ -11,6 +11,7 @@ from datetime import datetime
 
 import env
 from feed import Feed, Feeds
+from post import Post
 
 # global var placeholder
 feeds: Optional[Feeds] = None
@@ -99,12 +100,13 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 
 @permission_required(only_manager=True)
 def cmd_list(update: telegram.Update, context: telegram.ext.CallbackContext):
-    empty_flags = True
-    for feed in feeds:
-        empty_flags = False
-        update.effective_message.reply_text(f'标题: {feed.name}\nRSS 源: {feed.link}\n最后检查的文章: {feed.last}')
-    if empty_flags:
+    list_result = '<br>'.join(f'<a href="{feed.link}">{feed.name}</a>' for feed in feeds)
+    if not list_result:
         update.effective_message.reply_text('数据库为空')
+        return
+    result_post = Post('<b><u>订阅列表</u></b><br><br>' + list_result, plain=True, service_msg=True)
+    result_post.send_message(update.effective_chat.id,
+                             update.effective_message.message_id if update.effective_chat.type != 'private' else None)
 
 
 @permission_required(only_manager=True)
@@ -211,13 +213,14 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
 
     valid = res['valid']
     invalid = res['invalid']
-    import_result = '<b>导入结果</b>\n\n' \
-                    + ('导入成功：\n' if valid else '') \
-                    + '\n'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in valid) \
-                    + ('\n\n' if valid and invalid else '') \
-                    + ('导入失败：\n' if invalid else '') \
-                    + '\n'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in invalid)
-    update.effective_message.reply_html(import_result, quote=True)
+    import_result = '<b><u>导入结果</u></b><br><br>' \
+                    + ('导入成功：<br>' if valid else '') \
+                    + '<br>'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in valid) \
+                    + ('<br><br>' if valid and invalid else '') \
+                    + ('导入失败：<br>' if invalid else '') \
+                    + '<br>'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in invalid)
+    result_post = Post(import_result, plain=True, service_msg=True)
+    result_post.send_message(update.effective_chat.id, update.effective_message.message_id)
 
 
 def rss_monitor(context: telegram.ext.CallbackContext = None):

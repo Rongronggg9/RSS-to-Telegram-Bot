@@ -1,11 +1,13 @@
 import telegram.error
 import time
-import logging
 import fasteners
 from typing import List, Union, Optional, Tuple
 
+import log
 from medium import Medium
 import env
+
+logger = log.getLogger('RSStT.message')
 
 
 class Message:
@@ -23,18 +25,18 @@ class Message:
 
     def send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         if self.no_retry and self.retries >= 1:
-            logging.warning('Message dropped: this message was configured not to retry.')
+            logger.warning('Message dropped: this message was configured not to retry.')
             return
         elif self.retries >= 1:
             return
         elif self.retries >= 3:  # retried twice, tried 3 times in total
-            logging.warning('Message dropped: retried for too many times.')
+            logger.warning('Message dropped: retried for too many times.')
             raise OverflowError
 
         try:
             self._send(chat_id, reply_to_msg_id)
         except telegram.error.RetryAfter as e:  # exceed flood control
-            logging.warning(e.message)
+            logger.warning(e.message)
             self.retries += 1
             if not Message._lock.owner == Message._lock.WRITER:  # if not already blocking
                 with Message._lock.write_lock():  # block any other sending tries
@@ -42,11 +44,11 @@ class Message:
             self.send(chat_id)
         except telegram.error.BadRequest as e:
             if self.no_retry:
-                logging.warning('Something went wrong while sending a message. Please check:', exc_info=e)
+                logger.warning('Something went wrong while sending a message. Please check:', exc_info=e)
                 return
             raise e  # let post.py to deal with it
         except telegram.error.NetworkError as e:
-            logging.warning(f'Network error({e.message}). Retrying...')
+            logger.warning(f'Network error({e.message}). Retrying...')
             self.retries += 1
             time.sleep(1)
             self.send(chat_id)

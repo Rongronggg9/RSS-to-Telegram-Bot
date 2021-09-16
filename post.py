@@ -1,5 +1,4 @@
 import json
-import logging
 import re
 import traceback
 import telegram.error
@@ -8,9 +7,12 @@ from bs4.element import NavigableString
 from typing import Optional, Union, List
 from emoji import emojize
 
+import log
 import message
 import env
 from medium import Video, Image, Media, Animation
+
+logger = log.getLogger('RSStT.post')
 
 # python-Levenshtein cannot handle UTF-8 input properly, mute the annoying warning from fuzzywuzzy
 import warnings
@@ -104,7 +106,7 @@ class Post:
                 except telegram.error.BadRequest as e:
                     error_caption = e.message
                     if error_caption.startswith('Have no rights to send a message'):
-                        logging.warning(f'Chat ID {chat_id} has banned the bot!')
+                        logger.warning(f'Chat ID {chat_id} has banned the bot!')
                         chat_ids.pop(0)
                         break  # TODO: disable all feeds for this chat_id
 
@@ -114,23 +116,23 @@ class Post:
                             or error_caption.startswith('Wrong type of the web page content') \
                             or error_caption.startswith('Group send failed'):
                         if self.media.change_all_server():
-                            logging.info('TBA sucks! Changed img server and retrying...')
+                            logger.info('TBA sucks! Changed img server and retrying...')
                             self.send_message(chat_ids)
                             return
-                        logging.warning('All media was set invalid because TBA cannot process some of them.')
+                        logger.warning('All media was set invalid because TBA cannot process some of them.')
                         self.invalidate_all_media()
                         self.generate_message()
                         self.send_message(chat_ids)
                         return
 
-                    logging.warning(f'Sending {self.link} failed:', exc_info=e)
+                    logger.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc(),
                                          self.title, self.feed_title, self.link, self.author, service_msg=True)
                     error_message.send_message(env.MANAGER)
 
                 except Exception as e:
-                    logging.warning(f'Sending {self.link} failed:', exc_info=e)
+                    logger.warning(f'Sending {self.link} failed:', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
                                          self.title, self.feed_title, self.link, self.author, service_msg=True)
@@ -190,7 +192,7 @@ class Post:
         split_html = [stripNewline.sub('\n\n',
                                        stripLineEnd.sub('\n', p))
                       for p in self.text.split_html(length_limit_head, head_count, length_limit_tail)]
-        # logging.debug(f'{self.title} ({self.link}):\n{split_html}')
+        # logger.debug(f'{self.title} ({self.link}):\n{split_html}')
         return split_html
 
     def _add_metadata(self):
@@ -198,7 +200,7 @@ class Post:
         if self.title and ('微博' not in self.feed_title or env.DEBUG):
             title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
             similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
-            logging.debug(f'{self.title} ({self.link}) is {similarity}% likely to be of no title.')
+            logger.debug(f'{self.title} ({self.link}) is {similarity}% likely to be of no title.')
             if similarity < 90:
                 self._add_title(self.title)
         if self.feed_title:

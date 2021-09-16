@@ -2,7 +2,6 @@ import fasteners
 import feedparser
 import listparser
 import requests
-import logging
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from requests.adapters import HTTPAdapter
@@ -10,9 +9,12 @@ from io import BytesIO
 from typing import Optional, Dict, Union, Iterator
 from datetime import datetime
 
+import log
 import env
 from db import db
 from post import get_post_from_entry
+
+logger = log.getLogger('RSStT.feed')
 
 
 class Feed:
@@ -29,10 +31,10 @@ class Feed:
 
         feed_last = str(rss_d.entries[0]['link'])
         if self.last == feed_last:
-            logging.debug(f'Feed {self.link} fetched, no new post.')
+            logger.debug(f'{self.link} fetched, no new post.')
             return
 
-        logging.info(f'Feed {self.link} updated!')
+        logger.info(f'{self.link} updated!')
         # Workaround, avoiding deleted post causing the bot send all posts in the feed.
         # Known issues:
         # If a post was deleted while another post was sent between feed fetching duration,
@@ -42,7 +44,7 @@ class Feed:
         last_flag = False
         for entry in rss_d.entries[::-1]:
             if last_flag:
-                logging.info(f"Sending {entry['link']}...")
+                logger.info(f"Sending {entry['link']}...")
                 post = get_post_from_entry(entry, rss_d.feed.title)
                 post.send_message(env.CHATID)
                 continue
@@ -51,9 +53,10 @@ class Feed:
                 last_flag = True
 
         if not last_flag:
-            logging.warning('Cannot find the last sent post in current feed, all posts will not be sent.')
+            logger.warning('Cannot find the last sent post in current feed, all posts will not be sent.')
         self.last = feed_last
         db.write(self.name, self.link, feed_last, True)  # update db
+        return
 
     def send(self, uid, start: int = 0, end: Optional[int] = 1):
         rss_d = feed_get(self.link, uid=uid)
@@ -68,11 +71,11 @@ class Feed:
 
         try:
             for entry in rss_d.entries[start:end]:
-                logging.info(f"Sending {entry['link']}...")
+                logger.info(f"Sending {entry['link']}...")
                 post = get_post_from_entry(entry, rss_d.feed.title)
                 post.send_message(uid)
         except Exception as e:
-            logging.warning(f"Sending failed:", exc_info=e)
+            logger.warning(f"Sending failed:", exc_info=e)
             env.bot.send_message(uid, 'ERROR: 内部错误')
             return
 
@@ -105,7 +108,7 @@ class Feeds:
     def add_feed(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10):
         if self.find(name, link, strict=False):
             env.bot.send_message(uid, 'ERROR: 订阅名已被使用或 RSS 源已订阅') if uid else None
-            logging.warning(f'Refused to add an existing feed: {name} ({link})')
+            logger.warning(f'Refused to add an existing feed: {name} ({link})')
             return None
         rss_d = feed_get(link, uid=uid, timeout=timeout)
         if rss_d is None:
@@ -119,7 +122,7 @@ class Feeds:
             self._feeds[fid] = feed
             db.write(name, link, last)
 
-        logging.info(f'Added feed {link}.')
+        logger.info(f'Added feed {link}.')
         return feed
 
     def del_feed(self, name):
@@ -132,7 +135,7 @@ class Feeds:
             self._feeds.pop(feed_to_delete.fid)
             db.delete(name)
 
-        logging.info(f'Removed feed {name}.')
+        logger.info(f'Removed feed {name}.')
         return feed_to_delete
 
     @property
@@ -164,7 +167,7 @@ class Feeds:
             successful = self.add_feed(name=_feed.title, link=_feed.url, timeout=5)
 
             valid_feeds.append(_feed) if successful else invalid_feeds.append(_feed)
-        logging.info('Imported feed(s).')
+        logger.info('Imported feed(s).')
         return {'valid': valid_feeds, 'invalid': invalid_feeds}
 
     @fasteners.lock.read_locked
@@ -180,7 +183,7 @@ class Feeds:
             opml.body.append(outline)
         if empty_flags:
             return None
-        logging.info('Exported feed(s).')
+        logger.info('Exported feed(s).')
         return opml.prettify().encode()
 
     @fasteners.lock.read_locked
@@ -211,17 +214,17 @@ def feed_get(url: str, uid: Optional[int] = None, timeout: Optional[int] = None)
         rss_d = feedparser.parse(rss_content, sanitize_html=False, resolve_relative_uris=False)
         _ = rss_d.entries[0]['title']  # try if the url is a valid RSS feed
     except IndexError:
-        logging.warning(f'Feed {url} fetch failed: feed error.')
+        logger.warning(f'{url} fetch failed: feed error.')
         if uid:
             env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
         return None
     except requests.exceptions.RequestException:
-        logging.warning(f'Feed {url} fetch failed: network error.')
+        logger.warning(f'{url} fetch failed: network error.')
         if uid:
             env.bot.send_message(uid, 'ERROR: 网络超时')
         return None
     except Exception as e:
-        logging.warning(f'Feed {url} fetch failed: ', exc_info=e)
+        logger.warning(f'{url} fetch failed: ', exc_info=e)
         if uid:
             env.bot.send_message(uid, 'ERROR: 内部错误')
         return None

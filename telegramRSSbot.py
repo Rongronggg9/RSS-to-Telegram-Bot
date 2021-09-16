@@ -15,17 +15,18 @@ from socket import timeout
 from telegram.vendor.ptb_urllib3.urllib3.exceptions import HTTPError
 from telegram.error import TelegramError
 
+# log
+logger = log.getLogger('RSStT')
+
 # global var placeholder
 feeds: Optional[Feeds] = None
+conflictCount = 0
 
 # initial
 Path("config").mkdir(parents=True, exist_ok=True)
 
 # permission verification
 GROUP = 1087968824
-
-# log
-logger = log.getLogger('RSStT')
 
 
 def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
@@ -204,10 +205,20 @@ def rss_monitor(context: telegram.ext.CallbackContext = None):
 
 
 def error_handler(update: object, context: telegram.ext.CallbackContext):
+    global conflictCount
+
     try:
         raise context.error
     except (timeout, HTTPError) as e:
         logger.error('A uncaught Network error occured: ' + str(e))
+    except telegram.error.Conflict as e:
+        conflictCount += 1
+        logger.warning('Detected getUpdates conflict error.\n'
+                       'If you run this robot on railway.app, this error (<10 times) should be normal.')
+        if conflictCount >= 25:
+            logger.critical('TOO MUCH GETUPDATES CONFLICT, PLEASE MAKE SURE THAT ONLY ONE BOT INSTANTCE IS RUNNING!',
+                            exc_info=e)
+            exit(1)
     except Exception as e:
         logger.error('No error handlers are registered, logger exception.', exc_info=e)
 

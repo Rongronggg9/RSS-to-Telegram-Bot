@@ -1,17 +1,19 @@
 import functools
-import logging
-import socket
 import telegram
-from telegram.vendor.ptb_urllib3 import urllib3
-from telegram.error import TelegramError
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
+import log
 import env
 from feed import Feed, Feeds
 from post import Post
+
+# import for exception handling
+from socket import timeout
+from telegram.vendor.ptb_urllib3.urllib3.exceptions import HTTPError
+from telegram.error import TelegramError
 
 # global var placeholder
 feeds: Optional[Feeds] = None
@@ -19,37 +21,11 @@ feeds: Optional[Feeds] = None
 # initial
 Path("config").mkdir(parents=True, exist_ok=True)
 
-
-# logging
-class APSCFilter(logging.Filter):
-    def __init__(self):
-        super().__init__()
-        self.count = -3  # first 3 times muted
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        if 'skipped: maximum number of running instances reached' in record.msg:
-            self.count += 1
-            if self.count % 10 == 0:
-                env.bot.send_message(
-                    env.MANAGER, 'RSS 更新检查发生冲突，程序可能出现问题，请记录日志并重启。\n'
-                                 '（这也可能是由过短的检查间隔和过多的订阅引起，请适度调整后观察是否还有错误）\n\n'
-                                 + (record.msg % record.args if record.args else record.msg))
-        elif ' executed successfully' in record.msg:
-            self.count = -3
-        return True
-
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    level=logging.DEBUG if env.DEBUG else logging.INFO)
-logging.getLogger("telegram").setLevel(logging.INFO)
-logging.getLogger("requests").setLevel(logging.ERROR if env.DEBUG else logging.CRITICAL)
-logging.getLogger("urllib3").setLevel(logging.ERROR if env.DEBUG else logging.CRITICAL)
-logging.getLogger('apscheduler').setLevel(logging.INFO if env.DEBUG else logging.WARNING)
-logging.getLogger('apscheduler.scheduler').addFilter(APSCFilter())
-
 # permission verification
 GROUP = 1087968824
+
+# log
+logger = log.getLogger('RSStT')
 
 
 def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
@@ -66,30 +42,30 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
         if only_manager and str(user_id) != env.MANAGER:
             update.effective_message.reply_text('此命令只可由机器人的管理员使用。\n'
                                                 'This command can be only used by the bot manager.')
-            logging.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
+            logger.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
             return
 
         if message.chat.type == 'private':
-            logging.info(f'Allowed {user_fullname} ({user_id}) to use {command}.')
+            logger.info(f'Allowed {user_fullname} ({user_id}) to use {command}.')
             return func(update, context, *args, **kwargs)
 
         if message.chat.type in ('supergroup', 'group'):
             if only_in_private_chat:
                 update.effective_message.reply_text('此命令不允许在群聊中使用。\n'
                                                     'This command can not be used in a group.')
-                logging.info(f'Refused {user_fullname} ({user_id}) to use {command} in '
-                             f'{message.chat.title} ({message.chat.id}).')
+                logger.info(f'Refused {user_fullname} ({user_id}) to use {command} in '
+                            f'{message.chat.title} ({message.chat.id}).')
                 return
 
             user_status = update.effective_chat.get_member(user_id).status
             if user_id != GROUP and user_status not in ('administrator', 'creator'):
                 update.effective_message.reply_text('此命令只可由群管理员使用。\n'
                                                     'This command can be only used by an administrator.')
-                logging.info(
+                logger.info(
                     f'Refused {user_fullname} ({user_id}, {user_status}) to use {command} '
                     f'in {message.chat.title} ({message.chat.id}).')
                 return
-            logging.info(
+            logger.info(
                 f'Allowed {user_fullname} ({user_id}, {user_status}) to use {command} '
                 f'in {message.chat.title} ({message.chat.id}).')
             return func(update, context, *args, **kwargs)
@@ -174,7 +150,7 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
         return
 
     Feed(link=url).send(update.effective_chat.id, start, end)
-    logging.info('Test finished.')
+    logger.info('Test finished.')
 
 
 @permission_required(only_manager=True)
@@ -201,11 +177,11 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
         opml_file = update.effective_message.document.get_file(timeout=7).download_as_bytearray()
     except telegram.error.TelegramError as e:
         update.effective_message.reply_text('ERROR: 获取文件失败', quote=True)
-        logging.warning(f'Failed to get opml file: ' + e.message)
+        logger.warning(f'Failed to get opml file: ' + e.message)
         return
     update.effective_message.reply_text('正在处理中...\n'
                                         '如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待', quote=True)
-    logging.info(f'Got an opml file.')
+    logger.info(f'Got an opml file.')
     res = feeds.import_opml(opml_file)
     if res is None:
         update.effective_message.reply_text('ERROR: 解析失败或文档不含订阅', quote=True)
@@ -230,21 +206,21 @@ def rss_monitor(context: telegram.ext.CallbackContext = None):
 def error_handler(update: object, context: telegram.ext.CallbackContext):
     try:
         raise context.error
-    except (socket.timeout, urllib3.exceptions.HTTPError) as e:
-        logging.error('A uncaught Network error occured: ' + str(e))
+    except (timeout, HTTPError) as e:
+        logger.error('A uncaught Network error occured: ' + str(e))
     except Exception as e:
-        logging.error('No error handlers are registered, logging exception.', exc_info=e)
+        logger.error('No error handlers are registered, logger exception.', exc_info=e)
 
 
 def main():
     global feeds
-    logging.info(f"RSS-to-Telegram-Bot started!\n"
-                 f"CHATID: {env.CHATID}\n"
-                 f"MANAGER: {env.MANAGER}\n"
-                 f"DELAY: {env.DELAY}s\n"
-                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY}\n"
-                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}\n"
-                 f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}")
+    logger.info(f"RSS-to-Telegram-Bot started!\n"
+                f"CHATID: {env.CHATID}\n"
+                f"MANAGER: {env.MANAGER}\n"
+                f"DELAY: {env.DELAY}s\n"
+                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY}\n"
+                f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}\n"
+                f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n")
 
     updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
                                             request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
@@ -284,9 +260,9 @@ def main():
         updater.bot.set_my_commands(commands)
     except TelegramError as e:
         if e.message == 'Unauthorized':
-            logging.critical('TELEGRAM BOT TOKEN INVALID! PLEASE CHECK YOUR SETTINGS!')
+            logger.critical('TELEGRAM BOT TOKEN INVALID! PLEASE CHECK YOUR SETTINGS!')
             exit(1)
-        logging.warning('Set command error: ' + e.message)
+        logger.warning('Set command error: ' + e.message)
 
     feeds = Feeds()
 

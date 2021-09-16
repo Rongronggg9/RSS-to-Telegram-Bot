@@ -1,12 +1,14 @@
-import logging
 import requests
 import re
 import telegram
 from requests.adapters import HTTPAdapter
 from typing import List
 
+import log
 import env
 import post
+
+logger = log.getLogger('RSStT.medium')
 
 # getPic = re.compile(r'<img[^>]*\bsrc="([^"]*)"')
 # getVideo = re.compile(r'<video[^>]*\bsrc="([^"]*)"')
@@ -49,7 +51,7 @@ class Medium:
         try:
             size, width, height = get_medium_info(url)
         except Exception as e:
-            logging.debug(f'Dropped medium {url}: can not be fetched.')
+            logger.debug(f'Dropped medium {url}: can not be fetched.')
             self.valid = False
             return
 
@@ -62,13 +64,13 @@ class Medium:
 
         if not sizeParser.search(url):  # invalid but is not a weibo img
             # TODO: reduce non-weibo pic size
-            logging.debug(f'Dropped medium {url}: invalid.')
+            logger.debug(f'Dropped medium {url}: invalid.')
             self.valid = False
             return
 
         parsed = sizeParser.search(url).groupdict()  # invalid and is a weibo img
         if parsed['size'] == sizes[-1]:
-            logging.debug(f'Dropped medium {url}: invalid.')
+            logger.debug(f'Dropped medium {url}: invalid.')
             self.valid = False
             return
         self.url = parsed['domain'] + sizes[sizes.index(parsed['size']) + 1] + parsed['filename']

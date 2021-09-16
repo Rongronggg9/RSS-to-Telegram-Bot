@@ -1,8 +1,10 @@
 import sqlite3
 import redis
-import logging
 
+import log
 import env
+
+logger = log.getLogger('RSStT.db')
 
 if env.REDIS_HOST:
     #  REDIS
@@ -23,7 +25,7 @@ if env.REDIS_HOST:
                 self._rds = redis.Redis(connection_pool=DB._pool)
                 self.load_all()
             except Exception as e:
-                logging.critical('Cannot connect to redis!', exc_info=e)
+                logger.critical('Cannot connect to redis!', exc_info=e)
                 exit(1)
 
         def load_all(self):

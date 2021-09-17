@@ -4,7 +4,10 @@ WORKDIR /app
 
 COPY . /app
 
-RUN echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version
+RUN \
+  echo "$(git describe --tags --always)@$(git branch --show-current)" > .version ; \
+  if test $(expr length "$(cat .version)") -le 3; then echo "dirty-build@$(date -Iseconds)" | tee .version; else cat .version; fi ; \
+  rm -rf .git resources
 
 #----------------------------------------
 
@@ -14,6 +17,9 @@ WORKDIR /app
 
 COPY --from=builder /app /app
 
-RUN pip install --trusted-host pypi.python.org -r /app/requirements.txt
+RUN \
+  pip install --trusted-host pypi.python.org -r /app/requirements.txt && \
+  ls -la ; \
+  cat .version
 
 CMD ["python", "-u", "telegramRSSbot.py"]

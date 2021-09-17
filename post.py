@@ -171,8 +171,8 @@ class Post:
 
     def telegraph_ify(self):
         try:
-            telegraph_url = tgraph.telegraph_ify(self.xml, title=self.title, link=self.link,
-                                                 feed_title=self.feed_title, author=self.author)
+            telegraph_url = tgraph.TelegraphIfy(self.xml, title=self.title, link=self.link,
+                                                feed_title=self.feed_title, author=self.author).telegraph_ify()
             telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=telegraph_url)
             return telegraph_post

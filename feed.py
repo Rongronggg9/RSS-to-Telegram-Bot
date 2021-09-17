@@ -21,16 +21,19 @@ logger = log.getLogger('RSStT.feed')
 # send threads pool
 class SendPool:
     max_concurrent = 5
-    _semaphore = threading.BoundedSemaphore(max_concurrent)
+    _send_semaphore = threading.BoundedSemaphore(max_concurrent)
+    _generate_semaphore = threading.BoundedSemaphore(max_concurrent)
 
     def __init__(self):
         self.endLock = threading.RLock()
 
     def send(self, uid, entry, feed_title):
         post = get_post_from_entry(entry, feed_title)
-        post.generate_message()
 
-        with self._semaphore:
+        with self._generate_semaphore:
+            post.generate_message()
+
+        with self._send_semaphore:
             logger.debug(f"Sending {entry['title']} ({entry['link']})...")
             post.send_message(uid)
 

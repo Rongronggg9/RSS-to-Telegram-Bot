@@ -157,14 +157,14 @@ class Post:
                         self.send_message(chat_ids)
                         return
 
-                    logger.warning(f'Sending {self.link} failed:', exc_info=e)
+                    logger.warning(f'Sending {self.link} failed: ', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc(),
                                          self.title, self.feed_title, self.link, self.author, service_msg=True)
                     error_message.send_message(env.MANAGER)
 
                 except Exception as e:
-                    logger.warning(f'Sending {self.link} failed:', exc_info=e)
+                    logger.warning(f'Sending {self.link} failed: ', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
                                          self.title, self.feed_title, self.link, self.author, service_msg=True)
@@ -183,10 +183,10 @@ class Post:
                                       link=self.link, author=self.author, telegraph_url=self.link)
                 pure_link_post.send_message(chat_ids, reply_to_msg_id)
                 return True
-            logger.warning('Telegraph API error:' + str(e))
+            logger.warning('Telegraph API error: ' + str(e))
             return False
         except Exception as e:
-            logger.error('Send via Telegraph error:', exc_info=e)
+            logger.error('Send via Telegraph error: ', exc_info=e)
             return False
 
         telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,

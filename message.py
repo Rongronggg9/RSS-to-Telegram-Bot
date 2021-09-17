@@ -27,11 +27,12 @@ class Message:
         if self.no_retry and self.retries >= 1:
             logger.warning('Message dropped: this message was configured not to retry.')
             return
-        elif self.retries >= 1:
-            return
         elif self.retries >= 3:  # retried twice, tried 3 times in total
             logger.warning('Message dropped: retried for too many times.')
             raise OverflowError
+
+        if self.retries > 0:
+            logger.info('Retrying...')
 
         try:
             self._send(chat_id, reply_to_msg_id)
@@ -44,11 +45,11 @@ class Message:
             self.send(chat_id)
         except telegram.error.BadRequest as e:
             if self.no_retry:
-                logger.warning('Something went wrong while sending a message. Please check:', exc_info=e)
+                logger.warning('Something went wrong while sending a message. Please check: ', exc_info=e)
                 return
             raise e  # let post.py to deal with it
         except telegram.error.NetworkError as e:
-            logger.warning(f'Network error({e.message}). Retrying...')
+            logger.warning(f'Network error({e.message}).')
             self.retries += 1
             time.sleep(1)
             self.send(chat_id)

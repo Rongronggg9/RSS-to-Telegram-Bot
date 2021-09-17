@@ -219,7 +219,7 @@ def error_handler(update: object, context: telegram.ext.CallbackContext):
     try:
         raise context.error
     except telegram.error.BadRequest as e:
-        logger.error('A uncaught TBA error occurred:', exc_info=e)
+        logger.error('A uncaught TBA error occurred: ', exc_info=e)
     except (telegram.error.NetworkError, timeout, HTTPError) as e:
         logger.error('A uncaught Network error occurred: ' + str(e))
     except telegram.error.Conflict as e:

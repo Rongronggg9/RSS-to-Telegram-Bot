@@ -54,11 +54,15 @@ except:
     VERSION = 'debug'
 
 if VERSION == 'debug':
+    from subprocess import Popen, PIPE, DEVNULL
+
     try:
-        with os.popen('git describe --tags') as __:
-            VERSION = __.read().strip()
-        with os.popen('git branch --show-current') as __:
-            __ = __.read().strip()
+        with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+            __.wait(3)
+            VERSION = __.stdout.read().decode().strip()
+        with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+            __.wait(3)
+            __ = __.stdout.read().decode().strip()
             if __:
                 VERSION += f'@{__}'
     except:

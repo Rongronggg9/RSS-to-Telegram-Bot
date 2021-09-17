@@ -11,6 +11,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: master
+      - name: Create .version file
+        run: echo "$(git describe --tags)@$(git branch --show-current)" > ./.version
       - name: Docker Hub README sync
         uses: meeDamian/sync-readme@v1.0.6
         with:

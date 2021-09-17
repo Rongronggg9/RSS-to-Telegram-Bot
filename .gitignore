@@ -300,3 +300,4 @@ icon/
 *.bat
 *.cmd
 docker-compose*.yml
+.version

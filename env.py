@@ -46,3 +46,20 @@ bot: Optional[telegram.Bot] = None  # placeholder
 REQUESTS_HEADERS = {
     'user-agent': 'RSStT'
 }
+
+try:
+    with open('.version', 'r') as v:
+        VERSION = v.read()
+except:
+    VERSION = 'debug'
+
+if VERSION == 'debug':
+    try:
+        with os.popen('git describe --tags') as __:
+            VERSION = __.read().strip()
+        with os.popen('git branch --show-current') as __:
+            __ = __.read().strip()
+            if __:
+                VERSION += f'@{__}'
+    except:
+        VERSION = 'debug'

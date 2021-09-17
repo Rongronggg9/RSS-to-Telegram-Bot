@@ -200,6 +200,11 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
     result_post.send_message(update.effective_chat.id, update.effective_message.message_id)
 
 
+@permission_required(only_manager=True)
+def cmd_version(update: telegram.Update, context: telegram.ext.CallbackContext):
+    update.effective_message.reply_text(env.VERSION)
+
+
 def rss_monitor(context: telegram.ext.CallbackContext = None):
     feeds.monitor()
 
@@ -227,7 +232,7 @@ def error_handler(update: object, context: telegram.ext.CallbackContext):
 
 def main():
     global feeds
-    logger.info(f"RSS-to-Telegram-Bot started!\n"
+    logger.info(f"RSS-to-Telegram-Bot ({env.VERSION}) started!\n"
                 f"CHATID: {env.CHATID}\n"
                 f"MANAGER: {env.MANAGER}\n"
                 f"DELAY: {env.DELAY}s\n"
@@ -257,18 +262,21 @@ def main():
                                   filters=~Filters.update.edited_message))
     dp.add_handler(CommandHandler("export", callback=cmd_export, run_async=True,
                                   filters=~Filters.update.edited_message))
+    dp.add_handler(CommandHandler("version", callback=cmd_version, run_async=True,
+                                  filters=~Filters.update.edited_message))
     dp.add_handler(MessageHandler(callback=opml_import, run_async=True,
                                   filters=Filters.document & ~Filters.update.edited_message & (
                                           Filters.reply | Filters.chat_type.private)))
     dp.add_error_handler(error_handler, run_async=True)
 
-    commands = [telegram.BotCommand(command="add", description="+标题 RSS : 添加订阅"),
-                telegram.BotCommand(command="remove", description="+标题 : 移除订阅"),
-                telegram.BotCommand(command="list", description="列出数据库中的所有订阅，包括它们的标题和 RSS 源"),
-                telegram.BotCommand(command="test", description="+RSS 编号(可选) : 从 RSS 源处获取一条 post"),
+    commands = [telegram.BotCommand(command="add", description="添加订阅"),
+                telegram.BotCommand(command="remove", description="移除订阅"),
+                telegram.BotCommand(command="list", description="列出所有订阅"),
+                telegram.BotCommand(command="test", description="测试"),
                 telegram.BotCommand(command="import", description="导入订阅"),
                 telegram.BotCommand(command="export", description="导出订阅"),
-                telegram.BotCommand(command="help", description="发送这条消息")]
+                telegram.BotCommand(command="version", description="查看版本"),
+                telegram.BotCommand(command="help", description="查看帮助")]
     try:
         updater.bot.set_my_commands(commands)
     except TelegramError as e:

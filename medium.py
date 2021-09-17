@@ -186,9 +186,9 @@ def get_medium_stream(url, headers: dict = None):
     session = requests.Session()
     session.mount('http://', HTTPAdapter(max_retries=1))
     session.mount('https://', HTTPAdapter(max_retries=1))
-    stream = session.get(url, timeout=(5, 5), proxies=env.REQUESTS_PROXIES, stream=True,
-                         headers=headers)
+    stream = session.get(url, timeout=3, proxies=env.REQUESTS_PROXIES, stream=True, headers=headers)
     if stream.status_code != 200:
+        stream.close()
         return None
     return stream
 

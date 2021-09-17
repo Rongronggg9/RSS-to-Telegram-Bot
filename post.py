@@ -91,6 +91,7 @@ class Post:
         self.link = link
         self.author = author
         self.plain = plain
+        self.telegraph_post: Optional[Post] = None
         # self.generate_text()
 
     def generate_text(self):
@@ -102,22 +103,18 @@ class Post:
         self._add_invalid_media()
 
     def send_message(self, chat_ids: Union[List[Union[str, int]], str, int], reply_to_msg_id: int = None):
-        if type(chat_ids) is not list:
-            chat_ids = [chat_ids]
-
-        # generate telegraph post and send
-        if tgraph.api and not self.service_msg and not self.telegraph_url \
-                and (len(self.soup.getText()) >= 4096 or self.generate_message() >= 2):
-            logger.info('This post will be sent via Telegraph.')
-            if self.telegraph_ify(chat_ids, reply_to_msg_id):  # telegraph post sent successful
-                return
-            logger.warning('This post cannot be sent via Telegraph, fallback to normal message...')
-
         if not self.messages:
             self.generate_message()
 
-        if len(self.messages) >= 5:
-            logger.warning('This post is too large, send a pure link message instead.')
+        if self.telegraph_post:
+            self.telegraph_post.send_message(chat_ids, reply_to_msg_id)
+            return
+
+        if type(chat_ids) is not list:
+            chat_ids = [chat_ids]
+
+        if self.messages and len(self.messages) >= 5:
+            logger.warning(f'Too large, send a pure link message instead: "{self.title}"')
             pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=self.link)
             pure_link_post.send_message(chat_ids, reply_to_msg_id)
@@ -172,33 +169,40 @@ class Post:
 
             chat_ids.pop(0)
 
-    def telegraph_ify(self, chat_ids: Union[List[Union[str, int]], str, int] = None, reply_to_msg_id: int = None):
+    def telegraph_ify(self):
         try:
             telegraph_url = tgraph.telegraph_ify(self.xml, title=self.title, link=self.link,
                                                  feed_title=self.feed_title, author=self.author)
+            telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,
+                                  link=self.link, author=self.author, telegraph_url=telegraph_url)
+            return telegraph_post
         except telegraph.TelegraphException as e:
             if str(e) == 'CONTENT_TOO_BIG':
-                logger.warning('This post is too large, send a pure link message instead.')
+                logger.warning(f'Too large, send a pure link message instead: "{self.title}"')
                 pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                       link=self.link, author=self.author, telegraph_url=self.link)
-                pure_link_post.send_message(chat_ids, reply_to_msg_id)
-                return True
+                return pure_link_post
             logger.warning('Telegraph API error: ' + str(e))
-            return False
+            return None
         except Exception as e:
-            logger.error('Send via Telegraph error: ', exc_info=e)
-            return False
-
-        telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,
-                              link=self.link, author=self.author, telegraph_url=telegraph_url)
-        telegraph_post.send_message(chat_ids, reply_to_msg_id)
-        return True
+            logger.error('Generate Telegraph post error: ', exc_info=e)
+            return None
 
     def generate_pure_message(self):
         self.text = Text('Content decoding failed!\n内容解码失败！')
         self._add_metadata()
 
-    def generate_message(self):
+    def generate_message(self, no_telegraph: bool = False) -> Optional[int]:
+        # generate telegraph post and send
+        if not no_telegraph and tgraph.api and not self.service_msg and not self.telegraph_url \
+                and (len(self.soup.getText()) >= 4096
+                     or (len(self.messages) if self.messages else self.generate_message(no_telegraph=True)) >= 2):
+            logger.info(f'Will be sent via Telegraph: "{self.title}"')
+            self.telegraph_post = self.telegraph_ify()  # telegraph post sent successful
+            if self.telegraph_post:
+                return
+            logger.warning(f'Cannot be sent via Telegraph, fallback to normal message: "{self.title}"')
+
         if not self.text:
             self.generate_text()
 

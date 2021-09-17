@@ -154,8 +154,13 @@ def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
         update.effective_message.reply_text('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         return
 
-    Feed(link=url).send(update.effective_chat.id, start, end)
-    logger.info('Test finished.')
+    try:
+        Feed(link=url).send(update.effective_chat.id, start, end)
+    except Exception as e:
+        logger.warning(f"Sending failed:", exc_info=e)
+        update.effective_message.reply_text('ERROR: 内部错误')
+
+    return
 
 
 @permission_required(only_manager=True)
@@ -243,7 +248,7 @@ def main():
                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
                 f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n"
-                f"TELEGRAPH: {'Enable'  if tgraph.api else 'Disable'}")
+                f"TELEGRAPH: {'Enable' if tgraph.api else 'Disable'}")
 
     updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
                                             request_kwargs={'proxy_url': env.TELEGRAM_PROXY})

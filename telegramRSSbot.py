@@ -7,6 +7,7 @@ from datetime import datetime
 
 import log
 import env
+import tgraph
 from feed import Feed, Feeds
 from post import Post
 
@@ -236,9 +237,10 @@ def main():
                 f"CHATID: {env.CHATID}\n"
                 f"MANAGER: {env.MANAGER}\n"
                 f"DELAY: {env.DELAY}s\n"
-                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY}\n"
-                f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else ''}\n"
-                f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n")
+                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
+                f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
+                f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n"
+                f"TELEGRAPH: {'Enable'  if tgraph.api else 'Disable'}")
 
     updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
                                             request_kwargs={'proxy_url': env.TELEGRAM_PROXY})

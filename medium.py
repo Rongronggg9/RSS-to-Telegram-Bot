@@ -50,7 +50,7 @@ class Medium:
             if size is None:
                 raise IOError
         except Exception as e:
-            logger.debug(f'Dropped medium {url}: can not be fetched:' + str(e))
+            logger.debug(f'Dropped medium {url}: can not be fetched: ' + str(e))
             self.valid = False
             return
 

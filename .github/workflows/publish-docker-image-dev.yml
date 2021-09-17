@@ -12,7 +12,7 @@ jobs:
         with:
           ref: dev
       - name: Create .version file
-        run: echo "$(git describe --tags)@$(git branch --show-current)" > ./.version
+        run: echo "$(git describe --tags --always)@$(git branch --show-current)" | tee ./.version
       - name: Docker Hub README sync
         uses: meeDamian/sync-readme@v1.0.6
         with:

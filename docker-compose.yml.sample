@@ -24,11 +24,19 @@ services:
       - MANAGER=1234567890  # 替换为你的 user id
       - DELAY=300  # 订阅更新检查间隔（单位：秒）
 
-# ↓------ 要启用长文自动转 Telegraph，取消注释（删除 # 号）并替换为你自己申请到的 access_token ------↓ #
-# 在这里申请: https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot
-# 可以填写多个，以半角逗号（ , ）分割，每次都会随机选用（刷新上述页面就可以取得新的 token）
-      #- TELEGRAPH_TOKEN=1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
-# ↑------ 要启用长文自动转 Telegraph，取消注释（删除 # 号）并替换为你自己申请到的 access_token ------↑ #
+# ↓------ 要停用长文自动转 Telegraph，就将此区域完全注释（在每一行最前面加 # 号） ------↓ #
+# 在这里申请 access_token: https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot
+# 每行一个，保证缩进对齐，每次都会随机选用（刷新上述页面就可以取得新的 token）
+# 尽可能保证数量不少于 5 个
+# 程序会在每次启动时检查 token 合法性，遇到非法 token 就会自动重新注册 Telegraph 账户代替
+# 因此，不替换为自己的 token 也可以运行，但是，这么做的话，程序启动就会较慢
+      - TELEGRAPH_TOKEN=  # ↓ 替换为你自己申请到的 access_token ↓
+        1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
+        1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
+        1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
+        1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
+        1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
+# ↑------ 要停用长文自动转 Telegraph，就将此区域完全注释（在每一行最前面加 # 号） ------↑ #
 
 # ↓------ 以下为可选参数，取消注释（删除 # 号）并对应修改来启用它们 ------↓ #
       #- T_PROXY=socks5h://host.docker.internal:1080  # Telegram Bot API 使用的代理，用 host.docker.internal 代替 localhost

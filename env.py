@@ -13,6 +13,15 @@ if TOKEN is None or CHATID is None:
 
 MANAGER = os.environ.get('MANAGER', CHATID)
 
+TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
+if TELEGRAPH_TOKEN:
+    TELEGRAPH_TOKEN = TELEGRAPH_TOKEN.strip(). \
+        replace('\n', ',') \
+        .replace('，', ',') \
+        .replace(';', ',') \
+        .replace('；', ',') \
+        .replace(' ', ',')
+
 TELEGRAM_PROXY = os.environ.get('T_PROXY', '')
 
 if os.environ.get('R_PROXY'):
@@ -25,8 +34,6 @@ else:
 IMG_RELAY_SERVER = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
 if not IMG_RELAY_SERVER.endswith('/'):
     IMG_RELAY_SERVER += '/'
-
-TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
 
 REDIS_HOST = os.environ.get('REDISHOST')
 REDIS_PORT = int(os.environ.get('REDISPORT', 6379))

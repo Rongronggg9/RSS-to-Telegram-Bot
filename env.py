@@ -49,7 +49,7 @@ REQUESTS_HEADERS = {
 
 try:
     with open('.version', 'r') as v:
-        VERSION = v.read()
+        VERSION = v.read().strip()
 except:
     VERSION = 'dirty'
 

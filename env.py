@@ -65,7 +65,8 @@ if VERSION == 'dirty':
             __ = __.stdout.read().decode().strip()
             if __:
                 VERSION += f'@{__}'
-        if not VERSION:
-            VERSION = 'dirty'
     except:
         VERSION = 'dirty'
+
+if not VERSION or VERSION == '@':
+    VERSION = 'dirty'

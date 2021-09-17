@@ -51,9 +51,9 @@ try:
     with open('.version', 'r') as v:
         VERSION = v.read()
 except:
-    VERSION = 'debug'
+    VERSION = 'dirty'
 
-if VERSION == 'debug':
+if VERSION == 'dirty':
     from subprocess import Popen, PIPE, DEVNULL
 
     try:
@@ -65,5 +65,7 @@ if VERSION == 'debug':
             __ = __.stdout.read().decode().strip()
             if __:
                 VERSION += f'@{__}'
+        if not VERSION:
+            VERSION = 'dirty'
     except:
-        VERSION = 'debug'
+        VERSION = 'dirty'

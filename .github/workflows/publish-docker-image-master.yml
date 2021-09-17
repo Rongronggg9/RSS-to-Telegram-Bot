@@ -11,6 +11,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: master
+          fetch-depth: 0
       - name: Create .version file
         run: echo "$(git describe --tags --always)@$(git branch --show-current)" | tee ./.version
       - name: Docker Hub README sync

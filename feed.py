@@ -2,6 +2,7 @@ import fasteners
 import feedparser
 import listparser
 import requests
+import threading
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from requests.adapters import HTTPAdapter
@@ -17,12 +18,30 @@ from post import get_post_from_entry
 logger = log.getLogger('RSStT.feed')
 
 
+# send threads pool
+class SendPool:
+    max_concurrent = 5
+    _semaphore = threading.BoundedSemaphore(max_concurrent)
+
+    def __init__(self):
+        self.endLock = threading.RLock()
+
+    def send(self, uid, entry, feed_title):
+        post = get_post_from_entry(entry, feed_title)
+        post.generate_message()
+
+        with self._semaphore:
+            logger.debug(f"Sending {entry['title']} ({entry['link']})...")
+            post.send_message(uid)
+
+
 class Feed:
     def __init__(self, link: str, fid: Optional[int] = None, name: Optional[str] = None, last: Optional[str] = None):
         self.fid = fid
         self.name = name
         self.link = link
         self.last = last
+        self.rss_d = None
 
     def monitor(self):
         rss_d = feed_get(self.link)
@@ -34,6 +53,10 @@ class Feed:
             logger.debug(f'{self.link} fetched, no new post.')
             return
 
+        last = self.last
+        self.last = feed_last
+        db.write(self.name, self.link, feed_last, True)  # update db
+
         logger.info(f'{self.link} updated!')
         # Workaround, avoiding deleted post causing the bot send all posts in the feed.
         # Known issues:
@@ -41,27 +64,27 @@ class Feed:
         #  the latter won't be sent.
         # If your bot has stopped for too long that last sent post do not exist in current RSS feed,
         #  all posts won't be sent and last sent post will be reset to the newest post (though not sent).
-        last_flag = False
-        for entry in rss_d.entries[::-1]:
-            if last_flag:
-                logger.info(f"Sending {entry['link']}...")
-                post = get_post_from_entry(entry, rss_d.feed.title)
-                post.send_message(env.CHATID)
-                continue
+        end = None
+        for i in range(len(rss_d.entries)):
+            if last == rss_d.entries[i]['link']:
+                end = i
+                break
 
-            if self.last == entry['link']:  # a sent post detected, the rest of posts in the list will be sent
-                last_flag = True
-
-        if not last_flag:
+        if not end:  # end is None or end == 0
             logger.warning('Cannot find the last sent post in current feed, all posts will not be sent.')
-        self.last = feed_last
-        db.write(self.name, self.link, feed_last, True)  # update db
+        else:
+            self.rss_d = rss_d
+            # threading.Thread(target=self.send,
+            #                  kwargs={'uid': env.CHATID, 'start': 0, 'end': end, 'reverse': True}).start()
+            self.send(env.CHATID, start=0, end=end, reverse=True)
         return
 
-    def send(self, uid, start: int = 0, end: Optional[int] = 1):
-        rss_d = feed_get(self.link, uid=uid)
+    def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False):
+        rss_d = self.rss_d if self.rss_d else feed_get(self.link, uid=uid)
         if rss_d is None:
             return
+
+        self.rss_d = None  # release
 
         if start >= len(rss_d.entries):
             start = 0
@@ -69,15 +92,16 @@ class Feed:
         elif end is not None and start > 0 and start >= end:
             end = start + 1
 
-        try:
-            for entry in rss_d.entries[start:end]:
-                logger.info(f"Sending {entry['link']}...")
-                post = get_post_from_entry(entry, rss_d.feed.title)
-                post.send_message(uid)
-        except Exception as e:
-            logger.warning(f"Sending failed:", exc_info=e)
-            env.bot.send_message(uid, 'ERROR: 内部错误')
-            return
+        entries_to_send = rss_d.entries[start:end]
+        if reverse:
+            entries_to_send = entries_to_send[::-1]
+
+        send_poll = SendPool()
+        for thread in (threading.Thread(target=send_poll.send,
+                                        kwargs={'uid': uid, 'entry': entry, 'feed_title': rss_d.feed.title})
+                       for entry in entries_to_send):
+            thread.setDaemon(True)
+            thread.start()
 
     def __eq__(self, other):
         return isinstance(other, Feed) and self.name == other.name

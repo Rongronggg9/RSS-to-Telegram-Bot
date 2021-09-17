@@ -110,7 +110,7 @@ class Post:
         self.link = link
         self.author = author
         self.plain = plain
-        self.generate_text()
+        # self.generate_text()
 
     def generate_text(self):
         self.text = Text(self._get_item(self.soup))
@@ -124,15 +124,23 @@ class Post:
         if type(chat_ids) is not list:
             chat_ids = [chat_ids]
 
-        if not self.messages:
-            self.generate_message()
-
         # generate telegraph post and send
-        if telegraph_api and not self.service_msg and not self.telegraph_url and len(self.messages) > 1:
+        if telegraph_api and not self.service_msg and not self.telegraph_url \
+                and (len(self.soup.getText()) >= 4096 or self.generate_message() >= 2):
             logger.info('This post will be sent via Telegraph.')
             if self.telegraph_ify(chat_ids, reply_to_msg_id):  # telegraph post sent successful
                 return
             logger.warning('This post cannot be sent via Telegraph, fallback to normal message...')
+
+        if not self.messages:
+            self.generate_message()
+
+        if len(self.messages) >= 5:
+            logger.warning('This post is too large, send a pure link message instead.')
+            pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
+                                  link=self.link, author=self.author, telegraph_url=self.link)
+            pure_link_post.send_message(chat_ids, reply_to_msg_id)
+            return
 
         message_count = len(self.messages)
         tot_success_count = 0
@@ -230,17 +238,20 @@ class Post:
         self._add_metadata()
 
     def generate_message(self):
+        if not self.text:
+            self.generate_text()
+
         self.messages = []
 
         # service msg
         if self.service_msg:
             self.messages = [message.BotServiceMsg(text) for text in self.get_split_html(4096)]
-            return
+            return len(self.messages)
 
         # Telegraph msg
         if self.telegraph_url:
             self.messages = [message.TelegraphMsg(text) for text in self.get_split_html(4096)]
-            return
+            return len(self.messages)
 
         media_tuple = tuple(self.media.get_valid_media())
         media_msg_count = len(media_tuple)
@@ -248,7 +259,7 @@ class Post:
         # only text
         if not media_tuple:
             self.messages = [message.TextMsg(text) for text in self.get_split_html(4096)]
-            return
+            return len(self.messages)
 
         # containing media
         msg_texts = self.get_split_html(1024, media_msg_count, 4096)
@@ -271,6 +282,8 @@ class Post:
                 continue
         if msg_texts:
             self.messages.extend([message.TextMsg(text) for text in msg_texts])
+
+        return len(self.messages)
 
     def invalidate_all_media(self):
         self.media.invalidate_all()
@@ -598,6 +611,9 @@ class Text:
                 length += len(subText)
             return length
         return len(self.content)
+
+    def __bool__(self):
+        return bool(self.content)
 
     def __eq__(self, other):
         return type(self) == type(other) and self.content == other.content and self.param == other.param

@@ -10,14 +10,11 @@ import post
 
 logger = log.getLogger('RSStT.medium')
 
-# getPic = re.compile(r'<img[^>]*\bsrc="([^"]*)"')
-# getVideo = re.compile(r'<video[^>]*\bsrc="([^"]*)"')
-# getSize = re.compile(r'^Content-Length: (\d+)$', re.M)
 sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
 sizeParser = re.compile(r'(?P<domain>^https?://\w+\.sinaimg\.\S+/)'
                         r'(?P<size>large|mw2048|mw1024|mw720|middle)'
                         r'(?P<filename>/\w+\.\w+$)')
-serverParser = re.compile(r'(?P<url_prefix>^https?:\/\/[a-zA-Z_-]+)'
+serverParser = re.compile(r'(?P<url_prefix>^https?://[a-zA-Z_-]+)'
                           r'(?P<server_id>\d)'
                           r'(?P<url_suffix>\.sinaimg\.\S+$)')
 
@@ -50,8 +47,10 @@ class Medium:
         url = self.url
         try:
             size, width, height = get_medium_info(url)
+            if size is None:
+                raise IOError
         except Exception as e:
-            logger.debug(f'Dropped medium {url}: can not be fetched.')
+            logger.debug(f'Dropped medium {url}: can not be fetched:' + str(e))
             self.valid = False
             return
 
@@ -126,34 +125,6 @@ class Animation(Medium):
         return telegram.InputMediaAnimation(self.url)  # hmm, you don't need it
 
 
-def get_medium_info(url):
-    session = requests.Session()
-    session.mount('http://', HTTPAdapter(max_retries=1))
-    session.mount('https://', HTTPAdapter(max_retries=1))
-
-    response = session.get(url, timeout=(5, 5), proxies=env.REQUESTS_PROXIES, stream=True, headers=env.REQUESTS_HEADERS)
-    size = int(response.headers.get('Content-Length', 256))
-    content_type = response.headers.get('Content-Type')
-
-    height = width = -1
-    if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
-        response.close()
-        return size, width, height
-
-    pic_header = response.raw.read(min(256, size))
-    response.close()
-    pointer = -1
-    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
-        p = pic_header.find(marker)
-        if p != -1:
-            pointer = p
-    if pointer != -1:
-        width = int(pic_header[pointer + 7:pointer + 9].hex(), 16)
-        height = int(pic_header[pointer + 5:pointer + 7].hex(), 16)
-
-    return size, width, height
-
-
 class Media:
     def __init__(self):
         self._media: List[Medium] = []
@@ -197,3 +168,52 @@ class Media:
         if sum(map(lambda m: m.change_server(), self._media)):
             return True
         return False
+
+    def __len__(self):
+        return len(self._media)
+
+    def __bool__(self):
+        return bool(self._media)
+
+
+def get_medium_stream(url, headers: dict = None):
+    if headers is None:
+        headers = env.REQUESTS_HEADERS
+    else:
+        headers = headers.copy()
+        headers.update(env.REQUESTS_HEADERS)
+
+    session = requests.Session()
+    session.mount('http://', HTTPAdapter(max_retries=1))
+    session.mount('https://', HTTPAdapter(max_retries=1))
+    stream = session.get(url, timeout=(5, 5), proxies=env.REQUESTS_PROXIES, stream=True,
+                         headers=headers)
+    if stream.status_code != 200:
+        return None
+    return stream
+
+
+def get_medium_info(url):
+    stream = get_medium_stream(url)
+    if stream is None:
+        return None, None, None
+    size = int(stream.headers.get('Content-Length', 256))
+    content_type = stream.headers.get('Content-Type')
+
+    height = width = -1
+    if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
+        stream.close()
+        return size, width, height
+
+    pic_header = stream.raw.read(min(256, size))
+    stream.close()
+    pointer = -1
+    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
+        p = pic_header.find(marker)
+        if p != -1:
+            pointer = p
+    if pointer != -1:
+        width = int(pic_header[pointer + 7:pointer + 9].hex(), 16)
+        height = int(pic_header[pointer + 5:pointer + 7].hex(), 16)
+
+    return size, width, height

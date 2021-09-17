@@ -10,3 +10,4 @@ listparser==0.18
 lxml==4.6.3
 fasteners==0.16.3
 colorlog==6.4.1
+telegraph==1.4.1

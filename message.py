@@ -58,9 +58,12 @@ class Message:
 
 
 class TextMsg(Message):
+    disable_preview = True
+
     @fasteners.lock.read_locked
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
-        env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode, disable_web_page_preview=True,
+        env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode,
+                             disable_web_page_preview=self.disable_preview,
                              reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
@@ -97,3 +100,7 @@ class MediaGroupMsg(Message):
 
 class BotServiceMsg(TextMsg):
     no_retry = True
+
+
+class TelegraphMsg(TextMsg):
+    disable_preview = False

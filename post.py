@@ -119,16 +119,16 @@ class Post:
         if type(chat_ids) is not list:
             chat_ids = [chat_ids]
 
+        if not self.messages:
+            self.generate_message()
+
         # send telegraph post
-        if telegraph_api and not self.service_msg and not self.telegraph_url \
-                and len(self.text) >= (1024 if self.media else 4096):
+        if telegraph_api and not self.service_msg and not self.telegraph_url and len(self.messages) > 1:
             logger.info('This post will be sent via Telegraph.')
             if self.telegraph_ify(chat_ids, reply_to_msg_id):  # telegraph post sent successful
                 return
             logger.warning('This post cannot be sent via Telegraph, fallback to normal message...')
 
-        if not self.messages:
-            self.generate_message()
         message_count = len(self.messages)
         tot_success_count = 0
         while len(chat_ids) >= 1:

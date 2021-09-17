@@ -24,12 +24,18 @@ services:
       - MANAGER=1234567890  # 替换为你的 user id
       - DELAY=300  # 订阅更新检查间隔（单位：秒）
 
-      # <------ 以下为可选参数，取消注释（删除行首的空格）并对应修改来启用它们 ------> #
-#      - T_PROXY=socks5h://host.docker.internal:1080  # Telegram Bot API 使用的代理，用 host.docker.internal 代替 localhost
-#      - R_PROXY=socks5h://host.docker.internal:1080  # 获取 RSS 订阅使用的代理， 用 host.docker.internal 代替 localhost
-#      - DEBUG=1  # 若要开启 debug 日志输出，请取消注释该行
+# ↓------ 要启用长文自动转 Telegraph，取消注释（删除 # 号）并替换为你自己申请到的 access_token ------↓ #
+# 在这里申请: https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot
+      #- TELEGRAPH_TOKEN=1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
+# ↑------ 要启用长文自动转 Telegraph，取消注释（删除 # 号）并替换为你自己申请到的 access_token ------↑ #
 
-      # <------ 若不使用 redis 而使用 sqlite，请将此行以下全部注释，注意数据不会被自动迁移 ------> #
+# ↓------ 以下为可选参数，取消注释（删除 # 号）并对应修改来启用它们 ------↓ #
+      #- T_PROXY=socks5h://host.docker.internal:1080  # Telegram Bot API 使用的代理，用 host.docker.internal 代替 localhost
+      #- R_PROXY=socks5h://host.docker.internal:1080  # 获取 RSS 订阅使用的代理， 用 host.docker.internal 代替 localhost
+      #- DEBUG=1  # 若要开启 debug 日志输出，请取消注释该行
+# ↑------ 以上为可选参数，取消注释（删除 # 号）并对应修改来启用它们 ------↑ #
+
+# ↓------ 若不使用 redis 而使用 sqlite，请将此行以下全部注释，注意数据不会被自动迁移 ------↓ #
       - REDISHOST=redis
     depends_on:
       - redis

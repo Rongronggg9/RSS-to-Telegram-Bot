@@ -26,6 +26,10 @@ IMG_RELAY_SERVER = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.r
 if not IMG_RELAY_SERVER.endswith('/'):
     IMG_RELAY_SERVER += '/'
 
+TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
+if TELEGRAM_PROXY and TELEGRAM_PROXY:  # enable proxy for telegraph
+    os.environ['HTTPS_PROXY'] = TELEGRAM_PROXY
+
 REDIS_HOST = os.environ.get('REDISHOST')
 REDIS_PORT = int(os.environ.get('REDISPORT', 6379))
 REDIS_USER = os.environ.get('REDISUSER')

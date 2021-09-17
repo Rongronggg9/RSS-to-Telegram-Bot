@@ -26,7 +26,7 @@ services:
 
 # ↓------ 要启用长文自动转 Telegraph，取消注释（删除 # 号）并替换为你自己申请到的 access_token ------↓ #
 # 在这里申请: https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot
-# 可以填写多个，以半角分号（ ; ）分割，每次都会随机选用（刷新上述页面就可以取得新的 token）
+# 可以填写多个，以半角逗号（ , ）分割，每次都会随机选用（刷新上述页面就可以取得新的 token）
       #- TELEGRAPH_TOKEN=1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
 # ↑------ 要启用长文自动转 Telegraph，取消注释（删除 # 号）并替换为你自己申请到的 access_token ------↑ #
 

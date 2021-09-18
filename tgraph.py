@@ -23,11 +23,12 @@ class Session(requests.Session):
 
 class Telegraph(telegraph.Telegraph):
     def __init__(self, access_token=None):
+        self._lock = fasteners.ReaderWriterLock()  # rwlock: wait if exceed flood control
+        self._rlock = threading.RLock()  # lock: only one request can be sent at the same time
+
         self._telegraph = telegraph.api.TelegraphApi(access_token)
         self._telegraph.session = Session()
         self._telegraph.session.mount('https://', HTTPAdapter(max_retries=1))
-        self._lock = fasteners.ReaderWriterLock()
-        self._rlock = threading.RLock()
         self.retries = 0
         self.last_run = time.time()
 
@@ -65,7 +66,7 @@ class Telegraph(telegraph.Telegraph):
     @fasteners.read_locked
     def _create_page(self, *args, **kwargs):
         with self._rlock:
-            time.sleep(max(1 - (time.time() - self.last_run), 0))  # avoid flood control
+            time.sleep(max(1 - (time.time() - self.last_run), 0))  # avoid exceeding flood control
             ret = super().create_page(*args, **kwargs)
             self.last_run = time.time()
             return ret
@@ -109,7 +110,7 @@ class API:
         if not self._accounts:
             raise telegraph.TelegraphException('Telegraph token no set!')
 
-        return random.choice(self._accounts).create_page(*args, **kwargs)
+        return random.choice(self._accounts).create_page(*args, **kwargs)  # choose an account randomly
 
 
 api = None
@@ -127,9 +128,16 @@ TELEGRAPH_ALLOWED_TAGS = {
 
 
 class TelegraphIfy:
+    # if Telegraph account is not set but telegraph_ify is called, let it raise exception heartily :-)
+    max_concurrency = api.count if api else 10
+
+    # limit Telegraph_ify concurrency so that we can increase the concurrency of post.generate_message
+    _semaphore = threading.BoundedSemaphore(max_concurrency)
+
     def __init__(self, xml: str = None, title: str = None, link: str = None, feed_title: str = None,
                  author: str = None):
-        self.retries = 0
+        if not api:
+            raise telegraph.TelegraphException('Telegraph token no set!')
 
         soup = BeautifulSoup(xml, 'lxml')
 
@@ -154,8 +162,9 @@ class TelegraphIfy:
                                        f"<br><br><a href='{link}'>Source</a>" if link else '')
 
     def telegraph_ify(self):
-        telegraph_page = api.create_page(title=self.telegraph_title[:256],
-                                         html_content=self.telegraph_html_content,
-                                         author_name=self.telegraph_author[:128],
-                                         author_url=self.telegraph_author_url[:512])
+        with self._semaphore:
+            telegraph_page = api.create_page(title=self.telegraph_title[:256],
+                                             html_content=self.telegraph_html_content,
+                                             author_name=self.telegraph_author[:128],
+                                             author_url=self.telegraph_author_url[:512])
         return telegraph_page['url']

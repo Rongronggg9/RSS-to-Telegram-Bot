@@ -121,6 +121,11 @@ class Feed:
     def __eq__(self, other):
         return isinstance(other, Feed) and self.name == other.name
 
+    def __lt__(self, other):
+        if self.fid is None:
+            return True
+        return self.fid < other.fid
+
 
 class Feeds:
     def __init__(self):
@@ -129,12 +134,22 @@ class Feeds:
         self._lock = fasteners.ReaderWriterLock()
         with open('opml_template.opml', 'r') as template:
             self._opml_template = template.read()
+        self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 
     @fasteners.lock.read_locked
-    def monitor(self):
+    def monitor(self, fetch_all: bool = False):
         # any(map(lambda feed: feed.monitor(), self._feeds.values()))
+
+        if fetch_all:
+            feeds_to_be_monitored = self
+        else:
+            # divide monitor tasks evenly to every minute
+            sorted_feeds = sorted(self)
+            head = datetime.utcnow().minute % self._interval
+            feeds_to_be_monitored = sorted_feeds[head::self._interval]
+
         monitor_poll = MonitorPool()
-        for feed in self._feeds.values():
+        for feed in feeds_to_be_monitored:
             thread = threading.Thread(target=monitor_poll.monitor, kwargs={'feed': feed})
             thread.setDaemon(True)
             thread.setName('Feed:' + str(feed.name))

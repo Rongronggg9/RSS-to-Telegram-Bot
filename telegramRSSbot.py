@@ -300,6 +300,7 @@ def main():
     updater.start_polling()
 
     # fetch_all on start
+    logger.info('Fetch all feeds at once.')
     rss_monitor(fetch_all=True)
 
     # divide monitor tasks evenly to every minute

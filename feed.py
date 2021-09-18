@@ -20,9 +20,10 @@ logger = log.getLogger('RSStT.feed')
 
 # send threads pool
 class SendPool:
-    max_concurrent = 5
-    _send_semaphore = threading.BoundedSemaphore(max_concurrent)
-    _generate_semaphore = threading.BoundedSemaphore(max_concurrent)
+    _send_max_concurrency = 5
+    _generate_max_concurrency = 10
+    _send_semaphore = threading.BoundedSemaphore(_send_max_concurrency)
+    _generate_semaphore = threading.BoundedSemaphore(_generate_max_concurrency)
 
     def __init__(self):
         self.endLock = threading.RLock()
@@ -39,8 +40,8 @@ class SendPool:
 
 
 class MonitorPool:
-    max_concurrent = 5
-    _semaphore = threading.BoundedSemaphore(max_concurrent)
+    max_concurrency = 5
+    _semaphore = threading.BoundedSemaphore(max_concurrency)
 
     def monitor(self, feed):
         with self._semaphore:

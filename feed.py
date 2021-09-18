@@ -38,6 +38,15 @@ class SendPool:
             post.send_message(uid)
 
 
+class MonitorPool:
+    max_concurrent = 5
+    _semaphore = threading.BoundedSemaphore(max_concurrent)
+
+    def monitor(self, feed):
+        with self._semaphore:
+            feed.monitor()
+
+
 class Feed:
     def __init__(self, link: str, fid: Optional[int] = None, name: Optional[str] = None, last: Optional[str] = None):
         self.fid = fid
@@ -100,10 +109,12 @@ class Feed:
             entries_to_send = entries_to_send[::-1]
 
         send_poll = SendPool()
-        for thread in (threading.Thread(target=send_poll.send,
-                                        kwargs={'uid': uid, 'entry': entry, 'feed_title': rss_d.feed.title})
-                       for entry in entries_to_send):
+
+        for entry in entries_to_send:
+            thread = threading.Thread(target=send_poll.send,
+                                      kwargs={'uid': uid, 'entry': entry, 'feed_title': rss_d.feed.title})
             thread.setDaemon(True)
+            thread.setName('Post:' + str(entry.title))
             thread.start()
 
     def __eq__(self, other):
@@ -120,7 +131,13 @@ class Feeds:
 
     @fasteners.lock.read_locked
     def monitor(self):
-        any(map(lambda feed: feed.monitor(), self._feeds.values()))
+        # any(map(lambda feed: feed.monitor(), self._feeds.values()))
+        monitor_poll = MonitorPool()
+        for feed in self._feeds.values():
+            thread = threading.Thread(target=monitor_poll.monitor, kwargs={'feed': feed})
+            thread.setDaemon(True)
+            thread.setName('Feed:' + str(feed.name))
+            thread.start()
 
     @fasteners.lock.read_locked
     def find(self, name: Optional[str] = None, link: Optional[str] = None, strict: bool = True) -> Optional[Feed]:

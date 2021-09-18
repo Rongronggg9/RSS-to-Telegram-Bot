@@ -214,8 +214,8 @@ def cmd_version(update: telegram.Update, context: telegram.ext.CallbackContext):
     update.effective_message.reply_text(env.VERSION)
 
 
-def rss_monitor(context: telegram.ext.CallbackContext = None):
-    feeds.monitor()
+def rss_monitor(context: telegram.ext.CallbackContext = None, fetch_all: bool = False):
+    feeds.monitor(fetch_all)
 
 
 def error_handler(update: object, context: telegram.ext.CallbackContext):
@@ -298,8 +298,13 @@ def main():
     feeds = Feeds()
 
     updater.start_polling()
-    job_queue.run_repeating(rss_monitor, env.DELAY)
-    rss_monitor()
+
+    # fetch_all on start
+    rss_monitor(fetch_all=True)
+
+    # divide monitor tasks evenly to every minute
+    job_queue.run_custom(rss_monitor, job_kwargs={'max_instances': 3, 'trigger': 'cron', 'minute': '*/1'})
+
     updater.idle()
 
 

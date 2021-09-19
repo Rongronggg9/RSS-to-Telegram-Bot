@@ -60,7 +60,7 @@ class Feed:
         if rss_d is None:
             return
 
-        feed_last = str(rss_d.entries[0]['link'])
+        feed_last = str(rss_d.entries[0]['guid'] if 'guid' in rss_d.entries[0] else rss_d.entries[0]['link'])
         if self.last == feed_last:
             logger.debug(f'{self.link} fetched, no new post.')
             return
@@ -78,7 +78,7 @@ class Feed:
         #  all posts won't be sent and last sent post will be reset to the newest post (though not sent).
         end = None
         for i in range(len(rss_d.entries)):
-            if last == rss_d.entries[i]['link']:
+            if last == str(rss_d.entries[i]['guid'] if 'guid' in rss_d.entries[i] else rss_d.entries[i]['link']):
                 end = i
                 break
 
@@ -173,7 +173,7 @@ class Feeds:
         rss_d = feed_get(link, uid=uid, timeout=timeout)
         if rss_d is None:
             return None
-        last = str(rss_d.entries[0]['link'])
+        last = str(rss_d.entries[0]['guid'] if 'guid' in rss_d.entries[0] else rss_d.entries[0]['link'])
         fid = self.current_fid
         feed = Feed(fid=fid, name=name, link=link, last=last)
 

@@ -7,12 +7,13 @@ from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import Optional, Union, List
 from emoji import emojize
+from urllib.parse import urlparse
 
 import log
 import message
 import env
 import tgraph
-from medium import Video, Image, Media, Animation
+from medium import Video, Image, Media, Animation, get_medium_stream
 
 logger = log.getLogger('RSStT.post')
 
@@ -406,6 +407,22 @@ class Post:
         if tag == 'li':
             text = self._get_item(soup.children)
             return ListItem(text) if text else None
+
+        if tag == 'iframe':
+            text = self._get_item(soup.children)
+            src = soup.get('src')
+            if not src:
+                return None
+            if not text:
+                try:
+                    stream = get_medium_stream(src)
+                    page = stream.text
+                    stream.close()
+                    text = BeautifulSoup(page, 'lxml').title.text
+                finally:
+                    if not text:
+                        text = urlparse(src).netloc
+            return Link(f'iframe ({text})', param=src)
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:

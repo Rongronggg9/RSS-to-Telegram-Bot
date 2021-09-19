@@ -20,8 +20,8 @@ logger = log.getLogger('RSStT.feed')
 
 # send threads pool
 class SendPool:
-    _send_max_concurrency = 5
-    _generate_max_concurrency = 10
+    _send_max_concurrency = 3
+    _generate_max_concurrency = 7
     _send_semaphore = threading.BoundedSemaphore(_send_max_concurrency)
     _generate_semaphore = threading.BoundedSemaphore(_generate_max_concurrency)
 

@@ -1,6 +1,7 @@
+import threading
 import telegram.error
 import time
-import fasteners
+import random
 from typing import List, Union, Optional, Tuple
 
 import log
@@ -12,7 +13,7 @@ logger = log.getLogger('RSStT.message')
 
 class Message:
     no_retry = False
-    _lock = fasteners.ReaderWriterLock()
+    _fc_lock = threading.Lock()
 
     def __init__(self,
                  text: Optional[str] = None,
@@ -31,18 +32,29 @@ class Message:
             logger.warning('Message dropped: retried for too many times.')
             raise OverflowError
 
-        if self.retries > 0:
-            logger.info('Retrying...')
-
         try:
+            with self._fc_lock:  # if not blocked, continue; otherwise, wait
+                pass
+
+            if self.retries > 0:
+                time.sleep(random.uniform(0, 3))
+                logger.info('Retrying...')
+
             self._send(chat_id, reply_to_msg_id)
         except telegram.error.RetryAfter as e:  # exceed flood control
             logger.warning(e.message)
             self.retries += 1
-            if not Message._lock.owner == Message._lock.WRITER:  # if not already blocking
-                with Message._lock.write_lock():  # block any other sending tries
+
+            if self._fc_lock.acquire(blocking=False):  # if not already blocking
+                try:  # block any other sending tries
+                    logger.info('Blocking any sending tries due to flood control...')
                     time.sleep(e.retry_after + 1)
+                    logger.info('Unblocked.')
+                finally:
+                    self._fc_lock.release()
+
             self.send(chat_id)
+            return
         except telegram.error.BadRequest as e:
             if self.no_retry:
                 logger.warning('Something went wrong while sending a message. Please check: ', exc_info=e)
@@ -51,7 +63,6 @@ class Message:
         except telegram.error.NetworkError as e:
             logger.warning(f'Network error({e.message}).')
             self.retries += 1
-            time.sleep(1)
             self.send(chat_id)
 
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
@@ -61,7 +72,6 @@ class Message:
 class TextMsg(Message):
     disable_preview = True
 
-    @fasteners.lock.read_locked
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         env.bot.send_message(chat_id, self.text, parse_mode=self.parse_mode,
                              disable_web_page_preview=self.disable_preview,
@@ -69,28 +79,24 @@ class TextMsg(Message):
 
 
 class PhotoMsg(Message):
-    @fasteners.lock.read_locked
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         env.bot.send_photo(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode,
                            reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class VideoMsg(Message):
-    @fasteners.lock.read_locked
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         env.bot.send_video(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode,
                            reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class AnimationMsg(Message):
-    @fasteners.lock.read_locked
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         env.bot.send_animation(chat_id, self.media.get_url(), caption=self.text, parse_mode=self.parse_mode,
                                reply_to_message_id=reply_to_msg_id, allow_sending_without_reply=True)
 
 
 class MediaGroupMsg(Message):
-    @fasteners.lock.read_locked
     def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         media_list = list(map(lambda m: m.telegramize(), self.media))
         media_list[0].caption = self.text

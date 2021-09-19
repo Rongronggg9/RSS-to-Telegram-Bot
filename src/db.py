@@ -1,12 +1,11 @@
 import sqlite3
 import redis
 
-import log
-import env
+from src import log, env
 
 logger = log.getLogger('RSStT.db')
 
-if env.REDIS_HOST:
+if env.REDIS_HOST or env.REDIS_PORT or env.REDIS_USER or env.REDIS_PASSWORD or env.REDIS_NUM:
     #  REDIS
     class DB:
         _pool = redis.ConnectionPool(host=env.REDIS_HOST,

@@ -4,9 +4,8 @@ import time
 import random
 from typing import List, Union, Optional, Tuple
 
-import log
-from medium import Medium
-import env
+from src import log, env
+from src.parsing.medium import Medium
 
 logger = log.getLogger('RSStT.message')
 

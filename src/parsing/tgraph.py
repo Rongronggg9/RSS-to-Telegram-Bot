@@ -7,8 +7,7 @@ from typing import List, Union
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 
-import log
-import env
+from src import env, log
 
 logger = log.getLogger('RSStT.tgraph')
 

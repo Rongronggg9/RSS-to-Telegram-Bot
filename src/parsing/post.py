@@ -9,11 +9,9 @@ from typing import Optional, Union, List, Iterator
 from emoji import emojize
 from urllib.parse import urlparse, urljoin
 
-import log
-import message
-import env
-import tgraph
-from medium import Video, Image, Media, Animation, get_medium_stream
+from src import env, message, log
+from src.parsing import tgraph
+from src.parsing.medium import Video, Image, Media, Animation, get_medium_stream
 
 logger = log.getLogger('RSStT.post')
 
@@ -31,7 +29,7 @@ stripLineEnd = re.compile(r'[ \t\xa0]+\n')
 isEmoticon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|[01](\.\d)?em)')
 
 # load emoji dict
-with open('emojify.json', 'r', encoding='utf-8') as emojify_json:
+with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
     emoji_dict = json.load(emojify_json)
 
 

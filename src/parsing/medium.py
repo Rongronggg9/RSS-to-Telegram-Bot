@@ -4,9 +4,8 @@ import telegram
 from requests.adapters import HTTPAdapter
 from typing import List
 
-import log
-import env
-import post
+from src import env, log
+from src.parsing import post
 
 logger = log.getLogger('RSStT.medium')
 

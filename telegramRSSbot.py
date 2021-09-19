@@ -5,11 +5,10 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
-import log
-import env
-import tgraph
-from feed import Feed, Feeds
-from post import Post
+from src import env, log
+from src.parsing import tgraph
+from src.feed import Feed, Feeds
+from src.parsing.post import Post
 
 # import for exception handling
 from socket import timeout

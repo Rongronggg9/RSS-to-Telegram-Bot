@@ -36,10 +36,14 @@ if not IMG_RELAY_SERVER.endswith('/'):
     IMG_RELAY_SERVER += '/'
 
 REDIS_HOST = os.environ.get('REDISHOST')
-REDIS_PORT = int(os.environ.get('REDISPORT', 6379))
+REDIS_PORT = os.environ.get('REDISPORT')
 REDIS_USER = os.environ.get('REDISUSER')
 REDIS_PASSWORD = os.environ.get('REDISPASSWORD')
-REDIS_NUM = os.environ.get('REDIS_NUM', 0)
+REDIS_NUM = os.environ.get('REDIS_NUM')
+if REDIS_PORT:
+    REDIS_PORT = int(REDIS_PORT)
+if REDIS_NUM:
+    REDIS_PORT = int(REDIS_NUM)
 
 if os.environ.get('DEBUG'):
     DEBUG = True

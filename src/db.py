@@ -9,10 +9,10 @@ if env.REDIS_HOST or env.REDIS_PORT or env.REDIS_USER or env.REDIS_PASSWORD or e
     #  REDIS
     class DB:
         _pool = redis.ConnectionPool(host=env.REDIS_HOST,
-                                     port=env.REDIS_PORT,
+                                     port=6379 if not env.REDIS_PORT else env.REDIS_PORT,
                                      username=env.REDIS_USER,
                                      password=env.REDIS_PASSWORD,
-                                     db=env.REDIS_NUM,
+                                     db=0 if not env.REDIS_NUM else env.REDIS_NUM,
                                      socket_connect_timeout=1.5,
                                      socket_timeout=1.5,
                                      retry_on_timeout=True,

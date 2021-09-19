@@ -5,9 +5,9 @@ import telegram.error
 import telegraph
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Iterator
 from emoji import emojize
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 import log
 import message
@@ -43,14 +43,14 @@ def emojify(xml):
     return xml
 
 
-def get_post_from_entry(entry, feed_title):
+def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post':
     xml = entry['content'][0]['value'] \
         if ('content' in entry) and (len(entry['content']) > 0) \
         else entry['summary']
     link = entry['link']
     author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
     title = entry['title']
-    return Post(xml, title, feed_title, link, author)
+    return Post(xml, title, feed_title, link, author, feed_link=feed_link)
 
 
 # ----------------
@@ -65,7 +65,8 @@ class Post:
                  author: Optional[str] = None,
                  plain: bool = False,
                  service_msg: bool = False,
-                 telegraph_url: str = None):
+                 telegraph_url: str = None,
+                 feed_link: str = None):
         """
         :param xml: post content (xml or html)
         :param title: post title
@@ -75,6 +76,7 @@ class Post:
         :param plain: do not need to add metadata?
         :param service_msg: is this post a bot service msg?
         :param telegraph_url: if set, a telegraph post will be sent
+        :param feed_link: the url of the feed where the post from
         """
         self.retries = 0
         xml = xml.replace('\n', '')
@@ -93,6 +95,7 @@ class Post:
         self.author = author
         self.plain = plain
         self.telegraph_post: Optional[Post] = None
+        self.feed_link = feed_link if feed_link else link
         # self.generate_text()
 
     def generate_text(self):
@@ -311,7 +314,7 @@ class Post:
             return
         self.text = Text([self.text, text_invalid_media])
 
-    def _get_item(self, soup: BeautifulSoup):
+    def _get_item(self, soup: Union[BeautifulSoup, Iterator, NavigableString]):
         result = []
         if isinstance(soup, type(iter([]))):
             for child in soup:
@@ -353,17 +356,22 @@ class Post:
             return Br()
 
         if tag == 'a':
+            text = self._get_item(soup.children)
+            if not text:
+                return None
             href = soup.get("href")
-            if href and '://' in href:
-                return Link(self._get_item(soup.children), href)
-            return None
+            if not href:
+                return None
+            href = urljoin(self.feed_link, href)
+            return Link(self._get_item(soup.children), href)
 
         if tag == 'img':
             src, alt, _class, style = soup.get('src'), soup.get('alt'), soup.get('class', ''), soup.get('style', '')
-            if not src:
-                return None
             if alt and (isEmoticon.search(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':'))):
                 return Text(emojify(alt))
+            if not src:
+                return None
+            src = urljoin(self.feed_link, src)
             if src.endswith('.gif'):
                 self.media.add(Animation(src))
                 return None
@@ -374,6 +382,7 @@ class Post:
             src = soup.get('src')
             if not src:
                 return None
+            src = urljoin(self.feed_link, src)
             self.media.add(Video(src))
             return None
 
@@ -413,6 +422,7 @@ class Post:
             src = soup.get('src')
             if not src:
                 return None
+            src = urljoin(self.feed_link, src)
             if not text:
                 try:
                     stream = get_medium_stream(src)

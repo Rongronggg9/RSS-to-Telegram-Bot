@@ -27,7 +27,7 @@ warnings.warn = warnings.original_warn
 
 stripNewline = re.compile(r'\n{3,}', )
 stripLineEnd = re.compile(r'[ \t\xa0]+\n')
-isEmoticon = re.compile(r'(width|height): ?[012]?\dpx')
+isEmoticon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|[01](\.\d)?em)')
 
 # load emoji dict
 with open('emojify.json', 'r', encoding='utf-8') as emojify_json:

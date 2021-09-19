@@ -28,8 +28,8 @@ class SendPool:
     def __init__(self):
         self.endLock = threading.RLock()
 
-    def send(self, uid, entry, feed_title):
-        post = get_post_from_entry(entry, feed_title)
+    def send(self, uid, entry, feed_title, feed_link=None):
+        post = get_post_from_entry(entry, feed_title, feed_link)
 
         with self._generate_semaphore:
             post.generate_message()
@@ -113,7 +113,8 @@ class Feed:
 
         for entry in entries_to_send:
             thread = threading.Thread(target=send_poll.send,
-                                      kwargs={'uid': uid, 'entry': entry, 'feed_title': rss_d.feed.title})
+                                      kwargs={'uid': uid, 'entry': entry, 'feed_title': rss_d.feed.title,
+                                              'feed_link': self.link})
             thread.setDaemon(True)
             thread.setName('Post:' + str(entry.title))
             thread.start()
@@ -271,7 +272,7 @@ def web_get(url: str, timeout: Optional[int] = 15) -> BytesIO:
 def feed_get(url: str, uid: Optional[int] = None, timeout: Optional[int] = None):
     try:
         rss_content = web_get(url, timeout=timeout)
-        rss_d = feedparser.parse(rss_content, sanitize_html=False, resolve_relative_uris=False)
+        rss_d = feedparser.parse(rss_content, sanitize_html=False)
         _ = rss_d.entries[0]['title']  # try if the url is a valid RSS feed
     except IndexError:
         logger.warning(f'{url} fetch failed: feed error.')

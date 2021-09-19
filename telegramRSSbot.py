@@ -240,7 +240,7 @@ def error_handler(update: object, context: telegram.ext.CallbackContext):
 
 def main():
     global feeds
-    logger.info(f"RSS-to-Telegram-Bot ({env.VERSION}) started!\n"
+    logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
                 f"CHATID: {env.CHATID}\n"
                 f"MANAGER: {env.MANAGER}\n"
                 f"DELAY: {env.DELAY}s\n"

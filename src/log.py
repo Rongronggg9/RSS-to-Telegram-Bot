@@ -1,7 +1,7 @@
 import logging
 import colorlog
 
-import env
+from src import env
 
 getLogger = colorlog.getLogger
 

@@ -10,10 +10,9 @@ from io import BytesIO
 from typing import Optional, Dict, Union, Iterator
 from datetime import datetime
 
-import log
-import env
-from db import db
-from post import get_post_from_entry
+from src import log, env
+from src.db import db
+from src.parsing.post import get_post_from_entry
 
 logger = log.getLogger('RSStT.feed')
 
@@ -133,7 +132,7 @@ class Feeds:
         self._feeds = {fid: Feed(fid=fid, name=name, link=feed_url, last=last_url)
                        for fid, (name, (feed_url, last_url)) in enumerate(db.read_all().items())}
         self._lock = fasteners.ReaderWriterLock()
-        with open('opml_template.opml', 'r') as template:
+        with open('src/opml_template.opml', 'r') as template:
             self._opml_template = template.read()
         self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 

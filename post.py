@@ -362,7 +362,7 @@ class Post:
             if not src:
                 return None
             if alt and (isEmoticon.search(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':'))):
-                return Text(alt)
+                return Text(emojify(alt))
             if src.endswith('.gif'):
                 self.media.add(Animation(src))
                 return None

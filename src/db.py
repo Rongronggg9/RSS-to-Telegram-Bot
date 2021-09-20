@@ -1,5 +1,6 @@
 import sqlite3
 import redis
+from pathlib import Path
 
 from src import log, env
 
@@ -61,6 +62,7 @@ else:
 
         def _init(self):
             try:
+                Path("config").mkdir(parents=True, exist_ok=True)
                 self._conn = sqlite3.connect('config/rss.db', check_same_thread=False)
                 c = self._conn.cursor()
                 c.execute('''CREATE TABLE rss (name text, link text, last text)''')

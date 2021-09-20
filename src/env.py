@@ -3,6 +3,7 @@ import telegram
 import logging
 from typing import Optional
 
+# ----- base config -----
 TOKEN = os.environ.get('TOKEN')
 CHATID = os.environ.get('CHATID')
 DELAY = int(os.environ.get('DELAY', 300))
@@ -22,19 +23,26 @@ if TELEGRAPH_TOKEN:
         .replace('；', ',') \
         .replace(' ', ',')
 
-TELEGRAM_PROXY = os.environ.get('T_PROXY', '')
+# ----- proxy config -----
+DEFAULT_PROXY = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', ''))
 
-if os.environ.get('R_PROXY'):
+TELEGRAM_PROXY = os.environ.get('T_PROXY', DEFAULT_PROXY)
+
+__R_PROXY = os.environ.get('R_PROXY', DEFAULT_PROXY)
+
+if __R_PROXY:
     REQUESTS_PROXIES = {
-        'all': os.environ['R_PROXY']
+        'all': __R_PROXY
     }
 else:
     REQUESTS_PROXIES = {}
 
+# ----- img relay server config -----
 IMG_RELAY_SERVER = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
 if not IMG_RELAY_SERVER.endswith('/'):
     IMG_RELAY_SERVER += '/'
 
+# ----- redis config -----
 REDIS_HOST = os.environ.get('REDISHOST')
 REDIS_PORT = os.environ.get('REDISPORT')
 REDIS_USER = os.environ.get('REDISUSER')
@@ -45,17 +53,13 @@ if REDIS_PORT:
 if REDIS_NUM:
     REDIS_PORT = int(REDIS_NUM)
 
+# ----- debug config -----
 if os.environ.get('DEBUG'):
     DEBUG = True
 else:
     DEBUG = False
 
-bot: Optional[telegram.Bot] = None  # placeholder
-
-REQUESTS_HEADERS = {
-    'user-agent': 'RSStT'
-}
-
+# ----- get version -----
 try:
     with open('.version', 'r') as v:
         VERSION = v.read().strip()
@@ -79,3 +83,10 @@ if VERSION == 'dirty':
 
 if not VERSION or VERSION == '@':
     VERSION = 'dirty'
+
+# ----- shared var -----
+bot: Optional[telegram.Bot] = None  # placeholder
+
+REQUESTS_HEADERS = {
+    'user-agent': 'RSStT'
+}

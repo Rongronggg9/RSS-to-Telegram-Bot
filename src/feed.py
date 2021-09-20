@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from requests.adapters import HTTPAdapter
-from typing import Optional, Dict, Union, Iterator
+from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple
 from datetime import datetime
 from concurrent import futures
 
@@ -16,45 +16,18 @@ from src.parsing.post import get_post_from_entry
 logger = log.getLogger('RSStT.feed')
 
 
-# threads pool
-class Pool:
+class Feed:
     _send_max_concurrency = 3
     _send_pool = futures.ThreadPoolExecutor(_send_max_concurrency, 'Send')
 
     _generate_max_concurrency = 7
     _generate_pool = futures.ThreadPoolExecutor(_generate_max_concurrency, 'Post')
 
-    def send(self, uid, entry, feed_title, feed_link=None):
-        self._generate_pool.submit(self._generate, uid, entry, feed_title, feed_link) \
-            .add_done_callback(self._send_callback)
-
-    def _generate(self, uid, entry, feed_title, feed_link=None):
-        post = get_post_from_entry(entry, feed_title, feed_link)
-        post.generate_message()
-        return post, uid, entry
-
-    def _send_callback(self, future: futures.Future):
-        res = future.result()
-        self._send_pool.submit(self._send, *res)
-
-    def _send(self, post, uid, entry):
-        logger.debug(f"Sending {entry['title']} ({entry['link']})...")
-        post.send_message(uid)
-
-    _monitor_max_concurrency = 5
-    _monitor_pool = futures.ThreadPoolExecutor(_monitor_max_concurrency, 'Monitor')
-
-    def monitor(self, feed):
-        self._monitor_pool.submit(feed.monitor)
-
-
-class Feed:
     def __init__(self, link: str, fid: Optional[int] = None, name: Optional[str] = None, last: Optional[str] = None):
         self.fid = fid
         self.name = name
         self.link = link
         self.last = last
-        self.rss_d = None
 
     def monitor(self):
         rss_d = feed_get(self.link)
@@ -86,18 +59,14 @@ class Feed:
         if not end:  # end is None or end == 0
             logger.warning('Cannot find the last sent post in current feed, all posts will not be sent.')
         else:
-            self.rss_d = rss_d
             # threading.Thread(target=self.send,
             #                  kwargs={'uid': env.CHATID, 'start': 0, 'end': end, 'reverse': True}).start()
-            self.send(env.CHATID, start=0, end=end, reverse=True)
+            self.send(env.CHATID, start=0, end=end, reverse=True, rss_d=rss_d)
         return
 
-    def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False):
-        rss_d = self.rss_d if self.rss_d else feed_get(self.link, uid=uid)
+    def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False, rss_d=None):
         if rss_d is None:
-            return
-
-        self.rss_d = None  # release
+            rss_d = feed_get(self.link, uid=uid)
 
         if start >= len(rss_d.entries):
             start = 0
@@ -109,10 +78,22 @@ class Feed:
         if reverse:
             entries_to_send = entries_to_send[::-1]
 
-        send_poll = Pool()
-
         for entry in entries_to_send:
-            send_poll.send(uid, entry, rss_d.feed.title, self.link)
+            self._generate_pool.submit(self._generate, uid, entry, rss_d.feed.title) \
+                .add_done_callback(self._send_callback)
+
+    def _generate(self, uid, entry, feed_title):
+        post = get_post_from_entry(entry, feed_title, self.link)
+        post.generate_message()
+        return post, uid, entry
+
+    def _send_callback(self, future: futures.Future):
+        res = future.result()
+        self._send_pool.submit(self._send, *res)
+
+    def _send(self, post, uid, entry):
+        logger.debug(f"Sending {entry['title']} ({entry['link']})...")
+        post.send_message(uid)
 
     def __eq__(self, other):
         return isinstance(other, Feed) and self.name == other.name
@@ -124,6 +105,9 @@ class Feed:
 
 
 class Feeds:
+    _max_concurrency = 5
+    _pool = futures.ThreadPoolExecutor(_max_concurrency, 'Monitor')
+
     def __init__(self):
         self._feeds = {fid: Feed(fid=fid, name=name, link=feed_url, last=last_url)
                        for fid, (name, (feed_url, last_url)) in enumerate(db.read_all().items())}
@@ -133,8 +117,6 @@ class Feeds:
         self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 
     def monitor(self, fetch_all: bool = False):
-        # any(map(lambda feed: feed.monitor(), self._feeds.values()))
-
         # acquire r lock
         with self._lock.read_lock():
             if fetch_all:
@@ -145,9 +127,8 @@ class Feeds:
                 head = datetime.utcnow().minute % self._interval
                 feeds_to_be_monitored = sorted_feeds[head::self._interval]
 
-        monitor_poll = Pool()
         for feed in feeds_to_be_monitored:
-            monitor_poll.monitor(feed)
+            self._pool.submit(feed.monitor)
 
     @fasteners.lock.read_locked
     def find(self, name: Optional[str] = None, link: Optional[str] = None, strict: bool = True) -> Optional[Feed]:
@@ -205,11 +186,13 @@ class Feeds:
             return tuple(self._feeds)
 
     def import_opml(self, opml_file: Union[bytearray, bytes]) -> Optional[Dict[str, list]]:
-        valid_feeds = []
-        invalid_feeds = []
         opml_d = listparser.parse(opml_file.decode())
         if not opml_d.feeds:
             return None
+        valid_feeds: List[MutableMapping] = []
+        invalid_feeds: List[MutableMapping] = []
+
+        pending_futures: List[Tuple[MutableMapping, futures.Future]] = []
         for _feed in opml_d.feeds:
             if not _feed.title:
                 _feed.title = '不支持无标题订阅！'
@@ -218,9 +201,13 @@ class Feeds:
             _feed.title = _feed.title.replace(' ', '_')
 
             # do not need to acquire lock because add_feed will acquire one
-            successful = self.add_feed(name=_feed.title, link=_feed.url, timeout=5)
+            future = self._pool.submit(self.add_feed, name=_feed.title, link=_feed.url, timeout=5)
+            pending_futures.append((_feed, future))
 
+        for _feed, future in pending_futures:
+            successful = future.result()
             valid_feeds.append(_feed) if successful else invalid_feeds.append(_feed)
+
         logger.info('Imported feed(s).')
         return {'valid': valid_feeds, 'invalid': invalid_feeds}
 

@@ -5,7 +5,6 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from requests.adapters import HTTPAdapter
-from io import BytesIO
 from typing import Optional, Dict, Union, Iterator
 from datetime import datetime
 from concurrent import futures
@@ -250,7 +249,7 @@ class Feeds:
         return self._feeds[item]
 
 
-def web_get(url: str, timeout: Optional[int] = 15) -> BytesIO:
+def web_get(url: str, timeout: Optional[int] = 15) -> bytes:
     if timeout is None:
         timeout = 15
 
@@ -259,7 +258,7 @@ def web_get(url: str, timeout: Optional[int] = 15) -> BytesIO:
         session.mount('https://', HTTPAdapter(max_retries=1))
 
         with session.get(url, timeout=timeout, proxies=env.REQUESTS_PROXIES, headers=env.REQUESTS_HEADERS) as response:
-            content = BytesIO(response.content)
+            content = response.content
 
     return content
 

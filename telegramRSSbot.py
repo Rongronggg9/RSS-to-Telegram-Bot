@@ -1,7 +1,6 @@
 import functools
 import telegram
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
-from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
@@ -21,9 +20,6 @@ logger = log.getLogger('RSStT')
 # global var placeholder
 feeds: Optional[Feeds] = None
 conflictCount = 0
-
-# initial
-Path("config").mkdir(parents=True, exist_ok=True)
 
 # permission verification
 GROUP = 1087968824

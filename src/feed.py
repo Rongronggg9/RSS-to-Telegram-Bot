@@ -17,7 +17,7 @@ from src.parsing.post import get_post_from_entry
 logger = log.getLogger('RSStT.feed')
 
 
-# send threads pool
+# threads pool
 class SendPool:
     _send_max_concurrency = 3
     _generate_max_concurrency = 7
@@ -136,17 +136,18 @@ class Feeds:
             self._opml_template = template.read()
         self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 
-    @fasteners.lock.read_locked
     def monitor(self, fetch_all: bool = False):
         # any(map(lambda feed: feed.monitor(), self._feeds.values()))
 
-        if fetch_all:
-            feeds_to_be_monitored = self
-        else:
-            # divide monitor tasks evenly to every minute
-            sorted_feeds = sorted(self)
-            head = datetime.utcnow().minute % self._interval
-            feeds_to_be_monitored = sorted_feeds[head::self._interval]
+        # acquire r lock
+        with self._lock.read_lock():
+            if fetch_all:
+                feeds_to_be_monitored = self._feeds.values()
+            else:
+                # divide monitor tasks evenly to every minute
+                sorted_feeds = sorted(self)
+                head = datetime.utcnow().minute % self._interval
+                feeds_to_be_monitored = sorted_feeds[head::self._interval]
 
         monitor_poll = MonitorPool()
         for feed in feeds_to_be_monitored:

@@ -298,9 +298,10 @@ def main():
 
     updater.start_polling()
 
-    # fetch_all on start
-    logger.info('Fetch all feeds at once.')
-    rss_monitor(fetch_all=True)
+    # disable to get rid of memory exhausted
+    # # fetch_all on start
+    # logger.info('Fetch all feeds at once.')
+    # rss_monitor(fetch_all=True)
 
     # divide monitor tasks evenly to every minute
     job_queue.run_custom(rss_monitor, job_kwargs={'max_instances': 3, 'trigger': 'cron', 'minute': '*/1'})

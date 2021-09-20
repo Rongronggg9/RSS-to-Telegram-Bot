@@ -2,13 +2,13 @@ import fasteners
 import feedparser
 import listparser
 import requests
-import threading
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from requests.adapters import HTTPAdapter
 from io import BytesIO
 from typing import Optional, Dict, Union, Iterator
 from datetime import datetime
+from concurrent import futures
 
 from src import log, env
 from src.db import db
@@ -18,33 +18,35 @@ logger = log.getLogger('RSStT.feed')
 
 
 # threads pool
-class SendPool:
+class Pool:
     _send_max_concurrency = 3
-    _generate_max_concurrency = 7
-    _send_semaphore = threading.BoundedSemaphore(_send_max_concurrency)
-    _generate_semaphore = threading.BoundedSemaphore(_generate_max_concurrency)
+    _send_pool = futures.ThreadPoolExecutor(_send_max_concurrency, 'Send')
 
-    def __init__(self):
-        self.endLock = threading.RLock()
+    _generate_max_concurrency = 7
+    _generate_pool = futures.ThreadPoolExecutor(_generate_max_concurrency, 'Post')
 
     def send(self, uid, entry, feed_title, feed_link=None):
+        self._generate_pool.submit(self._generate, uid, entry, feed_title, feed_link)\
+            .add_done_callback(self._send_callback)
+
+    def _generate(self, uid, entry, feed_title, feed_link=None):
         post = get_post_from_entry(entry, feed_title, feed_link)
+        post.generate_message()
+        return post, uid, entry
 
-        with self._generate_semaphore:
-            post.generate_message()
+    def _send_callback(self, future: futures.Future):
+        res = future.result()
+        self._send_pool.submit(self._send, *res)
 
-        with self._send_semaphore:
-            logger.debug(f"Sending {entry['title']} ({entry['link']})...")
-            post.send_message(uid)
+    def _send(self, post, uid, entry):
+        logger.debug(f"Sending {entry['title']} ({entry['link']})...")
+        post.send_message(uid)
 
-
-class MonitorPool:
-    max_concurrency = 5
-    _semaphore = threading.BoundedSemaphore(max_concurrency)
+    _monitor_max_concurrency = 5
+    _monitor_pool = futures.ThreadPoolExecutor(_monitor_max_concurrency, 'Monitor')
 
     def monitor(self, feed):
-        with self._semaphore:
-            feed.monitor()
+        self._monitor_pool.submit(feed.monitor)
 
 
 class Feed:
@@ -108,15 +110,10 @@ class Feed:
         if reverse:
             entries_to_send = entries_to_send[::-1]
 
-        send_poll = SendPool()
+        send_poll = Pool()
 
         for entry in entries_to_send:
-            thread = threading.Thread(target=send_poll.send,
-                                      kwargs={'uid': uid, 'entry': entry, 'feed_title': rss_d.feed.title,
-                                              'feed_link': self.link})
-            thread.setDaemon(True)
-            thread.setName('Post:' + str(entry.title))
-            thread.start()
+            send_poll.send(uid, entry, rss_d.feed.title, self.link)
 
     def __eq__(self, other):
         return isinstance(other, Feed) and self.name == other.name
@@ -149,12 +146,9 @@ class Feeds:
                 head = datetime.utcnow().minute % self._interval
                 feeds_to_be_monitored = sorted_feeds[head::self._interval]
 
-        monitor_poll = MonitorPool()
+        monitor_poll = Pool()
         for feed in feeds_to_be_monitored:
-            thread = threading.Thread(target=monitor_poll.monitor, kwargs={'feed': feed})
-            thread.setDaemon(True)
-            thread.setName('Feed:' + str(feed.name))
-            thread.start()
+            monitor_poll.monitor(feed)
 
     @fasteners.lock.read_locked
     def find(self, name: Optional[str] = None, link: Optional[str] = None, strict: bool = True) -> Optional[Feed]:

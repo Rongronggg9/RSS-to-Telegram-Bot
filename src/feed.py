@@ -26,7 +26,7 @@ class Pool:
     _generate_pool = futures.ThreadPoolExecutor(_generate_max_concurrency, 'Post')
 
     def send(self, uid, entry, feed_title, feed_link=None):
-        self._generate_pool.submit(self._generate, uid, entry, feed_title, feed_link)\
+        self._generate_pool.submit(self._generate, uid, entry, feed_title, feed_link) \
             .add_done_callback(self._send_callback)
 
     def _generate(self, uid, entry, feed_title, feed_link=None):
@@ -253,13 +253,14 @@ class Feeds:
 def web_get(url: str, timeout: Optional[int] = 15) -> BytesIO:
     if timeout is None:
         timeout = 15
-    session = requests.Session()
-    session.mount('http://', HTTPAdapter(max_retries=1))
-    session.mount('https://', HTTPAdapter(max_retries=1))
 
-    response = session.get(url, timeout=timeout, proxies=env.REQUESTS_PROXIES,
-                           headers=env.REQUESTS_HEADERS)
-    content = BytesIO(response.content)
+    with requests.Session() as session:
+        session.mount('http://', HTTPAdapter(max_retries=1))
+        session.mount('https://', HTTPAdapter(max_retries=1))
+
+        with session.get(url, timeout=timeout, proxies=env.REQUESTS_PROXIES, headers=env.REQUESTS_HEADERS) as response:
+            content = BytesIO(response.content)
+
     return content
 
 

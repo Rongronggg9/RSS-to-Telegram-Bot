@@ -1,12 +1,12 @@
-import functools
 import telegram
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 from typing import Optional
 from datetime import datetime
+from functools import wraps, partial
 
 from src import env, log
 from src.parsing import tgraph
-from src.feed import Feed, Feeds
+from src.feed import Feed, Feeds, run_sync
 from src.parsing.post import Post
 
 # import for exception handling
@@ -27,10 +27,10 @@ GROUP = 1087968824
 
 def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
     if func is None:
-        return functools.partial(permission_required, only_manager=only_manager,
-                                 only_in_private_chat=only_in_private_chat)
+        return partial(permission_required, only_manager=only_manager,
+                       only_in_private_chat=only_in_private_chat)
 
-    @functools.wraps(func)
+    @wraps(func)
     def wrapper(update: telegram.Update, context: Optional[telegram.ext.CallbackContext] = None, *args, **kwargs):
         message = update.effective_message
         command = message.text if message.text else '(no command, file message)'
@@ -91,7 +91,7 @@ def cmd_add(update: telegram.Update, context: telegram.ext.CallbackContext):
     except IndexError:
         update.effective_message.reply_text('ERROR: 格式需要为: /add 标题 RSS')
         return
-    if feeds.add_feed(name=title, link=url, uid=update.effective_chat.id):
+    if run_sync(feeds.add_feed_async(name=title, link=url, uid=update.effective_chat.id)):
         update.effective_message.reply_text('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
@@ -187,7 +187,7 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
     update.effective_message.reply_text('正在处理中...\n'
                                         '如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待', quote=True)
     logger.info(f'Got an opml file.')
-    res = feeds.import_opml(opml_file)
+    res = run_sync(feeds.import_opml_async(opml_file))
     if res is None:
         update.effective_message.reply_text('ERROR: 解析失败或文档不含订阅', quote=True)
         return
@@ -196,10 +196,10 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
     invalid = res['invalid']
     import_result = '<b><u>导入结果</u></b><br><br>' \
                     + ('导入成功：<br>' if valid else '') \
-                    + '<br>'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in valid) \
+                    + '<br>'.join(f'<a href="{feed["link"]}">{feed["name"]}</a>' for feed in valid) \
                     + ('<br><br>' if valid and invalid else '') \
                     + ('导入失败：<br>' if invalid else '') \
-                    + '<br>'.join(f'<a href="{feed.url}">{feed.title}</a>' for feed in invalid)
+                    + '<br>'.join(f'<a href="{feed["link"]}">{feed["name"]}</a>' for feed in invalid)
     result_post = Post(import_result, plain=True, service_msg=True)
     result_post.send_message(update.effective_chat.id, update.effective_message.message_id)
 
@@ -210,7 +210,7 @@ def cmd_version(update: telegram.Update, context: telegram.ext.CallbackContext):
 
 
 def rss_monitor(context: telegram.ext.CallbackContext = None, fetch_all: bool = False):
-    feeds.monitor(fetch_all)
+    run_sync(feeds.monitor_async(fetch_all))
 
 
 def error_handler(update: object, context: telegram.ext.CallbackContext):

@@ -24,15 +24,15 @@ if TELEGRAPH_TOKEN:
         .replace(' ', ',')
 
 # ----- proxy config -----
-DEFAULT_PROXY = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', ''))
+DEFAULT_PROXY = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', None))
 
 TELEGRAM_PROXY = os.environ.get('T_PROXY', DEFAULT_PROXY)
 
-__R_PROXY = os.environ.get('R_PROXY', DEFAULT_PROXY)
+R_PROXY = os.environ.get('R_PROXY', DEFAULT_PROXY)
 
-if __R_PROXY:
+if R_PROXY:
     REQUESTS_PROXIES = {
-        'all': __R_PROXY
+        'all': R_PROXY
     }
 else:
     REQUESTS_PROXIES = {}

@@ -1,15 +1,15 @@
+import asyncio
+import aiohttp.client_exceptions
 import fasteners
 import feedparser
 import listparser
-import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from requests.adapters import HTTPAdapter
-from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple
+from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple, Coroutine
 from datetime import datetime
 from concurrent import futures
 
-from src import log, env
+from src import log, env, web
 from src.db import db
 from src.parsing.post import get_post_from_entry
 
@@ -29,21 +29,21 @@ class Feed:
         self.link = link
         self.last = last
 
-    def monitor(self):
-        rss_d = feed_get(self.link)
+    async def monitor_async(self, web_semaphore: asyncio.Semaphore = None) -> Optional[bool]:
+        rss_d = await feed_get_async(self.link, web_semaphore=web_semaphore)
         if rss_d is None:
-            return
+            return False
 
         feed_last = str(rss_d.entries[0]['guid'] if 'guid' in rss_d.entries[0] else rss_d.entries[0]['link'])
         if self.last == feed_last:
-            logger.debug(f'{self.link} fetched, no new post.')
-            return
+            logger.debug(f'Fetched (not updated): {self.link}')
+            return None
 
         last = self.last
         self.last = feed_last
         db.write(self.name, self.link, feed_last, True)  # update db
 
-        logger.info(f'{self.link} updated!')
+        logger.info(f'Updated: {self.link}')
         # Workaround, avoiding deleted post causing the bot send all posts in the feed.
         # Known issues:
         # If a post was deleted while another post was sent between feed fetching duration,
@@ -57,16 +57,16 @@ class Feed:
                 break
 
         if not end:  # end is None or end == 0
-            logger.warning('Cannot find the last sent post in current feed, all posts will not be sent.')
+            logger.warning(f'Cannot find the last sent post in current feed, all posts will not be sent: {self.link}')
         else:
             # threading.Thread(target=self.send,
             #                  kwargs={'uid': env.CHATID, 'start': 0, 'end': end, 'reverse': True}).start()
             self.send(env.CHATID, start=0, end=end, reverse=True, rss_d=rss_d)
-        return
+        return True
 
     def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False, rss_d=None):
         if rss_d is None:
-            rss_d = feed_get(self.link, uid=uid)
+            rss_d = run_sync(feed_get_async(self.link, uid=uid))
 
         if start >= len(rss_d.entries):
             start = 0
@@ -91,7 +91,8 @@ class Feed:
         res = future.result()
         self._send_pool.submit(self._send, *res)
 
-    def _send(self, post, uid, entry):
+    @staticmethod
+    def _send(post, uid, entry):
         logger.debug(f"Sending {entry['title']} ({entry['link']})...")
         post.send_message(uid)
 
@@ -105,9 +106,6 @@ class Feed:
 
 
 class Feeds:
-    _max_concurrency = 5
-    _pool = futures.ThreadPoolExecutor(_max_concurrency, 'Monitor')
-
     def __init__(self):
         self._feeds = {fid: Feed(fid=fid, name=name, link=feed_url, last=last_url)
                        for fid, (name, (feed_url, last_url)) in enumerate(db.read_all().items())}
@@ -116,7 +114,9 @@ class Feeds:
             self._opml_template = template.read()
         self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 
-    def monitor(self, fetch_all: bool = False):
+    async def monitor_async(self, fetch_all: bool = False):
+        logger.info('Started feeds monitoring task.')
+
         # acquire r lock
         with self._lock.read_lock():
             if fetch_all:
@@ -127,8 +127,25 @@ class Feeds:
                 head = datetime.utcnow().minute % self._interval
                 feeds_to_be_monitored = sorted_feeds[head::self._interval]
 
-        for feed in feeds_to_be_monitored:
-            self._pool.submit(feed.monitor)
+        web_semaphore = asyncio.Semaphore(5)
+
+        result = await asyncio.gather(*(feed.monitor_async(web_semaphore) for feed in feeds_to_be_monitored))
+
+        no_update = 0
+        fail = 0
+        updated = 0
+
+        for r in result:
+            if r is None:
+                no_update += 1
+                continue
+            if r:
+                updated += 1
+                continue
+            fail += 1
+
+        logger.info(f'Finished feeds monitoring task: '
+                    f'updated({updated}), not updated({no_update}), fetch failed({fail})')
 
     @fasteners.lock.read_locked
     def find(self, name: Optional[str] = None, link: Optional[str] = None, strict: bool = True) -> Optional[Feed]:
@@ -140,14 +157,17 @@ class Feeds:
                 return feed
         return None
 
-    def add_feed(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10):
+    async def add_feed_async(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10,
+                             web_semaphore: asyncio.Semaphore = None) \
+            -> Tuple[Union[bool, 'Feed'], Dict[str, Union[str, int]]]:
+        feed_dict = {'name': name, 'link': link, 'uid': uid}
         if self.find(name, link, strict=False):
             env.bot.send_message(uid, 'ERROR: 订阅名已被使用或 RSS 源已订阅') if uid else None
             logger.warning(f'Refused to add an existing feed: {name} ({link})')
-            return None
-        rss_d = feed_get(link, uid=uid, timeout=timeout)
+            return False, feed_dict
+        rss_d = await feed_get_async(link, uid=uid, timeout=timeout, web_semaphore=web_semaphore)
         if rss_d is None:
-            return None
+            return False, feed_dict
         last = str(rss_d.entries[0]['guid'] if 'guid' in rss_d.entries[0] else rss_d.entries[0]['link'])
         fid = self.current_fid
         feed = Feed(fid=fid, name=name, link=link, last=last)
@@ -158,7 +178,7 @@ class Feeds:
             db.write(name, link, last)
 
         logger.info(f'Added feed {link}.')
-        return feed
+        return feed, feed_dict
 
     def del_feed(self, name):
         feed_to_delete = self.find(name)
@@ -185,28 +205,30 @@ class Feeds:
         else:
             return tuple(self._feeds)
 
-    def import_opml(self, opml_file: Union[bytearray, bytes]) -> Optional[Dict[str, list]]:
+    async def import_opml_async(self, opml_file: Union[bytearray, bytes]) -> Optional[Dict[str, list]]:
         opml_d = listparser.parse(opml_file.decode())
         if not opml_d.feeds:
             return None
         valid_feeds: List[MutableMapping] = []
         invalid_feeds: List[MutableMapping] = []
 
-        pending_futures: List[Tuple[MutableMapping, futures.Future]] = []
+        web_semaphore = asyncio.Semaphore(5)
+
+        coroutines = []
         for _feed in opml_d.feeds:
             if not _feed.title:
                 _feed.title = '不支持无标题订阅！'
                 invalid_feeds.append(_feed)
                 continue
+
             _feed.title = _feed.title.replace(' ', '_')
+            coroutines.append(self.add_feed_async(name=_feed.title, link=_feed.url, web_semaphore=web_semaphore))
 
-            # do not need to acquire lock because add_feed will acquire one
-            future = self._pool.submit(self.add_feed, name=_feed.title, link=_feed.url, timeout=5)
-            pending_futures.append((_feed, future))
+        # do not need to acquire lock because add_feed will acquire one
+        result = await asyncio.gather(*coroutines)
 
-        for _feed, future in pending_futures:
-            successful = future.result()
-            valid_feeds.append(_feed) if successful else invalid_feeds.append(_feed)
+        for feed, feed_dict in result:
+            valid_feeds.append(feed_dict) if feed else invalid_feeds.append(feed_dict)
 
         logger.info('Imported feed(s).')
         return {'valid': valid_feeds, 'invalid': invalid_feeds}
@@ -236,39 +258,33 @@ class Feeds:
         return self._feeds[item]
 
 
-def web_get(url: str, timeout: Optional[int] = 15) -> bytes:
-    if timeout is None:
-        timeout = 15
-
-    with requests.Session() as session:
-        session.mount('http://', HTTPAdapter(max_retries=1))
-        session.mount('https://', HTTPAdapter(max_retries=1))
-
-        with session.get(url, timeout=timeout, proxies=env.REQUESTS_PROXIES, headers=env.REQUESTS_HEADERS) as response:
-            content = response.content
-
-    return content
-
-
-def feed_get(url: str, uid: Optional[int] = None, timeout: Optional[int] = None):
+async def feed_get_async(url: str, uid: Optional[int] = None, timeout: Optional[int] = None,
+                         web_semaphore: asyncio.Semaphore = None):
     try:
-        rss_content = web_get(url, timeout=timeout)
-        rss_d = feedparser.parse(rss_content, sanitize_html=False)
-        _ = rss_d.entries[0]['title']  # try if the url is a valid RSS feed
-    except IndexError:
-        logger.warning(f'{url} fetch failed: feed error.')
+        rss_content = await web.get_async(url, timeout, web_semaphore)
+        rss_d = feedparser.parse(rss_content)
+        if not rss_d.entries:
+            logger.warning(f'Fetch failed (feed error): {url}')
+            if uid:
+                env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
+            return None
+    except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError) as e:
+        logger.warning(f'Fetch failed (network error, {e.__class__}): {url}')
         if uid:
-            env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
-        return None
-    except requests.exceptions.RequestException:
-        logger.warning(f'{url} fetch failed: network error.')
-        if uid:
-            env.bot.send_message(uid, 'ERROR: 网络超时')
+            env.bot.send_message(uid, 'ERROR: 网络错误')
         return None
     except Exception as e:
-        logger.warning(f'{url} fetch failed: ', exc_info=e)
+        logger.warning(f'Fetch failed: {url}', exc_info=e)
         if uid:
             env.bot.send_message(uid, 'ERROR: 内部错误')
         return None
-
     return rss_d
+
+
+def run_sync(coroutine: Coroutine):
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)

@@ -262,7 +262,7 @@ async def feed_get_async(url: str, uid: Optional[int] = None, timeout: Optional[
                          web_semaphore: asyncio.Semaphore = None):
     try:
         rss_content = await web.get_async(url, timeout, web_semaphore)
-        rss_d = feedparser.parse(rss_content)
+        rss_d = feedparser.parse(rss_content, sanitize_html=False)
         if not rss_d.entries:
             logger.warning(f'Fetch failed (feed error): {url}')
             if uid:

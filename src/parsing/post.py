@@ -312,21 +312,35 @@ class Post:
             return
         self.text = Text([self.text, text_invalid_media])
 
-    def _get_item(self, soup: Union[BeautifulSoup, Iterator, NavigableString]):
+    def _get_item(self, soup: Union[BeautifulSoup, Iterator, NavigableString], get_source: bool = False):
         result = []
         if isinstance(soup, type(iter([]))):
             for child in soup:
-                item = self._get_item(child)
+                item = self._get_item(child, get_source)
+                if item and get_source and isinstance(item, list):
+                    result.extend(item)
                 if item:
                     result.append(item)
+            if not result:
+                return None
+            if get_source:
+                return result
             return result[0] if len(result) == 1 else Text(result)
 
         if type(soup) is NavigableString:
-            if str(soup) == ' ':
+            if str(soup) == ' ' or get_source:
                 return None
             return Text(str(soup))
 
         tag = soup.name
+
+        if get_source:
+            if tag != 'source':
+                return None
+            src = soup.get('src')
+            if not src:
+                return None
+            return src
 
         if tag is None:
             return None
@@ -341,6 +355,8 @@ class Post:
 
         if tag == 'blockquote':
             quote = self._get_item(soup.children)
+            if not quote:
+                return None
             quote.strip()
             return Text([Hr(), quote, Hr()])
 
@@ -360,7 +376,8 @@ class Post:
             href = soup.get("href")
             if not href:
                 return None
-            href = urljoin(self.feed_link, href)
+            if not href.startswith('http'):
+                href = urljoin(self.feed_link, href)
             return Link(self._get_item(soup.children), href)
 
         if tag == 'img':
@@ -369,7 +386,8 @@ class Post:
                 return Text(emojify(alt))
             if not src:
                 return None
-            src = urljoin(self.feed_link, src)
+            if not src.startswith('http'):
+                src = urljoin(self.feed_link, src)
             if src.endswith('.gif'):
                 self.media.add(Animation(src))
                 return None
@@ -377,11 +395,24 @@ class Post:
             return None
 
         if tag == 'video':
-            src = soup.get('src')
-            if not src:
+            video = None
+            _src = soup.get('src')
+            if _src:
+                multi_src = [_src]
+            else:
+                multi_src = self._get_item(soup.children, get_source=True)
+            if not multi_src:
                 return None
-            src = urljoin(self.feed_link, src)
-            self.media.add(Video(src))
+            for src in multi_src:
+                if not isinstance(src, str):
+                    continue
+                if not src.startswith('http'):
+                    src = urljoin(self.feed_link, src)
+                video = Video(src)
+                if video:  # if video is valid
+                    break
+            if video is not None:
+                self.media.add(video)
             return None
 
         if tag == 'b' or tag == 'strong':
@@ -420,7 +451,8 @@ class Post:
             src = soup.get('src')
             if not src:
                 return None
-            src = urljoin(self.feed_link, src)
+            if not src.startswith('http'):
+                src = urljoin(self.feed_link, src)
             if not text:
                 try:
                     stream = get_medium_stream(src)

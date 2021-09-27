@@ -1,92 +1,126 @@
 import os
-import telegram
 import logging
-from typing import Optional
+from telethon import TelegramClient
+from typing import Optional, Final
+from python_socks import parse_proxy_url
 
 # ----- base config -----
+# https://github.com/telegramdesktop/tdesktop/blob/dev/docs/api_credentials.md
+API_ID: Final = int(os.environ.get('API_ID', 17349))
+API_HASH: Final = os.environ.get('API_HASH', '344583e45741c457fe1862106095a5eb')
 TOKEN = os.environ.get('TOKEN')
-CHATID = os.environ.get('CHATID')
-DELAY = int(os.environ.get('DELAY', 300))
+_chatid: Final = os.environ.get('CHATID')
+DELAY: Final = int(os.environ.get('DELAY', 300))
 
-if TOKEN is None or CHATID is None:
+if TOKEN is None or _chatid is None:
     logging.critical('TOKEN OR CHATID NOT SET! PLEASE CHECK YOUR SETTINGS!')
     exit(1)
 
-MANAGER = os.environ.get('MANAGER', CHATID)
+try:
+    CHATID: Final = int(_chatid) if _chatid.lstrip('-').isdecimal() else _chatid
+    del _chatid
 
-TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
-if TELEGRAPH_TOKEN:
-    TELEGRAPH_TOKEN = TELEGRAPH_TOKEN.strip(). \
+    _manager = os.environ.get('MANAGER', CHATID)
+    MANAGER: Final = int(_manager) if isinstance(_manager, str) and _manager.lstrip('-').isdecimal() else _manager
+    del _manager
+except ValueError:
+    logging.critical('INVALID CHATID OR MANAGER! PLEASE CHECK YOUR SETTINGS!')
+    exit(1)
+
+_telegraph_token = os.environ.get('TELEGRAPH_TOKEN')
+if _telegraph_token:
+    TELEGRAPH_TOKEN: Final = _telegraph_token.strip(). \
         replace('\n', ',') \
         .replace('，', ',') \
         .replace(';', ',') \
         .replace('；', ',') \
         .replace(' ', ',')
+else:
+    TELEGRAPH_TOKEN: Final = None
 
 # ----- proxy config -----
-DEFAULT_PROXY = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', None))
+DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', None))
 
-TELEGRAM_PROXY = os.environ.get('T_PROXY', DEFAULT_PROXY)
+TELEGRAM_PROXY: Final = os.environ.get('T_PROXY', DEFAULT_PROXY)
+if TELEGRAM_PROXY:
+    _parsed = parse_proxy_url(TELEGRAM_PROXY.replace('socks5h', 'socks5'))
+    TELEGRAM_PROXY_DICT: Final = {
+        'proxy_type': _parsed[0],
+        'addr': _parsed[1],
+        'port': _parsed[2],
+        'username': _parsed[3],
+        'password': _parsed[4],
+        'rdns': True
+    }
+    del _parsed
+else:
+    TELEGRAM_PROXY_DICT: Final = None
 
-R_PROXY = os.environ.get('R_PROXY', DEFAULT_PROXY)
+R_PROXY: Final = os.environ.get('R_PROXY', DEFAULT_PROXY)
 
 if R_PROXY:
-    REQUESTS_PROXIES = {
+    REQUESTS_PROXIES: Final = {
         'all': R_PROXY
     }
 else:
-    REQUESTS_PROXIES = {}
+    REQUESTS_PROXIES: Final = {}
 
 # ----- img relay server config -----
-IMG_RELAY_SERVER = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
-if not IMG_RELAY_SERVER.endswith('/'):
-    IMG_RELAY_SERVER += '/'
+_img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
+IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith('/') else '/')
+del _img_relay_server
 
 # ----- redis config -----
-REDIS_HOST = os.environ.get('REDISHOST')
-REDIS_PORT = os.environ.get('REDISPORT')
-REDIS_USER = os.environ.get('REDISUSER')
-REDIS_PASSWORD = os.environ.get('REDISPASSWORD')
-REDIS_NUM = os.environ.get('REDIS_NUM')
-if REDIS_PORT:
-    REDIS_PORT = int(REDIS_PORT)
-if REDIS_NUM:
-    REDIS_PORT = int(REDIS_NUM)
+REDIS_HOST: Final = os.environ.get('REDISHOST')
+REDIS_USER: Final = os.environ.get('REDISUSER')
+REDIS_PASSWORD: Final = os.environ.get('REDISPASSWORD')
+
+_redis_port = os.environ.get('REDISPORT')
+REDIS_PORT: Final = int(_redis_port) if _redis_port else None
+del _redis_port
+
+_redis_num = os.environ.get('REDIS_NUM')
+REDIS_NUM: Final = int(_redis_num) if _redis_num else None
+del _redis_num
 
 # ----- debug config -----
 if os.environ.get('DEBUG'):
-    DEBUG = True
+    DEBUG: Final = True
 else:
-    DEBUG = False
+    DEBUG: Final = False
 
 # ----- get version -----
 try:
     with open('.version', 'r') as v:
-        VERSION = v.read().strip()
-except:
-    VERSION = 'dirty'
+        _version = v.read().strip()
+except Exception:
+    _version = 'dirty'
 
-if VERSION == 'dirty':
+if _version == 'dirty':
     from subprocess import Popen, PIPE, DEVNULL
 
     try:
         with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
             __.wait(3)
-            VERSION = __.stdout.read().decode().strip()
+            _version = __.stdout.read().decode().strip()
         with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
             __.wait(3)
             __ = __.stdout.read().decode().strip()
             if __:
-                VERSION += f'@{__}'
-    except:
-        VERSION = 'dirty'
+                _version += f'@{__}'
+    except Exception:
+        _version = 'dirty'
 
-if not VERSION or VERSION == '@':
-    VERSION = 'dirty'
+if not _version or _version == '@':
+    _version = 'dirty'
+
+VERSION: Final = _version
+del _version
 
 # ----- shared var -----
-bot: Optional[telegram.Bot] = None  # placeholder
+bot: Optional[TelegramClient] = None  # placeholder
+bot_id: Optional[int] = None  # placeholder
 
-REQUESTS_HEADERS = {
+REQUESTS_HEADERS: Final = {
     'user-agent': 'RSStT'
 }

@@ -18,6 +18,7 @@ getLogger("urllib3").setLevel(_shut_upped)
 getLogger('apscheduler').setLevel(_muted)
 getLogger('aiohttp_retry').setLevel(_muted)
 getLogger('asyncio').setLevel(_muted)
+getLogger('telethon').setLevel(_muted)
 
 
 # flit log from apscheduler.scheduler

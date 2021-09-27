@@ -1,10 +1,9 @@
-import requests
+import asyncio
 import re
-import telegram
-from requests.adapters import HTTPAdapter
+from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal
 from typing import List
 
-from src import env, log
+from src import env, log, web
 from src.parsing import post
 
 logger = log.getLogger('RSStT.medium')
@@ -17,6 +16,7 @@ serverParser = re.compile(r'(?P<url_prefix>^https?://[a-zA-Z_-]+)'
                           r'(?P<server_id>\d)'
                           r'(?P<url_suffix>\.sinaimg\.\S+$)')
 
+_web_semaphore = asyncio.BoundedSemaphore(5)
 
 class Medium:
     type = 'medium_base_class'
@@ -25,8 +25,7 @@ class Medium:
     def __init__(self, url: str):
         self.url = url
         self.original_url = url
-        self.valid = True
-        self._validate()
+        self.valid = None
         self._server_change_count = 0
 
     def telegramize(self):
@@ -41,15 +40,18 @@ class Medium:
     def invalidate(self):
         self.valid = False
 
-    def _validate(self):  # warning: only design for weibo
+    async def validate(self):  # warning: only design for weibo
+        if self.valid is not None:  # already validated
+            return
+
         max_size = self.max_size
         url = self.url
         try:
-            size, width, height = get_medium_info(url)
+            size, width, height = await get_medium_info(url)
             if size is None:
                 raise IOError
         except Exception as e:
-            logger.debug(f'Dropped medium {url}: can not be fetched: ' + str(e))
+            logger.debug(f'Dropped medium {url}: can not be fetched: ' + str(e), exc_info=e)
             self.valid = False
             return
 
@@ -58,6 +60,7 @@ class Medium:
             return
 
         if size <= max_size and width + height < 10000:  # valid
+            self.valid = True
             return
 
         if not sizeParser.search(url):  # invalid but is not a weibo img
@@ -72,9 +75,11 @@ class Medium:
             self.valid = False
             return
         self.url = parsed['domain'] + sizes[sizes.index(parsed['size']) + 1] + parsed['filename']
-        self._validate()
+        await self.validate()
 
     def __bool__(self):
+        if self.valid is None:
+            raise TypeError('You must validate a medium before judging its validation')
         return self.valid
 
     def __eq__(self, other):
@@ -93,7 +98,7 @@ class Image(Medium):
     max_size = 5242880
 
     def telegramize(self):
-        return telegram.InputMediaPhoto(self.url)
+        return InputMediaPhotoExternal(self.url)
 
     def change_server(self):
         if not serverParser.search(self.url):  # is not a weibo img
@@ -114,14 +119,14 @@ class Video(Medium):
     type = 'video'
 
     def telegramize(self):
-        return telegram.InputMediaVideo(self.url)
+        return InputMediaDocumentExternal(self.url)
 
 
 class Animation(Medium):
     type = 'animation'
 
     def telegramize(self):
-        return telegram.InputMediaAnimation(self.url)  # hmm, you don't need it
+        return InputMediaDocumentExternal(self.url)
 
 
 class Media:
@@ -135,6 +140,11 @@ class Media:
 
     def invalidate_all(self):
         any(map(lambda m: m.invalidate(), self._media))
+
+    async def validate(self):
+        if not self._media:
+            return
+        await asyncio.gather(*(medium.validate() for medium in self._media))
 
     def get_valid_media(self):
         result = []
@@ -175,37 +185,22 @@ class Media:
         return bool(self._media)
 
 
-def get_medium_stream(url, headers: dict = None):
-    if headers is None:
-        headers = env.REQUESTS_HEADERS
-    else:
-        headers = headers.copy()
-        headers.update(env.REQUESTS_HEADERS)
+async def get_medium_info(url):
+    session = await web.get_session()
+    try:
+        async with _web_semaphore:
+            async with session.get(url) as response:
+                size = int(response.headers.get('Content-Length', 256))
+                content_type = response.headers.get('Content-Type')
 
-    session = requests.Session()
-    session.mount('http://', HTTPAdapter(max_retries=1))
-    session.mount('https://', HTTPAdapter(max_retries=1))
-    stream = session.get(url, timeout=3, proxies=env.REQUESTS_PROXIES, stream=True, headers=headers)
-    if stream.status_code != 200:
-        stream.close()
-        return None
-    return stream
+                height = width = -1
+                if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
+                    return size, width, height
 
+                pic_header = await response.content.read(min(256, size))
+    finally:
+        await session.close()
 
-def get_medium_info(url):
-    stream = get_medium_stream(url)
-    if stream is None:
-        return None, None, None
-    size = int(stream.headers.get('Content-Length', 256))
-    content_type = stream.headers.get('Content-Type')
-
-    height = width = -1
-    if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
-        stream.close()
-        return size, width, height
-
-    pic_header = stream.raw.read(min(256, size))
-    stream.close()
     pointer = -1
     for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
         p = pic_header.find(marker)

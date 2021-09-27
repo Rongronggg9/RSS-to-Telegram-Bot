@@ -1,6 +1,5 @@
 import asyncio
 import functools
-
 import aiohttp.client_exceptions
 import fasteners
 import feedparser
@@ -9,12 +8,15 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 from src import log, env, web
 from src.db import db
 from src.parsing.post import get_post_from_entry
 
 logger = log.getLogger('RSStT.feed')
+
+_feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 
 
 class Feed:
@@ -109,8 +111,6 @@ class Feeds:
         self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 
     async def monitor_async(self, fetch_all: bool = False):
-        logger.info('Started feeds monitoring task.')
-
         # acquire r lock
         with self._lock.read_lock():
             if fetch_all:
@@ -120,6 +120,11 @@ class Feeds:
                 sorted_feeds = sorted(self)
                 head = datetime.utcnow().minute % self._interval
                 feeds_to_be_monitored = sorted_feeds[head::self._interval]
+
+        if not feeds_to_be_monitored:  # nothing to do
+            return
+
+        logger.info('Started feeds monitoring task.')
 
         result = await asyncio.gather(*(feed.monitor_async() for feed in feeds_to_be_monitored))
 
@@ -251,15 +256,19 @@ async def feed_get_async(url: str, uid: Optional[int] = None, timeout: Optional[
                          web_semaphore: Union[bool, asyncio.Semaphore] = None):
     try:
         rss_content = await web.get_async(url, timeout, web_semaphore)
-        rss_d = await asyncio.get_event_loop().run_in_executor(None, functools.partial(feedparser.parse, rss_content,
-                                                                                       sanitize_html=False))
+        if len(rss_content) <= 524288:
+            rss_d = feedparser.parse(rss_content, sanitize_html=False)
+        else:  # feed too large, run in another thread to avoid blocking the bot
+            rss_d = await asyncio.get_event_loop().run_in_executor(_feedparser_thread_pool,
+                                                                   functools.partial(feedparser.parse, rss_content,
+                                                                                     sanitize_html=False))
         if not rss_d.entries:
             logger.warning(f'Fetch failed (feed error): {url}')
             if uid:
                 await env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
             return None
     except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError) as e:
-        logger.warning(f'Fetch failed (network error, {e.__class__}): {url}')
+        logger.warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
         if uid:
             await env.bot.send_message(uid, 'ERROR: 网络错误')
         return None

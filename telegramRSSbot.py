@@ -365,7 +365,7 @@ def main():
     # updater.idle()
     feeds = Feeds()
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(rss_monitor, trigger='cron', minute='*/1')
+    scheduler.add_job(rss_monitor, trigger='cron', minute='*/1', max_instances=5)
     scheduler.start()
 
     bot.run_until_disconnected()

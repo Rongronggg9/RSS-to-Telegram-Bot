@@ -1,18 +1,20 @@
-import telegram
-from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
-from typing import Optional
+import asyncio
+import re
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from telethon import TelegramClient, events
+from telethon.sessions import MemorySession
+from telethon.tl.custom import Message, Button
+from telethon.tl import types
+from telethon.tl.functions.channels import GetParticipantRequest
+from re import compile as re_compile
+from typing import Optional, Union
 from datetime import datetime
 from functools import wraps, partial
 
 from src import env, log
 from src.parsing import tgraph
-from src.feed import Feed, Feeds, run_sync
+from src.feed import Feed, Feeds
 from src.parsing.post import Post
-
-# import for exception handling
-from socket import timeout
-from telegram.vendor.ptb_urllib3.urllib3.exceptions import HTTPError
-from telegram.error import TelegramError
 
 # log
 logger = log.getLogger('RSStT')
@@ -22,7 +24,17 @@ feeds: Optional[Feeds] = None
 conflictCount = 0
 
 # permission verification
-GROUP = 1087968824
+ANONYMOUS_ADMIN = 1087968824
+
+# parser
+commandParser = re_compile(r'\s')
+
+# initializing bot
+bot = TelegramClient(MemorySession(), env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT) \
+    .start(bot_token=env.TOKEN)
+env.bot = bot
+bot_peer: types.InputPeerUser = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=True))
+env.bot_id = bot_peer.user_id
 
 
 def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
@@ -31,166 +43,212 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                        only_in_private_chat=only_in_private_chat)
 
     @wraps(func)
-    def wrapper(update: telegram.Update, context: Optional[telegram.ext.CallbackContext] = None, *args, **kwargs):
-        message = update.effective_message
-        command = message.text if message.text else '(no command, file message)'
-        user_id = update.effective_user.id
-        user_fullname = update.effective_user.full_name
-        if only_manager and str(user_id) != env.MANAGER:
-            update.effective_message.reply_text('此命令只可由机器人的管理员使用。\n'
-                                                'This command can be only used by the bot manager.')
-            logger.info(f'Refused {user_fullname} ({user_id}) to use {command}.')
+    async def wrapper(event: Union[events.NewMessage.Event, Message], *args, **kwargs):
+        command = event.text if event.text else '(no command, file message)'
+        sender_id = event.sender_id
+        sender: Optional[types.User] = await event.get_sender()
+        sender_fullname = sender.first_name + (f' {sender.last_name}' if sender.last_name else '')
+
+        if only_manager and sender_id != env.MANAGER:
+            await event.respond('此命令只可由机器人的管理员使用。\n'
+                                'This command can be only used by the bot manager.')
+            logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command}.')
             return
 
-        if message.chat.type == 'private':
-            logger.info(f'Allowed {user_fullname} ({user_id}) to use {command}.')
-            return func(update, context, *args, **kwargs)
+        if event.is_private:
+            logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
+            return await func(event, *args, **kwargs)
 
-        if message.chat.type in ('supergroup', 'group'):
+        if event.is_group:
+            chat: types.Chat = await event.get_chat()
+            input_chat: types.InputChannel = await event.get_input_chat()  # supergroup is a special form of channel
             if only_in_private_chat:
-                update.effective_message.reply_text('此命令不允许在群聊中使用。\n'
-                                                    'This command can not be used in a group.')
-                logger.info(f'Refused {user_fullname} ({user_id}) to use {command} in '
-                            f'{message.chat.title} ({message.chat.id}).')
+                await event.respond('此命令不允许在群聊中使用。\n'
+                                    'This command can not be used in a group.')
+                logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
+                            f'{chat.title} ({chat.id}).')
                 return
 
-            user_status = update.effective_chat.get_member(user_id).status
-            if user_id != GROUP and user_status not in ('administrator', 'creator'):
-                update.effective_message.reply_text('此命令只可由群管理员使用。\n'
-                                                    'This command can be only used by an administrator.')
+            input_sender = await event.get_input_sender()
+
+            if sender_id != ANONYMOUS_ADMIN:
+                participant: types.channels.ChannelParticipant = await bot(
+                    GetParticipantRequest(input_chat, input_sender))
+                is_admin = (isinstance(participant.participant, types.ChannelParticipantAdmin)
+                            or isinstance(participant.participant, types.ChannelParticipantCreator))
+                participant_type = type(participant.participant).__name__
+            else:
+                is_admin = True
+                participant_type = 'AnonymousAdmin'
+
+            if not is_admin:
+                await event.respond('此命令只可由群管理员使用。\n'
+                                    'This command can be only used by an administrator.')
                 logger.info(
-                    f'Refused {user_fullname} ({user_id}, {user_status}) to use {command} '
-                    f'in {message.chat.title} ({message.chat.id}).')
+                    f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
+                    f'in {chat.title} ({chat.id}).')
                 return
             logger.info(
-                f'Allowed {user_fullname} ({user_id}, {user_status}) to use {command} '
-                f'in {message.chat.title} ({message.chat.id}).')
-            return func(update, context, *args, **kwargs)
+                f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
+                f'in {chat.title} ({chat.id}).')
+            return await func(event, *args, **kwargs)
         return
 
     return wrapper
 
 
+@bot.on(events.NewMessage(pattern='/list'))
 @permission_required(only_manager=True)
-def cmd_list(update: telegram.Update, context: telegram.ext.CallbackContext):
+async def cmd_list(event: Union[events.NewMessage.Event, Message]):
     list_result = '<br>'.join(f'<a href="{feed.link}">{feed.name}</a>' for feed in feeds)
     if not list_result:
-        update.effective_message.reply_text('数据库为空')
+        await event.respond('数据库为空')
         return
     result_post = Post('<b><u>订阅列表</u></b><br><br>' + list_result, plain=True, service_msg=True)
-    result_post.send_message(update.effective_chat.id,
-                             update.effective_message.message_id if update.effective_chat.type != 'private' else None)
+    await result_post.send_message(event.chat_id, event.id if not event.is_private else None)
 
 
+@bot.on(events.NewMessage(pattern='/add'))
 @permission_required(only_manager=True)
-def cmd_add(update: telegram.Update, context: telegram.ext.CallbackContext):
-    # try if there are 2 arguments passed
-    try:
-        title = context.args[0]
-        url = context.args[1]
-    except IndexError:
-        update.effective_message.reply_text('ERROR: 格式需要为: /add 标题 RSS')
+async def cmd_add(event: Union[events.NewMessage.Event, Message]):
+    args = commandParser.split(event.text)
+    if len(args) < 3:
+        await event.respond('ERROR: 格式需要为: /add 标题 RSS')
         return
-    if run_sync(feeds.add_feed_async(name=title, link=url, uid=update.effective_chat.id)):
-        update.effective_message.reply_text('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
+    title = args[1]
+    url = args[2]
+    if await feeds.add_feed_async(name=title, link=url, uid=event.chat_id):
+        await event.respond('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
+@bot.on(events.NewMessage(pattern='/remove'))
 @permission_required(only_manager=True)
-def cmd_remove(update: telegram.Update, context: telegram.ext.CallbackContext):
-    if not context.args:
-        update.effective_message.reply_text("ERROR: 请指定订阅名")
+async def cmd_remove(event: Union[events.NewMessage.Event, Message]):
+    args = commandParser.split(event.text)
+    if len(args) < 2:
+        await event.respond("ERROR: 请指定订阅名")
         return
-    name = context.args[0]
+    name = args[1]
     if feeds.del_feed(name):
-        update.effective_message.reply_text("已移除: " + name)
+        await event.respond("已移除: " + name)
         return
-    update.effective_message.reply_text("ERROR: 未能找到这个订阅名: " + name)
+    await event.respond("ERROR: 未能找到这个订阅名: " + name)
 
 
+@bot.on(events.NewMessage(pattern='/help|/start'))
 @permission_required(only_manager=True)
-def cmd_help(update: telegram.Update, context: telegram.ext.CallbackContext):
-    update.effective_message.reply_text(
-        f"""[RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。](https://github.com/Rongronggg9/RSS-to-Telegram-Bot)
-\n成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.DELAY} 秒一次。 \\(可修改\\)
-\n标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
-\n命令:
-__*/add*__ __*标题*__ __*RSS*__ : 添加订阅
-__*/remove*__ __*标题*__ : 移除订阅
-__*/list*__ : 列出数据库中的所有订阅
-__*/test*__ __*RSS*__ __*编号起点\\(可选\\)*__ __*编号终点\\(可选\\)*__ : 从 RSS 源处获取一条 post \\(编号为 0\\-based, 不填或超出范围默认为 0，不填编号终点默认只获取一条 post\\)，或者直接用 `all` 获取全部
-__*/import*__ : 导入订阅
-__*/export*__ : 导出订阅
-__*/version*__ : 查看版本
-__*/help*__ : 发送这条消息
-\n您的 chatid 是: {update.message.chat.id}""",
-        parse_mode='MarkdownV2'
+async def cmd_help(event: Union[events.NewMessage.Event, Message]):
+    await event.respond(
+        "<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>"
+        "RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。</a>\n\n"
+        f"成功添加一个 RSS 源后, 机器人就会开始检查订阅，每 {env.DELAY} 秒一次。 (可修改)\n\n"
+        "标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。\n\n"
+        "命令:\n"
+        "<u><b>/add</b></u> <u><b>标题</b></u> <u><b>RSS</b></u> : 添加订阅\n"
+        "<u><b>/remove</b></u> <u><b>标题</b></u> : 移除订阅\n"
+        "<u><b>/list</b></u> : 列出数据库中的所有订阅\n"
+        "<u><b>/test</b></u> <u><b>RSS</b></u> <u><b>编号起点(可选)</b></u> <u><b>编号终点(可选)</b></u> : "
+        "从 RSS 源处获取一条 post (编号为 0-based, 不填或超出范围默认为 0，不填编号终点默认只获取一条 post)，"
+        "或者直接用 <code>all</code> 获取全部\n"
+        "<u><b>/import</b></u> : 导入订阅\n"
+        "<u><b>/export</b></u> : 导出订阅\n"
+        "<u><b>/version</b></u> : 查看版本\n"
+        "<u><b>/help</b></u> : 发送这条消息\n\n"
+        f"您的 chatid 是: {event.chat_id}",
+        parse_mode='html'
     )
 
 
+@bot.on(events.NewMessage(pattern='/test'))
 @permission_required(only_manager=True)
-def cmd_test(update: telegram.Update, context: telegram.ext.CallbackContext):
-    # try if there are 2 arguments passed
-    try:
-        url = context.args[0]
-
-        if len(context.args) > 1 and context.args[1] == 'all':
-            start = 0
-            end = None
-        elif len(context.args) == 2:
-            start = int(context.args[1])
-            end = int(context.args[1]) + 1
-        elif len(context.args) == 3:
-            start = int(context.args[1])
-            end = int(context.args[2]) + 1
-        else:
-            start = 0
-            end = 1
-    except (IndexError, ValueError):
-        update.effective_message.reply_text('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
+async def cmd_test(event: Union[events.NewMessage.Event, Message]):
+    args = commandParser.split(event.text)
+    if len(args) < 2:
+        await event.respond('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         return
+    url = args[1]
+
+    if len(args) > 2 and args[2] == 'all':
+        start = 0
+        end = None
+    elif len(args) == 3:
+        start = int(args[2])
+        end = int(args[2]) + 1
+    elif len(args) == 4:
+        start = int(args[2])
+        end = int(args[3]) + 1
+    else:
+        start = 0
+        end = 1
 
     try:
-        Feed(link=url).send(update.effective_chat.id, start, end)
+        await Feed(link=url).send(event.chat_id, start, end, web_semaphore=False)
     except Exception as e:
         logger.warning(f"Sending failed:", exc_info=e)
-        update.effective_message.reply_text('ERROR: 内部错误')
+        await event.respond('ERROR: 内部错误')
+        return
 
-    return
 
-
+@bot.on(events.NewMessage(pattern='/import'))
 @permission_required(only_manager=True)
-def cmd_import(update: telegram.Update, context: telegram.ext.CallbackContext):
-    update.effective_message.reply_text('请发送需要导入的 OPML 文档',
-                                        reply_markup=telegram.ForceReply(selective=True,
-                                                                         input_field_placeholder='OPML'))
+async def cmd_import(event: Union[events.NewMessage.Event, Message]):
+    await event.respond('请发送需要导入的 OPML 文档',
+                        buttons=Button.force_reply())
+    # single_use=False, selective=Ture, placeholder='请发送需要导入的 OPML 文档'
 
 
+@bot.on(events.NewMessage(pattern='/export'))
 @permission_required(only_manager=True)
-def cmd_export(update: telegram.Update, context: telegram.ext.CallbackContext):
+async def cmd_export(event: Union[events.NewMessage.Event, Message]):
     opml_file = feeds.export_opml()
     if opml_file is None:
-        update.effective_message.reply_text('数据库为空')
+        await event.respond('数据库为空')
         return
-    update.effective_message.reply_document(opml_file,
-                                            filename=f"RSStT_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.opml")
+    await event.respond(file=opml_file,
+                        attributes=(types.DocumentAttributeFilename(
+                            f"RSStT_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.opml"),))
 
 
+class NewFileMessage(events.NewMessage):
+    def __init__(self, chats=None, *, blacklist_chats=False, func=None, incoming=None, outgoing=None, from_users=None,
+                 forwards=None, pattern=None, filename_pattern: str = None):
+        self.filename_pattern = re.compile(filename_pattern).match
+        super().__init__(chats, blacklist_chats=blacklist_chats, func=func, incoming=incoming, outgoing=outgoing,
+                         from_users=from_users, forwards=forwards, pattern=pattern)
+
+    def filter(self, event):
+        document: types.Document = event.message.document
+        if not document:
+            return
+        if self.filename_pattern:
+            filename = None
+            for attr in document.attributes:
+                if isinstance(attr, types.DocumentAttributeFilename):
+                    filename = attr.file_name
+                    break
+            if not self.filename_pattern(filename or ''):
+                return
+        return super().filter(event)
+
+
+@bot.on(NewFileMessage(filename_pattern=r'^.*\.opml$'))
 @permission_required(only_manager=True)
-def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
-    if update.effective_chat.type != 'private' and update.effective_message.reply_to_message.from_user.id != env.bot.id:
+async def opml_import(event: Union[events.NewMessage.Event, Message]):
+    reply_message: Message = await event.get_reply_message()
+    if not event.is_private and reply_message.sender_id != env.bot_id:
         return
     try:
-        opml_file = update.effective_message.document.get_file(timeout=7).download_as_bytearray()
-    except telegram.error.TelegramError as e:
-        update.effective_message.reply_text('ERROR: 获取文件失败', quote=True)
-        logger.warning(f'Failed to get opml file: ' + e.message)
+        opml_file = await event.download_media(file=bytes)
+    except Exception as e:
+        await event.reply('ERROR: 获取文件失败')
+        logger.warning(f'Failed to get opml file: ', exc_info=e)
         return
-    update.effective_message.reply_text('正在处理中...\n'
-                                        '如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待', quote=True)
+    await event.reply('正在处理中...\n'
+                      '如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待')
     logger.info(f'Got an opml file.')
-    res = run_sync(feeds.import_opml_async(opml_file))
+    res = await feeds.import_opml_async(opml_file)
     if res is None:
-        update.effective_message.reply_text('ERROR: 解析失败或文档不含订阅', quote=True)
+        await event.reply('ERROR: 解析失败或文档不含订阅')
         return
 
     valid = res['valid']
@@ -202,37 +260,38 @@ def opml_import(update: telegram.Update, context: telegram.ext.CallbackContext):
                     + ('导入失败：<br>' if invalid else '') \
                     + '<br>'.join(f'<a href="{feed["link"]}">{feed["name"]}</a>' for feed in invalid)
     result_post = Post(import_result, plain=True, service_msg=True)
-    result_post.send_message(update.effective_chat.id, update.effective_message.message_id)
+    await result_post.send_message(event.chat_id, event.message.id)
 
 
+@bot.on(events.NewMessage(pattern='/version'))
 @permission_required(only_manager=True)
-def cmd_version(update: telegram.Update, context: telegram.ext.CallbackContext):
-    update.effective_message.reply_text(env.VERSION)
+async def cmd_version(event: Union[events.NewMessage.Event, Message]):
+    await event.respond(env.VERSION)
 
 
-def rss_monitor(context: telegram.ext.CallbackContext = None, fetch_all: bool = False):
-    run_sync(feeds.monitor_async(fetch_all))
+async def rss_monitor(fetch_all: bool = False):
+    await feeds.monitor_async(fetch_all)
 
 
-def error_handler(update: object, context: telegram.ext.CallbackContext):
-    global conflictCount
-
-    try:
-        raise context.error
-    except telegram.error.BadRequest as e:
-        logger.error('A uncaught TBA error occurred: ', exc_info=e)
-    except (telegram.error.NetworkError, timeout, HTTPError) as e:
-        logger.error('A uncaught Network error occurred: ' + str(e))
-    except telegram.error.Conflict as e:
-        conflictCount += 1
-        logger.warning('Detected getUpdates conflict error.\n'
-                       'If you run this robot on railway.app, this error (<10 times) should be normal.')
-        if conflictCount >= 25:
-            logger.critical('TOO MUCH GETUPDATES CONFLICT, PLEASE MAKE SURE THAT ONLY ONE BOT INSTANCE IS RUNNING!',
-                            exc_info=e)
-            exit(1)
-    except Exception as e:
-        logger.error('No error handlers are registered, logger exception.', exc_info=e)
+# def error_handler(update: object, context: telegram.ext.CallbackContext):
+#     global conflictCount
+#
+#     try:
+#         raise context.error
+#     except telegram.error.BadRequest as e:
+#         logger.error('A uncaught TBA error occurred: ', exc_info=e)
+#     except (telegram.error.NetworkError, timeout, HTTPError) as e:
+#         logger.error('A uncaught Network error occurred: ' + str(e))
+#     except telegram.error.Conflict as e:
+#         conflictCount += 1
+#         logger.warning('Detected getUpdates conflict error.\n'
+#                        'If you run this robot on railway.app, this error (<10 times) should be normal.')
+#         if conflictCount >= 25:
+#             logger.critical('TOO MUCH GETUPDATES CONFLICT, PLEASE MAKE SURE THAT ONLY ONE BOT INSTANCE IS RUNNING!',
+#                             exc_info=e)
+#             exit(1)
+#     except Exception as e:
+#         logger.error('No error handlers are registered, logger exception.', exc_info=e)
 
 
 def main():
@@ -246,64 +305,70 @@ def main():
                 f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.api.count} accounts)' if tgraph.api else 'Disable'}")
 
-    updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
-                                            request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
-    env.bot = updater.bot
-    job_queue: telegram.ext.JobQueue = updater.job_queue
-    dp: telegram.ext.Dispatcher = updater.dispatcher
-
-    dp.add_handler(CommandHandler("add", callback=cmd_add, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("start", callback=cmd_help, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("help", callback=cmd_help, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("test", callback=cmd_test, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("list", callback=cmd_list, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("remove", callback=cmd_remove, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("import", callback=cmd_import, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("export", callback=cmd_export, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(CommandHandler("version", callback=cmd_version, run_async=True,
-                                  filters=~Filters.update.edited_message))
-    dp.add_handler(MessageHandler(callback=opml_import, run_async=True,
-                                  filters=Filters.document & ~Filters.update.edited_message & (
-                                          Filters.reply | Filters.chat_type.private)))
-    dp.add_error_handler(error_handler, run_async=True)
-
-    commands = [telegram.BotCommand(command="add", description="添加订阅"),
-                telegram.BotCommand(command="remove", description="移除订阅"),
-                telegram.BotCommand(command="list", description="列出所有订阅"),
-                telegram.BotCommand(command="test", description="测试"),
-                telegram.BotCommand(command="import", description="导入订阅"),
-                telegram.BotCommand(command="export", description="导出订阅"),
-                telegram.BotCommand(command="version", description="查看版本"),
-                telegram.BotCommand(command="help", description="查看帮助")]
-    try:
-        updater.bot.set_my_commands(commands)
-    except TelegramError as e:
-        if e.message == 'Unauthorized':
-            logger.critical('TELEGRAM BOT TOKEN INVALID! PLEASE CHECK YOUR SETTINGS!')
-            exit(1)
-        logger.warning('Set command error: ' + e.message)
-
+    # updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
+    #                                         request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
+    #
+    # job_queue: telegram.ext.JobQueue = updater.job_queue
+    # dp: telegram.ext.Dispatcher = updater.dispatcher
+    #
+    # dp.add_handler(CommandHandler("add", callback=cmd_add, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("start", callback=cmd_help, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("help", callback=cmd_help, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("test", callback=cmd_test, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("list", callback=cmd_list, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("remove", callback=cmd_remove, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("import", callback=cmd_import, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("export", callback=cmd_export, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(CommandHandler("version", callback=cmd_version, run_async=True,
+    #                               filters=~Filters.update.edited_message))
+    # dp.add_handler(MessageHandler(callback=opml_import, run_async=True,
+    #                               filters=Filters.document & ~Filters.update.edited_message & (
+    #                                       Filters.reply | Filters.chat_type.private)))
+    # dp.add_error_handler(error_handler, run_async=True)
+    #
+    # commands = [telegram.BotCommand(command="add", description="添加订阅"),
+    #             telegram.BotCommand(command="remove", description="移除订阅"),
+    #             telegram.BotCommand(command="list", description="列出所有订阅"),
+    #             telegram.BotCommand(command="test", description="测试"),
+    #             telegram.BotCommand(command="import", description="导入订阅"),
+    #             telegram.BotCommand(command="export", description="导出订阅"),
+    #             telegram.BotCommand(command="version", description="查看版本"),
+    #             telegram.BotCommand(command="help", description="查看帮助")]
+    # try:
+    #     updater.bot.set_my_commands(commands)
+    # except TelegramError as e:
+    #     if e.message == 'Unauthorized':
+    #         logger.critical('TELEGRAM BOT TOKEN INVALID! PLEASE CHECK YOUR SETTINGS!')
+    #         exit(1)
+    #     logger.warning('Set command error: ' + e.message)
+    #
+    # feeds = Feeds()
+    #
+    # updater.start_polling()
+    #
+    # # disable to get rid of memory exhausted
+    # # # fetch_all on start
+    # # logger.info('Fetch all feeds at once.')
+    # # rss_monitor(fetch_all=True)
+    #
+    # # divide monitor tasks evenly to every minute
+    # job_queue.run_custom(rss_monitor, job_kwargs={'max_instances': 3, 'trigger': 'cron', 'minute': '*/1'})
+    #
+    # updater.idle()
     feeds = Feeds()
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(rss_monitor, trigger='cron', minute='*/1')
+    scheduler.start()
 
-    updater.start_polling()
-
-    # disable to get rid of memory exhausted
-    # # fetch_all on start
-    # logger.info('Fetch all feeds at once.')
-    # rss_monitor(fetch_all=True)
-
-    # divide monitor tasks evenly to every minute
-    job_queue.run_custom(rss_monitor, job_kwargs={'max_instances': 3, 'trigger': 'cron', 'minute': '*/1'})
-
-    updater.idle()
+    bot.run_until_disconnected()
 
 
 if __name__ == '__main__':

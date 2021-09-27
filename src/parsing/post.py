@@ -1,17 +1,16 @@
 import json
 import re
 import traceback
-import telegram.error
-import telegraph
+from telegraph import TelegraphException
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import Optional, Union, List, Iterator
 from emoji import emojize
 from urllib.parse import urlparse, urljoin
 
-from src import env, message, log
+from src import env, message, log, web
 from src.parsing import tgraph
-from src.parsing.medium import Video, Image, Media, Animation, get_medium_stream
+from src.parsing.medium import Video, Image, Media, Animation
 
 logger = log.getLogger('RSStT.post')
 
@@ -96,20 +95,21 @@ class Post:
         self.feed_link = feed_link if feed_link else link
         # self.generate_text()
 
-    def generate_text(self):
-        self.text = Text(self._get_item(self.soup))
+    async def generate_text(self):
+        self.text = Text(await self._get_item(self.soup))
         self.origin_text = self.text.copy()
         if self.plain:
             return
+        await self.media.validate()
         self._add_metadata()
         self._add_invalid_media()
 
-    def send_message(self, chat_ids: Union[List[Union[str, int]], str, int], reply_to_msg_id: int = None):
+    async def send_message(self, chat_ids: Union[List[Union[str, int]], str, int], reply_to_msg_id: int = None):
         if not self.messages:
-            self.generate_message()
+            await self.generate_message()
 
         if self.telegraph_post:
-            self.telegraph_post.send_message(chat_ids, reply_to_msg_id)
+            await self.telegraph_post.send_message(chat_ids, reply_to_msg_id)
             return
 
         if type(chat_ids) is not list:
@@ -119,7 +119,7 @@ class Post:
             logger.warning(f'Too large, send a pure link message instead: "{self.title}"')
             pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=self.link)
-            pure_link_post.send_message(chat_ids, reply_to_msg_id)
+            await pure_link_post.send_message(chat_ids, reply_to_msg_id)
             return
 
         message_count = len(self.messages)
@@ -129,45 +129,44 @@ class Post:
             user_success_count = 0
             for msg in self.messages:
                 try:
-                    msg.send(chat_id, reply_to_msg_id)
+                    await msg.send(chat_id, reply_to_msg_id)
                     user_success_count += 1
                     tot_success_count += 1
-                except OverflowError:
-                    return  # retried too many times
-                except telegram.error.BadRequest as e:
-                    error_caption = e.message
-                    if error_caption.startswith('Have no rights to send a message'):
-                        logger.warning(f'Chat ID {chat_id} has banned the bot!')
-                        chat_ids.pop(0)
-                        break  # TODO: disable all feeds for this chat_id
-
-                    # if telegram bot api sucks
-                    if error_caption.startswith('Wrong file identifier/http url specified') \
-                            or error_caption.startswith('Failed to get http url content') \
-                            or error_caption.startswith('Wrong type of the web page content') \
-                            or error_caption.startswith('Group send failed'):
-                        if self.media.change_all_server():
-                            logger.info('TBA sucks! Changed img server and retrying...')
-                            self.send_message(chat_ids)
-                            return
-                        logger.warning('All media was set invalid because TBA cannot process some of them.')
-                        self.invalidate_all_media()
-                        self.generate_message()
-                        self.send_message(chat_ids)
-                        return
-
-                    logger.warning(f'Sending {self.link} failed: ', exc_info=e)
-                    error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
-                                         traceback.format_exc(),
-                                         self.title, self.feed_title, self.link, self.author, service_msg=True)
-                    error_message.send_message(env.MANAGER)
-
+                # except OverflowError:
+                #     return  # retried too many times
+                # except telegram.error.BadRequest as e:
+                #     error_caption = e.message
+                #     if error_caption.startswith('Have no rights to send a message'):
+                #         logger.warning(f'Chat ID {chat_id} has banned the bot!')
+                #         chat_ids.pop(0)
+                #         break  # TODO: disable all feeds for this chat_id
+                #
+                #     # if telegram bot api sucks
+                #     if error_caption.startswith('Wrong file identifier/http url specified') \
+                #             or error_caption.startswith('Failed to get http url content') \
+                #             or error_caption.startswith('Wrong type of the web page content') \
+                #             or error_caption.startswith('Group send failed'):
+                #         if self.media.change_all_server():
+                #             logger.info('TBA sucks! Changed img server and retrying...')
+                #             await self.send_message(chat_ids)
+                #             return
+                #         logger.warning('All media was set invalid because TBA cannot process some of them.')
+                #         self.invalidate_all_media()
+                #         await self.generate_message()
+                #         await self.send_message(chat_ids)
+                #         return
+                #
+                #     logger.warning(f'Sending {self.link} failed: ', exc_info=e)
+                #     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
+                #                          traceback.format_exc(),
+                #                          self.title, self.feed_title, self.link, self.author, service_msg=True)
+                #     await error_message.send_message(env.MANAGER)
                 except Exception as e:
                     logger.warning(f'Sending {self.link} failed: ', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
                                          self.title, self.feed_title, self.link, self.author, service_msg=True)
-                    error_message.send_message(env.MANAGER)
+                    await error_message.send_message(env.MANAGER)
 
             chat_ids.pop(0)
 
@@ -178,7 +177,7 @@ class Post:
             telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=telegraph_url)
             return telegraph_post
-        except telegraph.TelegraphException as e:
+        except TelegraphException as e:
             if str(e) == 'CONTENT_TOO_BIG':
                 logger.warning(f'Too large, send a pure link message instead: "{self.title}"')
                 pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
@@ -194,11 +193,11 @@ class Post:
         self.text = Text('Content decoding failed!\n内容解码失败！')
         self._add_metadata()
 
-    def generate_message(self, no_telegraph: bool = False) -> Optional[int]:
+    async def generate_message(self, no_telegraph: bool = False) -> Optional[int]:
         # generate telegraph post and send
         if not no_telegraph and tgraph.api and not self.service_msg and not self.telegraph_url \
                 and (len(self.soup.getText()) >= 4096
-                     or (len(self.messages) if self.messages else self.generate_message(no_telegraph=True)) >= 2):
+                     or (len(self.messages) if self.messages else await self.generate_message(no_telegraph=True)) >= 2):
             logger.info(f'Will be sent via Telegraph: "{self.title}"')
             self.telegraph_post = self.telegraph_ify()  # telegraph post sent successful
             if self.telegraph_post:
@@ -206,7 +205,7 @@ class Post:
             logger.warning(f'Cannot be sent via Telegraph, fallback to normal message: "{self.title}"')
 
         if not self.text:
-            self.generate_text()
+            await self.generate_text()
 
         self.messages = []
 
@@ -312,11 +311,11 @@ class Post:
             return
         self.text = Text([self.text, text_invalid_media])
 
-    def _get_item(self, soup: Union[BeautifulSoup, Iterator, NavigableString], get_source: bool = False):
+    async def _get_item(self, soup: Union[BeautifulSoup, Iterator, NavigableString], get_source: bool = False):
         result = []
         if isinstance(soup, type(iter([]))):
             for child in soup:
-                item = self._get_item(child, get_source)
+                item = await self._get_item(child, get_source)
                 if item and get_source and isinstance(item, list):
                     result.extend(item)
                 if item:
@@ -347,30 +346,30 @@ class Post:
 
         if tag == 'p' or tag == 'section':
             parent = soup.parent.name
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             if text:
                 return Text([Br(), text, Br()]) if parent != 'li' else text
             else:
                 return None
 
         if tag == 'blockquote':
-            quote = self._get_item(soup.children)
+            quote = await self._get_item(soup.children)
             if not quote:
                 return None
             quote.strip()
             return Text([Hr(), quote, Hr()])
 
         if tag == 'pre':
-            return Pre(self._get_item(soup.children))
+            return Pre(await self._get_item(soup.children))
 
         if tag == 'code':
-            return Code(self._get_item(soup.children))
+            return Code(await self._get_item(soup.children))
 
         if tag == 'br':
             return Br()
 
         if tag == 'a':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             if not text:
                 return None
             href = soup.get("href")
@@ -378,7 +377,7 @@ class Post:
                 return None
             if not href.startswith('http'):
                 href = urljoin(self.feed_link, href)
-            return Link(self._get_item(soup.children), href)
+            return Link(await self._get_item(soup.children), href)
 
         if tag == 'img':
             src, alt, _class, style = soup.get('src'), soup.get('alt'), soup.get('class', ''), soup.get('style', '')
@@ -400,7 +399,7 @@ class Post:
             if _src:
                 multi_src = [_src]
             else:
-                multi_src = self._get_item(soup.children, get_source=True)
+                multi_src = await self._get_item(soup.children, get_source=True)
             if not multi_src:
                 return None
             for src in multi_src:
@@ -409,6 +408,7 @@ class Post:
                 if not src.startswith('http'):
                     src = urljoin(self.feed_link, src)
                 video = Video(src)
+                await video.validate()
                 if video:  # if video is valid
                     break
             if video is not None:
@@ -416,38 +416,38 @@ class Post:
             return None
 
         if tag == 'b' or tag == 'strong':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return Bold(text) if text else None
 
         if tag == 'i' or tag == 'em':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return Italic(text) if text else None
 
         if tag == 'u' or tag == 'ins':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return Underline(text) if text else None
 
         if tag == 'h1':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return Text([Br(2), Bold(Underline(text)), Br()]) if text else None
 
         if tag == 'h2':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return Text([Br(2), Bold(text), Br()]) if text else None
 
         if tag == 'hr':
             return Hr()
 
         if tag.startswith('h') and len(tag) == 2:
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return Text([Br(2), Underline(text), Br()]) if text else None
 
         if tag == 'li':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             return ListItem(text) if text else None
 
         if tag == 'iframe':
-            text = self._get_item(soup.children)
+            text = await self._get_item(soup.children)
             src = soup.get('src')
             if not src:
                 return None
@@ -455,10 +455,8 @@ class Post:
                 src = urljoin(self.feed_link, src)
             if not text:
                 try:
-                    stream = get_medium_stream(src)
-                    page = stream.text
-                    stream.close()
-                    text = BeautifulSoup(page, 'lxml').title.text
+                    page = await web.get_async(src)
+                    text = BeautifulSoup(page.decode(), 'lxml').title.text
                 finally:
                     if not text:
                         text = urlparse(src).netloc
@@ -466,7 +464,7 @@ class Post:
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:
-            item = self._get_item(child)
+            item = await self._get_item(child)
             if item and (not in_list or type(child) is not NavigableString):
                 result.append(item)
         if tag == 'ol':

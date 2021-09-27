@@ -1,13 +1,14 @@
 import asyncio
+import functools
+
 import aiohttp.client_exceptions
 import fasteners
 import feedparser
 import listparser
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple, Coroutine
+from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple
 from datetime import datetime
-from concurrent import futures
 
 from src import log, env, web
 from src.db import db
@@ -17,20 +18,14 @@ logger = log.getLogger('RSStT.feed')
 
 
 class Feed:
-    _send_max_concurrency = 3
-    _send_pool = futures.ThreadPoolExecutor(_send_max_concurrency, 'Send')
-
-    _generate_max_concurrency = 7
-    _generate_pool = futures.ThreadPoolExecutor(_generate_max_concurrency, 'Post')
-
     def __init__(self, link: str, fid: Optional[int] = None, name: Optional[str] = None, last: Optional[str] = None):
         self.fid = fid
         self.name = name
         self.link = link
         self.last = last
 
-    async def monitor_async(self, web_semaphore: asyncio.Semaphore = None) -> Optional[bool]:
-        rss_d = await feed_get_async(self.link, web_semaphore=web_semaphore)
+    async def monitor_async(self) -> Optional[bool]:
+        rss_d = await feed_get_async(self.link)
         if rss_d is None:
             return False
 
@@ -61,12 +56,13 @@ class Feed:
         else:
             # threading.Thread(target=self.send,
             #                  kwargs={'uid': env.CHATID, 'start': 0, 'end': end, 'reverse': True}).start()
-            self.send(env.CHATID, start=0, end=end, reverse=True, rss_d=rss_d)
+            await self.send(env.CHATID, start=0, end=end, reverse=True, rss_d=rss_d)
         return True
 
-    def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False, rss_d=None):
+    async def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False, rss_d=None,
+                   web_semaphore: Union[bool, asyncio.Semaphore] = None):
         if rss_d is None:
-            rss_d = run_sync(feed_get_async(self.link, uid=uid))
+            rss_d = await feed_get_async(self.link, uid=uid, web_semaphore=web_semaphore)
 
         if start >= len(rss_d.entries):
             start = 0
@@ -78,23 +74,21 @@ class Feed:
         if reverse:
             entries_to_send = entries_to_send[::-1]
 
-        for entry in entries_to_send:
-            self._generate_pool.submit(self._generate, uid, entry, rss_d.feed.title) \
-                .add_done_callback(self._send_callback)
+        await asyncio.gather(*(self._send(uid, entry, rss_d.feed.title) for entry in entries_to_send))
 
-    def _generate(self, uid, entry, feed_title):
+        # for entry in entries_to_send:
+        #     self._generate_pool.submit(self._generate, uid, entry, rss_d.feed.title) \
+        #         .add_done_callback(self._send_callback)
+
+    # def _send_callback(self, future: futures.Future):
+    #     res = future.result()
+    #     self._send_pool.submit(self._send, *res)
+
+    async def _send(self, uid, entry, feed_title):
         post = get_post_from_entry(entry, feed_title, self.link)
-        post.generate_message()
-        return post, uid, entry
-
-    def _send_callback(self, future: futures.Future):
-        res = future.result()
-        self._send_pool.submit(self._send, *res)
-
-    @staticmethod
-    def _send(post, uid, entry):
+        await post.generate_message()
         logger.debug(f"Sending {entry['title']} ({entry['link']})...")
-        post.send_message(uid)
+        await post.send_message(uid)
 
     def __eq__(self, other):
         return isinstance(other, Feed) and self.name == other.name
@@ -127,9 +121,7 @@ class Feeds:
                 head = datetime.utcnow().minute % self._interval
                 feeds_to_be_monitored = sorted_feeds[head::self._interval]
 
-        web_semaphore = asyncio.Semaphore(5)
-
-        result = await asyncio.gather(*(feed.monitor_async(web_semaphore) for feed in feeds_to_be_monitored))
+        result = await asyncio.gather(*(feed.monitor_async() for feed in feeds_to_be_monitored))
 
         no_update = 0
         fail = 0
@@ -157,15 +149,14 @@ class Feeds:
                 return feed
         return None
 
-    async def add_feed_async(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10,
-                             web_semaphore: asyncio.Semaphore = None) \
+    async def add_feed_async(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10) \
             -> Tuple[Union[bool, 'Feed'], Dict[str, Union[str, int]]]:
         feed_dict = {'name': name, 'link': link, 'uid': uid}
         if self.find(name, link, strict=False):
             env.bot.send_message(uid, 'ERROR: 订阅名已被使用或 RSS 源已订阅') if uid else None
             logger.warning(f'Refused to add an existing feed: {name} ({link})')
             return False, feed_dict
-        rss_d = await feed_get_async(link, uid=uid, timeout=timeout, web_semaphore=web_semaphore)
+        rss_d = await feed_get_async(link, uid=uid, timeout=timeout)
         if rss_d is None:
             return False, feed_dict
         last = str(rss_d.entries[0]['guid'] if 'guid' in rss_d.entries[0] else rss_d.entries[0]['link'])
@@ -212,8 +203,6 @@ class Feeds:
         valid_feeds: List[MutableMapping] = []
         invalid_feeds: List[MutableMapping] = []
 
-        web_semaphore = asyncio.Semaphore(5)
-
         coroutines = []
         for _feed in opml_d.feeds:
             if not _feed.title:
@@ -222,7 +211,7 @@ class Feeds:
                 continue
 
             _feed.title = _feed.title.replace(' ', '_')
-            coroutines.append(self.add_feed_async(name=_feed.title, link=_feed.url, web_semaphore=web_semaphore))
+            coroutines.append(self.add_feed_async(name=_feed.title, link=_feed.url))
 
         # do not need to acquire lock because add_feed will acquire one
         result = await asyncio.gather(*coroutines)
@@ -259,32 +248,24 @@ class Feeds:
 
 
 async def feed_get_async(url: str, uid: Optional[int] = None, timeout: Optional[int] = None,
-                         web_semaphore: asyncio.Semaphore = None):
+                         web_semaphore: Union[bool, asyncio.Semaphore] = None):
     try:
         rss_content = await web.get_async(url, timeout, web_semaphore)
-        rss_d = feedparser.parse(rss_content, sanitize_html=False)
+        rss_d = await asyncio.get_event_loop().run_in_executor(None, functools.partial(feedparser.parse, rss_content,
+                                                                                       sanitize_html=False))
         if not rss_d.entries:
             logger.warning(f'Fetch failed (feed error): {url}')
             if uid:
-                env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
+                await env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
             return None
     except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError) as e:
         logger.warning(f'Fetch failed (network error, {e.__class__}): {url}')
         if uid:
-            env.bot.send_message(uid, 'ERROR: 网络错误')
+            await env.bot.send_message(uid, 'ERROR: 网络错误')
         return None
     except Exception as e:
         logger.warning(f'Fetch failed: {url}', exc_info=e)
         if uid:
-            env.bot.send_message(uid, 'ERROR: 内部错误')
+            await env.bot.send_message(uid, 'ERROR: 内部错误')
         return None
     return rss_d
-
-
-def run_sync(coroutine: Coroutine):
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coroutine)

@@ -6,6 +6,7 @@ from telethon.sessions import MemorySession
 from telethon.tl.custom import Message, Button
 from telethon.tl import types
 from telethon.tl.functions.channels import GetParticipantRequest
+from telethon.tl.functions.bots import SetBotCommandsRequest
 from re import compile as re_compile
 from typing import Optional, Union
 from datetime import datetime
@@ -30,7 +31,7 @@ ANONYMOUS_ADMIN = 1087968824
 commandParser = re_compile(r'\s')
 
 # initializing bot
-bot = TelegramClient(MemorySession(), env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT) \
+bot = TelegramClient(MemorySession(), env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
     .start(bot_token=env.TOKEN)
 env.bot = bot
 bot_peer: types.InputPeerUser = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=True))
@@ -273,27 +274,6 @@ async def rss_monitor(fetch_all: bool = False):
     await feeds.monitor_async(fetch_all)
 
 
-# def error_handler(update: object, context: telegram.ext.CallbackContext):
-#     global conflictCount
-#
-#     try:
-#         raise context.error
-#     except telegram.error.BadRequest as e:
-#         logger.error('A uncaught TBA error occurred: ', exc_info=e)
-#     except (telegram.error.NetworkError, timeout, HTTPError) as e:
-#         logger.error('A uncaught Network error occurred: ' + str(e))
-#     except telegram.error.Conflict as e:
-#         conflictCount += 1
-#         logger.warning('Detected getUpdates conflict error.\n'
-#                        'If you run this robot on railway.app, this error (<10 times) should be normal.')
-#         if conflictCount >= 25:
-#             logger.critical('TOO MUCH GETUPDATES CONFLICT, PLEASE MAKE SURE THAT ONLY ONE BOT INSTANCE IS RUNNING!',
-#                             exc_info=e)
-#             exit(1)
-#     except Exception as e:
-#         logger.error('No error handlers are registered, logger exception.', exc_info=e)
-
-
 def main():
     global feeds
     logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
@@ -305,64 +285,20 @@ def main():
                 f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.api.count} accounts)' if tgraph.api else 'Disable'}")
 
-    # updater: telegram.ext.Updater = Updater(token=env.TOKEN, use_context=True,
-    #                                         request_kwargs={'proxy_url': env.TELEGRAM_PROXY})
-    #
-    # job_queue: telegram.ext.JobQueue = updater.job_queue
-    # dp: telegram.ext.Dispatcher = updater.dispatcher
-    #
-    # dp.add_handler(CommandHandler("add", callback=cmd_add, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("start", callback=cmd_help, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("help", callback=cmd_help, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("test", callback=cmd_test, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("list", callback=cmd_list, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("remove", callback=cmd_remove, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("import", callback=cmd_import, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("export", callback=cmd_export, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(CommandHandler("version", callback=cmd_version, run_async=True,
-    #                               filters=~Filters.update.edited_message))
-    # dp.add_handler(MessageHandler(callback=opml_import, run_async=True,
-    #                               filters=Filters.document & ~Filters.update.edited_message & (
-    #                                       Filters.reply | Filters.chat_type.private)))
-    # dp.add_error_handler(error_handler, run_async=True)
-    #
-    # commands = [telegram.BotCommand(command="add", description="添加订阅"),
-    #             telegram.BotCommand(command="remove", description="移除订阅"),
-    #             telegram.BotCommand(command="list", description="列出所有订阅"),
-    #             telegram.BotCommand(command="test", description="测试"),
-    #             telegram.BotCommand(command="import", description="导入订阅"),
-    #             telegram.BotCommand(command="export", description="导出订阅"),
-    #             telegram.BotCommand(command="version", description="查看版本"),
-    #             telegram.BotCommand(command="help", description="查看帮助")]
-    # try:
-    #     updater.bot.set_my_commands(commands)
-    # except TelegramError as e:
-    #     if e.message == 'Unauthorized':
-    #         logger.critical('TELEGRAM BOT TOKEN INVALID! PLEASE CHECK YOUR SETTINGS!')
-    #         exit(1)
-    #     logger.warning('Set command error: ' + e.message)
-    #
-    # feeds = Feeds()
-    #
-    # updater.start_polling()
-    #
-    # # disable to get rid of memory exhausted
-    # # # fetch_all on start
-    # # logger.info('Fetch all feeds at once.')
-    # # rss_monitor(fetch_all=True)
-    #
-    # # divide monitor tasks evenly to every minute
-    # job_queue.run_custom(rss_monitor, job_kwargs={'max_instances': 3, 'trigger': 'cron', 'minute': '*/1'})
-    #
-    # updater.idle()
+    commands = [types.BotCommand(command="add", description="添加订阅"),
+                types.BotCommand(command="remove", description="移除订阅"),
+                types.BotCommand(command="list", description="列出所有订阅"),
+                types.BotCommand(command="test", description="测试"),
+                types.BotCommand(command="import", description="导入订阅"),
+                types.BotCommand(command="export", description="导出订阅"),
+                types.BotCommand(command="version", description="查看版本"),
+                types.BotCommand(command="help", description="查看帮助")]
+    try:
+        asyncio.get_event_loop().run_until_complete(
+            bot(SetBotCommandsRequest(scope=types.BotCommandScopeDefault(), lang_code='', commands=commands)))
+    except Exception as e:
+        logger.warning('Set command error: ', exc_info=e)
+
     feeds = Feeds()
     scheduler = AsyncIOScheduler()
     scheduler.add_job(rss_monitor, trigger='cron', minute='*/1', max_instances=5)

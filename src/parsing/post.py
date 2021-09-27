@@ -8,6 +8,15 @@ from typing import Optional, Union, List, Iterator
 from emoji import emojize
 from urllib.parse import urlparse, urljoin
 
+# errors caused by invalid img/video(s)
+from telethon.errors.rpcerrorlist import PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, \
+    PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError, \
+    GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError, \
+    VideoContentTypeInvalidError, VideoFileInvalidError
+
+# errors caused by server instability or network instability between img server and telegram server
+from telethon.errors.rpcerrorlist import WebpageCurlFailedError, WebpageMediaEmptyError
+
 from src import env, message, log, web
 from src.parsing import tgraph
 from src.parsing.medium import Video, Image, Media, Animation
@@ -122,45 +131,37 @@ class Post:
             await pure_link_post.send_message(chat_ids, reply_to_msg_id)
             return
 
-        message_count = len(self.messages)
-        tot_success_count = 0
         while len(chat_ids) >= 1:
             chat_id = chat_ids[0]
-            user_success_count = 0
             for msg in self.messages:
                 try:
                     await msg.send(chat_id, reply_to_msg_id)
-                    user_success_count += 1
-                    tot_success_count += 1
-                # except OverflowError:
-                #     return  # retried too many times
-                # except telegram.error.BadRequest as e:
-                #     error_caption = e.message
-                #     if error_caption.startswith('Have no rights to send a message'):
-                #         logger.warning(f'Chat ID {chat_id} has banned the bot!')
-                #         chat_ids.pop(0)
-                #         break  # TODO: disable all feeds for this chat_id
-                #
-                #     # if telegram bot api sucks
-                #     if error_caption.startswith('Wrong file identifier/http url specified') \
-                #             or error_caption.startswith('Failed to get http url content') \
-                #             or error_caption.startswith('Wrong type of the web page content') \
-                #             or error_caption.startswith('Group send failed'):
-                #         if self.media.change_all_server():
-                #             logger.info('TBA sucks! Changed img server and retrying...')
-                #             await self.send_message(chat_ids)
-                #             return
-                #         logger.warning('All media was set invalid because TBA cannot process some of them.')
-                #         self.invalidate_all_media()
-                #         await self.generate_message()
-                #         await self.send_message(chat_ids)
-                #         return
-                #
-                #     logger.warning(f'Sending {self.link} failed: ', exc_info=e)
-                #     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
-                #                          traceback.format_exc(),
-                #                          self.title, self.feed_title, self.link, self.author, service_msg=True)
-                #     await error_message.send_message(env.MANAGER)
+
+                # errors caused by invalid img/video(s)
+                except (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
+                        PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
+                        GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
+                        VideoContentTypeInvalidError, VideoFileInvalidError) as e:
+                    logger.warning(f'All media was set invalid because some of them are invalid. '
+                                   f'({e.__class__.__name__}: {str(e)})')
+                    self.invalidate_all_media()
+                    await self.generate_message()
+                    await self.send_message(chat_ids)
+                    return
+
+                # errors caused by server instability or network instability between img server and telegram server
+                except (WebpageCurlFailedError, WebpageMediaEmptyError):
+                    if self.media.change_all_server():
+                        logger.info('Telegram cannot fetch some media. Changed img server and retrying...')
+                        await self.send_message(chat_ids)
+                        return
+                    logger.warning('All media was set invalid '
+                                   'because Telegram still cannot fetch some media after changing img server.')
+                    self.invalidate_all_media()
+                    await self.generate_message()
+                    await self.send_message(chat_ids)
+                    return
+
                 except Exception as e:
                     logger.warning(f'Sending {self.link} failed: ', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +

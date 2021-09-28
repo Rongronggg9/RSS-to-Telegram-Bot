@@ -5,9 +5,25 @@ from typing import Optional, Final
 from python_socks import parse_proxy_url
 
 # ----- base config -----
-# https://github.com/telegramdesktop/tdesktop/blob/dev/docs/api_credentials.md
-API_ID: Final = int(os.environ.get('API_ID', 17349))
-API_HASH: Final = os.environ.get('API_HASH', '344583e45741c457fe1862106095a5eb')
+SAMPLE_APIS: Final = {
+    # https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
+    4: '014b35b6184100b085b0d0572f9b5103',
+    # https://github.com/TelegramMessenger/Telegram-iOS/blob/master/build-system/verify.sh
+    8: '7245de8e747a0d6fbe11f7cc14fcc0bb',
+    # https://github.com/overtake/TelegramSwift/blob/master/Telegram-Mac/Config.swift
+    9: '3975f648bb682ee889f35483bc618d1c',
+    # https://github.com/vysheng/tg/blob/master/loop.h
+    2899: '36722c72256a24c1225de00eb6a1ca74',
+    # https://github.com/telegramdesktop/tdesktop/blob/dev/docs/api_credentials.md
+    17349: '344583e45741c457fe1862106095a5eb',
+    # https://github.com/tdlib/td/blob/master/example/uwp/app/MainPage.xaml.cs
+    94575: 'a3406de8d171bb422bb6ddf3bbd800e2',
+    # https://github.com/morethanwords/tweb/blob/master/t.py
+    1025907: '452b0359b988148995f22ff0f4229750'
+}
+
+API_ID: Final = int(os.environ['API_ID']) if os.environ.get('API_ID') else None
+API_HASH: Final = os.environ.get('API_HASH')
 TOKEN = os.environ.get('TOKEN')
 _chatid: Final = os.environ.get('CHATID')
 DELAY: Final = int(os.environ.get('DELAY', 300))

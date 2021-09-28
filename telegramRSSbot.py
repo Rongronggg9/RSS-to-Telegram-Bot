@@ -1,7 +1,9 @@
 import asyncio
 import re
+from time import sleep
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telethon import TelegramClient, events
+from telethon.errors import ApiIdPublishedFloodError
 from telethon.sessions import MemorySession
 from telethon.tl.custom import Message, Button
 from telethon.tl import types
@@ -11,6 +13,7 @@ from re import compile as re_compile
 from typing import Optional, Union
 from datetime import datetime
 from functools import wraps, partial
+from random import sample
 
 from src import env, log
 from src.parsing import tgraph
@@ -31,8 +34,33 @@ ANONYMOUS_ADMIN = 1087968824
 commandParser = re_compile(r'\s')
 
 # initializing bot
-bot = TelegramClient(MemorySession(), env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
-    .start(bot_token=env.TOKEN)
+bot = None
+if not env.API_ID or not env.API_HASH:
+    _use_sample_api = True
+    logger.info('API_ID and/or API_HASH not set, use sample APIs instead. API_ID_PUBLISHED_FLOOD_ERROR may occur.')
+    API_IDs = sample(tuple(env.SAMPLE_APIS.keys()), len(env.SAMPLE_APIS))
+    sleep_for = 0
+    while API_IDs:
+        sleep_for += 10
+        API_ID = API_IDs.pop()
+        API_HASH = env.SAMPLE_APIS[API_ID]
+        try:
+            bot = TelegramClient(MemorySession(), API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
+                .start(bot_token=env.TOKEN)
+            break
+        except ApiIdPublishedFloodError:
+            logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
+            sleep(sleep_for)
+
+else:
+    _use_sample_api = False
+    bot = TelegramClient(MemorySession(), env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
+        .start(bot_token=env.TOKEN)
+
+if bot is None:
+    logger.critical('LOGIN FAILED!')
+    exit(1)
+
 env.bot = bot
 bot_peer: types.InputPeerUser = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=True))
 env.bot_id = bot_peer.user_id

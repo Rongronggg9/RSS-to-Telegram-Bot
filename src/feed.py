@@ -78,14 +78,6 @@ class Feed:
 
         await asyncio.gather(*(self._send(uid, entry, rss_d.feed.title) for entry in entries_to_send))
 
-        # for entry in entries_to_send:
-        #     self._generate_pool.submit(self._generate, uid, entry, rss_d.feed.title) \
-        #         .add_done_callback(self._send_callback)
-
-    # def _send_callback(self, future: futures.Future):
-    #     res = future.result()
-    #     self._send_pool.submit(self._send, *res)
-
     async def _send(self, uid, entry, feed_title):
         post = get_post_from_entry(entry, feed_title, self.link)
         await post.generate_message()
@@ -267,7 +259,7 @@ async def feed_get_async(url: str, uid: Optional[int] = None, timeout: Optional[
             if uid:
                 await env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
             return None
-    except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError) as e:
+    except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError, ConnectionError, TimeoutError) as e:
         logger.warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
         if uid:
             await env.bot.send_message(uid, 'ERROR: 网络错误')

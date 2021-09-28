@@ -4,7 +4,6 @@ from time import sleep
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telethon import TelegramClient, events
 from telethon.errors import ApiIdPublishedFloodError
-from telethon.sessions import MemorySession
 from telethon.tl.custom import Message, Button
 from telethon.tl import types
 from telethon.tl.functions.channels import GetParticipantRequest
@@ -45,7 +44,7 @@ if not env.API_ID or not env.API_HASH:
         API_ID = API_IDs.pop()
         API_HASH = env.SAMPLE_APIS[API_ID]
         try:
-            bot = TelegramClient(MemorySession(), API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
+            bot = TelegramClient('config/bot', API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
                 .start(bot_token=env.TOKEN)
             break
         except ApiIdPublishedFloodError:
@@ -54,7 +53,7 @@ if not env.API_ID or not env.API_HASH:
 
 else:
     _use_sample_api = False
-    bot = TelegramClient(MemorySession(), env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
+    bot = TelegramClient('config/bot', env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=3) \
         .start(bot_token=env.TOKEN)
 
 if bot is None:
@@ -311,7 +310,7 @@ def main():
                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
                 f"DATABASE: {'Redis' if env.REDIS_HOST else 'Sqlite'}\n"
-                f"TELEGRAPH: {f'Enable ({tgraph.api.count} accounts)' if tgraph.api else 'Disable'}")
+                f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}")
 
     commands = [types.BotCommand(command="add", description="添加订阅"),
                 types.BotCommand(command="remove", description="移除订阅"),

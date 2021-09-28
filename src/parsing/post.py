@@ -1,12 +1,14 @@
 import json
 import re
 import traceback
-from telegraph import TelegraphException
+import asyncio.exceptions
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import Optional, Union, List, Iterator
 from emoji import emojize
 from urllib.parse import urlparse, urljoin
+from aiographfix import exceptions
+from aiohttp import ClientError
 
 # errors caused by invalid img/video(s)
 from telethon.errors.rpcerrorlist import PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, \
@@ -15,7 +17,7 @@ from telethon.errors.rpcerrorlist import PhotoInvalidDimensionsError, PhotoSaveF
     VideoContentTypeInvalidError, VideoFileInvalidError
 
 # errors caused by server instability or network instability between img server and telegram server
-from telethon.errors.rpcerrorlist import WebpageCurlFailedError, WebpageMediaEmptyError
+from telethon.errors.rpcerrorlist import WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError
 
 from src import env, message, log, web
 from src.parsing import tgraph
@@ -114,7 +116,7 @@ class Post:
         self._add_invalid_media()
 
     async def send_message(self, chat_ids: Union[List[Union[str, int]], str, int], reply_to_msg_id: int = None):
-        if not self.messages:
+        if not self.messages and not self.telegraph_post:
             await self.generate_message()
 
         if self.telegraph_post:
@@ -142,7 +144,7 @@ class Post:
                         PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
                         GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
                         VideoContentTypeInvalidError, VideoFileInvalidError) as e:
-                    logger.warning(f'All media was set invalid because some of them are invalid. '
+                    logger.warning(f'All media was set invalid because some of them are invalid '
                                    f'({e.__class__.__name__}: {str(e)})')
                     self.invalidate_all_media()
                     await self.generate_message()
@@ -150,9 +152,10 @@ class Post:
                     return
 
                 # errors caused by server instability or network instability between img server and telegram server
-                except (WebpageCurlFailedError, WebpageMediaEmptyError):
+                except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
                     if self.media.change_all_server():
-                        logger.info('Telegram cannot fetch some media. Changed img server and retrying...')
+                        logger.info(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
+                                    f'Changed img server and retrying...')
                         await self.send_message(chat_ids)
                         return
                     logger.warning('All media was set invalid '
@@ -171,23 +174,32 @@ class Post:
 
             chat_ids.pop(0)
 
-    def telegraph_ify(self):
+    async def telegraph_ify(self):
         try:
-            telegraph_url = tgraph.TelegraphIfy(self.xml, title=self.title, link=self.link,
-                                                feed_title=self.feed_title, author=self.author).telegraph_ify()
+            telegraph_url = await tgraph.TelegraphIfy(self.xml, title=self.title, link=self.link,
+                                                      feed_title=self.feed_title, author=self.author).telegraph_ify()
             telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=telegraph_url)
             return telegraph_post
-        except TelegraphException as e:
+        except exceptions.TelegraphError as e:
             if str(e) == 'CONTENT_TOO_BIG':
-                logger.warning(f'Too large, send a pure link message instead: "{self.title}"')
+                logger.warning(f'Content too big, send a pure link message instead: "{self.title}"')
                 pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                       link=self.link, author=self.author, telegraph_url=self.link)
                 return pure_link_post
             logger.warning('Telegraph API error: ' + str(e))
             return None
+        except (TimeoutError, asyncio.exceptions.TimeoutError):
+            logger.warning('Generate Telegraph post error: network timeout.')
+            return None
+        except (ClientError, ConnectionError) as e:
+            logger.warning(f'Generate Telegraph post error: network error ({e.__class__.__name__}).')
+            return None
+        except OverflowError:
+            logger.warning(f'Generate Telegraph post error: retried for too many times.')
+            return None
         except Exception as e:
-            logger.error('Generate Telegraph post error: ', exc_info=e)
+            logger.warning('Generate Telegraph post error: ', exc_info=e)
             return None
 
     def generate_pure_message(self):
@@ -196,11 +208,11 @@ class Post:
 
     async def generate_message(self, no_telegraph: bool = False) -> Optional[int]:
         # generate telegraph post and send
-        if not no_telegraph and tgraph.api and not self.service_msg and not self.telegraph_url \
+        if not no_telegraph and tgraph.apis and not self.service_msg and not self.telegraph_url \
                 and (len(self.soup.getText()) >= 4096
                      or (len(self.messages) if self.messages else await self.generate_message(no_telegraph=True)) >= 2):
             logger.info(f'Will be sent via Telegraph: "{self.title}"')
-            self.telegraph_post = self.telegraph_ify()  # telegraph post sent successful
+            self.telegraph_post = await self.telegraph_ify()  # telegraph post sent successful
             if self.telegraph_post:
                 return
             logger.warning(f'Cannot be sent via Telegraph, fallback to normal message: "{self.title}"')

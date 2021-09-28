@@ -1,7 +1,7 @@
 # telegram and telegraph
 cryptg==0.2.post4
 telethon[cryptg]==1.23.0
-telegraph==1.4.1
+aiographfix==0.2.2
 
 # feed parsing
 feedparser==6.0.8
@@ -17,7 +17,6 @@ emoji==1.5.0
 redis==3.5.3
 
 # network
-requests[socks]==2.26.0
 aiohttp==3.7.4.post0
 aiohttp-socks==0.6.0
 aiohttp-retry==2.4.6

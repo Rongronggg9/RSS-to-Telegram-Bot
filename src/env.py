@@ -68,9 +68,18 @@ if TELEGRAM_PROXY:
         'password': _parsed[4],
         'rdns': True
     }
+    TELEGRAPH_PROXY_DICT: Final = {
+        'proxy_type': _parsed[0],
+        'host': _parsed[1],
+        'port': _parsed[2],
+        'username': _parsed[3],
+        'password': _parsed[4],
+        'rdns': True
+    }
     del _parsed
 else:
     TELEGRAM_PROXY_DICT: Final = None
+    TELEGRAPH_PROXY_DICT: Final = None
 
 R_PROXY: Final = os.environ.get('R_PROXY', DEFAULT_PROXY)
 

@@ -11,7 +11,7 @@ _proxy = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if
 _semaphore = asyncio.BoundedSemaphore(5)
 
 
-async def get_async(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None) -> bytes:
+async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None) -> bytes:
     if not timeout:
         timeout = 12
 

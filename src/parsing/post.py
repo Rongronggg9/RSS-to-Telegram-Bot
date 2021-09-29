@@ -97,14 +97,13 @@ class Post:
         self.telegraph_url = telegraph_url
         self.messages: Optional[List[message.Message]] = None
         self.origin_text = self.text.copy()
-        self.title = emojify(BeautifulSoup(title, 'lxml').get_text(strip=True)) if title else None
+        self.title = emojify(title.strip()) if title else None
         self.feed_title = feed_title
         self.link = link
         self.author = author
         self.plain = plain
         self.telegraph_post: Optional[Post] = None
         self.feed_link = feed_link if feed_link else link
-        # self.generate_text()
 
     async def generate_text(self):
         self.text = Text(await self._get_item(self.soup))
@@ -207,7 +206,7 @@ class Post:
         self._add_metadata()
 
     async def generate_message(self, no_telegraph: bool = False) -> Optional[int]:
-        # generate telegraph post and send
+        # generate telegraph post if the post is too long
         if not no_telegraph and tgraph.apis and not self.service_msg and not self.telegraph_url \
                 and (len(self.soup.getText()) >= 4096
                      or (len(self.messages) if self.messages else await self.generate_message(no_telegraph=True)) >= 2):
@@ -274,7 +273,6 @@ class Post:
         split_html = [stripNewline.sub('\n\n',
                                        stripLineEnd.sub('\n', p))
                       for p in self.text.split_html(length_limit_head, head_count, length_limit_tail)]
-        # logger.debug(f'{self.title} ({self.link}):\n{split_html}')
         return split_html
 
     def _add_metadata(self):
@@ -468,7 +466,7 @@ class Post:
                 src = urljoin(self.feed_link, src)
             if not text:
                 try:
-                    page = await web.get_async(src)
+                    page = await web.get(src)
                     text = BeautifulSoup(page.decode(), 'lxml').title.text
                 finally:
                     if not text:

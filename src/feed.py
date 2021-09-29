@@ -6,7 +6,7 @@ import feedparser
 import listparser
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple
+from typing import Optional, Dict, Union, Iterator, List, MutableMapping, Tuple, Iterable
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -26,8 +26,8 @@ class Feed:
         self.link = link
         self.last = last
 
-    async def monitor_async(self) -> Optional[bool]:
-        rss_d = await feed_get_async(self.link)
+    async def monitor(self) -> Optional[bool]:
+        rss_d = await feed_get(self.link)
         if rss_d is None:
             return False
 
@@ -56,15 +56,13 @@ class Feed:
         if not end:  # end is None or end == 0
             logger.warning(f'Cannot find the last sent post in current feed, all posts will not be sent: {self.link}')
         else:
-            # threading.Thread(target=self.send,
-            #                  kwargs={'uid': env.CHATID, 'start': 0, 'end': end, 'reverse': True}).start()
             await self.send(env.CHATID, start=0, end=end, reverse=True, rss_d=rss_d)
         return True
 
     async def send(self, uid, start: int = 0, end: Optional[int] = 1, reverse: bool = False, rss_d=None,
                    web_semaphore: Union[bool, asyncio.Semaphore] = None):
         if rss_d is None:
-            rss_d = await feed_get_async(self.link, uid=uid, web_semaphore=web_semaphore)
+            rss_d = await feed_get(self.link, uid=uid, web_semaphore=web_semaphore)
 
         if start >= len(rss_d.entries):
             start = 0
@@ -102,7 +100,8 @@ class Feeds:
             self._opml_template = template.read()
         self._interval = min(round(env.DELAY / 60), 60)  # cannot greater than 60
 
-    async def monitor_async(self, fetch_all: bool = False):
+    async def monitor(self, fetch_all: bool = False):
+        feeds_to_be_monitored: Iterable[Feed]
         # acquire r lock
         with self._lock.read_lock():
             if fetch_all:
@@ -118,7 +117,7 @@ class Feeds:
 
         logger.info('Started feeds monitoring task.')
 
-        result = await asyncio.gather(*(feed.monitor_async() for feed in feeds_to_be_monitored))
+        result = await asyncio.gather(*(feed.monitor() for feed in feeds_to_be_monitored))
 
         no_update = 0
         fail = 0
@@ -146,14 +145,14 @@ class Feeds:
                 return feed
         return None
 
-    async def add_feed_async(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10) \
+    async def add_feed(self, name, link, uid: Optional[int] = None, timeout: Optional[int] = 10) \
             -> Tuple[Union[bool, 'Feed'], Dict[str, Union[str, int]]]:
         feed_dict = {'name': name, 'link': link, 'uid': uid}
         if self.find(name, link, strict=False):
             env.bot.send_message(uid, 'ERROR: 订阅名已被使用或 RSS 源已订阅') if uid else None
             logger.warning(f'Refused to add an existing feed: {name} ({link})')
             return False, feed_dict
-        rss_d = await feed_get_async(link, uid=uid, timeout=timeout)
+        rss_d = await feed_get(link, uid=uid, timeout=timeout)
         if rss_d is None:
             return False, feed_dict
         last = str(rss_d.entries[0]['guid'] if 'guid' in rss_d.entries[0] else rss_d.entries[0]['link'])
@@ -193,7 +192,7 @@ class Feeds:
         else:
             return tuple(self._feeds)
 
-    async def import_opml_async(self, opml_file: Union[bytearray, bytes]) -> Optional[Dict[str, list]]:
+    async def import_opml(self, opml_file: Union[bytearray, bytes]) -> Optional[Dict[str, list]]:
         opml_d = listparser.parse(opml_file.decode())
         if not opml_d.feeds:
             return None
@@ -208,7 +207,7 @@ class Feeds:
                 continue
 
             _feed.title = _feed.title.replace(' ', '_')
-            coroutines.append(self.add_feed_async(name=_feed.title, link=_feed.url))
+            coroutines.append(self.add_feed(name=_feed.title, link=_feed.url))
 
         # do not need to acquire lock because add_feed will acquire one
         result = await asyncio.gather(*coroutines)
@@ -244,10 +243,10 @@ class Feeds:
         return self._feeds[item]
 
 
-async def feed_get_async(url: str, uid: Optional[int] = None, timeout: Optional[int] = None,
-                         web_semaphore: Union[bool, asyncio.Semaphore] = None):
+async def feed_get(url: str, uid: Optional[int] = None, timeout: Optional[int] = None,
+                   web_semaphore: Union[bool, asyncio.Semaphore] = None):
     try:
-        rss_content = await web.get_async(url, timeout, web_semaphore)
+        rss_content = await web.get(url, timeout, web_semaphore)
         if len(rss_content) <= 524288:
             rss_d = feedparser.parse(rss_content, sanitize_html=False)
         else:  # feed too large, run in another thread to avoid blocking the bot

@@ -145,7 +145,7 @@ async def cmd_add(event: Union[events.NewMessage.Event, Message]):
         return
     title = args[1]
     url = args[2]
-    if await feeds.add_feed_async(name=title, link=url, uid=event.chat_id):
+    if await feeds.add_feed(name=title, link=url, uid=event.chat_id):
         await event.respond('已添加 \n标题: %s\nRSS 源: %s' % (title, url))
 
 
@@ -274,7 +274,7 @@ async def opml_import(event: Union[events.NewMessage.Event, Message]):
     await event.reply('正在处理中...\n'
                       '如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待')
     logger.info(f'Got an opml file.')
-    res = await feeds.import_opml_async(opml_file)
+    res = await feeds.import_opml(opml_file)
     if res is None:
         await event.reply('ERROR: 解析失败或文档不含订阅')
         return
@@ -298,7 +298,7 @@ async def cmd_version(event: Union[events.NewMessage.Event, Message]):
 
 
 async def rss_monitor(fetch_all: bool = False):
-    await feeds.monitor_async(fetch_all)
+    await feeds.monitor(fetch_all)
 
 
 def main():

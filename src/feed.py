@@ -64,6 +64,9 @@ class Feed:
         if rss_d is None:
             rss_d = await feed_get(self.link, uid=uid, web_semaphore=web_semaphore)
 
+        if rss_d is None and uid is not None:
+            return  # error occurred and have notified user
+
         if start >= len(rss_d.entries):
             start = 0
             end = 1
@@ -258,6 +261,11 @@ async def feed_get(url: str, uid: Optional[int] = None, timeout: Optional[int] =
             if uid:
                 await env.bot.send_message(uid, 'ERROR: 链接看起来不像是个 RSS 源，或该源不受支持')
             return None
+    except aiohttp.client_exceptions.InvalidURL:
+        logger.warning(f'Fetch failed (URL invalid): {url}')
+        if uid:
+            await env.bot.send_message(uid, 'ERROR: URL 不合法')
+        return None
     except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError, ConnectionError, TimeoutError) as e:
         logger.warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
         if uid:

@@ -147,5 +147,5 @@ bot: Optional[TelegramClient] = None  # placeholder
 bot_id: Optional[int] = None  # placeholder
 
 REQUESTS_HEADERS: Final = {
-    'user-agent': 'RSStT'
+    'user-agent': os.environ.get('USER_AGENT', 'RSStT')
 }

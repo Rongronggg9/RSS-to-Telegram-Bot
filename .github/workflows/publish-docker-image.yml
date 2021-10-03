@@ -1,7 +1,11 @@
-name: Publish Docker image (master)
+name: Publish Docker image
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - dev
+    tags:
+      - '**'
 jobs:
   push_to_docker_hub:
     name: Push Docker image to Docker Hub
@@ -10,8 +14,20 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
         with:
-          ref: master
           fetch-depth: 0
+      - name: Set Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=pep440,pattern={{version}}
+            type=pep440,pattern={{major}}.{{minor}}
+            type=pep440,pattern={{major}}
+            type=raw,value=latest,enable=${{ endsWith(github.ref, 'master') }}
       - name: Docker Hub README sync
         uses: meeDamian/sync-readme@v1.0.6
         with:
@@ -35,4 +51,5 @@ jobs:
           push: true
           context: .
           platforms: linux/amd64,linux/arm64
-          tags: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

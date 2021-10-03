@@ -7,8 +7,8 @@ COPY . /app
 RUN \
   echo "$(git describe --tags --always)@$(git branch --show-current)" > .version ; \
   if test $(expr length "$(cat .version)") -le 3; then echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; fi ; \
-  rm -rf .git resources && \
-  mkdir config
+  rm -rf .git .github resources && \
+  mkdir -p config
 
 #----------------------------------------
 

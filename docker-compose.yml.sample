@@ -43,7 +43,7 @@ services:
       #- API_ID=1025907  # 若要使用自己的 API key，在 https://core.telegram.org/api/obtaining_api_id 创建，并替换前面的值
       #- API_HASH=452b0359b988148995f22ff0f4229750  # 同上
       #- IMG_RELAY_SERVER=https://rsstt-img-relay.rongrong.workers.dev/  # 自定义 Telegram 获取图片错误的时候换用的反代服务器，参见 https://github.com/rongronggg9/rsstt-img-relay
-      #- USER_AGENT=rsstt  # 自定义网络请求使用的 User-Agent
+      #- USER_AGENT=RSStT  # 自定义网络请求使用的 User-Agent
       #- T_PROXY=socks5h://host.docker.internal:1080  # 连接 Telegram API 使用的代理，用 host.docker.internal 代替 localhost
       #- R_PROXY=socks5h://host.docker.internal:1080  # 获取 RSS 订阅使用的代理， 用 host.docker.internal 代替 localhost
       #- DEBUG=1  # 若要开启 debug 日志输出，请取消注释该行

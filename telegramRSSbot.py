@@ -13,6 +13,7 @@ from typing import Optional, Union
 from datetime import datetime
 from functools import wraps, partial
 from random import sample
+from pathlib import Path
 
 from src import env, log
 from src.parsing import tgraph
@@ -33,6 +34,7 @@ ANONYMOUS_ADMIN = 1087968824
 commandParser = re_compile(r'\s')
 
 # initializing bot
+Path("config").mkdir(parents=True, exist_ok=True)
 bot = None
 if not env.API_ID or not env.API_HASH:
     _use_sample_api = True

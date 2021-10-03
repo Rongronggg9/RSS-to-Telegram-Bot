@@ -24,34 +24,39 @@ services:
       - MANAGER=1234567890  # 替换为你的 user id
       - DELAY=300  # 订阅更新检查间隔（单位：秒）
 
-# ↓------ 要停用长文自动转 Telegraph，就将此区域完全注释（在每一行最前面加 # 号） ------↓ #
-# 在这里申请 access_token: https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot
-# 每行一个，保证缩进对齐，每次都会随机选用（刷新上述页面就可以取得新的 token）
-# 尽可能保证数量不少于 5 个
-# 程序会在每次启动时检查 token 合法性，遇到非法 token 就会自动重新注册 Telegraph 账户代替
+# ↓------ 要停用长文自动转 telegraph，就将此区域完全注释（在每一行最前面加 # 号） ------↓ #
+# 在这里申请 access_token: https://api.telegra.ph/createaccount?short_name=rsstt&author_name=generated%20by%20rsstt&author_url=https%3a%2f%2fgithub.com%2frongronggg9%2frss-to-telegram-bot
+# 每行一个，保证缩进对齐，会轮流使用（刷新上述页面就可以取得新的 token）
+# 尽可能保证数量不少于 5 个，否则容易触发 flood control
+# 程序会在每次启动时检查 token 合法性，遇到非法 token 就会自动重新注册 telegraph 账户代替
 # 因此，不替换为自己的 token 也可以运行，但是，这么做的话，程序启动就会较慢
-      - TELEGRAPH_TOKEN=  # ↓ 替换为你自己申请到的 access_token ↓
+#                            ↓ 替换为你自己申请到的 access_token ↓
+      - TELEGRAPH_TOKEN=
         1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
         1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
         1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
         1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
         1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
-# ↑------ 要停用长文自动转 Telegraph，就将此区域完全注释（在每一行最前面加 # 号） ------↑ #
+# ↑------ 要停用长文自动转 telegraph，就将此区域完全注释（在每一行最前面加 # 号） ------↑ #
 
 # ↓------ 以下为可选参数，取消注释（删除 # 号）并对应修改来启用它们 ------↓ #
-      #- T_PROXY=socks5h://host.docker.internal:1080  # Telegram Bot API 使用的代理，用 host.docker.internal 代替 localhost
+      #- API_ID=1025907  # 若要使用自己的 API key，在 https://core.telegram.org/api/obtaining_api_id 创建，并替换前面的值
+      #- API_HASH=452b0359b988148995f22ff0f4229750  # 同上
+      #- IMG_RELAY_SERVER=https://rsstt-img-relay.rongrong.workers.dev/  # 自定义 Telegram 获取图片错误的时候换用的反代服务器，参见 https://github.com/rongronggg9/rsstt-img-relay
+      #- USER_AGENT=rsstt  # 自定义网络请求使用的 User-Agent
+      #- T_PROXY=socks5h://host.docker.internal:1080  # 连接 Telegram API 使用的代理，用 host.docker.internal 代替 localhost
       #- R_PROXY=socks5h://host.docker.internal:1080  # 获取 RSS 订阅使用的代理， 用 host.docker.internal 代替 localhost
       #- DEBUG=1  # 若要开启 debug 日志输出，请取消注释该行
 # ↑------ 以上为可选参数，取消注释（删除 # 号）并对应修改来启用它们 ------↑ #
 
-# ↓------ 若不使用 redis 而使用 sqlite，请将此行以下全部注释，注意数据不会被自动迁移 ------↓ #
-      - REDISHOST=redis
-    depends_on:
-      - redis
-  redis:
-    image: redis:alpine
-    container_name: rsstt_redis  # 如果您需要启动多个实例，请复制此文件到另外的文件夹，并修改此名字为唯一的名字
-    restart: unless-stopped
-    command: redis-server --appendonly yes --appendfilename "redis_db.aof" --appendfsync everysec --no-appendfsync-on-rewrite no --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb --aof-load-truncated yes
-    volumes:
-      - ./config:/data
+# ↓------ 若不使用 sqlite 而使用 redis，请将此行以下全部取消注释，注意数据不会被自动迁移 ------↓ #
+#      - REDISHOST=redis
+#    depends_on:
+#      - redis
+#  redis:
+#    image: redis:alpine
+#    container_name: rsstt_redis  # 如果您需要启动多个实例，请复制此文件到另外的文件夹，并修改此名字为唯一的名字
+#    restart: unless-stopped
+#    command: redis-server --appendonly yes --appendfilename "redis_db.aof" --appendfsync everysec --no-appendfsync-on-rewrite no --auto-aof-rewrite-percentage 100 --auto-aof-rewrite-min-size 64mb --aof-load-truncated yes
+#    volumes:
+#      - ./config:/data

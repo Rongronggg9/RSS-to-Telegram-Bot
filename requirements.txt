@@ -24,5 +24,5 @@ python-socks[asyncio]==1.2.4
 
 # utils
 fasteners==0.16.3
-colorlog==6.4.1
+colorlog==6.5.0
 APScheduler==3.8.0

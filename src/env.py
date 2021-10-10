@@ -3,6 +3,10 @@ import logging
 from telethon import TelegramClient
 from typing import Optional, Final
 from python_socks import parse_proxy_url
+from dotenv import load_dotenv
+
+# ----- load .env -----
+load_dotenv(override=True)
 
 # ----- base config -----
 SAMPLE_APIS: Final = {

@@ -8,8 +8,8 @@
 
 - Telegram bot library has been migrated from `python-telegram-bot` (which uses HTTP Bot API and is synchronous)
   to `telethon` (which uses MTProto Bot API and is asynchronous)
-    - However, to use MTProto Bot API, an API key is needed. The bot has 7 built-in API keys (collected on the Internet)
-      and in most cases it will not be unable to log in. But if so, please obtain your own API key (
+    - However, to use MTProto Bot API, an API key is needed. The bot has 7 built-in API keys (collected from the
+      Internet) and in most cases it should not be unable to log in. But if so, please obtain your own API key (
       see [docker-compose.yml.sample](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/53f11a473933e620d707c9d15f6d48737bd7a982/docker-compose.yml.sample#L43)
       for details)
 
@@ -73,7 +73,7 @@
     - 注意：这是为了在 [railway.app]() 上部署而设计的变通解决方案，未来很可能丢弃
 - 支持 arm64 (docker 构建)
 - 支持在由于 Telegram 服务器不稳定或 Telegram 服务器与媒体服务器之间的网络连接不稳定而导致 Telegram 无法发出带有媒体的消息时，使用媒体反代服务器重新发送。
-- Support colored logging
+- 支持日志着色
 - `docker-compose.yml.sample`
 - 用于检查 bot 版本的 `/version` 命令
 - 如果设置了全局代理 (环境变量 `SOCKS_PROXY`/`HTTP_PROXY`)，会使用它们

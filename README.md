@@ -1,4 +1,4 @@
-# RSS to Telegram bot
+# RSS to Telegram Bot
 
 **专为短动态类消息设计的 RSS Bot**
 
@@ -54,17 +54,15 @@
 >
 > 标题为只是为管理 RSS 源而设的，可随意选取，但不可有空格。
 >
-> 命令:
->
+> 命令:  
+> **<u>/add</u>** **<u>标题</u>** **<u>RSS</u>** : 添加订阅  
+> **<u>/remove</u>** **<u>标题</u>** : 移除订阅  
+> **<u>/list</u>** : 列出数据库中的所有订阅  
+> **<u>/test</u>** **<u>RSS</u>** **<u>编号起点(可选)</u>** **<u>编号终点(可选)</u>** : 从 RSS 源处获取一条 post (编号为 0-based, 不填或超出范围默认为 0，不填编号终点默认只获取一条 post)，或者直接用 all 获取全部  
+> **<u>/import</u>** : 导入订阅  
+> **<u>/export</u>** : 导出订阅  
+> **<u>/version</u>** : 查看版本  
 > **<u>/help</u>** : 发送这条消息
->
-> **<u>/add</u> <u>标题</u> <u>RSS</u>** : 添加订阅
->
-> **<u>/remove</u> <u>标题</u>** : 移除订阅
->
-> **<u>/list</u>** : 列出数据库中的所有订阅，包括它们的标题和 RSS 源
->
-> **<u>/test</u> <u>RSS</u> <u>编号起点(可选)</u> <u>编号终点(可选)</u>** : 从 RSS 源处获取一条 post (编号为 0-based, 不填或超出范围默认为 0，不填编号终点默认只获取一条 post)，或者直接用 `all` 获取全部
 >
 > 您的 chatid 是: 0123456789
 
@@ -75,9 +73,9 @@
     - 您也可使用一个频道来接收推送，此时 `CHATID` 格式为 `@channelusername` (不要忘记将 bot 添加到频道里!)
 3. 获得管理员 (通常为您) 的 userid ，方法同上，稍后填入 `MANAGER`
 
-### Docker
+### Docker Compose
 
-For the docker image go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
+For the docker images go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 
 ```sh
 mkdir rsstt
@@ -87,18 +85,15 @@ vi docker-compose.yml  # 自行按文件中的注释修改 docker-compose.yml
 docker-compose up -d
 ```
 
-### Installation
+### Manual Execution
 
 Python 3.8+
-
-Remember to replace `<arg>`, `<` and `>` should be deleted.
 
 ```sh
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git
 cd RSS-to-Telegram-Bot
 pip3 install -r requirements.txt
-export PYTHONUNBUFFERED=1
-# 参照 docker-compose.yml export 环境变量
+vi .env # 参照 docker-compose.yml 设置环境变量
 python3 -u telegramRSSbot.py
 ```
 

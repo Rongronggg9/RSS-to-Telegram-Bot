@@ -11,7 +11,7 @@ bs4==0.0.1
 beautifulsoup4==4.10.0
 lxml==4.6.3
 fuzzywuzzy==0.18.0
-emoji==1.6.0
+emoji==1.6.1
 
 # db
 redis==3.5.3

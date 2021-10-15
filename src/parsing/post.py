@@ -9,6 +9,7 @@ from emoji import emojize
 from urllib.parse import urlparse, urljoin
 from aiographfix import exceptions
 from aiohttp import ClientError
+from html import unescape
 
 # errors caused by invalid img/video(s)
 from telethon.errors.rpcerrorlist import PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, \
@@ -97,7 +98,7 @@ class Post:
         self.telegraph_url = telegraph_url
         self.messages: Optional[List[message.Message]] = None
         self.origin_text = self.text.copy()
-        self.title = emojify(title.strip()) if title else None
+        self.title = emojify(unescape(title.strip())) if title else None
         self.feed_title = feed_title
         self.link = link
         self.author = author

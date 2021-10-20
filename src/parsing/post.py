@@ -278,18 +278,19 @@ class Post:
 
     def _add_metadata(self):
         plain_text = self.text.get_html(plain=True)
-        if self.feed_title:
-            author = self.author if self.author and self.author not in self.feed_title else None
-            self._add_via(self.feed_title, self.link, author)
         if self.telegraph_url:
             self._add_title(self.title)
-            return
-        if self.title and ('微博' not in self.feed_title or env.DEBUG):
+        elif len(self.text) == 0 and self.title:
+            self.text = Text(self.title)
+        elif self.title and ('微博' not in self.feed_title or env.DEBUG):
             title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
             similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
             logger.debug(f'{self.title} ({self.link}) is {similarity}% likely to be of no title.')
             if similarity < 90:
                 self._add_title(self.title)
+        if self.feed_title:
+            author = self.author if self.author and self.author not in self.feed_title else None
+            self._add_via(self.feed_title, self.link, author)
 
     def _add_title(self, title: str):
         if self.telegraph_url:

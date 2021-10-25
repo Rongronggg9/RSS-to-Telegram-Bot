@@ -32,3 +32,4 @@ fasteners==0.16.3
 colorlog==6.5.0
 APScheduler==3.8.0
 python-dotenv==0.19.1
+readerwriterlock==1.0.9

@@ -3,6 +3,8 @@ from typing import List, Union, Optional, Tuple, Dict
 from telethon.tl.types import DocumentAttributeVideo, DocumentAttributeAnimated
 from telethon.errors.rpcerrorlist import FloodError
 from readerwriterlock.rwlock_async import RWLockWrite
+from asyncio import BoundedSemaphore
+from functools import partial
 
 from src import log, env
 from src.parsing.medium import Medium
@@ -12,6 +14,9 @@ logger = log.getLogger('RSStT.message')
 
 class Message:
     no_retry = False
+    __max_concurrency = 3
+    __semaphore_bucket: Dict[Union[int, str], BoundedSemaphore] = defaultdict(
+        partial(BoundedSemaphore, __max_concurrency))
     __lock_bucket: Dict[Union[int, str], RWLockWrite] = defaultdict(RWLockWrite)
     __lock_type = 'r'
 
@@ -56,8 +61,10 @@ class Message:
         try:
             rwlock = self.__lock_bucket[chat_id]
             rlock_or_wlock = (await rwlock.gen_wlock() if self.__lock_type == 'w' else await rwlock.gen_rlock())
+            semaphore = self.__semaphore_bucket[chat_id]
             async with rlock_or_wlock:
-                await self._send(chat_id, reply_to_msg_id)
+                async with semaphore:
+                    await self._send(chat_id, reply_to_msg_id)
         except FloodError:  # telethon has retried due to flood control for too many times
             logger.warning('Msg dropped due to too many flood control retries')
             return

@@ -53,13 +53,26 @@ def emojify(xml):
 
 
 def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post':
-    xml = entry['content'][0]['value'] \
-        if ('content' in entry) and (len(entry['content']) > 0) \
-        else entry['summary']
+    # entry.summary returns summary(Atom) or description(RSS)
+    content = entry.get('content') or entry.get('summary', '')
+
+    if isinstance(content, list):  # Atom
+        if len(content) == 1:
+            content = content[0]
+        else:
+            for _content in content:
+                content_type = _content.get('type', '')
+                if 'html' in content_type or 'xml' in content_type:
+                    content = _content
+                    break
+            else:
+                content = content[0]
+        content = content.get('value', '')
+
     link = entry['link']
     author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
     title = entry['title']
-    return Post(xml, title, feed_title, link, author, feed_link=feed_link)
+    return Post(content, title, feed_title, link, author, feed_link=feed_link)
 
 
 # ----------------

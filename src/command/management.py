@@ -27,7 +27,6 @@ async def cmd_help(event: Union[events.NewMessage.Event, Message]):
         # f"您的 chatid 是: {event.chat_id}",
         parse_mode='html'
     )
-    raise events.StopPropagation
 
 
 @permission_required(only_manager=True)
@@ -59,7 +58,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message]):
 
         if rss_d is None:
             await event.respond(d['msg'])
-            raise events.StopPropagation
+            return
 
         if start >= len(rss_d.entries):
             start = 0
@@ -76,8 +75,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message]):
     except Exception as e:
         logger.warning(f"Sending failed:", exc_info=e)
         await event.respond('ERROR: 内部错误')
-        raise events.StopPropagation
-    raise events.StopPropagation
+        return
 
 
 async def __send(uid, entry, feed_title, link):
@@ -90,4 +88,3 @@ async def __send(uid, entry, feed_title, link):
 @permission_required(only_manager=False)
 async def cmd_version(event: Union[events.NewMessage.Event, Message]):
     await event.respond(env.VERSION)
-    raise events.StopPropagation

@@ -17,7 +17,7 @@ async def init():
     if env.DATABASE_URL.startswith('sqlite'):
         aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_sqlite')
     elif env.DATABASE_URL.startswith('postgres'):
-        aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_postgres')
+        aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_pgsql')
     else:
         aerich_command = None
         logger.critical('INVALID DB SCHEME! ONLY "sqlite" AND "postgres" ARE SUPPORTED!')

@@ -2,7 +2,7 @@ from src import env
 
 TORTOISE_ORM = {
     "connections": {
-        "default": env.DB_URL
+        "default": env.DATABASE_URL
     },
     "apps": {
         "models": {

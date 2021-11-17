@@ -12,13 +12,13 @@ colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %
 _muted = colorlog.INFO if env.DEBUG else colorlog.WARNING
 _shut_upped = colorlog.ERROR if env.DEBUG else colorlog.CRITICAL
 
-getLogger("telegram").setLevel(colorlog.INFO)
-getLogger("requests").setLevel(_shut_upped)
-getLogger("urllib3").setLevel(_shut_upped)
 getLogger('apscheduler').setLevel(_muted)
 getLogger('aiohttp_retry').setLevel(_muted)
 getLogger('asyncio').setLevel(_muted)
 getLogger('telethon').setLevel(_muted)
+getLogger('aiosqlite').setLevel(_muted)
+getLogger('tortoise').setLevel(_muted)
+getLogger('asyncpg').setLevel(_muted)
 
 
 # flit log from apscheduler.scheduler

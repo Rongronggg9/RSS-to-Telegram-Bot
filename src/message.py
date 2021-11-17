@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 from typing import List, Union, Optional, Tuple, Dict
 from telethon.tl.types import DocumentAttributeVideo, DocumentAttributeAnimated
@@ -14,10 +15,15 @@ logger = log.getLogger('RSStT.message')
 
 class Message:
     no_retry = False
-    __max_concurrency = 3
-    __semaphore_bucket: Dict[Union[int, str], BoundedSemaphore] = defaultdict(
-        partial(BoundedSemaphore, __max_concurrency))
-    __lock_bucket: Dict[Union[int, str], RWLockWrite] = defaultdict(RWLockWrite)
+    __overall_concurrency = 30
+    __overall_semaphore = BoundedSemaphore(__overall_concurrency)
+
+    __max_concurrency_per_user = 3
+    __semaphore_bucket_per_user: Dict[Union[int, str], BoundedSemaphore] = defaultdict(
+        partial(BoundedSemaphore, __max_concurrency_per_user))
+
+    __rwlock_bucket_per_user: Dict[Union[int, str], RWLockWrite] = defaultdict(RWLockWrite)
+
     __lock_type = 'r'
 
     # Q: Why rwlock is needed?
@@ -59,12 +65,13 @@ class Message:
     async def send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         # do not need flood control waiting or network error retrying because telethon will automatically perform them
         try:
-            rwlock = self.__lock_bucket[chat_id]
+            rwlock = self.__rwlock_bucket_per_user[chat_id]
             rlock_or_wlock = (await rwlock.gen_wlock() if self.__lock_type == 'w' else await rwlock.gen_rlock())
-            semaphore = self.__semaphore_bucket[chat_id]
-            async with rlock_or_wlock:
-                async with semaphore:
-                    await self._send(chat_id, reply_to_msg_id)
+            semaphore = self.__semaphore_bucket_per_user[chat_id]
+            async with self.__overall_semaphore:
+                async with rlock_or_wlock:
+                    async with semaphore:
+                        await self._send(chat_id, reply_to_msg_id)
         except FloodError:  # telethon has retried due to flood control for too many times
             logger.warning('Msg dropped due to too many flood control retries')
             return
@@ -126,7 +133,9 @@ class MediaGroupMsg(MediaMsg):
 
     async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         media_list = list(map(lambda m: m.telegramize(), self.media))
+        await asyncio.sleep(0.25)  # extra sleep to avoid flood control
         await env.bot.send_message(chat_id, self.text,
                                    file=media_list,
                                    parse_mode=self.parse_mode,
                                    reply_to=reply_to_msg_id)
+        await asyncio.sleep(0.25)  # extra sleep to avoid flood control

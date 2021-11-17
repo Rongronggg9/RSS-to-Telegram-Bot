@@ -481,12 +481,14 @@ class Post:
                 src = urljoin(self.feed_link, src)
             if not text:
                 try:
-                    page = await web.get(src)
-                    text = BeautifulSoup(page.decode(), 'lxml').title.text
+                    page = (await web.get(src, decode=True))['content']
+                    text = BeautifulSoup(page, 'lxml').title.text
+                except Exception:
+                    pass
                 finally:
                     if not text:
                         text = urlparse(src).netloc
-            return Link(f'iframe ({text})', param=src)
+            return Text([Br(2), Link(f'iframe ({text})', param=src), Br(2)])
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:

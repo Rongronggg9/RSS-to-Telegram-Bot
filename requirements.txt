@@ -9,27 +9,24 @@ listparser==0.18
 #pillow==8.3.2
 bs4==0.0.1
 beautifulsoup4==4.10.0
-lxml==4.6.3
+lxml==4.6.4
 fuzzywuzzy==0.18.0
 emoji==1.6.1
 
 # db
 redis==3.5.3
+tortoise-orm[accel,asyncpg]==0.17.8
+aerich==0.5.8
 
 # network
-aiohttp==3.7.4.post0  # aiohttp[speedups] is useless unless >=3.8.0 released: https://github.com/aio-libs/aiohttp/issues/5746
+aiohttp[speedups]==3.8.1
 aiohttp-socks==0.6.0
 aiohttp-retry==2.4.6
 python-socks[asyncio]==1.2.4
 
-# aiohttp speedups
-aiodns==3.0.0
-cchardet==2.1.7
-Brotli==1.0.9
-
 # utils
 fasteners==0.16.3
-colorlog==6.5.0
+colorlog==6.6.0
 APScheduler==3.8.1
-python-dotenv==0.19.1
+python-dotenv==0.19.2
 readerwriterlock==1.0.9

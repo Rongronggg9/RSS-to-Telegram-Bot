@@ -7,12 +7,12 @@ getLogger = colorlog.getLogger
 
 colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
                      datefmt='%Y-%m-%d-%H:%M:%S',
-                     level=logging.DEBUG if env.DEBUG else logging.INFO)
+                     level=colorlog.DEBUG if env.DEBUG else colorlog.INFO)
 
 _muted = colorlog.INFO if env.DEBUG else colorlog.WARNING
 _shut_upped = colorlog.ERROR if env.DEBUG else colorlog.CRITICAL
 
-getLogger('apscheduler').setLevel(_muted)
+getLogger('apscheduler').setLevel(colorlog.WARNING)
 getLogger('aiohttp_retry').setLevel(_muted)
 getLogger('asyncio').setLevel(_muted)
 getLogger('telethon').setLevel(_muted)

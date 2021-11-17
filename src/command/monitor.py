@@ -17,7 +17,7 @@ async def run_monitor_task():
 
     feeds = await db.Feed.filter(id__in=feed_id_to_monitor)
 
-    logger.info('Started feeds monitoring task.')
+    logger.debug('Started feeds monitoring task.')
 
     result = await asyncio.gather(*(__monitor(feed) for feed in feeds))
 

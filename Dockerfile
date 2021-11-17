@@ -19,9 +19,10 @@ WORKDIR /app
 COPY --from=builder /app /app
 
 RUN \
-  apt-get update && apt-get install -y gcc g++ && \
+  apt-get update && apt-get install -y build-essential && \
+  pip install --trusted-host pypi.python.org --no-cache-dir --upgrade pip setuptools wheel; \
   pip install --trusted-host pypi.python.org --no-cache-dir -r /app/requirements.txt && \
-  apt-get purge -y gcc g++ && apt-get autoremove --purge -y && \
+  apt-get purge -y build-essential && apt-get autoremove --purge -y && \
   ls -la ; \
   cat .version
 

@@ -22,56 +22,63 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=T
 
     @wraps(func)
     async def wrapper(event: Union[events.NewMessage.Event, Message], *args, **kwargs):
-        command = event.text if event.text else '(no command, file message)'
-        sender_id = event.sender_id
-        sender: Optional[types.User] = await event.get_sender()
-        sender_fullname = sender.first_name + (f' {sender.last_name}' if sender.last_name else '')
+        try:
+            command = event.text if event.text else '(no command, file message)'
+            sender_id = event.sender_id
+            sender: Optional[types.User] = await event.get_sender()
+            sender_fullname = sender.first_name + (f' {sender.last_name}' if sender.last_name else '')
 
-        if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
-            await event.respond('此命令只可由机器人的管理员使用。\n'
-                                'This command can be only used by the bot manager.')
-            logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command}.')
-            return
+            if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
+                await event.respond('此命令只可由机器人的管理员使用。\n'
+                                    'This command can be only used by the bot manager.')
+                logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command}.')
+                raise events.StopPropagation
 
-        if event.is_private:
-            await db.User.get_or_create(id=sender_id)
-            logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
-            return await func(event, *args, **kwargs)
+            if event.is_private:
+                await db.User.get_or_create(id=sender_id)
+                logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
+                await func(event, *args, **kwargs)
+                raise events.StopPropagation
 
-        if event.is_group and not only_manager:
-            chat: types.Chat = await event.get_chat()
-            input_chat: types.InputChannel = await event.get_input_chat()  # supergroup is a special form of channel
-            if only_in_private_chat:
-                await event.respond('此命令不允许在群聊中使用。\n'
-                                    'This command can not be used in a group.')
-                logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
-                            f'{chat.title} ({chat.id}).')
-                return
+            if event.is_group and not only_manager:
+                chat: types.Chat = await event.get_chat()
+                input_chat: types.InputChannel = await event.get_input_chat()  # supergroup is a special form of channel
+                if only_in_private_chat:
+                    await event.respond('此命令不允许在群聊中使用。\n'
+                                        'This command can not be used in a group.')
+                    logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
+                                f'{chat.title} ({chat.id}).')
+                    raise events.StopPropagation
 
-            input_sender = await event.get_input_sender()
+                input_sender = await event.get_input_sender()
 
-            if sender_id != ANONYMOUS_ADMIN:
-                participant: types.channels.ChannelParticipant = await env.bot(
-                    GetParticipantRequest(input_chat, input_sender))
-                is_admin = (isinstance(participant.participant, types.ChannelParticipantAdmin)
-                            or isinstance(participant.participant, types.ChannelParticipantCreator))
-                participant_type = type(participant.participant).__name__
-            else:
-                is_admin = True
-                participant_type = 'AnonymousAdmin'
+                if sender_id != ANONYMOUS_ADMIN:
+                    participant: types.channels.ChannelParticipant = await env.bot(
+                        GetParticipantRequest(input_chat, input_sender))
+                    is_admin = (isinstance(participant.participant, types.ChannelParticipantAdmin)
+                                or isinstance(participant.participant, types.ChannelParticipantCreator))
+                    participant_type = type(participant.participant).__name__
+                else:
+                    is_admin = True
+                    participant_type = 'AnonymousAdmin'
 
-            if not is_admin:
-                await event.respond('此命令只可由群管理员使用。\n'
-                                    'This command can be only used by an administrator.')
+                if not is_admin:
+                    await event.respond('此命令只可由群管理员使用。\n'
+                                        'This command can be only used by an administrator.')
+                    logger.info(
+                        f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
+                        f'in {chat.title} ({chat.id}).')
+                    raise events.StopPropagation
                 logger.info(
-                    f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
+                    f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
                     f'in {chat.title} ({chat.id}).')
-                return
-            logger.info(
-                f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                f'in {chat.title} ({chat.id}).')
-            return await func(event, *args, **kwargs)
-        return
+                await func(event, *args, **kwargs)
+                raise events.StopPropagation
+        except events.StopPropagation as e:
+            raise e
+        except Exception as e:
+            await event.respond('ERROR: 未被捕捉的内部错误')
+            raise e
 
     return wrapper
 

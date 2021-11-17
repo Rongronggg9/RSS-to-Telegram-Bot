@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # ----- load .env -----
 load_dotenv(override=True)
 
-# ----- base config -----
+# ----- basic config -----
 SAMPLE_APIS: Final = {
     # https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
     4: '014b35b6184100b085b0d0572f9b5103',
@@ -28,23 +28,21 @@ SAMPLE_APIS: Final = {
 
 API_ID: Final = int(os.environ['API_ID']) if os.environ.get('API_ID') else None
 API_HASH: Final = os.environ.get('API_HASH')
-TOKEN = os.environ.get('TOKEN')
-_chatid: Final = os.environ.get('CHATID')
-DELAY: Final = int(os.environ.get('DELAY', 300))
-
-if TOKEN is None or _chatid is None:
-    logging.critical('TOKEN OR CHATID NOT SET! PLEASE CHECK YOUR SETTINGS!')
-    exit(1)
+TOKEN: Final = os.environ.get('TOKEN')
 
 try:
-    CHATID: Final = int(_chatid) if _chatid.lstrip('-').isdecimal() else _chatid
-    del _chatid
-
-    _manager = os.environ.get('MANAGER', CHATID)
+    _chatid = os.environ.get('CHATID')
+    _chatid = int(_chatid) if isinstance(_chatid, str) and _chatid.lstrip('-').isdecimal() else _chatid
+    _manager = os.environ.get('MANAGER', _chatid)
     MANAGER: Final = int(_manager) if isinstance(_manager, str) and _manager.lstrip('-').isdecimal() else _manager
+    del _chatid
     del _manager
-except ValueError:
-    logging.critical('INVALID CHATID OR MANAGER! PLEASE CHECK YOUR SETTINGS!')
+
+    if TOKEN is None or MANAGER is None:
+        logging.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
+        exit(1)
+except Exception as e:
+    logging.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
 
 _telegraph_token = os.environ.get('TELEGRAPH_TOKEN')
@@ -57,6 +55,14 @@ if _telegraph_token:
         .replace(' ', ',')
 else:
     TELEGRAPH_TOKEN: Final = None
+
+del _telegraph_token
+
+_multiuser = os.environ.get('MULTIUSER', '')
+if _multiuser is None or _multiuser == '0' or _multiuser.lower() == 'false':
+    MULTIUSER: Final = False
+else:
+    MULTIUSER: Final = True
 
 # ----- proxy config -----
 DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', None))
@@ -99,18 +105,10 @@ _img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.
 IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith('/') else '/')
 del _img_relay_server
 
-# ----- redis config -----
-REDIS_HOST: Final = os.environ.get('REDISHOST')
-REDIS_USER: Final = os.environ.get('REDISUSER')
-REDIS_PASSWORD: Final = os.environ.get('REDISPASSWORD')
-
-_redis_port = os.environ.get('REDISPORT')
-REDIS_PORT: Final = int(_redis_port) if _redis_port else None
-del _redis_port
-
-_redis_num = os.environ.get('REDIS_NUM')
-REDIS_NUM: Final = int(_redis_num) if _redis_num else None
-del _redis_num
+# ----- db config -----
+_db_url = os.environ.get('DB_URL', 'sqlite://config/db.sqlite3')
+DB_URL: Final = _db_url.replace('postgresql', 'postgres', 1) if _db_url.startswith('postgresql') else _db_url
+del _db_url
 
 # ----- debug config -----
 if os.environ.get('DEBUG'):
@@ -145,6 +143,33 @@ if not _version or _version == '@':
 
 VERSION: Final = _version
 del _version
+
+# !!!!! DEPRECATED WARNING !!!!!
+if os.environ.get('DELAY'):
+    logging.warning('Env var "DELAY" is DEPRECATED and of no use!\n'
+                    'To avoid this warning, remove this env var.')
+
+if os.environ.get('CHATID'):
+    logging.warning('Env var "CHATID" is DEPRECATED!\n'
+                    'To avoid this warning, remove this env var.')
+
+if any((os.environ.get('REDISHOST'), os.environ.get('REDISUSER'), os.environ.get('REDISPASSWORD'),
+        os.environ.get('REDISPORT'), os.environ.get('REDIS_NUM'),)):
+    logging.warning('Redis DB is DEPRECATED!\n'
+                    'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
+                    'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.\n\n'
+                    'Please remove these env vars (if exist):\n'
+                    'REDISHOST\n'
+                    'REDISUSER\n'
+                    'REDISPASSWORD\n'
+                    'REDISPORT\n'
+                    'REDIS_NUM')
+
+if os.path.exists('config/rss.db'):
+    os.rename('config/rss.db', 'config/rss.db.bak')
+    logging.warning('Sqlite DB "rss.db" with old schema is DEPRECATED and renamed to "rss.db.bak" automatically!\n'
+                    'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
+                    'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.')
 
 # ----- shared var -----
 bot: Optional[TelegramClient] = None  # placeholder

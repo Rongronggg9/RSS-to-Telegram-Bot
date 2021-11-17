@@ -39,7 +39,7 @@ services:
 
 # ↓------ 以下为可选参数，取消注释（删除 # 号）并对应修改来启用它们 ------↓ #
       #- MULTIUSER=FALSE  # 关闭多用户功能
-      #- DB_URL=postgres://username:password@host:port/db_name  # 不使用 Sqlite 而使用自定义数据库，仅支持 PostgreSQL
+      #- DATABASE_URL=postgres://username:password@host:port/db_name  # 不使用 Sqlite 而使用自定义数据库，仅支持 PostgreSQL
       #- API_ID=1025907  # 若要使用自己的 API key，在 https://core.telegram.org/api/obtaining_api_id 创建，并替换前面的值
       #- API_HASH=452b0359b988148995f22ff0f4229750  # 同上
       #- IMG_RELAY_SERVER=https://rsstt-img-relay.rongrong.workers.dev/  # 自定义 Telegram 获取图片错误的时候换用的反代服务器，参见 https://github.com/rongronggg9/rsstt-img-relay

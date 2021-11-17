@@ -54,7 +54,7 @@ def main():
                 f"MANAGER: {env.MANAGER}\n"
                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
-                f"DATABASE: {env.DB_URL.split('://', 1)[0]}\n"
+                f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
 

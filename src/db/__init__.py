@@ -14,9 +14,9 @@ Option = models.Option
 
 
 async def init():
-    if env.DB_URL.startswith('sqlite'):
+    if env.DATABASE_URL.startswith('sqlite'):
         aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_sqlite')
-    elif env.DB_URL.startswith('postgres'):
+    elif env.DATABASE_URL.startswith('postgres'):
         aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_postgres')
     else:
         aerich_command = None

@@ -14,7 +14,6 @@ fuzzywuzzy==0.18.0
 emoji==1.6.1
 
 # db
-redis==3.5.3
 tortoise-orm[accel,asyncpg]==0.17.8
 aerich==0.5.8
 
@@ -25,8 +24,8 @@ aiohttp-retry==2.4.6
 python-socks[asyncio]==1.2.4
 
 # utils
-fasteners==0.16.3
 colorlog==6.6.0
 APScheduler==3.8.1
 python-dotenv==0.19.2
 readerwriterlock==1.0.9
+#uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

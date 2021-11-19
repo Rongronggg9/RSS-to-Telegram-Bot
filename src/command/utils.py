@@ -1,6 +1,7 @@
 import re
 from functools import partial, wraps
-from typing import Union, Optional
+from typing import Union, Optional, AnyStr
+from zlib import crc32
 from telethon import events
 from telethon.tl import types
 from telethon.tl.custom import Message
@@ -12,7 +13,15 @@ logger = log.getLogger('RSStT.command')
 
 ANONYMOUS_ADMIN = 1087968824
 
-commandParser = re.compile(r'\s').split
+
+def parse_command(command: str) -> list[AnyStr]:
+    return re.compile(r'\s+').split(command.strip())
+
+
+def get_hash(string: AnyStr) -> str:
+    if isinstance(string, str):
+        string = string.encode('utf-8')
+    return hex(crc32(string))[2:]
 
 
 def permission_required(func=None, *, only_manager=False, only_in_private_chat=True):

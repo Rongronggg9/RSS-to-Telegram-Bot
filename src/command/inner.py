@@ -2,12 +2,10 @@ import asyncio
 from datetime import datetime
 from json import dumps
 from typing import Dict, Union, Optional
-from zlib import crc32
-
 from bs4 import BeautifulSoup, Tag
 
 from src import db, web
-from src.command.utils import logger, escape_html
+from src.command.utils import logger, escape_html, get_hash
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
@@ -23,8 +21,8 @@ async def sub(user_id: int, feed_url: str) -> Dict[str, Union[int, str, db.Sub, 
         feed = await db.Feed.get_or_none(link=feed_url)
 
         if feed:
-            sub = await db.Sub.get_or_none(user=user_id, feed=feed)
-            if sub:
+            _sub = await db.Sub.get_or_none(user=user_id, feed=feed)
+            if _sub:
                 ret['sub'] = None
                 ret['msg'] = 'ERROR: 订阅已存在'
                 return ret
@@ -41,12 +39,12 @@ async def sub(user_id: int, feed_url: str) -> Dict[str, Union[int, str, db.Sub, 
             feed = db.Feed(title=rss_d.feed.title, link=feed_url)
             feed.etag = d['headers'].get('etag') if d['headers'] else None
             feed.entry_hashes = dumps(
-                [hex(crc32(entry.get('guid', entry['link']).encode()))[2:] for entry in rss_d.entries])
+                [get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
             await feed.save()  # now we get the id
             db.effective_utils.EffectiveTasks.update(feed.id)
 
-        sub = await db.Sub.create(user_id=user_id, feed=feed)
-        ret['sub'] = sub
+        _sub = await db.Sub.create(user_id=user_id, feed=feed)
+        ret['sub'] = _sub
         logger.info(f'Subed {feed_url} for {user_id}')
         return ret
 

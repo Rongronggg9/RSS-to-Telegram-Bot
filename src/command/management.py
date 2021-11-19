@@ -4,7 +4,7 @@ from telethon import events
 from telethon.tl.custom import Message
 
 from src import env, web
-from .utils import permission_required, commandParser, logger
+from .utils import permission_required, parse_command, logger
 from ..parsing.post import get_post_from_entry
 
 
@@ -31,7 +31,7 @@ async def cmd_help(event: Union[events.NewMessage.Event, Message]):
 
 @permission_required(only_manager=True)
 async def cmd_test(event: Union[events.NewMessage.Event, Message]):
-    args = commandParser(event.text)
+    args = parse_command(event.text)
     if len(args) < 2:
         await event.respond('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
         return

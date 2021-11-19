@@ -106,8 +106,9 @@ IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith(
 del _img_relay_server
 
 # ----- db config -----
-_database_url = os.environ.get('DATABASE_URL', 'sqlite://config/db.sqlite3')
-DATABASE_URL: Final = _database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql') else _database_url
+_database_url = os.environ.get('DATABASE_URL', 'sqlite://config/db.sqlite3?journal_mode=OFF')
+DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
+                       else _database_url)
 del _database_url
 
 # ----- debug config -----

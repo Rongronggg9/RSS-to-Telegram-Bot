@@ -2,8 +2,9 @@ import asyncio
 from email.utils import format_datetime
 from json import loads, dumps
 from typing import Optional, Union, MutableMapping
-from zlib import crc32
+
 from src import log, db
+from src.command.utils import get_hash
 from src.parsing.post import get_post_from_entry, Post
 from src.web import feed_get
 
@@ -47,7 +48,7 @@ async def __monitor(feed: db.Feed) -> Optional[bool]:
     d = await feed_get(feed.link, headers=headers)
 
     if d['status'] == 304:
-        logger.debug(f'Fetched (not updated): {feed.link}')
+        logger.debug(f'Fetched (not updated, cached): {feed.link}')
         return None
 
     rss_d = d['rss_d']
@@ -60,26 +61,31 @@ async def __monitor(feed: db.Feed) -> Optional[bool]:
         logger.debug(f'Fetched (empty): {feed.link}')
         return None
 
-    # python version >= 3.7: dict order is guaranteed to be insertion order
-    # python version >= 3: crc32 output is an unsigned int
-    entries = {hex(crc32(entry.get('guid', entry['link']).encode()))[2:]: entry
-               for entry in rss_d.entries}
-    old_hashes = loads(feed.entry_hashes) if feed.entry_hashes else []
     # sequence matters so we cannot use a set
-    updated_hashes = [updated_hash for updated_hash in entries.keys() if updated_hash not in old_hashes]
+    old_hashes = loads(feed.entry_hashes) if feed.entry_hashes else []
+    updated_hashes = []
+    updated_entries = []
+    for entry in rss_d.entries:
+        h = get_hash(entry.get('guid', entry['link']))
+        if h in old_hashes:
+            continue
+        updated_hashes.append(h)
+        updated_entries.append(entry)
 
     if not updated_hashes:  # not updated
         logger.debug(f'Fetched (not updated): {feed.link}')
         return None
 
     logger.info(f'Updated: {feed.link}')
-    length = max(len(entries) * 2, 20)
+    length = max(len(rss_d.entries) * 2, 20)
     new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
-    feed.entry_hashes = dumps(new_hashes) if new_hashes else None
-    await asyncio.gather(
-        *(__notify_all(feed, entries[updated_hash]) for updated_hash in updated_hashes),
-        feed.save()
-    )
+    feed.entry_hashes = dumps(new_hashes)
+    feed.etag = d['headers'].get('etag') if d['headers'] else None
+
+    await feed.save()
+    await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries))
+
+    return True
 
 
 async def __notify_all(feed, entry: MutableMapping):

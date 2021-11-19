@@ -3,12 +3,12 @@ from telethon import events, Button
 from telethon.tl.custom import Message
 
 from . import inner
-from .utils import permission_required, commandParser, escape_html
+from .utils import permission_required, parse_command, escape_html
 
 
 @permission_required(only_manager=False)
 async def cmd_sub(event: Union[events.NewMessage.Event, Message]):
-    args = commandParser(event.text)
+    args = parse_command(event.text)
 
     sub_result = await inner.subs(event.chat_id, *args)
 
@@ -21,7 +21,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message]):
 
 @permission_required(only_manager=False)
 async def cmd_unsub(event: Union[events.NewMessage.Event, Message]):
-    args = commandParser(event.text)
+    args = parse_command(event.text)
     if len(args) < 2:
         await event.respond("ERROR: 请指定订阅链接")
         return

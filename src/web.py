@@ -83,12 +83,19 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
             return ret
 
         if len(rss_content) <= 524288:
-            ret['rss_d'] = feedparser.parse(rss_content, sanitize_html=False)
+            rss_d = feedparser.parse(rss_content, sanitize_html=False)
         else:  # feed too large, run in another thread to avoid blocking the bot
-            ret['rss_d'] = await asyncio.get_event_loop().run_in_executor(_feedparser_thread_pool,
-                                                                          functools.partial(feedparser.parse,
-                                                                                            rss_content,
-                                                                                            sanitize_html=False))
+            rss_d = await asyncio.get_event_loop().run_in_executor(_feedparser_thread_pool,
+                                                                   functools.partial(feedparser.parse,
+                                                                                     rss_content,
+                                                                                     sanitize_html=False))
+
+        if 'title' not in rss_d.feed:
+            logger.warning(f'Fetch failed (feed invalid): {url}')
+            ret['msg'] = f'ERROR: feed 不合法'
+            return ret
+
+        ret['rss_d'] = rss_d
     except aiohttp.client_exceptions.InvalidURL:
         logger.warning(f'Fetch failed (URL invalid): {url}')
         ret['msg'] = 'ERROR: URL 不合法'

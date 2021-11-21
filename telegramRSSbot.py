@@ -60,6 +60,7 @@ def main():
 
     commands = [types.BotCommand(command="sub", description="添加订阅"),
                 types.BotCommand(command="unsub", description="移除订阅"),
+                types.BotCommand(command="unsub_all", description="移除所有订阅"),
                 types.BotCommand(command="list", description="列出所有订阅"),
                 types.BotCommand(command="import", description="导入订阅"),
                 types.BotCommand(command="export", description="导出订阅"),
@@ -79,7 +80,8 @@ def main():
     bot.add_event_handler(command.sub.cmd_sub, events.NewMessage(pattern='/add|/sub'))
     bot.add_event_handler(command.sub.cmd_sub, command.utils.PrivateMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_sub, command.utils.ReplyMessage(pattern=r'https?://'))
-    bot.add_event_handler(command.sub.cmd_unsub, events.NewMessage(pattern='/remove|/unsub'))
+    bot.add_event_handler(command.sub.cmd_unsub, events.NewMessage(pattern='(/remove|/unsub)([^_]|$)'))
+    bot.add_event_handler(command.sub.cmd_unsub_all, events.NewMessage(pattern='/remove_all|/unsub_all'))
     bot.add_event_handler(command.sub.cmd_list, events.NewMessage(pattern='/list'))
     bot.add_event_handler(command.opml.cmd_import, events.NewMessage(pattern='/import'))
     bot.add_event_handler(command.opml.cmd_export, events.NewMessage(pattern='/export'))

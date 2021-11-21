@@ -54,7 +54,8 @@ async def sub(user_id: int, feed_url: str) -> Dict[str, Union[int, str, db.Sub, 
         return ret
 
 
-async def subs(user_id: int, *feed_urls: str) -> Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]:
+async def subs(user_id: int, *feed_urls: str) \
+        -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
     filtered_feed_urls = tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), feed_urls))
     if not filtered_feed_urls:
         return None
@@ -90,14 +91,14 @@ async def unsub(user_id: int, feed_url: str) -> Dict[str, Union[str, db.Sub, Non
         if feed:
             curr_interval = feed.interval or default_interval
             new_interval = float('inf')
-            for sub in feed.subs:
-                if sub.user_id == user_id:
-                    sub_to_delete = sub
+            for _sub in feed.subs:
+                if _sub.user_id == user_id:
+                    sub_to_delete = _sub
                     continue
-                new_interval = min(new_interval, sub.interval or default_interval)
+                new_interval = min(new_interval, _sub.interval or default_interval)
 
         if sub_to_delete is None:
-            ret['msg'] = 'ERROR: 订阅不存在！'
+            ret['msg'] = 'ERROR: 订阅不存在'
             return ret
 
         if len(feed.subs) <= 1:  # only this/no sub subs the feed, del the feed and the sub will be deleted cascaded
@@ -118,6 +119,37 @@ async def unsub(user_id: int, feed_url: str) -> Dict[str, Union[str, db.Sub, Non
         ret['msg'] = 'ERROR: 内部错误'
         logger.warning(f'Unsub {feed_url} for {user_id} failed: ', exc_info=e)
         return ret
+
+
+async def unsubs(user_id: int, *feed_urls: str) \
+        -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
+    filtered_feed_urls = tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), feed_urls))
+    if not filtered_feed_urls:
+        return None
+
+    result = await asyncio.gather(*(unsub(user_id, url) for url in filtered_feed_urls))
+
+    success = tuple(unsub_d for unsub_d in result if unsub_d['sub'])
+    failure = tuple(unsub_d for unsub_d in result if not unsub_d['sub'])
+
+    msg = (
+            ('<b>退订成功</b>\n' if success else '')
+            + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">{escape_html(sub_d["sub"].feed.title)}</a>'
+                        for sub_d in success)
+            + ('\n\n' if success and failure else '')
+            + ('<b>退订失败</b>\n' if failure else '')
+            + '\n'.join(f'{escape_html(sub_d["url"])} ({sub_d["msg"]})' for sub_d in failure)
+    )
+
+    ret = {'unsub_d_l': result, 'msg': msg}
+
+    return ret
+
+
+async def unsub_all(user_id: int) -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
+    user_sub_list = await db.Sub.filter(user=user_id).prefetch_related('feed')
+    url_list = [_sub.feed.link for _sub in user_sub_list]
+    return await unsubs(user_id, *url_list)
 
 
 async def list_sub(user_id: int):

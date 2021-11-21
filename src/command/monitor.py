@@ -2,7 +2,9 @@ import asyncio
 from email.utils import format_datetime
 from json import loads, dumps
 from typing import Optional, Union, MutableMapping
+from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
 
+from . import inner
 from src import log, db
 from src.command.utils import get_hash
 from src.parsing.post import get_post_from_entry, Post
@@ -105,4 +107,8 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
     # TODO: customized format
     if isinstance(post, str):
         post = Post(post)
-    await post.send_message(sub.user_id)
+    try:
+        await post.send_message(sub.user_id)
+    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
+        logger.warning(f'User blocked: {sub.user_id}')
+        await inner.unsub_all(sub.user_id)

@@ -11,14 +11,19 @@ from aiographfix import exceptions
 from aiohttp import ClientError
 from html import unescape
 
-# errors caused by invalid img/video(s)
-from telethon.errors.rpcerrorlist import PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, \
-    PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError, \
-    GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError, \
-    VideoContentTypeInvalidError, VideoFileInvalidError
+from telethon.errors.rpcerrorlist import (
+    # errors caused by invalid img/video(s)
+    PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
+    PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
+    GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
+    VideoContentTypeInvalidError, VideoFileInvalidError,
 
-# errors caused by server instability or network instability between img server and telegram server
-from telethon.errors.rpcerrorlist import WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError
+    # errors caused by server instability or network instability between img server and telegram server
+    WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError,
+
+    # errors caused by lack of permission
+    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError
+)
 
 from src import env, message, log, web
 from src.parsing import tgraph
@@ -177,6 +182,9 @@ class Post:
                     await self.generate_message()
                     await self.send_message(chat_ids)
                     return
+
+                except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError) as e:
+                    raise e  # let monitoring task to deal with it
 
                 except Exception as e:
                     logger.warning(f'Sending {self.link} failed: ', exc_info=e)

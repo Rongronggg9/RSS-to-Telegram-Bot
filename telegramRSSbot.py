@@ -77,6 +77,7 @@ def main():
     except Exception as e:
         logger.warning('Set command error: ', exc_info=e)
 
+    # command handler
     bot.add_event_handler(command.sub.cmd_sub, events.NewMessage(pattern='/add|/sub'))
     bot.add_event_handler(command.sub.cmd_sub, command.utils.PrivateMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_sub, command.utils.ReplyMessage(pattern=r'https?://'))
@@ -89,6 +90,10 @@ def main():
     bot.add_event_handler(command.management.cmd_help, events.NewMessage(pattern='/help|/start'))
     bot.add_event_handler(command.management.cmd_test, events.NewMessage(pattern='/test'))
     bot.add_event_handler(command.management.cmd_version, events.NewMessage(pattern='/version'))
+
+    # callback query handler
+    bot.add_event_handler(command.sub.callback_unsub, events.CallbackQuery(pattern=r'^unsub_\d+$'))
+    bot.add_event_handler(command.sub.callback_get_unsub_page, events.CallbackQuery(pattern=r'^get_unsub_page_\d+$'))
 
     asyncio.get_event_loop().run_until_complete(db.init())
 

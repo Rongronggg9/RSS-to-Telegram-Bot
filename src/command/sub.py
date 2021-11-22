@@ -22,11 +22,13 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], args: Optional
 @permission_required(only_manager=False)
 async def cmd_unsub(event: Union[events.NewMessage.Event, Message], args: Optional[str] = None):
     args = parse_command(event.text if args is None else args)
+    user_id = event.chat_id
 
-    unsub_result = await inner.unsubs(event.chat_id, *args)
+    unsub_result = await inner.unsubs(user_id, args)
 
     if unsub_result is None:
-        await event.respond("ERROR: 请指定订阅链接")
+        buttons = await inner.get_unsub_buttons(user_id, page=1)
+        await event.respond("请选择你要退订的订阅", buttons=buttons)
         return
 
     await event.respond(unsub_result["msg"], parse_mode='html')
@@ -51,3 +53,25 @@ async def cmd_list(event: Union[events.NewMessage.Event, Message]):
     )
 
     await event.respond(list_result, parse_mode='html')
+
+
+@permission_required(only_manager=False)
+async def callback_unsub(event: events.CallbackQuery.Event):
+    sub_to_unsub = int(event.data.decode().strip().split('_')[-1])
+    unsub_d = await inner.unsub(event.chat_id, sub_id=sub_to_unsub)
+
+    msg = (
+        f'<b>退订{"成功" if unsub_d["sub"] else "失败"}</b>\n'
+        + f'<a href="{unsub_d["sub"].feed.link}">{escape_html(unsub_d["sub"].feed.title)}</a>' if unsub_d['sub']
+        else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
+    )
+
+    # await event.edit(msg, parse_mode='html')
+    await event.respond(msg, parse_mode='html')  # make unsubscribing multiple subscriptions more efficiency
+
+
+@permission_required(only_manager=False)
+async def callback_get_unsub_page(event: events.CallbackQuery.Event):
+    page = int(event.data.decode().strip().split('_')[-1])
+    buttons = await inner.get_unsub_buttons(event.chat_id, page)
+    await event.edit(buttons=buttons)

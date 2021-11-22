@@ -1,6 +1,6 @@
 import re
 from functools import partial, wraps
-from typing import Union, Optional, AnyStr
+from typing import Union, Optional, AnyStr, Any
 from zlib import crc32
 from telethon import events
 from telethon.tl import types
@@ -30,9 +30,10 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=T
                        only_in_private_chat=only_in_private_chat)
 
     @wraps(func)
-    async def wrapper(event: Union[events.NewMessage.Event, Message], *args, **kwargs):
+    async def wrapper(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], *args, **kwargs):
         try:
-            command = event.text if event.text else '(no command, file message)'
+            command = (event.text if hasattr(event, 'text') and event.text else
+                       f'(callback){event.data.decode()}' if hasattr(event, 'data') else '(no command, file message)')
             sender_id = event.sender_id
             sender: Optional[types.User] = await event.get_sender()
             sender_fullname = sender.first_name + (f' {sender.last_name}' if sender.last_name else '')
@@ -92,7 +93,8 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=T
     return wrapper
 
 
-def escape_html(raw: str) -> str:
+def escape_html(raw: Any) -> str:
+    raw = str(raw)
     return raw.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 

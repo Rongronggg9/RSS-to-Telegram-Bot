@@ -61,9 +61,11 @@ async def callback_unsub(event: events.CallbackQuery.Event):
     unsub_d = await inner.unsub(event.chat_id, sub_id=sub_to_unsub)
 
     msg = (
-        f'<b>退订{"成功" if unsub_d["sub"] else "失败"}</b>\n'
-        + f'<a href="{unsub_d["sub"].feed.link}">{escape_html(unsub_d["sub"].feed.title)}</a>' if unsub_d['sub']
-        else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
+            f'<b>退订{"成功" if unsub_d["sub"] else "失败"}</b>\n'
+            + (
+                f'<a href="{unsub_d["sub"].feed.link}">{escape_html(unsub_d["sub"].feed.title)}</a>' if unsub_d['sub']
+                else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
+            )
     )
 
     # await event.edit(msg, parse_mode='html')

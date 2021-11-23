@@ -147,9 +147,10 @@ async def unsubs(user_id: int, feed_urls: Sequence[str] = None, sub_ids: Sequenc
     if not (filtered_feed_urls or sub_ids):
         return None
 
-    coroutines = (tuple(unsub(user_id, url) for url in filtered_feed_urls) if filtered_feed_urls else tuple()
-                                                                                                      + tuple(
-        unsub(user_id, sub_id=sub_id) for sub_id in sub_ids) if sub_ids else tuple())
+    coroutines = (
+            (tuple(unsub(user_id, url) for url in filtered_feed_urls) if filtered_feed_urls else tuple())
+            + (tuple(unsub(user_id, sub_id=sub_id) for sub_id in sub_ids) if sub_ids else tuple())
+    )
 
     result = await asyncio.gather(*coroutines)
 

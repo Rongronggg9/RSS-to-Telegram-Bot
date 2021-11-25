@@ -11,7 +11,8 @@ from src import env, log, db
 
 logger = log.getLogger('RSStT.command')
 
-ANONYMOUS_ADMIN = 1087968824
+
+# ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
 
 def parse_command(command: str) -> list[AnyStr]:
@@ -24,7 +25,7 @@ def get_hash(string: AnyStr) -> str:
     return hex(crc32(string))[2:]
 
 
-def permission_required(func=None, *, only_manager=False, only_in_private_chat=True):
+def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
     if func is None:
         return partial(permission_required, only_manager=only_manager,
                        only_in_private_chat=only_in_private_chat)
@@ -34,9 +35,18 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=T
         try:
             command = (event.text if hasattr(event, 'text') and event.text else
                        f'(callback){event.data.decode()}' if hasattr(event, 'data') else '(no command, file message)')
-            sender_id = event.sender_id
-            sender: Optional[types.User] = await event.get_sender()
-            sender_fullname = sender.first_name + (f' {sender.last_name}' if sender.last_name else '')
+            if command.startswith('/') and '@' in command:
+                mention = parse_command(command)[0].split('@')[1]
+                if mention != env.bot_peer.username:
+                    raise events.StopPropagation  # none of my business!
+
+            sender_id: Optional[int] = event.sender_id  # `None` if the sender is an anonymous admin in a group
+            sender: Optional[Union[types.User, types.Channel]] = await event.get_sender()  # ditto
+            sender_fullname = (
+                sender.title if isinstance(sender, types.Channel) else
+                (sender.first_name + (f' {sender.last_name}' if sender.last_name else '')) if sender is not None else
+                '__anonymous_admin__'
+            )
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
                 await event.respond('此命令只可由机器人的管理员使用。\n'
@@ -44,31 +54,41 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=T
                 logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command}.')
                 raise events.StopPropagation
 
-            if event.is_private:
+            if (
+                    event.is_private or
+                    (  # a supergroup is also a channel but we only expect a "real" channel here
+                            event.is_channel and not event.is_group
+                    )
+                    and not only_manager and not only_in_private_chat
+            ):  # we can deal with private chats and channels in the same way
                 await db.User.get_or_create(id=sender_id)
                 logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
                 await func(event, *args, **kwargs)
                 raise events.StopPropagation
 
             if event.is_group and not only_manager:
+                if isinstance(sender, types.Channel):
+                    raise events.StopPropagation  # bound channel messages in discussion groups are none of my business
+
                 chat: types.Chat = await event.get_chat()
-                input_chat: types.InputChannel = await event.get_input_chat()  # supergroup is a special form of channel
+
                 if only_in_private_chat:
                     await event.respond('此命令不允许在群聊中使用。\n'
                                         'This command can not be used in a group.')
                     logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
-                                f'{chat.title} ({chat.id}).')
+                                f'{chat.title} ({event.chat_id}).')
                     raise events.StopPropagation
 
-                input_sender = await event.get_input_sender()
+                input_chat: types.InputChannel = await event.get_input_chat()  # supergroup is a special form of channel
+                input_sender: types.InputPeerUser = await event.get_input_sender()
 
-                if sender_id != ANONYMOUS_ADMIN:
+                if sender_id is not None:  # a "real" user
                     participant: types.channels.ChannelParticipant = await env.bot(
                         GetParticipantRequest(input_chat, input_sender))
                     is_admin = (isinstance(participant.participant, types.ChannelParticipantAdmin)
                                 or isinstance(participant.participant, types.ChannelParticipantCreator))
                     participant_type = type(participant.participant).__name__
-                else:
+                else:  # an anonymous admin
                     is_admin = True
                     participant_type = 'AnonymousAdmin'
 
@@ -77,11 +97,13 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=T
                                         'This command can be only used by an administrator.')
                     logger.info(
                         f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                        f'in {chat.title} ({chat.id}).')
+                        f'in {chat.title} ({event.chat_id}).')
                     raise events.StopPropagation
+
+                await db.User.get_or_create(id=event.chat_id)
                 logger.info(
                     f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                    f'in {chat.title} ({chat.id}).')
+                    f'in {chat.title} ({event.chat_id}).')
                 await func(event, *args, **kwargs)
                 raise events.StopPropagation
         except events.StopPropagation as e:

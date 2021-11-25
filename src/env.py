@@ -1,6 +1,7 @@
 import os
 import logging
 from telethon import TelegramClient
+from telethon.tl.types import User
 from typing import Optional, Final
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
@@ -175,6 +176,7 @@ if os.path.exists('config/rss.db'):
 # ----- shared var -----
 bot: Optional[TelegramClient] = None  # placeholder
 bot_id: Optional[int] = None  # placeholder
+bot_peer: Optional[User] = None  # placeholder
 
 REQUESTS_HEADERS: Final = {
     'user-agent': os.environ.get('USER_AGENT', 'RSStT')

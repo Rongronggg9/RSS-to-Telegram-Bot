@@ -157,7 +157,7 @@ class TelegraphIfy:
             raise OverflowError
 
         if self.retries >= 1:
-            logger.info('Retrying using another telegraph account...' if apis.count > 1 else 'Retrying...')
+            logger.debug('Retrying using another telegraph account...' if apis.count > 1 else 'Retrying...')
 
         telegraph_account = apis.get_account()
         try:
@@ -170,7 +170,7 @@ class TelegraphIfy:
             e_msg = str(e)
             if e_msg.startswith('FLOOD_WAIT_'):  # exceed flood control
                 retry_after = int(e_msg.split('_')[-1])
-                logger.warning(f'Flood control exceeded. Wait {retry_after}.0 seconds')
+                logger.debug(f'Flood control exceeded. Wait {retry_after}.0 seconds')
                 self.retries += 1
                 rets = await asyncio.gather(self.telegraph_ify(), telegraph_account.flood_wait(retry_after))
 
@@ -181,7 +181,7 @@ class TelegraphIfy:
             raise e  # aiohttp_retry will retry automatically, so it means too many retries if caught
         except (ClientError, ConnectionError) as e:
             if self.retries < 3:
-                logger.warning(
+                logger.debug(
                     f'Network error ({e.__class__.__name__}) occurred when creating telegraph page, will retry')
                 return await self.telegraph_ify()
             raise e

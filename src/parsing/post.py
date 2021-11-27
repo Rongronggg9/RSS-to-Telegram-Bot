@@ -145,7 +145,7 @@ class Post:
             chat_ids = [chat_ids]
 
         if self.messages and len(self.messages) >= 5:
-            logger.warning(f'Too large, send a pure link message instead: "{self.title}"')
+            logger.debug(f'Too large, send a pure link message instead: "{self.title}"')
             pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=self.link)
             await pure_link_post.send_message(chat_ids, reply_to_msg_id)
@@ -162,8 +162,8 @@ class Post:
                         PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
                         GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
                         VideoContentTypeInvalidError, VideoFileInvalidError) as e:
-                    logger.warning(f'All media was set invalid because some of them are invalid '
-                                   f'({e.__class__.__name__}: {str(e)})')
+                    logger.debug(f'All media was set invalid because some of them are invalid '
+                                 f'({e.__class__.__name__}: {str(e)})')
                     self.invalidate_all_media()
                     await self.generate_message()
                     await self.send_message(chat_ids)
@@ -172,12 +172,12 @@ class Post:
                 # errors caused by server instability or network instability between img server and telegram server
                 except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
                     if self.media.change_all_server():
-                        logger.info(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
-                                    f'Changed img server and retrying...')
+                        logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
+                                     f'Changed img server and retrying...')
                         await self.send_message(chat_ids)
                         return
-                    logger.warning('All media was set invalid '
-                                   'because Telegram still cannot fetch some media after changing img server.')
+                    logger.debug('All media was set invalid '
+                                 'because Telegram still cannot fetch some media after changing img server.')
                     self.invalidate_all_media()
                     await self.generate_message()
                     await self.send_message(chat_ids)
@@ -204,23 +204,23 @@ class Post:
             return telegraph_post
         except exceptions.TelegraphError as e:
             if str(e) == 'CONTENT_TOO_BIG':
-                logger.warning(f'Content too big, send a pure link message instead: "{self.title}"')
+                logger.debug(f'Content too big, send a pure link message instead: "{self.title}"')
                 pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                       link=self.link, author=self.author, telegraph_url=self.link)
                 return pure_link_post
-            logger.warning('Telegraph API error: ' + str(e))
+            logger.debug('Telegraph API error: ' + str(e))
             return None
         except (TimeoutError, asyncio.exceptions.TimeoutError):
-            logger.warning('Generate Telegraph post error: network timeout.')
+            logger.debug('Generate Telegraph post error: network timeout.')
             return None
         except (ClientError, ConnectionError) as e:
-            logger.warning(f'Generate Telegraph post error: network error ({e.__class__.__name__}).')
+            logger.debug(f'Generate Telegraph post error: network error ({e.__class__.__name__}).')
             return None
         except OverflowError:
-            logger.warning(f'Generate Telegraph post error: retried for too many times.')
+            logger.debug(f'Generate Telegraph post error: retried for too many times.')
             return None
         except Exception as e:
-            logger.warning('Generate Telegraph post error: ', exc_info=e)
+            logger.debug('Generate Telegraph post error: ', exc_info=e)
             return None
 
     def generate_pure_message(self):
@@ -232,11 +232,11 @@ class Post:
         if not no_telegraph and tgraph.apis and not self.service_msg and not self.telegraph_url \
                 and (len(self.soup.getText()) >= 4096
                      or (len(self.messages) if self.messages else await self.generate_message(no_telegraph=True)) >= 2):
-            logger.info(f'Will be sent via Telegraph: "{self.title}"')
+            logger.debug(f'Will be sent via Telegraph: "{self.title}"')
             self.telegraph_post = await self.telegraph_ify()  # telegraph post sent successful
             if self.telegraph_post:
                 return
-            logger.warning(f'Cannot be sent via Telegraph, fallback to normal message: "{self.title}"')
+            logger.debug(f'Cannot be sent via Telegraph, fallback to normal message: "{self.title}"')
 
         if not self.text:
             await self.generate_text()

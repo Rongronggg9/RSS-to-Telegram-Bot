@@ -5,12 +5,12 @@ from typing import Optional, Union, MutableMapping
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
 
 from . import inner
+from .inner.utils import get_hash
 from src import log, db
-from src.command.utils import get_hash
 from src.parsing.post import get_post_from_entry, Post
 from src.web import feed_get
 
-logger = log.getLogger('RSStT.feed')
+logger = log.getLogger('RSStT.monitor')
 
 
 async def run_monitor_task():
@@ -111,4 +111,4 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
         await post.send_message(sub.user_id)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
         logger.warning(f'User blocked: {sub.user_id}')
-        await inner.unsub_all(sub.user_id)
+        await inner.sub.unsub_all(sub.user_id)

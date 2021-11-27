@@ -1,7 +1,6 @@
 import re
 from functools import partial, wraps
 from typing import Union, Optional, AnyStr, Any
-from zlib import crc32
 from telethon import events
 from telethon.tl import types
 from telethon.tl.custom import Message
@@ -17,12 +16,6 @@ logger = log.getLogger('RSStT.command')
 
 def parse_command(command: str) -> list[AnyStr]:
     return re.compile(r'\s+').split(command.strip())
-
-
-def get_hash(string: AnyStr) -> str:
-    if isinstance(string, str):
-        string = string.encode('utf-8')
-    return hex(crc32(string))[2:]
 
 
 async def respond_or_answer(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], msg: str,

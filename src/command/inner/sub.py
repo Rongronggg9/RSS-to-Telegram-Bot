@@ -1,13 +1,13 @@
 import asyncio
 from datetime import datetime
 from json import dumps
-from typing import Dict, Union, Optional, Sequence, List
-from bs4 import BeautifulSoup, Tag
-from telethon import Button
-from telethon.tl.types import KeyboardButtonCallback
+from typing import Dict, Union, Optional, Sequence
+from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 from src import db, web
-from src.command.utils import logger, escape_html, get_hash
+from ..utils import logger, escape_html
+from .utils import get_hash, update_interval, list_sub
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
@@ -37,9 +37,8 @@ async def sub(user_id: int, feed_url: str) -> Dict[str, Union[int, str, db.Sub, 
                 logger.warning(f'Sub {feed_url} for {user_id} failed')
                 return ret
 
-            feed, created_new_feed = await db.Feed.get_or_create(link=feed_url)
+            feed, created_new_feed = await db.Feed.get_or_create(defaults={'title': rss_d.feed.title}, link=feed_url)
             if created_new_feed:
-                feed.title = rss_d.feed.title
                 feed.etag = d['headers'].get('etag') if d['headers'] else None
                 feed.entry_hashes = dumps(
                     [get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
@@ -100,43 +99,20 @@ async def unsub(user_id: int, feed_url: str = None, sub_id: int = None) -> Dict[
         return ret
 
     try:
-        default_interval = db.effective_utils.EffectiveOptions.get('default_interval')
-        new_interval = curr_interval = None
-
         if feed_url:
-            feed: db.Feed = await db.Feed.get_or_none(link=feed_url).prefetch_related('subs')
-            sub_to_delete: Optional[db.Sub] = None
+            feed: db.Feed = await db.Feed.get_or_none(link=feed_url)
+            sub_to_delete: Optional[db.Sub] = await feed.subs.filter(user=user_id).first() if feed else None
         else:  # elif sub_id:
             sub_to_delete: db.Sub = await db.Sub.get_or_none(id=sub_id, user=user_id).prefetch_related('feed')
-            feed: Optional[db.Feed] = None
-            if sub_to_delete:
-                await sub_to_delete.feed.fetch_related('subs')
-                feed = sub_to_delete.feed
-
-        if feed:
-            curr_interval = feed.interval or default_interval
-            new_interval = float('inf')
-            for _sub in feed.subs:
-                if _sub.user_id != user_id:
-                    new_interval = min(new_interval, _sub.interval or default_interval)
-                    continue
-                if sub_to_delete is None:
-                    sub_to_delete = _sub
-                    continue
+            feed: Optional[db.Feed] = await sub_to_delete.feed if sub_to_delete else None
 
         if sub_to_delete is None or feed is None:
             ret['msg'] = 'ERROR: 订阅不存在'
             return ret
 
-        if len(feed.subs) <= 1:  # only this/no sub subs the feed, del the feed and the sub will be deleted cascaded
-            await feed.delete()
-            db.effective_utils.EffectiveTasks.delete(feed.id)
-        else:  # several subs subs the feed, only del the sub
-            await sub_to_delete.delete()
-            if curr_interval != new_interval and new_interval != float('inf'):
-                feed.interval = new_interval
-                await feed.save()
-                db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
+        await sub_to_delete.delete()
+        await update_interval(feed=feed)
+
         sub_to_delete.feed = feed
         ret['sub'] = sub_to_delete
         ret['url'] = feed.link
@@ -186,10 +162,6 @@ async def unsub_all(user_id: int) -> Optional[Dict[str, Union[Dict[str, Union[in
     return await unsubs(user_id, sub_ids=sub_ids)
 
 
-async def list_sub(user_id: int):
-    return await db.Sub.filter(user=user_id).prefetch_related('feed')
-
-
 async def export_opml(user_id: int) -> Optional[bytes]:
     sub_list = await list_sub(user_id)
     opml = BeautifulSoup(OPML_TEMPLATE, 'lxml-xml')
@@ -205,50 +177,3 @@ async def export_opml(user_id: int) -> Optional[bytes]:
         return None
     logger.info('Exported feed(s).')
     return opml.prettify().encode()
-
-
-async def get_unsub_buttons(user_id: int, page: int) -> List[List[KeyboardButtonCallback]]:
-    """
-    :param user_id: user id
-    :param page: page number (1-based)
-    :return: ReplyMarkup
-    """
-    if page <= 0:
-        raise IndexError('Page number must be positive.')
-
-    user_sub_list = await list_sub(user_id)
-    buttons: List[List[KeyboardButtonCallback]] = []
-
-    row = 0  # 0-based
-    column = 0  # 0-based
-    max_row_count = 12  # 1-based, telegram limit: 13
-    max_column_count = 2  # 1-based, telegram limit: 8 (row 1-12), 4 (row 13)
-    subs_count_per_page = max_column_count * max_row_count
-    page_start = (page - 1) * subs_count_per_page
-    page_end = page_start + subs_count_per_page
-    for _sub in user_sub_list[page_start:page_end]:
-        if row >= max_row_count:
-            break
-        button = Button.inline(_sub.feed.title, data=f'unsub_{_sub.id}')
-        if column == 0:
-            buttons.append([])
-            buttons[row] = [button]
-            column += 1
-        elif column < 2:
-            buttons[row].append(button)
-            if column == max_column_count - 1:
-                row += 1
-                column = 0
-
-    if column != 0:
-        row += 1
-
-    rest_subs_count = len(user_sub_list[page * subs_count_per_page:])
-    if page > 1 or rest_subs_count > 0:
-        buttons.append([])
-    if page > 1:
-        buttons[row].append(Button.inline('上一页', data=f'get_unsub_page_{page - 1}'))
-    if rest_subs_count > 0:
-        buttons[row].append(Button.inline('下一页', data=f'get_unsub_page_{page + 1}'))
-
-    return buttons

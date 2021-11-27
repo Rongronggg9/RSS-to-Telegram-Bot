@@ -19,7 +19,7 @@ async def cmd_import(event: Union[events.NewMessage.Event, Message]):
 
 @permission_required(only_manager=False)
 async def cmd_export(event: Union[events.NewMessage.Event, Message]):
-    opml_file = await inner.export_opml(event.chat_id)
+    opml_file = await inner.sub.export_opml(event.chat_id)
     if opml_file is None:
         await event.respond('无订阅')
         return
@@ -48,6 +48,6 @@ async def opml_import(event: Union[events.NewMessage.Event, Message]):
         await reply.edit('ERROR: 解析失败或文档不含订阅')
         return
 
-    import_result = await inner.subs(event.chat_id, *(feed.url for feed in opml_d.feeds))
+    import_result = await inner.sub.subs(event.chat_id, *(feed.url for feed in opml_d.feeds))
     logger.info(f'Imported feed(s) for {event.chat_id}')
     await reply.edit(import_result["msg"], parse_mode='html')

@@ -92,7 +92,7 @@ def main():
     bot.add_event_handler(command.management.cmd_version, events.NewMessage(pattern='/version'))
 
     # callback query handler
-    bot.add_event_handler(command.sub.callback_unsub, events.CallbackQuery(pattern=r'^unsub_\d+$'))
+    bot.add_event_handler(command.sub.callback_unsub, events.CallbackQuery(pattern=r'^unsub_\d+(\|\d+)$'))
     bot.add_event_handler(command.sub.callback_get_unsub_page, events.CallbackQuery(pattern=r'^get_unsub_page_\d+$'))
 
     asyncio.get_event_loop().run_until_complete(db.init())

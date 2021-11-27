@@ -40,7 +40,8 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
             async with session.get(url) as response:
                 status = response.status
                 content = await (response.text() if decode else response.read()) if status == 200 else None
-                return {'content': content,
+                return {'url': str(response.url),  # get the redirected url
+                        'content': content,
                         'headers': response.headers,
                         'status': status}
     finally:
@@ -63,13 +64,15 @@ async def get_session(timeout: int = None):
 async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
                    headers: Optional[dict] = None) \
         -> Dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
-    ret = {'rss_d': None,
+    ret = {'url': url,
+           'rss_d': None,
            'headers': None,
            'status': -1,
            'msg': None}
     try:
         _ = await get(url, timeout, web_semaphore, headers=headers)
         rss_content = _['content']
+        ret['url'] = _['url']
         ret['headers'] = _['headers']
         ret['status'] = _['status']
 

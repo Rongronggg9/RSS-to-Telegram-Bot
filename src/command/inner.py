@@ -21,31 +21,40 @@ async def sub(user_id: int, feed_url: str) -> Dict[str, Union[int, str, db.Sub, 
 
     try:
         feed = await db.Feed.get_or_none(link=feed_url)
+        _sub = None
+        created_new_sub = False
 
         if feed:
             _sub = await db.Sub.get_or_none(user=user_id, feed=feed)
-            if _sub:
-                ret['sub'] = None
-                ret['msg'] = 'ERROR: 订阅已存在'
-                return ret
         else:
             d = await web.feed_get(feed_url)
             rss_d = d['rss_d']
             ret['status'] = d['status']
             ret['msg'] = d['msg']
+            ret['url'] = feed_url = d['url']  # get the redirected url
 
             if rss_d is None:
                 logger.warning(f'Sub {feed_url} for {user_id} failed')
                 return ret
 
-            feed = db.Feed(title=rss_d.feed.title, link=feed_url)
-            feed.etag = d['headers'].get('etag') if d['headers'] else None
-            feed.entry_hashes = dumps(
-                [get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
-            await feed.save()  # now we get the id
-            db.effective_utils.EffectiveTasks.update(feed.id)
+            feed, created_new_feed = await db.Feed.get_or_create(link=feed_url)
+            if created_new_feed:
+                feed.title = rss_d.feed.title
+                feed.etag = d['headers'].get('etag') if d['headers'] else None
+                feed.entry_hashes = dumps(
+                    [get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
+                await feed.save()  # now we get the id
+                db.effective_utils.EffectiveTasks.update(feed.id)
 
-        _sub = await db.Sub.create(user_id=user_id, feed=feed)
+        if not _sub:  # create a new sub if needed
+            _sub, created_new_sub = await db.Sub.get_or_create(user_id=user_id, feed=feed)
+            _sub.feed = feed  # thus we don't need to fetch_related
+
+        if not created_new_sub:
+            ret['sub'] = None
+            ret['msg'] = 'ERROR: 订阅已存在'
+            return ret
+
         ret['sub'] = _sub
         logger.info(f'Subed {feed_url} for {user_id}')
         return ret

@@ -1,12 +1,14 @@
 import re
 from functools import partial, wraps
-from typing import Union, Optional, AnyStr, Any
+from typing import Union, Optional, AnyStr, Any, List
 from telethon import events
 from telethon.tl import types
 from telethon.tl.custom import Message
+from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 
 from src import env, log, db
+from src.i18n import i18n
 
 logger = log.getLogger('RSStT.command')
 
@@ -43,6 +45,7 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 
     @wraps(func)
     async def wrapper(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], *args, **kwargs):
+        lang = None  # placeholder
         try:
             is_callback = isinstance(event, events.CallbackQuery.Event)
             command = (event.text if hasattr(event, 'text') and event.text else
@@ -59,10 +62,10 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                 (sender.first_name + (f' {sender.last_name}' if sender.last_name else '')) if sender is not None else
                 '__anonymous_admin__'
             )
+            lang = await db.User.get_or_none(id=event.chat_id).values_list('lang', flat=True)
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
-                await respond_or_answer(event, '此命令只可由机器人的管理员使用。\n'
-                                               'This command can be only used by the bot manager.')
+                await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
                 logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command}.')
                 raise events.StopPropagation
 
@@ -77,9 +80,10 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                     )
                     and not only_manager and not only_in_private_chat
             ):  # we can deal with private chats and channels in the same way
-                await db.User.get_or_create(id=sender_id)
+                if lang is None:
+                    await db.User.get_or_create(id=sender_id)  # create the user if it doesn't exist
                 logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
-                await func(event, *args, **kwargs)
+                await func(event, lang=lang, *args, **kwargs)
                 raise events.StopPropagation
 
             if (
@@ -95,8 +99,7 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                 chat: types.Chat = await event.get_chat()
 
                 if only_in_private_chat:
-                    await respond_or_answer(event, '此命令只允许在私聊中使用。\n'
-                                                   'This command can not be used in a private chat.')
+                    await respond_or_answer(event, i18n[lang]['permission_denied_not_in_private_chat'])
                     logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
                                 f'{chat.title} ({event.chat_id}).')
                     raise events.StopPropagation
@@ -115,25 +118,24 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                     participant_type = 'AnonymousAdmin'
 
                 if not is_admin:
-                    await respond_or_answer(event,
-                                            '此命令只可由群/频道管理员使用。\n'
-                                            'This command can be only used by administrators in this group/channel.')
+                    await respond_or_answer(event, i18n[lang]['permission_denied_not_chat_admin'])
                     logger.info(
                         f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
                         f'in {chat.title} ({event.chat_id}).')
                     raise events.StopPropagation
 
-                await db.User.get_or_create(id=event.chat_id)
+                if lang is None:
+                    await db.User.get_or_create(id=event.chat_id)  # create the user if it doesn't exist
                 logger.info(
                     f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
                     f'in {chat.title} ({event.chat_id}).')
-                await func(event, *args, **kwargs)
+                await func(event, lang=lang, *args, **kwargs)
                 raise events.StopPropagation
 
         except events.StopPropagation as e:
             raise e
         except Exception as e:
-            await respond_or_answer(event, 'ERROR: 未被捕捉的内部错误')
+            await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
             raise e
 
     return wrapper
@@ -190,3 +192,38 @@ class PrivateMessage(events.NewMessage):
     @staticmethod
     def __in_private_chat(event: Union[events.NewMessage.Event, Message]):
         return event.is_private
+
+
+def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> List[types.BotCommand]:
+    commands = [
+        types.BotCommand(command="sub", description=i18n[lang]['cmd_description_sub']),
+        types.BotCommand(command="unsub", description=i18n[lang]['cmd_description_unsub']),
+        types.BotCommand(command="unsub_all", description=i18n[lang]['cmd_description_unsub_all']),
+        types.BotCommand(command="list", description=i18n[lang]['cmd_description_list']),
+        types.BotCommand(command="import", description=i18n[lang]['cmd_description_import']),
+        types.BotCommand(command="export", description=i18n[lang]['cmd_description_export']),
+        types.BotCommand(command="version", description=i18n[lang]['cmd_description_version']),
+        types.BotCommand(command="lang", description=i18n[lang]['cmd_description_lang']),
+        types.BotCommand(command="help", description=i18n[lang]['cmd_description_help']),
+    ]
+
+    if manager:
+        commands.append(
+            types.BotCommand(command="test", description=i18n[lang]['cmd_description_test'])
+        )
+
+    return commands
+
+
+async def set_bot_commands(scope: Union[types.BotCommandScopeDefault,
+                                        types.BotCommandScopePeer,
+                                        types.BotCommandScopePeerAdmins,
+                                        types.BotCommandScopeUsers,
+                                        types.BotCommandScopeChats,
+                                        types.BotCommandScopePeerUser,
+                                        types.BotCommandScopeChatAdmins],
+                           lang_code: str,
+                           commands: List[types.BotCommand]):
+    await env.bot(
+        SetBotCommandsRequest(scope=scope, lang_code=lang_code, commands=commands)
+    )

@@ -1,39 +1,70 @@
 import asyncio
-from typing import Union
-from telethon import events
+from typing import Union, Optional
+from telethon import events, Button
 from telethon.tl.custom import Message
+from telethon.tl import types
 
-from src import env, web
-from .utils import permission_required, parse_command, logger
+from src import env, web, db
+from src.i18n import i18n, ALL_LANGUAGES
+from .utils import permission_required, parse_command, logger, escape_html, set_bot_commands, get_commands_list
+from . import inner
 from ..parsing.post import get_post_from_entry
 
 
 @permission_required(only_manager=False)
-async def cmd_help(event: Union[events.NewMessage.Event, Message]):
+async def cmd_start(event: Union[events.NewMessage.Event, Message], lang=None, *args, **kwargs):
+    if lang is None:
+        await cmd_lang.__wrapped__(event)
+        return
+    await cmd_help.__wrapped__(event, lang)
+
+
+@permission_required(only_manager=False)
+async def cmd_lang(event: Union[events.NewMessage.Event, Message], *args, **kwargs):
+    msg = '\n'.join(f"{i18n[lang]['select_lang_prompt']}"
+                    for lang in ALL_LANGUAGES)
+    buttons = inner.utils.arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'set_lang_{lang}')
+                                        for lang in ALL_LANGUAGES),
+                                       columns=3)
+    await event.respond(msg, buttons=buttons)
+
+
+@permission_required(only_manager=False)
+async def callback_set_lang(event: events.CallbackQuery.Event, *args, **kwargs):  # callback data: set_lang_{lang_code}
+    lang = event.data.decode().strip().split('set_lang_')[-1]
+    welcome_msg = i18n[lang]['welcome_prompt']
+    await db.User.update_or_create(defaults={'lang': lang}, id=event.chat_id)
+    await set_bot_commands(scope=types.BotCommandScopePeer(await event.get_input_chat()),
+                           lang_code='',
+                           commands=get_commands_list(lang=lang, manager=event.chat_id == env.MANAGER))
+    logger.info(f'Changed language to {lang} for {event.chat_id}')
+    await event.edit(welcome_msg)
+
+
+@permission_required(only_manager=False)
+async def cmd_help(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
     await event.respond(
-        "<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>"
-        "RSS to Telegram bot，专为短动态类消息设计的 RSS Bot。</a>\n\n"
-        "命令:\n"
-        "<u><b>/sub</b></u> <u><b>RSS链接</b></u> : 添加订阅\n"
-        "<u><b>/unsub</b></u> <u><b>RSS链接</b></u> : 移除订阅\n"
-        "<u><b>/list</b></u> : 列出所有订阅\n"
-        # "<u><b>/test</b></u> <u><b>RSS</b></u> <u><b>编号起点(可选)</b></u> <u><b>编号终点(可选)</b></u> : "
-        # "从 RSS 源处获取一条 post (编号为 0-based, 不填或超出范围默认为 0，不填编号终点默认只获取一条 post)，"
-        # "或者直接用 <code>all</code> 获取全部\n"
-        "<u><b>/import</b></u> : 导入订阅\n"
-        "<u><b>/export</b></u> : 导出订阅\n"
-        "<u><b>/version</b></u> : 查看版本\n"
-        "<u><b>/help</b></u> : 发送这条消息\n\n",
-        # f"您的 chatid 是: {event.chat_id}",
+        f"<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>{escape_html(i18n[lang]['rsstt_slogan'])}</a>\n"
+        f"\n"
+        f"{escape_html(i18n[lang]['commands'])}:\n"
+        f"<b>/sub</b>: {escape_html(i18n[lang]['cmd_description_sub'])}\n"
+        f"<b>/unsub</b>: {escape_html(i18n[lang]['cmd_description_unsub'])}\n"
+        f"<b>/unsub_all</b>: {escape_html(i18n[lang]['cmd_description_unsub_all'])}\n"
+        f"<b>/list</b>: {escape_html(i18n[lang]['cmd_description_list'])}\n"
+        f"<b>/import</b>: {escape_html(i18n[lang]['cmd_description_import'])}\n"
+        f"<b>/export</b>: {escape_html(i18n[lang]['cmd_description_export'])}\n"
+        f"<b>/version</b>: {escape_html(i18n[lang]['cmd_description_version'])}\n"
+        f"<b>/lang</b>: {escape_html(' / '.join(i18n[_lang]['cmd_description_lang'] for _lang in ALL_LANGUAGES))}\n"
+        f"<b>/help</b>: {escape_html(i18n[lang]['cmd_description_help'])}\n\n",
         parse_mode='html'
     )
 
 
 @permission_required(only_manager=True)
-async def cmd_test(event: Union[events.NewMessage.Event, Message]):
+async def cmd_test(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
     args = parse_command(event.text)
     if len(args) < 2:
-        await event.respond('ERROR: 格式需要为: /test RSS 条目编号起点(可选) 条目编号终点(可选)')
+        await event.respond('ERROR: ' + i18n[lang]['test_command_usage_prompt'])
         return
     url = args[1]
 
@@ -74,7 +105,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message]):
 
     except Exception as e:
         logger.warning(f"Sending failed:", exc_info=e)
-        await event.respond('ERROR: 内部错误')
+        await event.respond('ERROR: ' + i18n[lang]['internal_error'])
         return
 
 
@@ -86,5 +117,5 @@ async def __send(uid, entry, feed_title, link):
 
 
 @permission_required(only_manager=False)
-async def cmd_version(event: Union[events.NewMessage.Event, Message]):
+async def cmd_version(event: Union[events.NewMessage.Event, Message], *args, **kwargs):
     await event.respond(env.VERSION)

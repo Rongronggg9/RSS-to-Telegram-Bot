@@ -33,8 +33,8 @@ class APSCFilter(logging.Filter):
             self.count += 1
             if self.count % 10 == 0:
                 env.bot.send_message(
-                    env.MANAGER, 'RSS 更新检查发生冲突，程序可能出现问题，请记录日志并重启。\n'
-                                 '（这也可能是由过短的检查间隔和过多的订阅引起，请适度调整后观察是否还有错误）\n\n'
+                    env.MANAGER, 'RSS monitor tasks have conflicted too many times! Please store the log and restart.\n'
+                                 ' (sometimes it may be caused by too many subscriptions)\n\n'
                                  + msg
                 )
             return True

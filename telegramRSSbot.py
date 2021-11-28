@@ -5,11 +5,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telethon import TelegramClient, events
 from telethon.errors import ApiIdPublishedFloodError
 from telethon.tl import types
-from telethon.tl.functions.bots import SetBotCommandsRequest
 from random import sample
 from pathlib import Path
 
 from src import env, log, db, command
+from src.i18n import i18n, ALL_LANGUAGES
 from src.parsing import tgraph
 
 # log
@@ -58,21 +58,25 @@ def main():
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
 
-    commands = [types.BotCommand(command="sub", description="添加订阅"),
-                types.BotCommand(command="unsub", description="移除订阅"),
-                types.BotCommand(command="unsub_all", description="移除所有订阅"),
-                types.BotCommand(command="list", description="列出所有订阅"),
-                types.BotCommand(command="import", description="导入订阅"),
-                types.BotCommand(command="export", description="导出订阅"),
-                types.BotCommand(command="version", description="查看版本"),
-                types.BotCommand(command="help", description="查看帮助")]
+    bot.loop.run_until_complete(
+        db.init()
+    )
 
-    commands_manager = [types.BotCommand(command="test", description="测试"), ]
-    try:
+    manager_lang = bot.loop.run_until_complete(db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True))
+
+    try:  # set bot command
         bot.loop.run_until_complete(asyncio.gather(
-            bot(SetBotCommandsRequest(scope=types.BotCommandScopeDefault(), lang_code='', commands=commands)),
-            bot(SetBotCommandsRequest(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
-                                      lang_code='', commands=commands + commands_manager))
+            command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(), lang_code='',
+                                           commands=command.utils.get_commands_list()),
+            *(
+                command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
+                                               lang_code=i18n[lang]['iso_639_1_code'],
+                                               commands=command.utils.get_commands_list(lang=lang))
+                for lang in ALL_LANGUAGES if i18n[lang]['iso_639_1_code']
+            ),
+            command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
+                                           lang_code='',
+                                           commands=command.utils.get_commands_list(lang=manager_lang, manager=True)),
         ))
     except Exception as e:
         logger.warning('Set command error: ', exc_info=e)
@@ -87,15 +91,15 @@ def main():
     bot.add_event_handler(command.opml.cmd_import, events.NewMessage(pattern='/import'))
     bot.add_event_handler(command.opml.cmd_export, events.NewMessage(pattern='/export'))
     bot.add_event_handler(command.opml.opml_import, command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
-    bot.add_event_handler(command.management.cmd_help, events.NewMessage(pattern='/help|/start'))
+    bot.add_event_handler(command.management.cmd_start, events.NewMessage(pattern='/start'))
+    bot.add_event_handler(command.management.cmd_help, events.NewMessage(pattern='/help'))
     bot.add_event_handler(command.management.cmd_test, events.NewMessage(pattern='/test'))
     bot.add_event_handler(command.management.cmd_version, events.NewMessage(pattern='/version'))
-
+    bot.add_event_handler(command.management.cmd_lang, events.NewMessage(pattern='/lang'))
     # callback query handler
     bot.add_event_handler(command.sub.callback_unsub, events.CallbackQuery(pattern=r'^unsub_\d+(\|\d+)$'))
     bot.add_event_handler(command.sub.callback_get_unsub_page, events.CallbackQuery(pattern=r'^get_unsub_page_\d+$'))
-
-    asyncio.get_event_loop().run_until_complete(db.init())
+    bot.add_event_handler(command.management.callback_set_lang, events.CallbackQuery(pattern=r'^set_lang_[\w_\-]+$'))
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(command.monitor.run_monitor_task, trigger='cron', minute='*/1', max_instances=5, timezone='UTC')
@@ -103,7 +107,9 @@ def main():
 
     bot.run_until_disconnected()
 
-    asyncio.get_event_loop().run_until_complete(db.close())
+    bot.loop.run_until_complete(
+        db.close()
+    )
 
 
 if __name__ == '__main__':

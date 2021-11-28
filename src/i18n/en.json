@@ -1,0 +1,60 @@
+{
+  "lang_code": "en",
+  "iso_639_1_code": "en",
+  "lang_native_name": "English",
+  "select_lang_prompt": "Please select a language.",
+  "welcome_prompt": "Welcome to RSS to Telegram Bot.",
+
+  "no_subscription": "You have no subscriptions",
+  "already_subscribed": "Already subscribed",
+  "subscription_not_exist": "Subscription does not exist",
+
+  "feed_invalid": "The RSS feed is invalid",
+  "url_invalid": "The URL is invalid",
+  "network_error": "Network error",
+  "internal_error": "Internal error",
+  "status_code_error": "HTTP status code error",
+  "uncaught_internal_error": "Uncaught internal error",
+
+  "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
+  "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",
+  "permission_denied_not_in_private_chat": "This command can only be used in a private chat.",
+
+  "subscribe": "Subscribe",
+  "unsubscribe": "Unsubscribe",
+  "subscription_list": "Subscription list",
+  "processing": "Processing, please wait for a moment...",
+
+  "sub_reply_feed_url_prompt_html": "Please reply the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 ...</code> to subscribe in bulk.",
+  "sub_successful": "Subscribed successfully",
+  "sub_failed": "Subscribed failed",
+
+  "unsub_choose_feed_prompt_html": "Please choose the feed you'd like to unsubscribe. \nOr, you may use <code>`/unsub url1 url2 url3 ...`</code> to unsubscribe in bulk.",
+  "unsub_successful": "Unsubscribed successfully",
+  "unsub_failed": "Unsubscribed failed",
+
+  "send_opml_prompt": "Please send me the OPML file to be imported (extension name must be .opml).",
+  "send_opml_reply_placeholder": "The OPML file to be imported (extension name must be .opml)",
+  "fetch_file_failed": "Failed fetching the file",
+  "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
+  "opml_parse_error": "OPML parsing error",
+
+  "choose_sub_prompt": "Please choose a subscription",
+  "previous_page": "Previous page",
+  "next_page": "Next page",
+
+  "test_command_usage_prompt": "Command usage: /test RSS_URL entry_start_number(optional) entry_end_number(optional)",
+
+  "rsstt_slogan": "RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience.",
+  "commands": "Commands",
+  "cmd_description_sub": "Subscribe",
+  "cmd_description_unsub": "Unsubscribe",
+  "cmd_description_unsub_all": "Unsubscribe all subscriptions",
+  "cmd_description_list": "Check the subscription list",
+  "cmd_description_import": "Import subscriptions from an OPML file",
+  "cmd_description_export": "Export subscriptions to an OPML file",
+  "cmd_description_version": "Check the bot version",
+  "cmd_description_help": "Check help",
+  "cmd_description_lang": "Set language",
+  "cmd_description_test": "Test"
+}

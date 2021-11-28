@@ -7,8 +7,10 @@ from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
 from aiohttp_retry import RetryClient
 from typing import Union, Optional, Mapping, Dict
+from ssl import SSLError
 
 from src import env, log
+from src.i18n import i18n
 
 logger = log.getLogger('RSStT.web')
 
@@ -62,7 +64,7 @@ async def get_session(timeout: int = None):
 
 
 async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
-                   headers: Optional[dict] = None) \
+                   headers: Optional[dict] = None, lang: Optional[str] = None) \
         -> Dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
     ret = {'url': url,
            'rss_d': None,
@@ -82,7 +84,7 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
 
         if rss_content is None:
             logger.warning(f'Fetch failed (status code error, {ret["status"]}): {url}')
-            ret['msg'] = f'ERROR: 状态码错误 ({_["status"]})'
+            ret['msg'] = f'ERROR: {i18n[lang]["status_code_error"]} ({_["status"]})'
             return ret
 
         if len(rss_content) <= 524288:
@@ -95,17 +97,21 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
 
         if 'title' not in rss_d.feed:
             logger.warning(f'Fetch failed (feed invalid): {url}')
-            ret['msg'] = f'ERROR: feed 不合法'
+            ret['msg'] = 'ERROR: ' + i18n[lang]['feed_invalid']
             return ret
 
         ret['rss_d'] = rss_d
     except aiohttp.client_exceptions.InvalidURL:
         logger.warning(f'Fetch failed (URL invalid): {url}')
-        ret['msg'] = 'ERROR: URL 不合法'
-    except (asyncio.exceptions.TimeoutError, aiohttp.client_exceptions.ClientError, ConnectionError, TimeoutError) as e:
+        ret['msg'] = 'ERROR: ' + i18n[lang]['url_invalid']
+    except (asyncio.exceptions.TimeoutError,
+            aiohttp.client_exceptions.ClientError,
+            SSLError,
+            ConnectionError,
+            TimeoutError) as e:
         logger.warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
-        ret['msg'] = 'ERROR: 网络错误'
+        ret['msg'] = 'ERROR: ' + i18n[lang]['network_error']
     except Exception as e:
         logger.warning(f'Fetch failed: {url}', exc_info=e)
-        ret['msg'] = 'ERROR: 内部错误'
+        ret['msg'] = 'ERROR: ' + i18n[lang]['internal_error']
     return ret

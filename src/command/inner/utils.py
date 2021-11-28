@@ -4,6 +4,7 @@ from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
 from src import db
+from src.i18n import i18n
 
 
 def get_hash(string: AnyStr) -> str:
@@ -29,13 +30,17 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Opti
     ) if counts > 0 else None
 
 
-async def get_sub_choosing_buttons(user_id: int, page: int, callback: str, get_page_callback: str) \
-        -> Tuple[Tuple[KeyboardButtonCallback, ...], ...]:
+async def get_sub_choosing_buttons(user_id: int,
+                                   page: int,
+                                   callback: str,
+                                   get_page_callback: str,
+                                   lang: Optional[str] = None) -> Tuple[Tuple[KeyboardButtonCallback, ...], ...]:
     """
     :param user_id: user id
     :param page: page number (1-based)
     :param callback: callback data header
     :param get_page_callback: callback data header for getting another page
+    :param lang: language code
     :return: ReplyMarkup
     """
     if page <= 0:
@@ -54,9 +59,9 @@ async def get_sub_choosing_buttons(user_id: int, page: int, callback: str, get_p
     rest_subs_count = len(user_sub_list[page * subs_count_per_page:])
     page_buttons = []
     if page > 1:
-        page_buttons.append(Button.inline('< 上一页', data=f'{get_page_callback}_{page - 1}'))
+        page_buttons.append(Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page - 1}'))
     if rest_subs_count > 0:
-        page_buttons.append(Button.inline('下一页 >', data=f'{get_page_callback}_{page + 1}'))
+        page_buttons.append(Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page + 1}'))
 
     return buttons + (tuple(page_buttons),) if page_buttons else buttons
 

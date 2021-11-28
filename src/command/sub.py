@@ -2,54 +2,62 @@ from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl.custom import Message
 
+from src.i18n import i18n
 from . import inner
 from .utils import permission_required, parse_command, escape_html
 
 
 @permission_required(only_manager=False)
-async def cmd_sub(event: Union[events.NewMessage.Event, Message], args: Optional[str] = None):
-    args = parse_command(event.text if args is None else args)
+async def cmd_sub(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
+    args = parse_command(event.text)
 
-    sub_result = await inner.sub.subs(event.chat_id, *args)
+    msg: Message = await event.respond(i18n[lang]['processing'])
+
+    sub_result = await inner.sub.subs(event.chat_id, args, lang=lang)
 
     if sub_result is None:
-        await event.respond("请回复订阅链接", buttons=Button.force_reply())
+        await msg.edit(i18n[lang]['sub_reply_feed_url_prompt_html'],
+                       buttons=Button.force_reply(),
+                       parse_mode='html')
         return
 
-    await event.respond(sub_result["msg"], parse_mode='html')
+    await msg.edit(sub_result["msg"], parse_mode='html')
 
 
 @permission_required(only_manager=False)
-async def cmd_unsub(event: Union[events.NewMessage.Event, Message], args: Optional[str] = None):
-    args = parse_command(event.text if args is None else args)
+async def cmd_unsub(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
+    args = parse_command(event.text)
     user_id = event.chat_id
 
-    unsub_result = await inner.sub.unsubs(user_id, args)
+    unsub_result = await inner.sub.unsubs(user_id, args, lang=lang)
 
     if unsub_result is None:
-        buttons = await inner.utils.get_sub_choosing_buttons(user_id, page=1, callback='unsub',
+        buttons = await inner.utils.get_sub_choosing_buttons(user_id, lang=lang, page=1, callback='unsub',
                                                              get_page_callback='get_unsub_page')
-        await event.respond('请选择你要退订的订阅' if buttons else '无订阅', buttons=buttons)
+        await event.respond(i18n[lang]['unsub_choose_feed_prompt_html'] if buttons else i18n[lang]['no_subscription'],
+                            buttons=buttons,
+                            parse_mode='html')
         return
 
     await event.respond(unsub_result['msg'], parse_mode='html')
 
 
 @permission_required(only_manager=False)
-async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message]):
+async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
     unsub_all_result = await inner.sub.unsub_all(event.chat_id)
-    await event.respond(unsub_all_result['msg'] if unsub_all_result else '无订阅', parse_mode='html')
+    await event.respond(unsub_all_result['msg'] if unsub_all_result else i18n[lang]['no_subscription'],
+                        parse_mode='html')
 
 
 @permission_required(only_manager=False)
-async def cmd_list(event: Union[events.NewMessage.Event, Message]):
+async def cmd_list(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
     subs = await inner.utils.list_sub(event.chat_id)
     if not subs:
-        await event.respond('无订阅')
+        await event.respond(i18n[lang]['no_subscription'])
         return
 
     list_result = (
-            '<b>订阅列表</b>\n'
+            f'<b>{i18n[lang]["subscription_list"]}</b>\n'
             + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.feed.title)}</a>' for sub in subs)
     )
 
@@ -57,14 +65,15 @@ async def cmd_list(event: Union[events.NewMessage.Event, Message]):
 
 
 @permission_required(only_manager=False)
-async def callback_unsub(event: events.CallbackQuery.Event):  # callback data = unsub_{sub_id}|{page}
+async def callback_unsub(event: events.CallbackQuery.Event, lang: Optional[str] = None, *args, **kwargs):
+    # callback data = unsub_{sub_id}|{page}
     data = event.data.decode().strip()
     sub_id = int(data.split('|')[0].split('_')[-1])
     page = int(data.split('|')[1]) if len(data.split('|')) > 1 else 1
     unsub_d = await inner.sub.unsub(event.chat_id, sub_id=sub_id)
 
     msg = (
-            f'<b>退订{"成功" if unsub_d["sub"] else "失败"}</b>\n'
+            f'<b>{i18n[lang]["unsub_successful" if unsub_d["sub"] else "unsub_failed"]}</b>\n'
             + (
                 f'<a href="{unsub_d["sub"].feed.link}">{escape_html(unsub_d["sub"].feed.title)}</a>' if unsub_d['sub']
                 else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
@@ -80,8 +89,10 @@ async def callback_unsub(event: events.CallbackQuery.Event):  # callback data = 
 
 @permission_required(only_manager=False)
 async def callback_get_unsub_page(event: events.CallbackQuery.Event,
-                                  page: Optional[int] = None):  # callback data = get_unsub_page_{page_number}
+                                  page: Optional[int] = None,
+                                  lang: Optional[str] = None,
+                                  *args, **kwargs):  # callback data = get_unsub_page_{page_number}
     page = page or int(event.data.decode().strip().split('_')[-1])
     buttons = await inner.utils.get_sub_choosing_buttons(event.chat_id, page, callback='unsub',
-                                                         get_page_callback='get_unsub_page')
-    await event.edit(None if buttons else '无订阅', buttons=buttons)
+                                                         get_page_callback='get_unsub_page', lang=lang)
+    await event.edit(None if buttons else i18n[lang]['no_subscription'], buttons=buttons)

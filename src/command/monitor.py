@@ -102,12 +102,16 @@ async def __monitor(feed: db.Feed) -> str:
         headers['If-None-Match'] = feed.etag
 
     d = await feed_get(feed.link, headers=headers)
+    rss_d = d['rss_d']
+
+    if (rss_d is not None or d['status'] == 304) and feed.error_count > 0:
+        feed.error_count = 0
+        await feed.save()
 
     if d['status'] == 304:
         logger.debug(f'Fetched (not updated, cached): {feed.link}')
         return CACHED
 
-    rss_d = d['rss_d']
     if rss_d is None:  # error occurred
         feed.error_count += 1
         await feed.save()

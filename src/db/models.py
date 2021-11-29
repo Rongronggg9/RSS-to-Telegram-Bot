@@ -66,6 +66,7 @@ class Feed(Model, Base):
     etag = fields.CharField(max_length=128, null=True,
                             description='The etag of webpage, will be changed each time the feed is updated. '
                                         'Can be null because some websites do not support')
+    last_modified = fields.DatetimeField(null=True, description='The last modified time of webpage. ')
     error_count = fields.SmallIntField(default=0,
                                        description='Error counts. If too many, deactivate the feed. '
                                                    '+1 if an error occurs, reset to 0 if feed fetched successfully')
@@ -94,6 +95,7 @@ class Sub(Model, Base):
         fields.ForeignKeyField('models.User', related_name='subs', to_field='id', on_delete=fields.CASCADE)
     feed: fields.ForeignKeyRelation['Feed'] = \
         fields.ForeignKeyField('models.Feed', related_name='subs', to_field='id', on_delete=fields.CASCADE)
+    title = fields.CharField(max_length=1024, null=True, description='Sub title, overriding feed title if set')
     tags = fields.CharField(max_length=255, null=True, description='Tags of the sub')
     interval = fields.SmallIntField(null=True, description='Interval of the sub monitor task, '
                                                            'default interval will be applied if null')

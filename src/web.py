@@ -22,7 +22,8 @@ _semaphore = asyncio.BoundedSemaphore(5)
 
 
 async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False) -> dict[str, Union[Mapping[str, str], bytes, str]]:
+              headers: Optional[dict] = None, decode: bool = False) -> dict[str,
+                                                                            Union[Mapping[str, str], bytes, str, int]]:
     if not timeout:
         timeout = 12
 
@@ -78,6 +79,12 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
         ret['headers'] = _['headers']
         ret['status'] = _['status']
 
+        # some rss feed implement http caching improperly :(
+        if ret['status'] == 200 and int(ret['headers'].get('Content-Length'), 1) == 0:
+            ret['status'] = 304
+            ret['msg'] = f'"Content-Length" is 0'
+            return ret
+
         if ret['status'] == 304:
             ret['msg'] = f'304 Not Modified'
             return ret  # 304 Not Modified, feed not updated
@@ -107,6 +114,7 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
     except (asyncio.exceptions.TimeoutError,
             aiohttp.client_exceptions.ClientError,
             SSLError,
+            OSError,
             ConnectionError,
             TimeoutError) as e:
         logger.warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')

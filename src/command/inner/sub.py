@@ -8,7 +8,7 @@ from bs4.element import Tag
 from src import db, web
 from src.i18n import i18n
 from ..utils import logger, escape_html
-from .utils import get_hash, update_interval, list_sub
+from .utils import get_hash, update_interval, list_sub, get_http_caching_headers
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
@@ -40,9 +40,10 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> Dict[s
 
             feed, created_new_feed = await db.Feed.get_or_create(defaults={'title': rss_d.feed.title}, link=feed_url)
             if created_new_feed:
-                feed.etag = d['headers'].get('etag') if d['headers'] else None
-                feed.entry_hashes = dumps(
-                    [get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
+                http_caching_d = get_http_caching_headers(d['headers'])
+                feed.etag = http_caching_d['ETag']
+                feed.last_modified = http_caching_d['Last-Modified']
+                feed.entry_hashes = dumps([get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
                 await feed.save()  # now we get the id
                 db.effective_utils.EffectiveTasks.update(feed.id)
 

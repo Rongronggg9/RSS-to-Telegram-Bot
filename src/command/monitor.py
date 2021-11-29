@@ -96,7 +96,7 @@ async def __monitor(feed: db.Feed) -> str:
     :return: monitoring result
     """
     headers = {
-        'If-Modified-Since': format_datetime(feed.updated_at)
+        'If-Modified-Since': format_datetime(feed.last_modified or feed.updated_at)
     }
     if feed.etag:
         headers['If-None-Match'] = feed.etag
@@ -108,7 +108,7 @@ async def __monitor(feed: db.Feed) -> str:
         feed.error_count = 0
         await feed.save()
 
-    if d['status'] == 304:
+    if d['status'] == 304:  # cached
         logger.debug(f'Fetched (not updated, cached): {feed.link}')
         return CACHED
 
@@ -140,7 +140,9 @@ async def __monitor(feed: db.Feed) -> str:
     length = max(len(rss_d.entries) * 2, 20)
     new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
     feed.entry_hashes = dumps(new_hashes)
-    feed.etag = d['headers'].get('etag') if d['headers'] else None
+    http_caching_d = inner.utils.get_http_caching_headers(d['headers'])
+    feed.etag = http_caching_d['ETag']
+    feed.last_modified = http_caching_d['Last-Modified']
 
     await feed.save()
     await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries))
@@ -148,10 +150,11 @@ async def __monitor(feed: db.Feed) -> str:
     return UPDATED
 
 
-async def __notify_all(feed, entry: MutableMapping):
-    subs = await db.Sub.filter(feed=feed)
+async def __notify_all(feed: db.Feed, entry: MutableMapping):
+    subs = await db.Sub.filter(feed=feed, state=1)
     if not subs:  # nobody has sub it
-        feed.state = 1
+        await db.effective_utils.EffectiveTasks.delete(feed.id)
+        feed.state = 0  # deactivate the feed
         await feed.save()
         return
     post = get_post_from_entry(entry, feed.title, feed.link)

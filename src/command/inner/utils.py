@@ -1,4 +1,6 @@
-from typing import AnyStr, Iterable, Tuple, Any, Union, Optional
+from typing import AnyStr, Iterable, Tuple, Any, Union, Optional, Mapping, Dict
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from zlib import crc32
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
@@ -11,6 +13,25 @@ def get_hash(string: AnyStr) -> str:
     if isinstance(string, str):
         string = string.encode('utf-8')
     return hex(crc32(string))[2:]
+
+
+def get_http_caching_headers(headers: Optional[Mapping]) -> Dict[str, Optional[Union[str, datetime]]]:
+    """
+    :param headers: dict of headers
+    :return: a dict containing "Etag" (`str` or `None`) and "Last-Modified" (`datetime.datetime` or `None`) headers
+    """
+    if not headers:
+        return {
+            'Last-Modified': None,
+            'ETag': None
+        }
+
+    last_modified = headers.get('Last-Modified', headers.get('Date'))
+    last_modified = parsedate_to_datetime(last_modified) if last_modified else datetime.utcnow()
+    return {
+        'Last-Modified': last_modified,
+        'ETag': headers.get('ETag')
+    }
 
 
 def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Optional[Tuple[Tuple[Any, ...], ...]]:

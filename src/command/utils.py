@@ -28,7 +28,7 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
     :param event: a telethon Event object, NewMessage or CallbackQuery
     :param msg: the message to send
     :param alert: alert or not? (only for CallbackQuery)
-    :param cache_time: cache the answer for how many seconds on the server side (only for CallbackQuery)
+    :param cache_time: cache the answer for how many seconds on the server side? (only for CallbackQuery)
     :param args: additional params (only for NewMessage)
     :param kwargs: additional params (only for NewMessage)
     """
@@ -81,7 +81,7 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                     and not only_manager and not only_in_private_chat
             ):  # we can deal with private chats and channels in the same way
                 if lang is None:
-                    await db.User.get_or_create(id=sender_id)  # create the user if it doesn't exist
+                    await db.User.get_or_create(id=sender_id, lang='en')  # create the user if it doesn't exist
                 logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
                 await func(event, lang=lang, *args, **kwargs)
                 raise events.StopPropagation
@@ -110,8 +110,8 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                 if sender_id is not None:  # a "real" user
                     participant: types.channels.ChannelParticipant = await env.bot(
                         GetParticipantRequest(input_chat, input_sender))
-                    is_admin = (isinstance(participant.participant, types.ChannelParticipantAdmin)
-                                or isinstance(participant.participant, types.ChannelParticipantCreator))
+                    is_admin = isinstance(participant.participant,
+                                          (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
                     participant_type = type(participant.participant).__name__
                 else:  # an anonymous admin
                     is_admin = True
@@ -125,7 +125,7 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                     raise events.StopPropagation
 
                 if lang is None:
-                    await db.User.get_or_create(id=event.chat_id)  # create the user if it doesn't exist
+                    await db.User.get_or_create(id=event.chat_id, lang='en')  # create the user if it doesn't exist
                 logger.info(
                     f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
                     f'in {chat.title} ({event.chat_id}).')

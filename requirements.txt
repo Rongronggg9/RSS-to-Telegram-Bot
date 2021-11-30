@@ -19,9 +19,9 @@ aerich==0.5.8
 
 # network
 aiohttp[speedups]==3.8.1
-aiohttp-socks==0.6.0
+aiohttp-socks==0.7.1
 aiohttp-retry==2.4.6
-python-socks[asyncio]==1.2.4
+python-socks[asyncio]==2.0.0
 
 # utils
 colorlog==6.6.0

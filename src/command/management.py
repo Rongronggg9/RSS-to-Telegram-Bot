@@ -6,13 +6,14 @@ from telethon.tl import types
 
 from src import env, web, db
 from src.i18n import i18n, ALL_LANGUAGES
-from .utils import permission_required, parse_command, logger, escape_html, set_bot_commands, get_commands_list
+from .utils import permission_required, command_parser, logger, escape_html, set_bot_commands, get_commands_list, \
+    callback_data_with_page_parser
 from . import inner
 from ..parsing.post import get_post_from_entry
 
 
 @permission_required(only_manager=False)
-async def cmd_start(event: Union[events.NewMessage.Event, Message], lang=None, *args, **kwargs):
+async def cmd_start(event: Union[events.NewMessage.Event, Message], *args, lang=None, **kwargs):
     if lang is None:
         await cmd_lang.__wrapped__(event)
         return
@@ -42,7 +43,84 @@ async def callback_set_lang(event: events.CallbackQuery.Event, *args, **kwargs):
 
 
 @permission_required(only_manager=False)
-async def cmd_help(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
+async def cmd_activate_or_deactivate_subs(event: Union[events.NewMessage.Event, Message],
+                                          activate: bool,
+                                          *args,
+                                          lang: Optional[str] = None,
+                                          **kwargs):  # cmd: activate_subs | deactivate_subs
+    await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, page=1)
+
+
+@permission_required(only_manager=False)
+async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQuery.Event,
+                                                                events.NewMessage.Event,
+                                                                Message],
+                                                   activate: bool,
+                                                   *args,
+                                                   lang: Optional[str] = None,
+                                                   page: Optional[int] = None,
+                                                   **kwargs):  # callback data: get_(activate|deactivate)_page_{page}
+    event_is_msg = not isinstance(event, events.CallbackQuery.Event)
+    origin_msg = None  # placeholder
+    if not event_is_msg:
+        origin_msg = (await event.get_message()).text
+    if page is None:
+        page = int(event.data.decode().strip().split('_')[-1]) if not event_is_msg else 1
+    have_subs = await inner.utils.have_subs(event.chat_id)
+    if not have_subs:
+        no_subscription_msg = i18n[lang]['no_subscription']
+        await (event.respond(no_subscription_msg) if event_is_msg
+               else event.edit(no_subscription_msg if not no_subscription_msg == origin_msg else None))
+        return
+    sub_buttons = await inner.utils.get_sub_choosing_buttons(
+        event.chat_id,
+        page=page,
+        callback='activate_sub' if activate else 'deactivate_sub',
+        get_page_callback='get_activate_page' if activate else 'get_deactivate_page',
+        lang=lang,
+        rows=11,
+        state=0 if activate else 1
+    )
+    msg = i18n[lang]['choose_sub_to_be_activated' if sub_buttons else 'all_subs_are_activated'] if activate \
+        else i18n[lang]['choose_sub_to_be_deactivated' if sub_buttons else 'all_subs_are_deactivated']
+    activate_or_deactivate_all_subs_str = 'activate_all_subs' if activate else 'deactivate_all_subs'
+    buttons = (
+            (
+                (Button.inline(i18n[lang][activate_or_deactivate_all_subs_str],
+                               data=activate_or_deactivate_all_subs_str),),
+            )
+            + sub_buttons
+    ) if sub_buttons else None
+    await (event.respond(msg, buttons=buttons) if event_is_msg
+           else event.edit(msg if not msg == origin_msg else None, buttons=buttons))
+
+
+@permission_required(only_manager=False)
+async def callback_activate_or_deactivate_all_subs(event: events.CallbackQuery.Event,
+                                                   activate: bool,
+                                                   *args,
+                                                   lang: Optional[str] = None,
+                                                   **kwargs):  # callback data: (activate|deactivate)_all_subs
+    await inner.utils.activate_or_deactivate_all_subs(event.chat_id, activate=activate)
+    await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, page=1)
+
+
+@permission_required(only_manager=False)
+async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
+                                              activate: bool,
+                                              *args,
+                                              lang: Optional[str] = None,
+                                              **kwargs):  # callback data: (activate|deactivate)_sub_{id}|{page}
+    sub_id, page = callback_data_with_page_parser(event.data)
+    unsub_res = await inner.utils.activate_or_deactivate_sub(event.chat_id, sub_id, activate=activate)
+    if unsub_res is None:
+        await event.answer('ERROR: ' + i18n[lang]['subscription_not_exist'], alert=True)
+        return
+    await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, page=page)
+
+
+@permission_required(only_manager=False)
+async def cmd_help(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
     await event.respond(
         f"<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>{escape_html(i18n[lang]['rsstt_slogan'])}</a>\n"
         f"\n"
@@ -53,6 +131,8 @@ async def cmd_help(event: Union[events.NewMessage.Event, Message], lang: Optiona
         f"<b>/list</b>: {escape_html(i18n[lang]['cmd_description_list'])}\n"
         f"<b>/import</b>: {escape_html(i18n[lang]['cmd_description_import'])}\n"
         f"<b>/export</b>: {escape_html(i18n[lang]['cmd_description_export'])}\n"
+        f"<b>/activate_subs</b>: {escape_html(i18n[lang]['cmd_description_activate_subs'])}\n"
+        f"<b>/deactivate_subs</b>: {escape_html(i18n[lang]['cmd_description_deactivate_subs'])}\n"
         f"<b>/version</b>: {escape_html(i18n[lang]['cmd_description_version'])}\n"
         f"<b>/lang</b>: {escape_html(' / '.join(i18n[_lang]['cmd_description_lang'] for _lang in ALL_LANGUAGES))}\n"
         f"<b>/help</b>: {escape_html(i18n[lang]['cmd_description_help'])}\n\n",
@@ -61,8 +141,8 @@ async def cmd_help(event: Union[events.NewMessage.Event, Message], lang: Optiona
 
 
 @permission_required(only_manager=True)
-async def cmd_test(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
-    args = parse_command(event.text)
+async def cmd_test(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+    args = command_parser(event.text)
     if len(args) < 2:
         await event.respond('ERROR: ' + i18n[lang]['test_command_usage_prompt'])
         return

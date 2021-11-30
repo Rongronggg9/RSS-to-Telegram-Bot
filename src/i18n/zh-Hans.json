@@ -29,7 +29,7 @@
   "sub_successful": "订阅成功",
   "sub_failed": "订阅失败",
 
-  "unsub_choose_feed_prompt_html": "请选择要退订的订阅。\n或者，你也可以使用 <code>`/unsub url1 url2 url3 ...`</code> 来批量退订。",
+  "unsub_choose_feed_prompt_html": "请选择要退订的订阅。\n或者，你也可以使用 <code>/unsub url1 url2 url3 ...</code> 来批量退订。",
   "unsub_successful": "退订成功",
   "unsub_failed": "退订失败",
 
@@ -43,6 +43,15 @@
   "previous_page": "上一页",
   "next_page": "下一页",
 
+  "feed_deactivated_warn": "检查任务已经连续失败 100 次，对该 RSS 源的订阅已被停用。\n若要重新启用，请使用 /activate_subs 命令。",
+
+  "choose_sub_to_be_activated": "以下订阅处于停用状态，请选择你需要启用的订阅。\n启用后，会监控订阅更新。",
+  "activate_all_subs": "启用我的全部订阅",
+  "all_subs_are_activated": "所有订阅都已启用。",
+  "choose_sub_to_be_deactivated": "以下订阅处于启用状态，请选择你需要停用的订阅。\n停用后，会暂停监控订阅更新；如果您永远不再需要这个订阅，请考虑退订而不是停用它。",
+  "deactivate_all_subs": "停用我的全部订阅",
+  "all_subs_are_deactivated": "所有订阅都已停用。",
+
   "test_command_usage_prompt": "格式需要为: /test RSS_URL 条目编号起点(可选) 条目编号终点(可选)",
 
   "rsstt_slogan": "RSS to Telegram Bot，关心你的阅读体验的 Telegram RSS 机器人。",
@@ -53,8 +62,10 @@
   "cmd_description_list": "列出订阅列表",
   "cmd_description_import": "从 OPML 导入订阅",
   "cmd_description_export": "导出订阅到 OPML",
+  "cmd_description_activate_subs": "启用订阅",
+  "cmd_description_deactivate_subs": "停用订阅",
   "cmd_description_version": "查看 bot 版本",
+  "cmd_description_lang": "选择语言",
   "cmd_description_help": "查看帮助",
-  "cmd_description_lang": "设置语言",
   "cmd_description_test": "测试"
 }

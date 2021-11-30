@@ -29,7 +29,7 @@
   "sub_successful": "Subscribed successfully",
   "sub_failed": "Subscribed failed",
 
-  "unsub_choose_feed_prompt_html": "Please choose the feed you'd like to unsubscribe. \nOr, you may use <code>`/unsub url1 url2 url3 ...`</code> to unsubscribe in bulk.",
+  "unsub_choose_feed_prompt_html": "Please choose the feed you'd like to unsubscribe. \nOr, you may use <code>/unsub url1 url2 url3 ...</code> to unsubscribe in bulk.",
   "unsub_successful": "Unsubscribed successfully",
   "unsub_failed": "Unsubscribed failed",
 
@@ -43,6 +43,15 @@
   "previous_page": "Previous page",
   "next_page": "Next page",
 
+  "feed_deactivated_warn": "The monitoring task had failed for 100 consecutive times. Your subscription to the RSS feed has been deactivated.\nTo reactivate it, please use the /activate_subs command.",
+
+  "choose_sub_to_be_activated": "The subscriptions below are deactivated, choose one to activate.\nAfter activated, their updates will be monitored.",
+  "activate_all_subs": "Activate all my subscriptions",
+  "all_subs_are_activated": "All subscriptions are activated.",
+  "choose_sub_to_be_deactivated": "The subscriptions below are deactivated, choose one to deactivate.\nAfter deactivated, their updates will be suspended from monitoring. If you don't need the subscription any more, please consider unsubscribing it instead of deactivating it.",
+  "deactivate_all_subs": "Deactivate all my subscriptions",
+  "all_subs_are_deactivated": "All subscriptions are deactivated.",
+
   "test_command_usage_prompt": "Command usage: /test RSS_URL entry_start_number(optional) entry_end_number(optional)",
 
   "rsstt_slogan": "RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience.",
@@ -53,8 +62,10 @@
   "cmd_description_list": "Check the subscription list",
   "cmd_description_import": "Import subscriptions from an OPML file",
   "cmd_description_export": "Export subscriptions to an OPML file",
+  "cmd_description_activate_subs": "Activate subscriptions",
+  "cmd_description_deactivate_subs": "Deactivate subscriptions",
   "cmd_description_version": "Check the bot version",
+  "cmd_description_lang": "Select a language",
   "cmd_description_help": "Check help",
-  "cmd_description_lang": "Set language",
   "cmd_description_test": "Test"
 }

@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 from time import sleep
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -93,6 +94,10 @@ def main():
     bot.add_event_handler(command.opml.opml_import, command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.management.cmd_start, events.NewMessage(pattern='/start'))
     bot.add_event_handler(command.management.cmd_help, events.NewMessage(pattern='/help'))
+    bot.add_event_handler(partial(command.management.cmd_activate_or_deactivate_subs, activate=True),
+                          events.NewMessage(pattern='/activate_subs'))
+    bot.add_event_handler(partial(command.management.cmd_activate_or_deactivate_subs, activate=False),
+                          events.NewMessage(pattern='/deactivate_subs'))
     bot.add_event_handler(command.management.cmd_test, events.NewMessage(pattern='/test'))
     bot.add_event_handler(command.management.cmd_version, events.NewMessage(pattern='/version'))
     bot.add_event_handler(command.management.cmd_lang, events.NewMessage(pattern='/lang'))
@@ -100,6 +105,18 @@ def main():
     bot.add_event_handler(command.sub.callback_unsub, events.CallbackQuery(pattern=r'^unsub_\d+(\|\d+)$'))
     bot.add_event_handler(command.sub.callback_get_unsub_page, events.CallbackQuery(pattern=r'^get_unsub_page_\d+$'))
     bot.add_event_handler(command.management.callback_set_lang, events.CallbackQuery(pattern=r'^set_lang_[\w_\-]+$'))
+    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_all_subs, activate=True),
+                          events.CallbackQuery(pattern=r'^activate_all_subs$'))
+    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_all_subs, activate=False),
+                          events.CallbackQuery(pattern=r'^deactivate_all_subs$'))
+    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_sub, activate=True),
+                          events.CallbackQuery(pattern=r'^activate_sub_\d+(\|\d+)$'))
+    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_sub, activate=False),
+                          events.CallbackQuery(pattern=r'^deactivate_sub_\d+(\|\d+)$'))
+    bot.add_event_handler(partial(command.management.callback_get_activate_or_deactivate_page, activate=True),
+                          events.CallbackQuery(pattern=r'^get_activate_page_\d+$'))
+    bot.add_event_handler(partial(command.management.callback_get_activate_or_deactivate_page, activate=False),
+                          events.CallbackQuery(pattern=r'^get_deactivate_page_\d+$'))
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(command.monitor.run_monitor_task, trigger='cron', minute='*/1', max_instances=5, timezone='UTC')

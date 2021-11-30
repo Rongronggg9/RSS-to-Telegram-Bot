@@ -5,8 +5,10 @@ from typing import Union, MutableMapping, Final
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
 
 from . import inner
-from .inner.utils import get_hash
-from src import log, db
+from .utils import escape_html
+from .inner.utils import get_hash, update_interval, deactivate_feed
+from src import log, db, env
+from src.i18n import i18n
 from src.parsing.post import get_post_from_entry, Post
 from src.web import feed_get
 
@@ -113,11 +115,17 @@ async def __monitor(feed: db.Feed) -> str:
         return CACHED
 
     if rss_d is None:  # error occurred
+        if feed.error_count >= 100:
+            logger.error(f'Deactivated feed due to too many errors: {feed.link}')
+            await __deactivate_feed_and_notify_all(feed)
+            return FAILED
         feed.error_count += 1
         await feed.save()
         return FAILED
 
     if not rss_d.entries:  # empty
+        if d['url'] != feed.link:
+            await inner.sub.migrate_to_new_url(feed, d['url'])
         logger.debug(f'Fetched (empty): {feed.link}')
         return EMPTY
 
@@ -143,8 +151,12 @@ async def __monitor(feed: db.Feed) -> str:
     http_caching_d = inner.utils.get_http_caching_headers(d['headers'])
     feed.etag = http_caching_d['ETag']
     feed.last_modified = http_caching_d['Last-Modified']
-
     await feed.save()
+
+    if d['url'] != feed.link:
+        new_url_feed = await inner.sub.migrate_to_new_url(feed, d['url'])
+        feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
+
     await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries))
 
     return UPDATED
@@ -153,10 +165,7 @@ async def __monitor(feed: db.Feed) -> str:
 async def __notify_all(feed: db.Feed, entry: MutableMapping):
     subs = await db.Sub.filter(feed=feed, state=1)
     if not subs:  # nobody has sub it
-        await db.effective_utils.EffectiveTasks.delete(feed.id)
-        feed.state = 0  # deactivate the feed
-        await feed.save()
-        return
+        await update_interval(feed)
     post = get_post_from_entry(entry, feed.title, feed.link)
     await post.generate_message()
     await asyncio.gather(
@@ -166,10 +175,31 @@ async def __notify_all(feed: db.Feed, entry: MutableMapping):
 
 async def __send(sub: db.Sub, post: Union[str, Post]):
     # TODO: customized format
-    if isinstance(post, str):
-        post = Post(post)
     try:
+        if isinstance(post, str):
+            await env.bot.send_message(sub.user_id, post, parse_mode='html')
+            return
         await post.send_message(sub.user_id)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
         logger.warning(f'User blocked: {sub.user_id}')
         await inner.sub.unsub_all(sub.user_id)
+
+
+async def __deactivate_feed_and_notify_all(feed: db.Feed):
+    await deactivate_feed(feed)
+
+    subs = await db.Sub.filter(feed=feed, state=1).prefetch_related('user')
+    if not subs:  # nobody has sub it
+        return
+
+    await asyncio.gather(
+        *(
+            __send(
+                sub=sub,
+                post=(
+                        f'<a href="{feed.link}">{escape_html(sub.title or feed.title)}</a>\n'
+                        + i18n[sub.user.lang]['feed_deactivated_warn']
+                )
+            )
+            for sub in subs)
+    )

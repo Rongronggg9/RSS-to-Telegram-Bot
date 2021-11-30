@@ -138,14 +138,23 @@ class EffectiveTasks:
         :param feed_id: the id of the feed in the task
         :param _preserve_in_all_tasks: for internal use
         """
-        old_interval = cls.__all_tasks[feed_id]
-        cls.__task_buckets[old_interval].__delete(feed_id)
+        try:
+            old_interval = cls.__all_tasks[feed_id]
+            cls.__task_buckets[old_interval].__delete(feed_id)
 
-        if not _preserve_in_all_tasks:
-            try:
+            if not _preserve_in_all_tasks:
                 del cls.__all_tasks[feed_id]
-            except KeyError:
-                pass
+        except KeyError:
+            pass
+
+    @classmethod
+    def exist(cls, feed_id: int) -> bool:
+        """
+        Check if a task exists.
+
+        :param feed_id: the id of the feed in the task
+        """
+        return feed_id in cls.__all_tasks
 
     def __get_tasks(self) -> Set[int]:
         if len(self.__all_feeds) == 0:

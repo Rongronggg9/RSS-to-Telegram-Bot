@@ -27,19 +27,29 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> Dict[s
 
         if feed:
             _sub = await db.Sub.get_or_none(user=user_id, feed=feed)
-        else:
+        if not feed or feed.state == 0:
             d = await web.feed_get(feed_url, lang=lang)
             rss_d = d['rss_d']
             ret['status'] = d['status']
             ret['msg'] = d['msg']
+            feed_url_original = feed_url
             ret['url'] = feed_url = d['url']  # get the redirected url
 
             if rss_d is None:
                 logger.warning(f'Sub {feed_url} for {user_id} failed')
                 return ret
 
+            if feed_url_original != feed_url:
+                logger.info(f'Sub {feed_url_original} redirected to {feed_url}')
+                if feed:
+                    await migrate_to_new_url(feed, feed_url)
+
+            # need to use get_or_create because we've changed feed_url to the redirected one
             feed, created_new_feed = await db.Feed.get_or_create(defaults={'title': rss_d.feed.title}, link=feed_url)
-            if created_new_feed:
+            if created_new_feed or feed.state == 0:
+                feed.state = 1
+                feed.error_count = 0
+                feed.next_check_time = None
                 http_caching_d = get_http_caching_headers(d['headers'])
                 feed.etag = http_caching_d['ETag']
                 feed.last_modified = http_caching_d['Last-Modified']
@@ -186,3 +196,37 @@ async def export_opml(user_id: int) -> Optional[bytes]:
         return None
     logger.info('Exported feed(s).')
     return opml.prettify().encode()
+
+
+async def migrate_to_new_url(feed: db.Feed, new_url: str) -> Union[bool, db.Feed]:
+    """
+    Migrate feed's link to new url, useful when a feed is redirected to a new url.
+    :param feed:
+    :param new_url:
+    :return:
+    """
+    if feed.link == new_url:
+        return False
+
+    logger.info(f'Migrating {feed.link} to {new_url}')
+    new_url_feed = await db.Feed.get_or_none(link=new_url)
+    if new_url_feed is None:  # new_url not occupied
+        feed.link = new_url
+        await feed.save()
+        return True
+
+    # new_url has been occupied by another feed
+    new_url_feed.state = 1
+    new_url_feed.title = feed.title
+    new_url_feed.entry_hashes = feed.entry_hashes
+    new_url_feed.etag = feed.etag
+    new_url_feed.last_modified = feed.last_modified
+    new_url_feed.error_count = 0
+    new_url_feed.next_check_time = None
+    await new_url_feed.save()
+
+    await feed.subs.all().update(feed=new_url_feed)  # migrate all subs to the new feed
+
+    await update_interval(new_url_feed)
+    await feed.delete()  # delete the old feed
+    return new_url_feed

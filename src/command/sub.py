@@ -4,12 +4,12 @@ from telethon.tl.custom import Message
 
 from src.i18n import i18n
 from . import inner
-from .utils import permission_required, parse_command, escape_html
+from .utils import permission_required, command_parser, escape_html, callback_data_with_page_parser
 
 
 @permission_required(only_manager=False)
-async def cmd_sub(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
-    args = parse_command(event.text)
+async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+    args = command_parser(event.text)
 
     msg: Message = await event.respond(i18n[lang]['processing'])
 
@@ -25,8 +25,8 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], lang: Optional
 
 
 @permission_required(only_manager=False)
-async def cmd_unsub(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
-    args = parse_command(event.text)
+async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+    args = command_parser(event.text)
     user_id = event.chat_id
 
     unsub_result = await inner.sub.unsubs(user_id, args, lang=lang)
@@ -43,14 +43,14 @@ async def cmd_unsub(event: Union[events.NewMessage.Event, Message], lang: Option
 
 
 @permission_required(only_manager=False)
-async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
+async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
     unsub_all_result = await inner.sub.unsub_all(event.chat_id)
     await event.respond(unsub_all_result['msg'] if unsub_all_result else i18n[lang]['no_subscription'],
                         parse_mode='html')
 
 
 @permission_required(only_manager=False)
-async def cmd_list(event: Union[events.NewMessage.Event, Message], lang: Optional[str] = None, *args, **kwargs):
+async def cmd_list(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
     subs = await inner.utils.list_sub(event.chat_id)
     if not subs:
         await event.respond(i18n[lang]['no_subscription'])
@@ -65,11 +65,9 @@ async def cmd_list(event: Union[events.NewMessage.Event, Message], lang: Optiona
 
 
 @permission_required(only_manager=False)
-async def callback_unsub(event: events.CallbackQuery.Event, lang: Optional[str] = None, *args, **kwargs):
+async def callback_unsub(event: events.CallbackQuery.Event, *args, lang: Optional[str] = None, **kwargs):
     # callback data = unsub_{sub_id}|{page}
-    data = event.data.decode().strip()
-    sub_id = int(data.split('|')[0].split('_')[-1])
-    page = int(data.split('|')[1]) if len(data.split('|')) > 1 else 1
+    sub_id, page = callback_data_with_page_parser(event.data)
     unsub_d = await inner.sub.unsub(event.chat_id, sub_id=sub_id)
 
     msg = (
@@ -81,7 +79,7 @@ async def callback_unsub(event: events.CallbackQuery.Event, lang: Optional[str] 
     )
 
     if unsub_d['sub']:  # successfully unsubed
-        await callback_get_unsub_page.__wrapped__(event, page)
+        await callback_get_unsub_page.__wrapped__(event, lang=lang, page=page)
 
     # await event.edit(msg, parse_mode='html')
     await event.respond(msg, parse_mode='html')  # make unsubscribing multiple subscriptions more efficiency
@@ -89,9 +87,10 @@ async def callback_unsub(event: events.CallbackQuery.Event, lang: Optional[str] 
 
 @permission_required(only_manager=False)
 async def callback_get_unsub_page(event: events.CallbackQuery.Event,
+                                  *args,
                                   page: Optional[int] = None,
                                   lang: Optional[str] = None,
-                                  *args, **kwargs):  # callback data = get_unsub_page_{page_number}
+                                  **kwargs):  # callback data = get_unsub_page_{page_number}
     page = page or int(event.data.decode().strip().split('_')[-1])
     buttons = await inner.utils.get_sub_choosing_buttons(event.chat_id, page, callback='unsub',
                                                          get_page_callback='get_unsub_page', lang=lang)

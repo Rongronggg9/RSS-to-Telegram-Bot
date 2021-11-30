@@ -1,4 +1,5 @@
-from typing import AnyStr, Iterable, Tuple, Any, Union, Optional, Mapping, Dict
+import asyncio
+from typing import AnyStr, Iterable, Tuple, Any, Union, Optional, Mapping, Dict, List
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from zlib import crc32
@@ -55,27 +56,35 @@ async def get_sub_choosing_buttons(user_id: int,
                                    page: int,
                                    callback: str,
                                    get_page_callback: str,
-                                   lang: Optional[str] = None) -> Tuple[Tuple[KeyboardButtonCallback, ...], ...]:
+                                   lang: Optional[str] = None,
+                                   rows: int = 12,
+                                   columns: int = 2,
+                                   *args, **kwargs) -> Optional[Tuple[Tuple[KeyboardButtonCallback, ...], ...]]:
     """
     :param user_id: user id
     :param page: page number (1-based)
     :param callback: callback data header
     :param get_page_callback: callback data header for getting another page
     :param lang: language code
+    :param rows: the number of rows
+    :param columns: the number of columns
+    :param args: args for `list_sub`
+    :param kwargs: kwargs for `list_sub`
     :return: ReplyMarkup
     """
     if page <= 0:
         raise IndexError('Page number must be positive.')
 
-    max_row_count = 12
-    max_column_count = 2
-    subs_count_per_page = max_column_count * max_row_count
+    user_sub_list = await list_sub(user_id, *args, **kwargs)
+    if not user_sub_list:
+        return None
+
+    subs_count_per_page = columns * rows
     page_start = (page - 1) * subs_count_per_page
     page_end = page_start + subs_count_per_page
-    user_sub_list = await list_sub(user_id)
     buttons_to_arrange = tuple(Button.inline(_sub.feed.title, data=f'{callback}_{_sub.id}|{page}')
                                for _sub in user_sub_list[page_start:page_end])
-    buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=max_column_count, rows=max_row_count)
+    buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)
 
     rest_subs_count = len(user_sub_list[page * subs_count_per_page:])
     page_buttons = []
@@ -101,18 +110,95 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
     curr_interval = feed.interval or default_interval
 
     if not new_interval:
-        intervals = await feed.subs.all().values_list('interval', flat=True)
-        if not intervals:  # no sub subs the feed, del the feed
+        sub_exist = await feed.subs.all().exists()
+        intervals = await feed.subs.filter(state=1).values_list('interval', flat=True)
+        if not sub_exist:  # no sub subs the feed, del the feed
             await feed.delete()
             db.effective_utils.EffectiveTasks.delete(feed.id)
             return
+        if not intervals:  # no active sub subs the feed, deactivate the feed
+            await deactivate_feed(feed)
+            return
         new_interval = min(intervals, key=lambda _: default_interval if _ is None else _) or default_interval
 
-    if curr_interval != new_interval:
+    if new_interval <= curr_interval:
         feed.interval = new_interval
         await feed.save()
         db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
+        return
+
+    if not db.effective_utils.EffectiveTasks.exist(feed.id):
+        db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
 
 
-async def list_sub(user_id: int):
-    return await db.Sub.filter(user=user_id).prefetch_related('feed')
+async def list_sub(user_id: int, *args, **kwargs) -> List[db.Sub]:
+    return await db.Sub.filter(user=user_id, *args, **kwargs).prefetch_related('feed')
+
+
+async def have_subs(user_id: int) -> bool:
+    return await db.Sub.filter(user=user_id).exists()
+
+
+async def activate_feed(feed: db.Feed) -> db.Feed:
+    if feed.state == 1:
+        return feed
+
+    feed.state = 1
+    feed.error_count = 0
+    feed.next_check_time = None
+    await feed.save()
+    await update_interval(feed)
+    return feed
+
+
+async def deactivate_feed(feed: db.Feed) -> db.Feed:
+    db.effective_utils.EffectiveTasks.delete(feed.id)
+
+    subs = await feed.subs.all()
+    if not subs:
+        await feed.delete()
+        return feed
+
+    feed.state = 0
+    feed.next_check_time = None
+    await feed.save()
+    await asyncio.gather(
+        *(activate_or_deactivate_sub(sub.user_id, sub, activate=False, _update_interval=False) for sub in subs)
+    )
+
+    return feed
+
+
+async def activate_or_deactivate_sub(user_id: int, sub_: Union[db.Sub, int], activate: bool,
+                                     _update_interval: bool = True) -> Optional[db.Sub]:
+    """
+    :param user_id: user id
+    :param sub_: `db.Sub` or sub id
+    :param activate: activate the sub if `Ture`, deactivate if `False`
+    :param _update_interval: update interval or not?
+    :return: the updated sub, `None` if the sub does not exist
+    """
+    if isinstance(sub_, int):
+        sub_ = await db.Sub.get_or_none(id=sub_, user_id=user_id).prefetch_related('feed')
+        if not sub_:
+            return None
+    elif sub_.user_id != user_id:
+        return None
+
+    sub_.state = 1 if activate else 0
+    await sub_.save()
+    await activate_feed(sub_.feed)
+    interval = sub_.interval or db.effective_utils.EffectiveOptions.get('default_interval')
+    if _update_interval:
+        await update_interval(sub_.feed, new_interval=interval if activate else None)
+    return sub_
+
+
+async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> Tuple[Optional[db.Sub], ...]:
+    """
+    :param user_id: user id
+    :param activate: activate all subs if `Ture`, deactivate if `False`
+    :return: the updated sub, `None` if the sub does not exist
+    """
+    subs_ = await list_sub(user_id, state=0 if activate else 1)
+    return await asyncio.gather(*(activate_or_deactivate_sub(user_id, sub_, activate=activate) for sub_ in subs_))

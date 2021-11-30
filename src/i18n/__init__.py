@@ -4,12 +4,12 @@ from typing import Optional, Dict
 
 I18N_PATH = path.split(path.realpath(__file__))[0]
 ALL_LANGUAGES = tuple(lang[:-5] for lang in listdir(I18N_PATH) if lang.endswith('.json'))
+FALLBACK_LANGUAGE = 'en'
 
 
 class _I18N:
     __instance: Optional["_I18N"] = None
     __initialized: bool = False
-    __fallback_lang: str = 'en'
 
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
@@ -28,7 +28,7 @@ class _I18N:
         return self.__l10n[lang_code] if lang_code in self.__l10n else self.get_fallback_l10n()
 
     def get_fallback_l10n(self) -> "_L10N":
-        return self.__l10n[self.__fallback_lang]
+        return self.__l10n[FALLBACK_LANGUAGE]
 
 
 class _L10N:
@@ -39,8 +39,12 @@ class _L10N:
             self.__l10n_lang = load(f)
 
     def __getitem__(self, key_string):
-        return self.__l10n_lang[key_string] if key_string in self.__l10n_lang \
-            else _I18N().get_fallback_l10n()[key_string]
+        if key_string in self.__l10n_lang:
+            return self.__l10n_lang[key_string]
+        elif self.__lang_code != FALLBACK_LANGUAGE:
+            return _I18N().get_fallback_l10n()[key_string]
+        else:
+            return key_string
 
 
 i18n = _I18N()

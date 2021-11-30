@@ -1,6 +1,6 @@
 import re
 from functools import partial, wraps
-from typing import Union, Optional, AnyStr, Any, List
+from typing import Union, Optional, AnyStr, Any, List, Tuple
 from telethon import events
 from telethon.tl import types
 from telethon.tl.custom import Message
@@ -16,8 +16,16 @@ logger = log.getLogger('RSStT.command')
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
 
-def parse_command(command: str) -> list[AnyStr]:
+def command_parser(command: str) -> list[AnyStr]:
     return re.compile(r'\s+').split(command.strip())
+
+
+def callback_data_with_page_parser(callback_data: bytes) -> Tuple[int, int]:
+    callback_data = callback_data.decode().strip()
+    id_and_page = callback_data.split('|')
+    _id = int(id_and_page[0].split('_')[-1])
+    page = int(id_and_page[1]) if len(id_and_page) > 1 else 1
+    return _id, page
 
 
 async def respond_or_answer(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], msg: str,
@@ -51,7 +59,7 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
             command = (event.text if hasattr(event, 'text') and event.text else
                        f'(callback){event.data.decode()}' if is_callback else '(no command, file message)')
             if command.startswith('/') and '@' in command:
-                mention = parse_command(command)[0].split('@')[1]
+                mention = command_parser(command)[0].split('@')[1]
                 if mention != env.bot_peer.username:
                     raise events.StopPropagation  # none of my business!
 
@@ -202,6 +210,8 @@ def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> List
         types.BotCommand(command="list", description=i18n[lang]['cmd_description_list']),
         types.BotCommand(command="import", description=i18n[lang]['cmd_description_import']),
         types.BotCommand(command="export", description=i18n[lang]['cmd_description_export']),
+        types.BotCommand(command="activate_subs", description=i18n[lang]['cmd_description_activate_subs']),
+        types.BotCommand(command="deactivate_subs", description=i18n[lang]['cmd_description_deactivate_subs']),
         types.BotCommand(command="version", description=i18n[lang]['cmd_description_version']),
         types.BotCommand(command="lang", description=i18n[lang]['cmd_description_lang']),
         types.BotCommand(command="help", description=i18n[lang]['cmd_description_help']),

@@ -187,10 +187,15 @@ async def activate_or_deactivate_sub(user_id: int, sub_: Union[db.Sub, int], act
 
     sub_.state = 1 if activate else 0
     await sub_.save()
-    await activate_feed(sub_.feed)
+    await sub_.fetch_related('feed')
+
+    if activate:
+        await activate_feed(sub_.feed)
+
     interval = sub_.interval or db.effective_utils.EffectiveOptions.get('default_interval')
     if _update_interval:
         await update_interval(sub_.feed, new_interval=interval if activate else None)
+
     return sub_
 
 

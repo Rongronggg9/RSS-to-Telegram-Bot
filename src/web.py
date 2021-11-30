@@ -80,7 +80,7 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
         ret['status'] = _['status']
 
         # some rss feed implement http caching improperly :(
-        if ret['status'] == 200 and int(ret['headers'].get('Content-Length'), 1) == 0:
+        if ret['status'] == 200 and int(ret['headers'].get('Content-Length', 1)) == 0:
             ret['status'] = 304
             ret['msg'] = f'"Content-Length" is 0'
             return ret

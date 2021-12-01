@@ -48,7 +48,7 @@
   "choose_sub_to_be_activated": "The subscriptions below are deactivated, choose one to activate.\nAfter activated, their updates will be monitored.",
   "activate_all_subs": "Activate all my subscriptions",
   "all_subs_are_activated": "All subscriptions are activated.",
-  "choose_sub_to_be_deactivated": "The subscriptions below are deactivated, choose one to deactivate.\nAfter deactivated, their updates will be suspended from monitoring. If you don't need the subscription any more, please consider unsubscribing it instead of deactivating it.",
+  "choose_sub_to_be_deactivated": "The subscriptions below are activated, choose one to deactivate.\nAfter deactivated, their updates will be suspended from monitoring. If you don't need the subscription any more, please consider unsubscribing it instead of deactivating it.",
   "deactivate_all_subs": "Deactivate all my subscriptions",
   "all_subs_are_deactivated": "All subscriptions are deactivated.",
 

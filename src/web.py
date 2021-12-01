@@ -8,6 +8,8 @@ from aiohttp_socks import ProxyConnector
 from aiohttp_retry import RetryClient
 from typing import Union, Optional, Mapping, Dict
 from ssl import SSLError
+from ipaddress import ip_network, ip_address
+from urllib.parse import urlparse
 
 from src import env, log
 from src.i18n import i18n
@@ -15,14 +17,42 @@ from src.i18n import i18n
 logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
-
-_proxy = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
-
 _semaphore = asyncio.BoundedSemaphore(5)
+
+PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
+PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
+                         ('127.0.0.0/8', '::1/128',  # loopback is not a private network, list in here for convenience
+                          '169.254.0.0/16', 'fe80::/10',  # link-local address
+                          '10.0.0.0/8',  # class A private network
+                          '172.16.0.0/12',  # class B private networks
+                          '192.168.0.0/16',  # class C private networks
+                          'fc00::/7',  # ULA
+                          ))
+
+
+def proxy_filter(url: str) -> bool:
+    if not (env.PROXY_BYPASS_PRIVATE or env.PROXY_BYPASS_DOMAINS):
+        return True
+
+    hostname = urlparse(url).hostname
+    if env.PROXY_BYPASS_PRIVATE:
+        try:
+            ip_a = ip_address(hostname)
+            is_private = any(ip_a in network for network in PRIVATE_NETWORKS)
+            if is_private:
+                return False
+        except ValueError:
+            pass  # not an IP, continue
+    if env.PROXY_BYPASS_DOMAINS:
+        is_bypassed = any(hostname.endswith(domain) and hostname[-len(domain) - 1] == '.'
+                          for domain in env.PROXY_BYPASS_DOMAINS)
+        if is_bypassed:
+            return False
+    return True
 
 
 async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False) -> dict[str,
+              headers: Optional[dict] = None, decode: bool = False) -> Dict[str,
                                                                             Union[Mapping[str, str], bytes, str, int]]:
     if not timeout:
         timeout = 12
@@ -32,7 +62,7 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
     if headers:
         _headers.update(headers)
 
-    proxy_connector = ProxyConnector.from_url(_proxy) if _proxy else None
+    proxy_connector = ProxyConnector.from_url(PROXY) if (PROXY and proxy_filter(url)) else None
 
     await _semaphore.acquire() if semaphore is None or semaphore is True else \
         await semaphore.acquire() if semaphore else None
@@ -56,7 +86,7 @@ async def get_session(timeout: int = None):
     if not timeout:
         timeout = 12
 
-    proxy_connector = ProxyConnector.from_url(_proxy) if _proxy else None
+    proxy_connector = ProxyConnector.from_url(PROXY) if PROXY else None
 
     session = RetryClient(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
                           headers=env.REQUESTS_HEADERS)

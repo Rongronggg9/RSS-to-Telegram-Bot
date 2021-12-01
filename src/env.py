@@ -1,10 +1,34 @@
 import os
 import logging
+import re
 from telethon import TelegramClient
 from telethon.tl.types import User
-from typing import Optional, Final
+from typing import Optional, Final, List
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
+
+
+# ----- utils -----
+def __bool_parser(var: Optional[str]) -> bool:
+    if not var:
+        return False
+
+    if var.isdecimal() or var.lstrip('-').isdecimal():
+        return int(var) > 0
+
+    var = var.upper()
+    if var in ('FALSE', 'NONE', 'NULL', 'NO', 'NOT', 'DISABLE', 'DISABLED', 'INACTIVE', 'DEACTIVATED'):
+        return False
+    return True
+
+
+def __list_parser(var: Optional[str]) -> List[str]:
+    if not var:
+        return []
+
+    var_t = re.split(r'[\s,;，；]+', var)
+    return var_t
+
 
 # ----- load .env -----
 load_dotenv(override=True)
@@ -46,18 +70,7 @@ except Exception as e:
     logging.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
 
-_telegraph_token = os.environ.get('TELEGRAPH_TOKEN')
-if _telegraph_token:
-    TELEGRAPH_TOKEN: Final = _telegraph_token.strip(). \
-        replace('\n', ',') \
-        .replace('，', ',') \
-        .replace(';', ',') \
-        .replace('；', ',') \
-        .replace(' ', ',')
-else:
-    TELEGRAPH_TOKEN: Final = None
-
-del _telegraph_token
+TELEGRAPH_TOKEN: Final = __list_parser(os.environ.get('TELEGRAPH_TOKEN'))
 
 _multiuser = os.environ.get('MULTIUSER', '')
 if _multiuser is None or _multiuser == '0' or _multiuser.lower() == 'false':
@@ -101,6 +114,9 @@ if R_PROXY:
 else:
     REQUESTS_PROXIES: Final = {}
 
+PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
+PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
+
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
 IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith('/') else '/')
@@ -113,10 +129,7 @@ DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _da
 del _database_url
 
 # ----- debug config -----
-if os.environ.get('DEBUG'):
-    DEBUG: Final = True
-else:
-    DEBUG: Final = False
+DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 
 # ----- get version -----
 try:

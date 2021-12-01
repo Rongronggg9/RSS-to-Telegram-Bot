@@ -101,7 +101,7 @@ class APIs:
 
 apis = None
 if env.TELEGRAPH_TOKEN:
-    apis = APIs(env.TELEGRAPH_TOKEN.split(','))
+    apis = APIs(env.TELEGRAPH_TOKEN)
     if not apis.valid:
         logger.error('Cannot set up Telegraph, fallback to non-Telegraph mode.')
         apis = None

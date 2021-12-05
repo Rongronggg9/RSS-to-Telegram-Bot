@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.6.1
+
+### en
+
+**This is a rushed release. It bumps the dependency `telethon` to the latest version. Please upgrade to this version
+immediately to avoid being unable to login due to the outdated dependency.**
+
+The bot is currently being actively developed on the `multiuser` branch, but has not been merged back yet to avoid
+introducing breaking changes too early. If you would like to try the multi-user version, there is a public
+demo [@RSStT_Bot](https://t.me/RSStT_Bot) .
+
+#### New features
+
+- `.env` file support (only for manual execution, not for docker)
+- Unescape HTML-escaped post title
+- Use the title as the content of a post if the latter is of no text
+
+#### Changes
+
+- Minor bugfixes
+- Introduce some workarounds to avoid being flood-controlled frequently
+- Introduce some deps to speedup HTTP requests
+
+### zh-Hans
+
+**这是一个仓促的发布。它将依赖 `telethon` 升级到了最新版本。请立即升级到这个版本以免由于依赖过时而无法登录。**
+
+机器人正在 `multiuser` 分支上被活跃开发，但尚未被合并回来，以免过早引入重大变更。如果你想要尝试多用户版本，这里有一个公开的 demo [@RSStT_Bot](https://t.me/RSStT_Bot) 。
+
+#### 新特性
+
+- `.env` 文件支持 (仅在手动执行时支持，不支持 docker)
+- 反转义受到 HTML 转义的文章标题
+- 当文章内容不含有文本时，将标题作为文章的内容
+
+#### 变更
+
+- 一些小的错误修复
+- 引入了一些变通解决方案以免频繁受到泛洪控制
+- 引入了一些依赖以加速 HTTP 请求
+
 ## v1.6.0
 
 ### en
@@ -56,7 +97,7 @@
       详见 [docker-compose.yml.sample](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/53f11a473933e620d707c9d15f6d48737bd7a982/docker-compose.yml.sample#L43)
       中的说明)
 
-#### 新功能
+#### 新特性
 
 - 由于 Telegram bot 库的替换，bot 可以直接连接到 bot 所属的 DC，不需绕经 HTTP Bot API；也不需轮询获得消息更新，它在接收及发送消息方面都更为迅速，资源占用也更低； 即使 HTTP Bot API
   宕机，bot 也可以正常工作 (

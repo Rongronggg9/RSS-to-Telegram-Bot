@@ -1,18 +1,19 @@
 # RSS to Telegram Bot
 
-**专为短动态类消息设计的 RSS Bot**
+**关心你的阅读体验的 Telegram RSS 机器人**
 
 [![Build Status](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
 [![Docker Pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
 [![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/stargazers)
 
-<a href="https://github.com/Rongronggg9/RSS-to-Telegram-Bot"><img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/RSStT_icon.svg" width = "256" height = "256"  alt="RSStT_icon"/><a/>
+[@RSStT_Bot](https://t.me/RSStT_Bot) (w/ English l10n)
+
+<a href="https://t.me/RSStT_Bot"><img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/RSStT_icon.svg" width = "256" height = "256"  alt="RSStT_icon"/><a/>
 
 [更新日志 CHANGELOG](CHANGELOG.md)
 
-本项目现改以 AGPLv3 许可证分发，这是为了将来的多用户功能准备的。
-
-加入频道 [@RSStT_Channel](https://t.me/RSStT_Channel) 以获取更新资讯；加入群组 [@RSStT_Group](https://t.me/RSStT_Group) 以参与讨论或反馈问题。
+使用公共 demo [@RSStT_Bot](https://t.me/RSStT_Bot) 以体验本机器人；加入频道 [@RSStT_Channel](https://t.me/RSStT_Channel)
+以获取更新资讯；加入群组 [@RSStT_Group](https://t.me/RSStT_Group) 以参与讨论或反馈问题。
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fdev&plugins=redis&envs=TOKEN%2CCHATID%2CMANAGER%2CDELAY&optionalEnvs=DELAY&TOKENDesc=%E4%BD%A0%E5%9C%A8+%40BotFather+%E7%94%B3%E8%AF%B7%E5%88%B0%E7%9A%84+bot+%E7%9A%84+token&CHATIDDesc=%E4%BD%A0%E7%9A%84+userid%EF%BC%88%E7%BA%AF%E6%95%B0%E5%AD%97%EF%BC%8C%E4%BB%8E+%40userinfobot%EF%BC%89%E8%8E%B7%E5%8F%96%EF%BC%9B%E6%88%96%E8%80%85%E9%9C%80%E8%A6%81%E6%8E%A8%E9%80%81%E5%88%B0%E7%9A%84%E9%A2%91%E9%81%93%E7%94%A8%E6%88%B7%E5%90%8D%EF%BC%88%E6%A0%BC%E5%BC%8F%EF%BC%9A%40channel%EF%BC%89&MANAGERDesc=%E4%BD%A0%E7%9A%84+userid&DELAYDesc=%E9%97%B4%E9%9A%94%E5%A4%9A%E4%B9%85%E6%A3%80%E6%9F%A5%E4%B8%80%E6%AC%A1%E8%AE%A2%E9%98%85%E6%9B%B4%E6%96%B0%EF%BC%88%E5%8D%95%E4%BD%8D%EF%BC%9A%E7%A7%92%EF%BC%89&referralCode=PEOFMi)
 

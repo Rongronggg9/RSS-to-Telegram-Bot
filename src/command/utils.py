@@ -3,7 +3,7 @@ from functools import partial, wraps
 from typing import Union, Optional, AnyStr, Any, List, Tuple
 from telethon import events
 from telethon.tl import types
-from telethon.tl.custom import Message
+from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 
@@ -52,44 +52,78 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                        only_in_private_chat=only_in_private_chat)
 
     @wraps(func)
-    async def wrapper(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], *args, **kwargs):
-        lang = None  # placeholder
+    async def wrapper(event: Union[events.NewMessage.Event, Message,
+                                   events.CallbackQuery.Event,
+                                   events.ChatAction.Event],
+                      *args, **kwargs):
+        # placeholders
+        lang = None
+        command: Optional[str] = None
+        sender_id: Optional[int] = None
+        sender: Optional[Union[types.User, types.Channel]] = None
+        sender_fullname: Optional[str] = None
+        chat_id: Optional[int] = None
+        chat_title: Optional[str] = None
+        participant_type: Optional[str] = None
+
         try:
+            chat_id = event.chat_id
             is_callback = isinstance(event, events.CallbackQuery.Event)
-            command = (event.text if hasattr(event, 'text') and event.text else
-                       f'(callback){event.data.decode()}' if is_callback else '(no command, file message)')
+            is_chat_action = isinstance(event, events.ChatAction.Event)
+            command = (event.text
+                       if hasattr(event, 'text') and event.text else
+                       f'(Callback){event.data.decode()}'
+                       if is_callback else
+                       f'(ChatAction, {event.action_message and event.action_message.action.__class__.__name__})'
+                       if is_chat_action else
+                       '(no command, other message)')
             if command.startswith('/') and '@' in command:
                 mention = command_parser(command)[0].split('@')[1]
                 if mention != env.bot_peer.username:
                     raise events.StopPropagation  # none of my business!
 
-            sender_id: Optional[int] = event.sender_id  # `None` if the sender is an anonymous admin in a group
-            sender: Optional[Union[types.User, types.Channel]] = await event.get_sender()  # ditto
+            if is_chat_action and event.action_message:  # service message
+                action_message: MessageService = event.action_message
+                sender_id = action_message.sender_id
+                sender = await action_message.get_sender()
+            elif not is_chat_action:  # message or callback
+                sender_id = event.sender_id  # `None` if the sender is an anonymous admin in a group
+                sender = await event.get_sender()  # ditto
+
             sender_fullname = (
-                sender.title if isinstance(sender, types.Channel) else
-                (sender.first_name + (f' {sender.last_name}' if sender.last_name else '')) if sender is not None else
+                sender.title
+                if isinstance(sender, types.Channel) else
+                (sender.first_name + (f' {sender.last_name}' if sender.last_name else ''))
+                if sender is not None else
                 '__anonymous_admin__'
+                if not is_chat_action else
+                '__chat_action__'
             )
-            lang = await db.User.get_or_none(id=event.chat_id).values_list('lang', flat=True)
+
+            lang_in_db = await db.User.get_or_none(id=chat_id).values_list('lang', flat=True)
+            lang = lang_in_db
+            if not lang or lang == 'null':
+                lang = sender.lang_code if hasattr(sender, 'lang_code') else None
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
                 await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
-                logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command}.')
+                logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} '
+                               f'because the command can only be used by a bot manager.')
                 raise events.StopPropagation
 
             if (
                     event.is_private or  # deal with commands in private chats
                     (
                             (event.is_channel  # deal with commands in channels
-                             # a supergroup is also a channel but we only expect a "real" channel here
+                             # a supergroup is also a channel, but we only expect a "real" channel here
                              and not event.is_group)
                             # if receiving a callback, we must verify that the sender is an admin. jump below
                             and not is_callback
                     )
                     and not only_manager and not only_in_private_chat
             ):  # we can deal with private chats and channels in the same way
-                if lang is None:
-                    await db.User.get_or_create(id=sender_id, lang='en')  # create the user if it doesn't exist
+                if lang_in_db is None:
+                    await db.User.get_or_create(id=sender_id, lang='null')  # create the user if it doesn't exist
                 logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
                 await func(event, lang=lang, *args, **kwargs)
                 raise events.StopPropagation
@@ -104,18 +138,32 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
                 if isinstance(sender, types.Channel):
                     raise events.StopPropagation  # bound channel messages in discussion groups are none of my business
 
-                chat: types.Chat = await event.get_chat()
+                # supergroup is a special form of channel
+                input_chat: Optional[Union[types.InputChannel,
+                                           types.InputPeerChannel,
+                                           types.InputPeerChat]] = await event.get_input_chat()
+                chat: Optional[Union[types.Chat, types.Channel]] = await event.get_chat()
+                chat_title = chat and chat.title
 
                 if only_in_private_chat:
                     await respond_or_answer(event, i18n[lang]['permission_denied_not_in_private_chat'])
-                    logger.info(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
-                                f'{chat.title} ({event.chat_id}).')
+                    logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
+                                   f'{chat_title} ({chat_id}) because the command can only be used in a private chat')
                     raise events.StopPropagation
 
-                input_chat: types.InputChannel = await event.get_input_chat()  # supergroup is a special form of channel
-                input_sender: types.InputPeerUser = await event.get_input_sender()
+                if isinstance(input_chat, types.InputPeerChat):
+                    # oops, the group hasn't been migrated to a supergroup. a migration is needed
+                    await respond_or_answer(event,
+                                            '\n\n'.join(i18n.get_all_l10n_string('group_upgrade_needed_prompt')))
+                    logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
+                                   f'{chat_title} ({chat_id}) because a group migration to supergroup is needed')
+                    raise events.StopPropagation
 
-                if sender_id is not None:  # a "real" user
+                if is_chat_action:
+                    is_admin = True
+                    participant_type = 'ChatAction, bypassing admin check'
+                elif sender_id is not None:  # a "real" user triggering the command
+                    input_sender: types.InputPeerUser = await event.get_input_sender()
                     participant: types.channels.ChannelParticipant = await env.bot(
                         GetParticipantRequest(input_chat, input_sender))
                     is_admin = isinstance(participant.participant,
@@ -127,24 +175,32 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
 
                 if not is_admin:
                     await respond_or_answer(event, i18n[lang]['permission_denied_not_chat_admin'])
-                    logger.info(
+                    logger.warning(
                         f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                        f'in {chat.title} ({event.chat_id}).')
+                        f'in {chat_title} ({chat_id}).')
                     raise events.StopPropagation
 
-                if lang is None:
-                    await db.User.get_or_create(id=event.chat_id, lang='en')  # create the user if it doesn't exist
+                if lang_in_db is None:
+                    await db.User.get_or_create(id=chat_id, lang='null')  # create the user if it doesn't exist
                 logger.info(
                     f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                    f'in {chat.title} ({event.chat_id}).')
+                    f'in {chat_title} ({chat_id}).')
                 await func(event, lang=lang, *args, **kwargs)
                 raise events.StopPropagation
 
         except events.StopPropagation as e:
             raise e
         except Exception as e:
+            logger.error(
+                f'Uncaught error occurred when {sender_fullname} '
+                + f'({sender_id}'
+                + (f', {participant_type}' if participant_type else '')
+                + f') '
+                + f'attempting to use {command}'
+                + (f' in {chat_title} ({chat_id})' if chat_id != sender_id else ''),
+                exc_info=e
+            )
             await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
-            raise e
 
     return wrapper
 
@@ -200,6 +256,37 @@ class PrivateMessage(events.NewMessage):
     @staticmethod
     def __in_private_chat(event: Union[events.NewMessage.Event, Message]):
         return event.is_private
+
+
+class AddedToGroupAction(events.ChatAction):
+    """Chat actions that are triggered when the bot has been added to a group."""
+
+    def __init__(self, chats=None, *, blacklist_chats=False):
+        super().__init__(chats, blacklist_chats=blacklist_chats, func=self.__added_to_group)
+
+    @staticmethod
+    def __added_to_group(event: events.ChatAction.Event):
+        if not event.is_group:
+            return False
+        if event.created:
+            return True  # group created or migrated
+        if event.user_added:  # `event.user_joined` is not needed because a bot cannot join a group on its own
+            return env.bot_id in event.user_ids  # joint to a group
+        return False
+
+
+class GroupMigratedAction(events.ChatAction):
+    """Chat actions that are triggered when a group has been migrated to a supergroup."""
+
+    @classmethod
+    def build(cls, update, others=None, self_id=None):
+        if (isinstance(update, (
+                types.UpdateNewMessage, types.UpdateNewChannelMessage))
+                and isinstance(update.message, types.MessageService)):
+            msg = update.message
+            action = update.message.action
+            if isinstance(action, types.MessageActionChannelMigrateFrom):
+                return cls.Event(msg)
 
 
 def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> List[types.BotCommand]:

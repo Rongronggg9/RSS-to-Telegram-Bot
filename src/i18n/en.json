@@ -19,6 +19,7 @@
   "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
   "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",
   "permission_denied_not_in_private_chat": "This command can only be used in a private chat.",
+  "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\"\n2. Change \"Chat history for new members\" to \"Visible\"\n3. Save chat history visibility setting\n4. Save all settings\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again\n6. Now you should be able to use the bot",
 
   "subscribe": "Subscribe",
   "unsubscribe": "Unsubscribe",

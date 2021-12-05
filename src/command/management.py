@@ -1,7 +1,7 @@
 import asyncio
 from typing import Union, Optional
 from telethon import events, Button
-from telethon.tl.custom import Message
+from telethon.tl.patched import Message
 from telethon.tl import types
 
 from src import env, web, db
@@ -134,7 +134,7 @@ async def cmd_help(event: Union[events.NewMessage.Event, Message], *args, lang: 
         f"<b>/activate_subs</b>: {escape_html(i18n[lang]['cmd_description_activate_subs'])}\n"
         f"<b>/deactivate_subs</b>: {escape_html(i18n[lang]['cmd_description_deactivate_subs'])}\n"
         f"<b>/version</b>: {escape_html(i18n[lang]['cmd_description_version'])}\n"
-        f"<b>/lang</b>: {escape_html(' / '.join(i18n[_lang]['cmd_description_lang'] for _lang in ALL_LANGUAGES))}\n"
+        f"<b>/lang</b>: {escape_html(' / '.join(i18n.get_all_l10n_string('cmd_description_lang')))}\n"
         f"<b>/help</b>: {escape_html(i18n[lang]['cmd_description_help'])}\n\n",
         parse_mode='html'
     )

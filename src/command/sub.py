@@ -1,6 +1,6 @@
 from typing import Union, Optional
 from telethon import events, Button
-from telethon.tl.custom import Message
+from telethon.tl.patched import Message
 
 from src.i18n import i18n
 from . import inner

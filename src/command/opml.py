@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl import types
-from telethon.tl.custom import Message
+from telethon.tl.patched import Message
 
 from src import env
 from src.i18n import i18n

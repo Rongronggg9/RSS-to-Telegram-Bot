@@ -11,13 +11,21 @@ from .utils import permission_required, command_parser, escape_html, callback_da
 async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
     args = command_parser(event.text)
 
+    if len(args) == 1:
+        await event.respond(i18n[lang]['sub_reply_feed_url_prompt_html'],
+                            parse_mode='html',
+                            buttons=Button.force_reply(single_use=True,
+                                                       selective=True,
+                                                       placeholder='url1 url2 url3 ...'),
+                            reply_to=event.id if event.is_group else None)
+        return
+
     msg: Message = await event.respond(i18n[lang]['processing'])
 
     sub_result = await inner.sub.subs(event.chat_id, args, lang=lang)
 
     if sub_result is None:
         await msg.edit(i18n[lang]['sub_reply_feed_url_prompt_html'],
-                       buttons=Button.force_reply(),
                        parse_mode='html')
         return
 

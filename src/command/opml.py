@@ -14,8 +14,10 @@ from .utils import permission_required, logger
 @permission_required(only_manager=False)
 async def cmd_import(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
     await event.respond(i18n[lang]['send_opml_prompt'],
-                        buttons=Button.force_reply())
-    # single_use=False, selective=Ture, placeholder='i18n[lang]["send_opml_reply_placeholder"]'
+                        buttons=Button.force_reply(single_use=True,
+                                                   selective=True,
+                                                   placeholder=i18n[lang]['send_opml_reply_placeholder']),
+                        reply_to=event.id if event.is_group else None)
 
 
 @permission_required(only_manager=False)

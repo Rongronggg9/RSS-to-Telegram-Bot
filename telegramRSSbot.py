@@ -330,7 +330,7 @@ def main():
 
     feeds = Feeds()
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(rss_monitor, trigger='cron', minute='*/1', max_instances=5)
+    scheduler.add_job(rss_monitor, trigger='cron', minute='*/1', max_instances=5, timezone='utc')
     scheduler.start()
 
     bot.run_until_disconnected()

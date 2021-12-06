@@ -8,7 +8,7 @@ from bs4.element import Tag
 from src import db, web
 from src.i18n import i18n
 from ..utils import logger, escape_html
-from .utils import get_hash, update_interval, list_sub, get_http_caching_headers
+from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
@@ -78,13 +78,14 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> Dict[s
 
 async def subs(user_id: int,
                feed_urls: Sequence[str],
-               lang: Optional[str] = None) \
+               lang: Optional[str] = None,
+               bypass_url_filter: bool = False) \
         -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
-    filtered_feed_urls = tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), feed_urls))
-    if not filtered_feed_urls:
+    feed_urls = filter_urls(feed_urls) if not bypass_url_filter else feed_urls
+    if not feed_urls:
         return None
 
-    result = await asyncio.gather(*(sub(user_id, url, lang=lang) for url in filtered_feed_urls))
+    result = await asyncio.gather(*(sub(user_id, url, lang=lang) for url in feed_urls))
 
     success = tuple(sub_d for sub_d in result if sub_d['sub'])
     failure = tuple(sub_d for sub_d in result if not sub_d['sub'])
@@ -143,10 +144,10 @@ async def unsub(user_id: int, feed_url: str = None, sub_id: int = None, lang: Op
 async def unsubs(user_id: int,
                  feed_urls: Sequence[str] = None,
                  sub_ids: Sequence[int] = None,
-                 lang: Optional[str] = None) \
+                 lang: Optional[str] = None,
+                 bypass_url_filter: bool = False) \
         -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
-    feed_urls = (tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), feed_urls))
-                 if feed_urls else None)
+    feed_urls = filter_urls(feed_urls) if not bypass_url_filter else feed_urls
     if not (feed_urls or sub_ids):
         return None
 

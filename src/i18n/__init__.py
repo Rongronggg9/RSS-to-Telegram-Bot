@@ -62,7 +62,7 @@ class _L10N:
         if self.key_exist(key):
             return self.__l10n_lang[key]
         elif self.__lang_code != FALLBACK_LANGUAGE:
-            return _I18N().get_fallback_l10n()[key]
+            return _I18N().get_fallback_l10n(self.__lang_code)[key]
         else:
             return key
 

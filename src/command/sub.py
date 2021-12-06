@@ -10,8 +10,9 @@ from .utils import permission_required, command_parser, escape_html, callback_da
 @permission_required(only_manager=False)
 async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
     args = command_parser(event.text)
+    filtered_urls = inner.utils.filter_urls(args)
 
-    if len(args) == 1:
+    if not filtered_urls:
         await event.respond(i18n[lang]['sub_reply_feed_url_prompt_html'],
                             parse_mode='html',
                             buttons=Button.force_reply(single_use=True,

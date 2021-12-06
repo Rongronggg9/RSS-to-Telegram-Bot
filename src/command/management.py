@@ -6,8 +6,8 @@ from telethon.tl import types
 
 from src import env, web, db
 from src.i18n import i18n, ALL_LANGUAGES
-from .utils import permission_required, command_parser, logger, escape_html, set_bot_commands, get_commands_list, \
-    callback_data_with_page_parser
+from .utils import permission_required, parse_command, logger, set_bot_commands, get_commands_list, \
+    parse_callback_data_with_page
 from . import inner
 from ..parsing.post import get_post_from_entry
 
@@ -17,7 +17,7 @@ async def cmd_start(event: Union[events.NewMessage.Event, Message], *args, lang=
     if lang is None:
         await cmd_lang.__wrapped__(event)
         return
-    await cmd_help.__wrapped__(event, lang)
+    await cmd_or_callback_help.__wrapped__(event, lang)
 
 
 @permission_required(only_manager=False)
@@ -39,7 +39,8 @@ async def callback_set_lang(event: events.CallbackQuery.Event, *args, **kwargs):
                            lang_code='',
                            commands=get_commands_list(lang=lang, manager=event.chat_id == env.MANAGER))
     logger.info(f'Changed language to {lang} for {event.chat_id}')
-    await event.edit(welcome_msg)
+    help_button = Button.inline(text=i18n[lang]['cmd_description_help'], data='help')
+    await event.edit(welcome_msg, buttons=help_button)
 
 
 @permission_required(only_manager=False)
@@ -111,7 +112,7 @@ async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
                                               *args,
                                               lang: Optional[str] = None,
                                               **kwargs):  # callback data: (activate|deactivate)_sub_{id}|{page}
-    sub_id, page = callback_data_with_page_parser(event.data)
+    sub_id, page = parse_callback_data_with_page(event.data)
     unsub_res = await inner.utils.activate_or_deactivate_sub(event.chat_id, sub_id, activate=activate)
     if unsub_res is None:
         await event.answer('ERROR: ' + i18n[lang]['subscription_not_exist'], alert=True)
@@ -120,29 +121,18 @@ async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
 
 
 @permission_required(only_manager=False)
-async def cmd_help(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
-    await event.respond(
-        f"<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>{escape_html(i18n[lang]['rsstt_slogan'])}</a>\n"
-        f"\n"
-        f"{escape_html(i18n[lang]['commands'])}:\n"
-        f"<b>/sub</b>: {escape_html(i18n[lang]['cmd_description_sub'])}\n"
-        f"<b>/unsub</b>: {escape_html(i18n[lang]['cmd_description_unsub'])}\n"
-        f"<b>/unsub_all</b>: {escape_html(i18n[lang]['cmd_description_unsub_all'])}\n"
-        f"<b>/list</b>: {escape_html(i18n[lang]['cmd_description_list'])}\n"
-        f"<b>/import</b>: {escape_html(i18n[lang]['cmd_description_import'])}\n"
-        f"<b>/export</b>: {escape_html(i18n[lang]['cmd_description_export'])}\n"
-        f"<b>/activate_subs</b>: {escape_html(i18n[lang]['cmd_description_activate_subs'])}\n"
-        f"<b>/deactivate_subs</b>: {escape_html(i18n[lang]['cmd_description_deactivate_subs'])}\n"
-        f"<b>/version</b>: {escape_html(i18n[lang]['cmd_description_version'])}\n"
-        f"<b>/lang</b>: {escape_html(' / '.join(i18n.get_all_l10n_string('cmd_description_lang')))}\n"
-        f"<b>/help</b>: {escape_html(i18n[lang]['cmd_description_help'])}\n\n",
-        parse_mode='html'
-    )
+async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
+                               *args,
+                               lang: Optional[str] = None,
+                               **kwargs):  # callback data: help; command: /help
+    msg = i18n[lang]['help_msg_html']
+    await event.respond(msg, parse_mode='html') if isinstance(event, events.NewMessage.Event) \
+        else await event.edit(msg, parse_mode='html')
 
 
 @permission_required(only_manager=True)
 async def cmd_test(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
-    args = command_parser(event.text)
+    args = parse_command(event.text)
     if len(args) < 2:
         await event.respond('ERROR: ' + i18n[lang]['test_command_usage_prompt'])
         return

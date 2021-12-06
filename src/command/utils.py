@@ -16,11 +16,11 @@ logger = log.getLogger('RSStT.command')
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
 
-def command_parser(command: str) -> list[AnyStr]:
+def parse_command(command: str) -> list[AnyStr]:
     return re.compile(r'\s+').split(command.strip())
 
 
-def callback_data_with_page_parser(callback_data: bytes) -> Tuple[int, int]:
+def parse_callback_data_with_page(callback_data: bytes) -> Tuple[int, int]:
     callback_data = callback_data.decode().strip()
     id_and_page = callback_data.split('|')
     _id = int(id_and_page[0].split('_')[-1])
@@ -82,7 +82,7 @@ def permission_required(func: Optional[Callable] = None,
                        if is_chat_action else
                        '(no command, other message)')
             if command.startswith('/') and '@' in command:
-                mention = command_parser(command)[0].split('@')[1]
+                mention = parse_command(command)[0].split('@')[1]
                 if mention != env.bot_peer.username:
                     raise events.StopPropagation  # none of my business!
 

@@ -16,6 +16,13 @@ def get_hash(string: AnyStr) -> str:
     return hex(crc32(string))[2:]
 
 
+def filter_urls(urls: Optional[Iterable[str]]) -> Tuple[str, ...]:
+    if not urls:
+        return tuple()
+
+    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls))
+
+
 def get_http_caching_headers(headers: Optional[Mapping]) -> Dict[str, Optional[Union[str, datetime]]]:
     """
     :param headers: dict of headers

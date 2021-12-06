@@ -12,7 +12,7 @@ from . import inner
 from ..parsing.post import get_post_from_entry
 
 
-@permission_required(only_manager=False)
+@permission_required(only_manager=False, ignore_tg_lang=True)
 async def cmd_start(event: Union[events.NewMessage.Event, Message], *args, lang=None, **kwargs):
     if lang is None:
         await cmd_lang.__wrapped__(event)

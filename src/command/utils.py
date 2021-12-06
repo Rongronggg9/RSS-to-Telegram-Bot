@@ -1,6 +1,6 @@
 import re
 from functools import partial, wraps
-from typing import Union, Optional, AnyStr, Any, List, Tuple
+from typing import Union, Optional, AnyStr, Any, List, Tuple, Callable
 from telethon import events
 from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
@@ -46,7 +46,11 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
         await event.respond(msg, *args, **kwargs)
 
 
-def permission_required(func=None, *, only_manager=False, only_in_private_chat=False):
+def permission_required(func: Optional[Callable] = None,
+                        *,
+                        only_manager: bool = False,
+                        only_in_private_chat: bool = False,
+                        ignore_tg_lang: bool = False):
     if func is None:
         return partial(permission_required, only_manager=only_manager,
                        only_in_private_chat=only_in_private_chat)
@@ -101,8 +105,8 @@ def permission_required(func=None, *, only_manager=False, only_in_private_chat=F
             )
 
             lang_in_db = await db.User.get_or_none(id=chat_id).values_list('lang', flat=True)
-            lang = lang_in_db
-            if not lang or lang == 'null':
+            lang = lang_in_db if lang_in_db != 'null' else None
+            if not lang and not ignore_tg_lang:
                 lang = sender.lang_code if hasattr(sender, 'lang_code') else None
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:

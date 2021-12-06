@@ -4,12 +4,12 @@ from telethon.tl.patched import Message
 
 from src.i18n import i18n
 from . import inner
-from .utils import permission_required, command_parser, escape_html, callback_data_with_page_parser
+from .utils import permission_required, parse_command, escape_html, parse_callback_data_with_page
 
 
 @permission_required(only_manager=False)
 async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
-    args = command_parser(event.text)
+    args = parse_command(event.text)
     filtered_urls = inner.utils.filter_urls(args)
 
     if not filtered_urls:
@@ -35,7 +35,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: O
 
 @permission_required(only_manager=False)
 async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
-    args = command_parser(event.text)
+    args = parse_command(event.text)
     user_id = event.chat_id
 
     unsub_result = await inner.sub.unsubs(user_id, args, lang=lang)
@@ -76,7 +76,7 @@ async def cmd_list(event: Union[events.NewMessage.Event, Message], *args, lang: 
 @permission_required(only_manager=False)
 async def callback_unsub(event: events.CallbackQuery.Event, *args, lang: Optional[str] = None, **kwargs):
     # callback data = unsub_{sub_id}|{page}
-    sub_id, page = callback_data_with_page_parser(event.data)
+    sub_id, page = parse_callback_data_with_page(event.data)
     unsub_d = await inner.sub.unsub(event.chat_id, sub_id=sub_id)
 
     msg = (

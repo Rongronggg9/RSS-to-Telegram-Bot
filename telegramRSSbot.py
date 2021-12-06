@@ -103,7 +103,7 @@ def main():
                           command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.management.cmd_start,
                           events.NewMessage(pattern='/start'))
-    bot.add_event_handler(command.management.cmd_help,
+    bot.add_event_handler(command.management.cmd_or_callback_help,
                           events.NewMessage(pattern='/help'))
     bot.add_event_handler(partial(command.management.cmd_activate_or_deactivate_subs, activate=True),
                           events.NewMessage(pattern='/activate_subs'))
@@ -122,6 +122,8 @@ def main():
                           events.CallbackQuery(pattern=r'^get_unsub_page_\d+$'))
     bot.add_event_handler(command.management.callback_set_lang,
                           events.CallbackQuery(pattern=r'^set_lang_[\w_\-]+$'))
+    bot.add_event_handler(command.management.cmd_or_callback_help,
+                          events.CallbackQuery(pattern=r'^help$'))
     bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_all_subs, activate=True),
                           events.CallbackQuery(pattern=r'^activate_all_subs$'))
     bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_all_subs, activate=False),

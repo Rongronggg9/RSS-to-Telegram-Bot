@@ -67,6 +67,6 @@
   "cmd_description_deactivate_subs": "Deactivate subscriptions",
   "cmd_description_version": "Check the bot version",
   "cmd_description_lang": "Select a language",
-  "cmd_description_help": "Check help",
+  "cmd_description_help": "View help",
   "cmd_description_test": "Test"
 }

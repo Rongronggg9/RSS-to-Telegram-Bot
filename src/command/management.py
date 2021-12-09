@@ -17,7 +17,7 @@ async def cmd_start(event: Union[events.NewMessage.Event, Message], *args, lang=
     if lang is None:
         await cmd_lang.__wrapped__(event)
         return
-    await cmd_or_callback_help.__wrapped__(event, lang)
+    await cmd_or_callback_help.__wrapped__(event, lang=lang)
 
 
 @permission_required(only_manager=False)

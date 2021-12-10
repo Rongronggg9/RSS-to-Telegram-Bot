@@ -1,14 +1,12 @@
-import asyncio
 from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl.patched import Message
 from telethon.tl import types
 
-from src import env, web, db
+from src import env, db
 from src.i18n import i18n, ALL_LANGUAGES
-from .utils import permission_required, parse_command, logger, set_bot_commands, get_commands_list
+from .utils import permission_required, logger, set_bot_commands, get_commands_list
 from . import inner
-from ..parsing.post import get_post_from_entry
 
 
 @permission_required(only_manager=False, ignore_tg_lang=True)
@@ -50,62 +48,6 @@ async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, ev
     msg = i18n[lang]['help_msg_html']
     await event.respond(msg, parse_mode='html') if isinstance(event, events.NewMessage.Event) \
         else await event.edit(msg, parse_mode='html')
-
-
-@permission_required(only_manager=True)
-async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.text)
-    if len(args) < 2:
-        await event.respond('ERROR: ' + i18n[lang]['test_command_usage_prompt'])
-        return
-    url = args[1]
-
-    if len(args) > 2 and args[2] == 'all':
-        start = 0
-        end = None
-    elif len(args) == 3:
-        start = int(args[2])
-        end = int(args[2]) + 1
-    elif len(args) == 4:
-        start = int(args[2])
-        end = int(args[3]) + 1
-    else:
-        start = 0
-        end = 1
-
-    uid = event.chat_id
-
-    try:
-        d = await web.feed_get(url, web_semaphore=False)
-        rss_d = d['rss_d']
-
-        if rss_d is None:
-            await event.respond(d['msg'])
-            return
-
-        if start >= len(rss_d.entries):
-            start = 0
-            end = 1
-        elif end is not None and start > 0 and start >= end:
-            end = start + 1
-
-        entries_to_send = rss_d.entries[start:end]
-
-        await asyncio.gather(
-            *(__send(uid, entry, rss_d.feed.title, url) for entry in entries_to_send)
-        )
-
-    except Exception as e:
-        logger.warning(f"Sending failed:", exc_info=e)
-        await event.respond('ERROR: ' + i18n[lang]['internal_error'])
-        return
-
-
-async def __send(uid, entry, feed_title, link):
-    post = get_post_from_entry(entry, feed_title, link)
-    await post.generate_message()
-    logger.debug(f"Sending {entry['title']} ({entry['link']})...")
-    await post.send_message(uid)
 
 
 @permission_required(only_manager=False)

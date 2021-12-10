@@ -338,8 +338,11 @@ def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> List
     ]
 
     if manager:
-        commands.append(
-            types.BotCommand(command="test", description=i18n[lang]['cmd_description_test'])
+        commands.extend(
+            (
+                types.BotCommand(command="test", description=i18n[lang]['cmd_description_test']),
+                types.BotCommand(command="set_option", description=i18n[lang]['cmd_description_set_option']),
+            )
         )
 
     return commands

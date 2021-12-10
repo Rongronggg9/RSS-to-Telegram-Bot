@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Final, Callable, Any, NoReturn, Set
+from typing import Optional, Dict, Final, Callable, Any, NoReturn, Set, Union
 from math import ceil
 
 from src.db import models
@@ -15,34 +15,75 @@ class EffectiveOptions:
 
     Implement a write-through cache that caches all options to reduce db load.
     """
-    options = {}
-    initialized = False
-    default_options = {
-        "default_interval": 10
+    __options: Dict[str, Union[str, int]] = {}
+    __initialized = False
+    __default_options: Dict[str, Union[str, int]] = {
+        "default_interval": 10,
+        "minimal_interval": 5,
     }
 
     @classmethod
-    def get(cls, key: str) -> str:
+    @property
+    def options(cls) -> Dict[str, Union[str, int]]:
+        return cls.__options.copy()
+
+    @classmethod
+    @property
+    def default_options(cls) -> Dict[str, Union[str, int]]:
+        return cls.__default_options.copy()
+
+    @classmethod
+    @property
+    def default_interval(cls) -> int:
+        return cls.get('default_interval')
+
+    @classmethod
+    @property
+    def minimal_interval(cls) -> int:
+        return cls.get("minimal_interval")
+
+    @classmethod
+    def validate(cls, key: str, value: Union[int, str], ignore_type_error: bool = False) -> Union[int, str]:
+        if len(key) > 255:
+            raise KeyError("Option key must be 255 characters or less")
+
+        value_type = type(cls.__default_options[key])
+        if value_type is str:
+            return str(value)
+
+        if value_type is int and type(value) is str:
+            if value.lstrip('-').isdecimal():
+                return int(value)
+
+            if ignore_type_error:
+                return cls.__default_options[key]
+            raise ValueError("Option value must be an integer")
+
+        return value
+
+    @classmethod
+    def get(cls, key: str) -> Union[str, int]:
         """
         Get the value of an Option.
 
         :param key: option key
         :return: option value
         """
-        if not cls.initialized:
+        if not cls.__initialized:
             raise RuntimeError("EffectiveOptions not initialized")
-        return cls.options[key]
+        return cls.__options[key]
 
     @classmethod
-    async def set(cls, key: str, value: str) -> NoReturn:
+    async def set(cls, key: str, value: Union[int, str]) -> NoReturn:
         """
         Set the value of an Option. (write-through to the DB)
 
         :param key: option key
         :param value: option value
         """
-        await models.Option.update_or_create(defaults={'value': value}, key=key)
-        cls.options[key] = value
+        value = cls.validate(key, value)
+        await models.Option.update_or_create(defaults={'value': str(value)}, key=key)
+        cls.__options[key] = value
 
     @classmethod
     async def init(cls) -> NoReturn:
@@ -51,17 +92,17 @@ class EffectiveOptions:
         """
         options = await models.Option.all()
         for option in options:
-            if option.key not in cls.default_options:  # invalid option
+            if option.key not in cls.__default_options:  # invalid option
                 continue
-            cls.options[option.key] = option.value
+            cls.__options[option.key] = cls.validate(option.key, option.value, ignore_type_error=True)
 
-        for key, value in cls.default_options.items():
-            if key in cls.options:
+        for key, value in cls.__default_options.items():
+            if key in cls.__options:
                 continue
-            cls.options[key] = value
+            cls.__options[key] = value
             # await models.Option.create(key=key, value=value)  # init option
 
-        cls.initialized = True
+        cls.__initialized = True
 
 
 class EffectiveTasks:
@@ -98,7 +139,7 @@ class EffectiveTasks:
             cls.__all_tasks = {}
             cls.__task_buckets = {}
             feeds = await models.Feed.filter(state=1).values('id', 'interval')
-            default_interval = EffectiveOptions.get('default_interval')
+            default_interval = EffectiveOptions.default_interval
             for feed in feeds:
                 cls.update(feed_id=feed['id'], interval=feed['interval'] or default_interval)
 
@@ -114,7 +155,7 @@ class EffectiveTasks:
         :param feed_id: the id of the feed in the task
         :param interval: the interval of the task
         """
-        interval = interval or EffectiveOptions.get('default_interval')
+        interval = interval or EffectiveOptions.default_interval
         if feed_id in cls.__all_tasks:  # if already have a task
             if cls.__all_tasks[feed_id] == interval:  # no need to update
                 return

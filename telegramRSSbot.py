@@ -9,6 +9,7 @@ from telethon.tl import types
 from random import sample
 from pathlib import Path
 
+import src.command.administration
 import src.command.customization
 from src import env, log, db, command
 from src.i18n import i18n, ALL_LANGUAGES
@@ -101,7 +102,7 @@ def main():
     bot.add_event_handler(command.opml.cmd_export,
                           events.NewMessage(pattern='/export'))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
-                          events.NewMessage(pattern='/set'))
+                          events.NewMessage(pattern='/set([^_]|$)'))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.management.cmd_start,
@@ -112,12 +113,14 @@ def main():
                           events.NewMessage(pattern='/activate_subs'))
     bot.add_event_handler(partial(src.command.customization.cmd_activate_or_deactivate_subs, activate=False),
                           events.NewMessage(pattern='/deactivate_subs'))
-    bot.add_event_handler(command.management.cmd_test,
-                          events.NewMessage(pattern='/test'))
     bot.add_event_handler(command.management.cmd_version,
                           events.NewMessage(pattern='/version'))
     bot.add_event_handler(command.management.cmd_lang,
                           events.NewMessage(pattern='/lang'))
+    bot.add_event_handler(src.command.administration.cmd_test,
+                          events.NewMessage(pattern='/test'))
+    bot.add_event_handler(src.command.administration.cmd_set_option,
+                          events.NewMessage(pattern='/set_option'))
     # callback query handler
     bot.add_event_handler(command.sub.callback_unsub,
                           events.CallbackQuery(pattern=r'^unsub_\d+(\|\d+)$'))

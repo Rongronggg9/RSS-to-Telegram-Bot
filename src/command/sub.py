@@ -8,7 +8,7 @@ from .utils import permission_required, parse_command, escape_html, parse_callba
 
 
 @permission_required(only_manager=False)
-async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.text)
     filtered_urls = inner.utils.filter_urls(args)
 
@@ -34,7 +34,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *args, lang: O
 
 
 @permission_required(only_manager=False)
-async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.text)
     user_id = event.chat_id
 
@@ -43,7 +43,7 @@ async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *args, lang:
     if unsub_result is None:
         buttons = await inner.utils.get_sub_choosing_buttons(user_id, lang=lang, page=1, callback='unsub',
                                                              get_page_callback='get_unsub_page')
-        await event.respond(i18n[lang]['unsub_choose_feed_prompt_html'] if buttons else i18n[lang]['no_subscription'],
+        await event.respond(i18n[lang]['unsub_choose_sub_prompt_html'] if buttons else i18n[lang]['no_subscription'],
                             buttons=buttons,
                             parse_mode='html')
         return
@@ -52,14 +52,14 @@ async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *args, lang:
 
 
 @permission_required(only_manager=False)
-async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     unsub_all_result = await inner.sub.unsub_all(event.chat_id)
     await event.respond(unsub_all_result['msg'] if unsub_all_result else i18n[lang]['no_subscription'],
                         parse_mode='html')
 
 
 @permission_required(only_manager=False)
-async def cmd_list(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def cmd_list(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     subs = await inner.utils.list_sub(event.chat_id)
     if not subs:
         await event.respond(i18n[lang]['no_subscription'])
@@ -74,7 +74,7 @@ async def cmd_list(event: Union[events.NewMessage.Event, Message], *args, lang: 
 
 
 @permission_required(only_manager=False)
-async def callback_unsub(event: events.CallbackQuery.Event, *args, lang: Optional[str] = None, **kwargs):
+async def callback_unsub(event: events.CallbackQuery.Event, *_, lang: Optional[str] = None, **__):
     # callback data = unsub_{sub_id}|{page}
     sub_id, page = parse_callback_data_with_page(event.data)
     unsub_d = await inner.sub.unsub(event.chat_id, sub_id=sub_id)
@@ -96,10 +96,10 @@ async def callback_unsub(event: events.CallbackQuery.Event, *args, lang: Optiona
 
 @permission_required(only_manager=False)
 async def callback_get_unsub_page(event: events.CallbackQuery.Event,
-                                  *args,
+                                  *_,
                                   page: Optional[int] = None,
                                   lang: Optional[str] = None,
-                                  **kwargs):  # callback data = get_unsub_page_{page_number}
+                                  **__):  # callback data = get_unsub_page_{page_number}
     page = page or int(event.data.decode().strip().split('_')[-1])
     buttons = await inner.utils.get_sub_choosing_buttons(event.chat_id, page, callback='unsub',
                                                          get_page_callback='get_unsub_page', lang=lang)

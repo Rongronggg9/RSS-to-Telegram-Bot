@@ -30,7 +30,7 @@
   "sub_successful": "订阅成功",
   "sub_failed": "订阅失败",
 
-  "unsub_choose_feed_prompt_html": "请选择要退订的订阅。\n或者，你也可以使用 <code>/unsub url1 url2 url3 ...</code> 来批量退订。",
+  "unsub_choose_sub_prompt_html": "请选择要退订的订阅。\n或者，你也可以使用 <code>/unsub url1 url2 url3 ...</code> 来批量退订。",
   "unsub_successful": "退订成功",
   "unsub_failed": "退订失败",
 
@@ -40,9 +40,25 @@
   "opml_import_processing": "如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待。",
   "opml_parse_error": "OPML 解析错误",
 
+  "set_choose_sub_prompt": "请选择你要设置的订阅。",
+  "action_invalid": "操作不合法。",
+  "status": "状态",
+  "status_activated": "已启用",
+  "status_deactivated": "已停用",
+  "notification": "通知",
+  "notification_normal": "正常",
+  "notification_muted": "静音",
+  "monitor_interval": "检查间隔",
+  "set_interval_prompt": "请选择检查间隔。",
+
   "choose_sub_prompt": "请选择订阅",
   "previous_page": "上一页",
   "next_page": "下一页",
+  "back": "返回",
+
+  "subscription_info": "订阅信息",
+  "subscription_title": "订阅标题",
+  "feed_url": "源 URL",
 
   "feed_deactivated_warn": "检查任务已经连续失败 100 次，对该 RSS 源的订阅已被停用。\n若要重新启用，请使用 /activate_subs 命令。",
 
@@ -61,6 +77,7 @@
   "cmd_description_unsub": "退订订阅",
   "cmd_description_unsub_all": "退订所有订阅",
   "cmd_description_list": "列出订阅列表",
+  "cmd_description_set": "自定义订阅设置",
   "cmd_description_import": "从 OPML 导入订阅",
   "cmd_description_export": "导出订阅到 OPML",
   "cmd_description_activate_subs": "启用订阅",

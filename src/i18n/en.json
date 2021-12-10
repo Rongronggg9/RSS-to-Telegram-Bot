@@ -30,7 +30,7 @@
   "sub_successful": "Subscribed successfully",
   "sub_failed": "Subscribed failed",
 
-  "unsub_choose_feed_prompt_html": "Please choose the feed you'd like to unsubscribe. \nOr, you may use <code>/unsub url1 url2 url3 ...</code> to unsubscribe in bulk.",
+  "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe. \nOr, you may use <code>/unsub url1 url2 url3 ...</code> to unsubscribe in bulk.",
   "unsub_successful": "Unsubscribed successfully",
   "unsub_failed": "Unsubscribed failed",
 
@@ -40,9 +40,25 @@
   "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
   "opml_parse_error": "OPML parsing error",
 
+  "set_choose_sub_prompt": "Please choose a subscription you'd like to customize.",
+  "action_invalid": "Action invalid.",
+  "status": "Status",
+  "status_activated": "Activated",
+  "status_deactivated": "Deactivated",
+  "notification": "Notification",
+  "notification_normal": "Normal",
+  "notification_muted": "Muted",
+  "monitor_interval": "Monitor interval",
+  "set_interval_prompt": "Please select a monitor interval.",
+
   "choose_sub_prompt": "Please choose a subscription",
   "previous_page": "Previous page",
   "next_page": "Next page",
+  "back": "Back",
+
+  "subscription_info": "Subscription info",
+  "subscription_title": "Subscription title",
+  "feed_url": "Feed URL",
 
   "feed_deactivated_warn": "The monitoring task had failed for 100 consecutive times. Your subscription to the RSS feed has been deactivated.\nTo reactivate it, please use the /activate_subs command.",
 
@@ -61,6 +77,7 @@
   "cmd_description_unsub": "Unsubscribe",
   "cmd_description_unsub_all": "Unsubscribe all subscriptions",
   "cmd_description_list": "Check the subscription list",
+  "cmd_description_set": "Customize subscriptions",
   "cmd_description_import": "Import subscriptions from an OPML file",
   "cmd_description_export": "Export subscriptions to an OPML file",
   "cmd_description_activate_subs": "Activate subscriptions",

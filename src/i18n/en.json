@@ -69,7 +69,13 @@
   "deactivate_all_subs": "Deactivate all my subscriptions",
   "all_subs_are_deactivated": "All subscriptions are deactivated.",
 
-  "test_command_usage_prompt": "Command usage: /test RSS_URL entry_start_number(optional) entry_end_number(optional)",
+  "test_cmd_usage_prompt_html": "Command usage: <code>/test RSS_URL entry_start_number(optional) entry_end_number(optional)</code>",
+  "set_option_cmd_usage_prompt_html": "Command usage: <code>/set_option key value</code>",
+  "current_options": "Current options",
+  "option_value_type": "Value type",
+  "option_key_invalid": "The Option key is invalid",
+  "option_value_invalid": "The Option value is invalid, please check its type",
+  "option_updated": "The option has been updated",
 
   "rsstt_slogan": "RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience.",
   "commands": "Commands",
@@ -85,5 +91,6 @@
   "cmd_description_version": "Check the bot version",
   "cmd_description_lang": "Select a language",
   "cmd_description_help": "View help",
-  "cmd_description_test": "Test"
+  "cmd_description_test": "Test (bot manager only)",
+  "cmd_description_set_option": "Set bot options (bot manager only)"
 }

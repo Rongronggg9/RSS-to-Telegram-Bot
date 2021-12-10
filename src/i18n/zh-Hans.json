@@ -69,7 +69,13 @@
   "deactivate_all_subs": "停用我的全部订阅",
   "all_subs_are_deactivated": "所有订阅都已停用。",
 
-  "test_command_usage_prompt": "格式需要为: /test RSS_URL 条目编号起点(可选) 条目编号终点(可选)",
+  "test_cmd_usage_prompt_html": "命令用法: <code>/test RSS_URL 条目编号起点(可选) 条目编号终点(可选)</code>",
+  "set_option_cmd_usage_prompt_html": "命令用法: <code>/set_option 键 值</code>",
+  "current_options": "目前的配置",
+  "option_value_type": "值类型",
+  "option_key_invalid": "配置的键不合法",
+  "option_value_invalid": "配置的值不合法，请检查其类型",
+  "option_updated": "配置已更新",
 
   "rsstt_slogan": "RSS to Telegram Bot，关心你的阅读体验的 Telegram RSS 机器人。",
   "commands": "命令",
@@ -85,5 +91,6 @@
   "cmd_description_version": "查看 bot 版本",
   "cmd_description_lang": "选择语言",
   "cmd_description_help": "查看帮助",
-  "cmd_description_test": "测试"
+  "cmd_description_test": "测试 (仅 bot 管理员)",
+  "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)"
 }

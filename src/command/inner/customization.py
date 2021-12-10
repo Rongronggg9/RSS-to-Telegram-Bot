@@ -32,7 +32,7 @@ async def get_sub_customization_buttons(sub: db.Sub,
                           i18n[lang]['notification_normal' if sub.notify else 'notification_muted'],
                           data=f'set_{sub.id}_notify|{page}'),
             Button.inline(i18n[lang]['monitor_interval'] + ': ' +
-                          str(sub.interval or db.effective_utils.EffectiveOptions.get("default_interval")),
+                          str(sub.interval or db.effective_utils.EffectiveOptions.default_interval),
                           data=f'set_{sub.id}_interval|{page}'),
         ),
         (

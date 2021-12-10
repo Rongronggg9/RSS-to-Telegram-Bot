@@ -117,8 +117,9 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
     if feed is None:
         return
 
-    default_interval = db.effective_utils.EffectiveOptions.get('default_interval')
+    default_interval = db.effective_utils.EffectiveOptions.default_interval
     curr_interval = feed.interval or default_interval
+    default_flag = False
 
     if not new_interval:
         sub_exist = await feed.subs.all().exists()
@@ -131,10 +132,13 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
             await deactivate_feed(feed)
             return
         new_interval = min(intervals, key=lambda _: default_interval if _ is None else _) or default_interval
-        force_update = new_interval != curr_interval
+        default_flag = new_interval == default_interval and new_interval not in intervals
+        force_update = True
+
+    force_update = force_update and new_interval != curr_interval
 
     if new_interval < curr_interval or force_update:  # if not force_update, will only reduce the interval
-        feed.interval = new_interval
+        feed.interval = new_interval if not default_flag else None
         await feed.save()
         db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
         return
@@ -204,7 +208,7 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
     if activate:
         await activate_feed(sub.feed)
 
-    interval = sub.interval or db.effective_utils.EffectiveOptions.get('default_interval')
+    interval = sub.interval or db.effective_utils.EffectiveOptions.default_interval
     if _update_interval:
         await update_interval(sub.feed, new_interval=interval if activate else None)
 

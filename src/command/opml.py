@@ -12,7 +12,7 @@ from .utils import permission_required, logger
 
 
 @permission_required(only_manager=False)
-async def cmd_import(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def cmd_import(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     await event.respond(i18n[lang]['send_opml_prompt'],
                         buttons=Button.force_reply(single_use=True,
                                                    selective=True,
@@ -21,7 +21,7 @@ async def cmd_import(event: Union[events.NewMessage.Event, Message], *args, lang
 
 
 @permission_required(only_manager=False)
-async def cmd_export(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def cmd_export(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     opml_file = await inner.sub.export_opml(event.chat_id)
     if opml_file is None:
         await event.respond(i18n[lang]['no_subscription'])
@@ -32,7 +32,7 @@ async def cmd_export(event: Union[events.NewMessage.Event, Message], *args, lang
 
 
 @permission_required(only_manager=False)
-async def opml_import(event: Union[events.NewMessage.Event, Message], *args, lang: Optional[str] = None, **kwargs):
+async def opml_import(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     reply_message: Message = await event.get_reply_message()
     if not (event.is_private or event.is_channel and not event.is_group) and reply_message.sender_id != env.bot_id:
         return  # must reply to the bot in a group to import opml

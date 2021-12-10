@@ -27,9 +27,9 @@ class _I18N:
                 self.__l10n_d[lang] = l10n
                 if iso_639_1_code:
                     self.__iso_639_1_d[iso_639_1_code] = lang
-            self.set_help_msg_html()
 
             self.__initialized = True
+            self.set_help_msg_html()
 
     def __getitem__(self, lang_code: Optional[str]) -> "_L10N":
         if not lang_code or not isinstance(lang_code, str):
@@ -62,6 +62,7 @@ class _I18N:
                 f"<b>/unsub</b>: {l10n.html_escaped('cmd_description_unsub')}\n"
                 f"<b>/unsub_all</b>: {l10n.html_escaped('cmd_description_unsub_all')}\n"
                 f"<b>/list</b>: {l10n.html_escaped('cmd_description_list')}\n"
+                f"<b>/set</b>: {l10n.html_escaped('cmd_description_set')}\n"
                 f"<b>/import</b>: {l10n.html_escaped('cmd_description_import')}\n"
                 f"<b>/export</b>: {l10n.html_escaped('cmd_description_export')}\n"
                 f"<b>/activate_subs</b>: {l10n.html_escaped('cmd_description_activate_subs')}\n"
@@ -87,7 +88,9 @@ class _L10N:
         if self.key_exist(key):
             return self.__l10n_lang[key]
         elif self.__lang_code != FALLBACK_LANGUAGE:
-            return _I18N().get_fallback_l10n(self.__lang_code)[key]
+            return _I18N().get_fallback_l10n(
+                self.__lang_code if not self.__l10n_lang['iso_639_1_code'] else None  # get iso-639-1 fallback if needed
+            )[key]
         else:
             return key
 

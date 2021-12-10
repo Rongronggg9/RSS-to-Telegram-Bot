@@ -9,6 +9,7 @@ from telethon.tl import types
 from random import sample
 from pathlib import Path
 
+import src.command.customization
 from src import env, log, db, command
 from src.i18n import i18n, ALL_LANGUAGES
 from src.parsing import tgraph
@@ -99,15 +100,17 @@ def main():
                           events.NewMessage(pattern='/import'))
     bot.add_event_handler(command.opml.cmd_export,
                           events.NewMessage(pattern='/export'))
+    bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
+                          events.NewMessage(pattern='/set'))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.management.cmd_start,
                           events.NewMessage(pattern='/start'))
     bot.add_event_handler(command.management.cmd_or_callback_help,
                           events.NewMessage(pattern='/help'))
-    bot.add_event_handler(partial(command.management.cmd_activate_or_deactivate_subs, activate=True),
+    bot.add_event_handler(partial(src.command.customization.cmd_activate_or_deactivate_subs, activate=True),
                           events.NewMessage(pattern='/activate_subs'))
-    bot.add_event_handler(partial(command.management.cmd_activate_or_deactivate_subs, activate=False),
+    bot.add_event_handler(partial(src.command.customization.cmd_activate_or_deactivate_subs, activate=False),
                           events.NewMessage(pattern='/deactivate_subs'))
     bot.add_event_handler(command.management.cmd_test,
                           events.NewMessage(pattern='/test'))
@@ -124,18 +127,22 @@ def main():
                           events.CallbackQuery(pattern=r'^set_lang_[\w_\-]+$'))
     bot.add_event_handler(command.management.cmd_or_callback_help,
                           events.CallbackQuery(pattern=r'^help$'))
-    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_all_subs, activate=True),
+    bot.add_event_handler(partial(src.command.customization.callback_activate_or_deactivate_all_subs, activate=True),
                           events.CallbackQuery(pattern=r'^activate_all_subs$'))
-    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_all_subs, activate=False),
+    bot.add_event_handler(partial(src.command.customization.callback_activate_or_deactivate_all_subs, activate=False),
                           events.CallbackQuery(pattern=r'^deactivate_all_subs$'))
-    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_sub, activate=True),
+    bot.add_event_handler(partial(src.command.customization.callback_activate_or_deactivate_sub, activate=True),
                           events.CallbackQuery(pattern=r'^activate_sub_\d+(\|\d+)$'))
-    bot.add_event_handler(partial(command.management.callback_activate_or_deactivate_sub, activate=False),
+    bot.add_event_handler(partial(src.command.customization.callback_activate_or_deactivate_sub, activate=False),
                           events.CallbackQuery(pattern=r'^deactivate_sub_\d+(\|\d+)$'))
-    bot.add_event_handler(partial(command.management.callback_get_activate_or_deactivate_page, activate=True),
+    bot.add_event_handler(partial(src.command.customization.callback_get_activate_or_deactivate_page, activate=True),
                           events.CallbackQuery(pattern=r'^get_activate_page_\d+$'))
-    bot.add_event_handler(partial(command.management.callback_get_activate_or_deactivate_page, activate=False),
+    bot.add_event_handler(partial(src.command.customization.callback_get_activate_or_deactivate_page, activate=False),
                           events.CallbackQuery(pattern=r'^get_deactivate_page_\d+$'))
+    bot.add_event_handler(command.customization.callback_set,
+                          events.CallbackQuery(pattern=r'^set(_\d+(_\w+(_\w+)?)?)?(\|\d+)?$'))
+    bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
+                          events.CallbackQuery(pattern=r'^get_set_page_\d+$'))
     # being added to a group handler
     bot.add_event_handler(command.management.cmd_start,
                           command.utils.AddedToGroupAction())

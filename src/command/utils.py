@@ -21,11 +21,39 @@ def parse_command(command: str) -> list[AnyStr]:
 
 
 def parse_callback_data_with_page(callback_data: bytes) -> Tuple[int, int]:
+    """
+    callback data = command_{id}[|{page}]
+
+    :param callback_data: callback data
+    :return: id, page
+    """
     callback_data = callback_data.decode().strip()
     id_and_page = callback_data.split('|')
     _id = int(id_and_page[0].split('_')[-1])
     page = int(id_and_page[1]) if len(id_and_page) > 1 else 1
     return _id, page
+
+
+def parse_sub_customization_callback_data(callback_data: bytes) \
+        -> Tuple[Optional[int], Optional[str], Optional[Union[int, str]], int]:
+    """
+    callback data = command[_{id}[_{action}[_{param}]]][|{page_number}]
+
+    :param callback_data: callback data
+    :return: id, action, param
+    """
+    callback_data = callback_data.decode().strip()
+    args = callback_data.split('|')
+    page = int(args[1]) if len(args) > 1 else 1
+    args = args[0].split('_')
+
+    _id: Optional[int] = int(args[1]) if len(args) > 1 else None
+    action: Optional[str] = args[2] if len(args) > 2 else None
+    param: Optional[Union[int, str]] = args[3] if len(args) > 3 else None
+    if param and param.lstrip('-').isdecimal():
+        param = int(param)
+
+    return _id, action, param, page
 
 
 async def respond_or_answer(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], msg: str,
@@ -299,6 +327,7 @@ def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> List
         types.BotCommand(command="unsub", description=i18n[lang]['cmd_description_unsub']),
         types.BotCommand(command="unsub_all", description=i18n[lang]['cmd_description_unsub_all']),
         types.BotCommand(command="list", description=i18n[lang]['cmd_description_list']),
+        types.BotCommand(command="set", description=i18n[lang]['cmd_description_set']),
         types.BotCommand(command="import", description=i18n[lang]['cmd_description_import']),
         types.BotCommand(command="export", description=i18n[lang]['cmd_description_export']),
         types.BotCommand(command="activate_subs", description=i18n[lang]['cmd_description_activate_subs']),

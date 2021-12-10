@@ -62,7 +62,8 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Opti
 async def get_sub_choosing_buttons(user_id: int,
                                    page: int,
                                    callback: str,
-                                   get_page_callback: str,
+                                   get_page_callback: Optional[str],
+                                   callback_contain_page_num: bool = True,
                                    lang: Optional[str] = None,
                                    rows: int = 12,
                                    columns: int = 2,
@@ -72,6 +73,7 @@ async def get_sub_choosing_buttons(user_id: int,
     :param page: page number (1-based)
     :param callback: callback data header
     :param get_page_callback: callback data header for getting another page
+    :param callback_contain_page_num: callback data should be followed by current page number or not?
     :param lang: language code
     :param rows: the number of rows
     :param columns: the number of columns
@@ -89,7 +91,9 @@ async def get_sub_choosing_buttons(user_id: int,
     subs_count_per_page = columns * rows
     page_start = (page - 1) * subs_count_per_page
     page_end = page_start + subs_count_per_page
-    buttons_to_arrange = tuple(Button.inline(_sub.feed.title, data=f'{callback}_{_sub.id}|{page}')
+    buttons_to_arrange = tuple(Button.inline(_sub.feed.title,
+                                             data=f'{callback}_{_sub.id}'
+                                                  + (f'|{page}' if callback_contain_page_num else ''))
                                for _sub in user_sub_list[page_start:page_end])
     buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)
 
@@ -103,7 +107,7 @@ async def get_sub_choosing_buttons(user_id: int,
     return buttons + (tuple(page_buttons),) if page_buttons else buttons
 
 
-async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int] = None):
+async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int] = None, force_update: bool = False):
     if new_interval is not None and (not isinstance(new_interval, int) or new_interval <= 0):
         raise ValueError('`new_interval` must be `None` or a positive integer')
 
@@ -127,8 +131,9 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
             await deactivate_feed(feed)
             return
         new_interval = min(intervals, key=lambda _: default_interval if _ is None else _) or default_interval
+        force_update = new_interval != curr_interval
 
-    if new_interval <= curr_interval:
+    if new_interval < curr_interval or force_update:  # if not force_update, will only reduce the interval
         feed.interval = new_interval
         await feed.save()
         db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
@@ -176,34 +181,34 @@ async def deactivate_feed(feed: db.Feed) -> db.Feed:
     return feed
 
 
-async def activate_or_deactivate_sub(user_id: int, sub_: Union[db.Sub, int], activate: bool,
+async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], activate: bool,
                                      _update_interval: bool = True) -> Optional[db.Sub]:
     """
     :param user_id: user id
-    :param sub_: `db.Sub` or sub id
+    :param sub: `db.Sub` or sub id
     :param activate: activate the sub if `Ture`, deactivate if `False`
     :param _update_interval: update interval or not?
     :return: the updated sub, `None` if the sub does not exist
     """
-    if isinstance(sub_, int):
-        sub_ = await db.Sub.get_or_none(id=sub_, user_id=user_id).prefetch_related('feed')
-        if not sub_:
+    if isinstance(sub, int):
+        sub = await db.Sub.get_or_none(id=sub, user_id=user_id).prefetch_related('feed')
+        if not sub:
             return None
-    elif sub_.user_id != user_id:
+    elif sub.user_id != user_id:
         return None
 
-    sub_.state = 1 if activate else 0
-    await sub_.save()
-    await sub_.fetch_related('feed')
+    sub.state = 1 if activate else 0
+    await sub.save()
+    await sub.fetch_related('feed')
 
     if activate:
-        await activate_feed(sub_.feed)
+        await activate_feed(sub.feed)
 
-    interval = sub_.interval or db.effective_utils.EffectiveOptions.get('default_interval')
+    interval = sub.interval or db.effective_utils.EffectiveOptions.get('default_interval')
     if _update_interval:
-        await update_interval(sub_.feed, new_interval=interval if activate else None)
+        await update_interval(sub.feed, new_interval=interval if activate else None)
 
-    return sub_
+    return sub
 
 
 async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> Tuple[Optional[db.Sub], ...]:
@@ -212,5 +217,5 @@ async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> Tuple
     :param activate: activate all subs if `Ture`, deactivate if `False`
     :return: the updated sub, `None` if the sub does not exist
     """
-    subs_ = await list_sub(user_id, state=0 if activate else 1)
-    return await asyncio.gather(*(activate_or_deactivate_sub(user_id, sub_, activate=activate) for sub_ in subs_))
+    subs = await list_sub(user_id, state=0 if activate else 1)
+    return await asyncio.gather(*(activate_or_deactivate_sub(user_id, sub, activate=activate) for sub in subs))

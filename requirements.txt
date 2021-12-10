@@ -15,7 +15,7 @@ emoji==1.6.1
 
 # db
 tortoise-orm[accel,asyncpg]==0.17.8
-aerich==0.5.8
+aerich==0.6.0
 
 # network
 aiohttp[speedups]==3.8.1

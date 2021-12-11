@@ -36,11 +36,13 @@ class _I18N:
             return self.get_fallback_l10n()
         return self.__l10n_d[lang_code] if lang_code in self.__l10n_d else self.get_fallback_l10n(lang_code)
 
-    def get_all_l10n_string(self, key: str, html_escaped: bool = False) -> Tuple[str, ...]:
+    def get_all_l10n_string(self, key: str, html_escaped: bool = False,
+                            only_iso_639_1: bool = False) -> Tuple[str, ...]:
+        languages = ALL_LANGUAGES if not only_iso_639_1 else self.__iso_639_1_d.keys()
         res = (
-            tuple(self[lang_code][key] for lang_code in ALL_LANGUAGES if self[lang_code].key_exist(key))
+            tuple(self[lang_code][key] for lang_code in languages if self[lang_code].key_exist(key))
             if not html_escaped else
-            tuple(self[lang_code].html_escaped(key) for lang_code in ALL_LANGUAGES if self[lang_code].key_exist(key))
+            tuple(self[lang_code].html_escaped(key) for lang_code in languages if self[lang_code].key_exist(key))
         )
         return res or (key,)
 
@@ -53,7 +55,15 @@ class _I18N:
         return self.__l10n_d[FALLBACK_LANGUAGE]
 
     def set_help_msg_html(self):
+        cmd_lang_description = ' / '.join(self.get_all_l10n_string('cmd_description_lang', html_escaped=True,
+                                                                   only_iso_639_1=True))
         for l10n in self.__l10n_d.values():
+            l10n_cmd_description_lang = l10n['cmd_description_lang']
+            _cmd_description_lang = (
+                    (f'{l10n_cmd_description_lang} / '
+                     if not l10n['iso_639_1_code'] and l10n_cmd_description_lang not in cmd_lang_description else '')
+                    + cmd_lang_description
+            )
             help_msg_html = (
                 f"<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>{l10n.html_escaped('rsstt_slogan')}</a>\n"
                 f"\n"
@@ -68,7 +78,7 @@ class _I18N:
                 f"<b>/activate_subs</b>: {l10n.html_escaped('cmd_description_activate_subs')}\n"
                 f"<b>/deactivate_subs</b>: {l10n.html_escaped('cmd_description_deactivate_subs')}\n"
                 f"<b>/version</b>: {l10n.html_escaped('cmd_description_version')}\n"
-                f"<b>/lang</b>: {' / '.join(self.get_all_l10n_string('cmd_description_lang', html_escaped=True))}\n"
+                f"<b>/lang</b>: {_cmd_description_lang}\n"
                 f"<b>/help</b>: {l10n.html_escaped('cmd_description_help')}\n\n"
             )
             l10n.set_help_msg_html(help_msg_html)

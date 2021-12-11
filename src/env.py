@@ -26,7 +26,7 @@ def __list_parser(var: Optional[str]) -> List[str]:
     if not var:
         return []
 
-    var_t = re.split(r'[\s,;，；]+', var)
+    var_t = re.split(r'[\s,;，；]+', var.strip())
     return var_t
 
 

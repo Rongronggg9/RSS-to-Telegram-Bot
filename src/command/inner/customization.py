@@ -2,7 +2,7 @@ from typing import Union, Tuple, Optional
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
-from src import db
+from src import db, env
 from src.i18n import i18n
 from .utils import arrange_grid, update_interval, activate_or_deactivate_sub
 
@@ -48,10 +48,24 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
     sub_id = sub if isinstance(sub, int) else sub.id
     page = page or 1
 
+    # noinspection PyTypeChecker
+    minimal_interval: int = db.effective_utils.EffectiveOptions.minimal_interval
+    # noinspection PyTypeChecker
+    default_interval: int = db.effective_utils.EffectiveOptions.default_interval
+
+    if sub.user_id == env.MANAGER:
+        minimal_interval = min(minimal_interval, 5)
+
+    interval_range = list(range(minimal_interval, minimal_interval + 125, 5))
+    try:
+        interval_range.remove(sub.interval or default_interval)
+    except ValueError:
+        pass
+
     buttons = arrange_grid(
         to_arrange=(
             Button.inline(str(interval), data=f'set_{sub_id}_interval_{interval}|{page}')
-            for interval in range(5, 125, 5)
+            for interval in interval_range[:24]
         ),
         columns=4
     ) + ((Button.inline(f'< {i18n[lang]["back"]}', data=f'set_{sub_id}|{page}'),),)
@@ -60,6 +74,13 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
 
 async def set_sub_interval(sub: db.Sub,
                            interval: int) -> db.Sub:
+    # noinspection PyTypeChecker
+    if interval < db.effective_utils.EffectiveOptions.minimal_interval and sub.user_id != env.MANAGER:
+        interval = db.effective_utils.EffectiveOptions.minimal_interval
+
+    if interval == sub.interval:
+        return sub
+
     sub.interval = interval
     await sub.save()
     await update_interval(sub.feed, interval)

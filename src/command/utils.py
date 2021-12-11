@@ -110,7 +110,7 @@ def permission_required(func: Optional[Callable] = None,
                        if is_chat_action else
                        '(no command, other message)')
             if command.startswith('/') and '@' in command:
-                mention = parse_command(command)[0].split('@')[1]
+                mention = parse_command(command)[0].split('@')[-1]
                 if mention != env.bot_peer.username:
                     raise events.StopPropagation  # none of my business!
 

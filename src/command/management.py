@@ -46,7 +46,8 @@ async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, ev
                                lang: Optional[str] = None,
                                **__):  # callback data: help; command: /help
     msg = i18n[lang]['help_msg_html']
-    await event.respond(msg, parse_mode='html') if isinstance(event, events.NewMessage.Event) \
+    await event.respond(msg, parse_mode='html') \
+        if isinstance(event, events.NewMessage.Event) or not hasattr(event, 'edit') \
         else await event.edit(msg, parse_mode='html')
 
 

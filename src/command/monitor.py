@@ -103,7 +103,7 @@ async def __monitor(feed: db.Feed) -> str:
     if feed.etag:
         headers['If-None-Match'] = feed.etag
 
-    d = await feed_get(feed.link, headers=headers)
+    d = await feed_get(feed.link, headers=headers, verbose=bool(feed.error_count and feed.error_count % 10 == 0))
     rss_d = d['rss_d']
 
     if (rss_d is not None or d['status'] == 304) and feed.error_count > 0:
@@ -120,6 +120,8 @@ async def __monitor(feed: db.Feed) -> str:
             await __deactivate_feed_and_notify_all(feed)
             return FAILED
         feed.error_count += 1
+        if feed.error_count % 10 == 0:
+            logger.warning(f'Fetch failed ({feed.error_count}th retry): {feed.link}')
         await feed.save()
         return FAILED
 
@@ -144,7 +146,7 @@ async def __monitor(feed: db.Feed) -> str:
         logger.debug(f'Fetched (not updated): {feed.link}')
         return NOT_UPDATED
 
-    logger.info(f'Updated: {feed.link}')
+    logger.debug(f'Updated: {feed.link}')
     length = max(len(rss_d.entries) * 2, 20)
     new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
     feed.entry_hashes = dumps(new_hashes)
@@ -164,7 +166,7 @@ async def __monitor(feed: db.Feed) -> str:
 
 async def __notify_all(feed: db.Feed, entry: MutableMapping):
     subs = await db.Sub.filter(feed=feed, state=1)
-    if not subs:  # nobody has sub it
+    if not subs:  # nobody has subbed it
         await update_interval(feed)
     post = get_post_from_entry(entry, feed.title, feed.link)
     await post.generate_message()
@@ -181,7 +183,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             return
         await post.send_message(sub.user_id)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
-        logger.warning(f'User blocked: {sub.user_id}')
+        logger.error(f'User blocked: {sub.user_id}')
         await inner.sub.unsub_all(sub.user_id)
 
 
@@ -189,7 +191,7 @@ async def __deactivate_feed_and_notify_all(feed: db.Feed):
     await deactivate_feed(feed)
 
     subs = await db.Sub.filter(feed=feed, state=1).prefetch_related('user')
-    if not subs:  # nobody has sub it
+    if not subs:  # nobody has subbed it
         return
 
     await asyncio.gather(

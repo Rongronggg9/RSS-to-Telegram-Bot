@@ -95,8 +95,9 @@ async def get_session(timeout: int = None):
 
 
 async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
-                   headers: Optional[dict] = None, lang: Optional[str] = None) \
+                   headers: Optional[dict] = None, lang: Optional[str] = None, verbose: bool = True) \
         -> Dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
+    auto_warning = logger.warning if verbose else logger.debug
     ret = {'url': url,
            'rss_d': None,
            'headers': None,
@@ -120,7 +121,7 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
             return ret  # 304 Not Modified, feed not updated
 
         if rss_content is None:
-            logger.warning(f'Fetch failed (status code error, {ret["status"]}): {url}')
+            auto_warning(f'Fetch failed (status code error, {ret["status"]}): {url}')
             ret['msg'] = f'ERROR: {i18n[lang]["status_code_error"]} ({_["status"]})'
             return ret
 
@@ -133,13 +134,13 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
                                                                                      sanitize_html=False))
 
         if 'title' not in rss_d.feed:
-            logger.warning(f'Fetch failed (feed invalid): {url}')
+            auto_warning(f'Fetch failed (feed invalid): {url}')
             ret['msg'] = 'ERROR: ' + i18n[lang]['feed_invalid']
             return ret
 
         ret['rss_d'] = rss_d
     except aiohttp.client_exceptions.InvalidURL:
-        logger.warning(f'Fetch failed (URL invalid): {url}')
+        auto_warning(f'Fetch failed (URL invalid): {url}')
         ret['msg'] = 'ERROR: ' + i18n[lang]['url_invalid']
     except (asyncio.exceptions.TimeoutError,
             aiohttp.client_exceptions.ClientError,
@@ -147,9 +148,9 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
             OSError,
             ConnectionError,
             TimeoutError) as e:
-        logger.warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
+        auto_warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
         ret['msg'] = 'ERROR: ' + i18n[lang]['network_error']
     except Exception as e:
-        logger.warning(f'Fetch failed: {url}', exc_info=e)
+        auto_warning(f'Fetch failed: {url}', exc_info=e)
         ret['msg'] = 'ERROR: ' + i18n[lang]['internal_error']
     return ret

@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 
 
 # ----- utils -----
-def __bool_parser(var: Optional[str]) -> bool:
+def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
     if not var:
-        return False
+        return default_value
 
     if var.isdecimal() or var.lstrip('-').isdecimal():
         return int(var) > 0
@@ -19,7 +19,9 @@ def __bool_parser(var: Optional[str]) -> bool:
     var = var.upper()
     if var in ('FALSE', 'NONE', 'NULL', 'NO', 'NOT', 'DISABLE', 'DISABLED', 'INACTIVE', 'DEACTIVATED'):
         return False
-    return True
+    if var in ('TRUE', 'YES', 'OK', 'ENABLE', 'ENABLED', 'ACTIVE', 'ACTIVATED'):
+        return True
+    return default_value
 
 
 def __list_parser(var: Optional[str]) -> List[str]:
@@ -117,6 +119,7 @@ else:
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
 USER_AGENT: Final = os.environ.get('USER_AGENT', 'RSStT')
+IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')

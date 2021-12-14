@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import os
 import aiohttp
 import aiohttp.client_exceptions
 import feedparser
@@ -11,14 +12,20 @@ from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
 from collections import OrderedDict
+from aiodns import DNSResolver
+from socket import AF_INET6
 
 from src import env, log
 from src.i18n import i18n
+
+if os.name == "nt":  # workaround for aiodns on Windows
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 _semaphore = asyncio.BoundedSemaphore(5)
+_resolver = DNSResolver()
 
 PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
 PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
@@ -63,17 +70,26 @@ def proxy_filter(url: str) -> bool:
 
 
 async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False) -> Dict[str,
-                                                                            Union[Mapping[str, str], bytes, str, int]]:
+              headers: Optional[dict] = None, decode: bool = False) \
+        -> Dict[str, Union[Mapping[str, str], bytes, str, int]]:
     if not timeout:
         timeout = 12
+
+    host = urlparse(url).hostname
+    v6_address = None
+    try:
+        v6_address = await _resolver.query(host, 'AAAA') if env.IPV6_PRIOR else None
+    except Exception:
+        pass
+    socket_family = AF_INET6 if v6_address else 0
 
     _headers = HEADER_TEMPLATE.copy()
     if headers:
         _headers.update(headers)
-    _headers['Host'] = urlparse(url).hostname
+    _headers['Host'] = host
 
-    proxy_connector = ProxyConnector.from_url(PROXY) if (PROXY and proxy_filter(url)) else None
+    proxy_connector = ProxyConnector.from_url(PROXY, family=socket_family) if (PROXY and proxy_filter(url)) \
+        else aiohttp.TCPConnector(family=socket_family)
 
     await _semaphore.acquire() if semaphore is None or semaphore is True else \
         await semaphore.acquire() if semaphore else None

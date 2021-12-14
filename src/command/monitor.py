@@ -116,7 +116,7 @@ async def __monitor(feed: db.Feed) -> str:
     if feed.etag:
         headers['If-None-Match'] = feed.etag
 
-    d = await feed_get(feed.link, headers=headers, verbose=bool(feed.error_count and feed.error_count % 10 == 0))
+    d = await feed_get(feed.link, headers=headers, verbose=bool(feed.error_count and (feed.error_count + 1) % 10 == 0))
     rss_d = d['rss_d']
 
     if (rss_d is not None or d['status'] == 304) and (feed.error_count > 0 or feed.next_check_time):

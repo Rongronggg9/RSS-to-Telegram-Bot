@@ -116,6 +116,7 @@ else:
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
+USER_AGENT: Final = os.environ.get('USER_AGENT', 'RSStT')
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
@@ -190,7 +191,3 @@ if os.path.exists('config/rss.db'):
 bot: Optional[TelegramClient] = None  # placeholder
 bot_id: Optional[int] = None  # placeholder
 bot_peer: Optional[User] = None  # placeholder
-
-REQUESTS_HEADERS: Final = {
-    'user-agent': os.environ.get('USER_AGENT', 'RSStT')
-}

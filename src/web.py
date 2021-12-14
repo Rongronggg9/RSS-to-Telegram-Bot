@@ -10,6 +10,7 @@ from typing import Union, Optional, Mapping, Dict
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
+from collections import OrderedDict
 
 from src import env, log
 from src.i18n import i18n
@@ -28,6 +29,16 @@ PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
                           '192.168.0.0/16',  # class C private networks
                           'fc00::/7',  # ULA
                           ))
+
+HEADER_TEMPLATE = OrderedDict({
+    'Host': None,  # to be filled
+    'User-Agent': env.USER_AGENT,
+    'Accept': '*/*',
+    'Accept-Encoding': 'gzip, deflate, br',
+})
+
+FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
+              'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
 
 def proxy_filter(url: str) -> bool:
@@ -57,10 +68,10 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
     if not timeout:
         timeout = 12
 
-    _headers = env.REQUESTS_HEADERS.copy()
-
+    _headers = HEADER_TEMPLATE.copy()
     if headers:
         _headers.update(headers)
+    _headers['Host'] = urlparse(url).hostname
 
     proxy_connector = ProxyConnector.from_url(PROXY) if (PROXY and proxy_filter(url)) else None
 
@@ -89,7 +100,7 @@ async def get_session(timeout: int = None):
     proxy_connector = ProxyConnector.from_url(PROXY) if PROXY else None
 
     session = RetryClient(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
-                          headers=env.REQUESTS_HEADERS)
+                          headers={'User-Agent': env.USER_AGENT})
 
     return session
 
@@ -103,8 +114,14 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
            'headers': None,
            'status': -1,
            'msg': None}
+    _headers = {}
+    if headers:
+        _headers.update(headers)
+    if 'Accept' not in _headers:
+        _headers['Accept'] = FEED_ACCEPT
+
     try:
-        _ = await get(url, timeout, web_semaphore, headers=headers)
+        _ = await get(url, timeout, web_semaphore, headers=_headers)
         rss_content = _['content']
         ret['url'] = _['url']
         ret['headers'] = _['headers']
@@ -148,8 +165,9 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
             OSError,
             ConnectionError,
             TimeoutError) as e:
-        auto_warning(f'Fetch failed (network error, {e.__class__.__name__}): {url}')
-        ret['msg'] = 'ERROR: ' + i18n[lang]['network_error']
+        err_name = e.__class__.__name__
+        auto_warning(f'Fetch failed (network error, {err_name}): {url}')
+        ret['msg'] = f'ERROR: {i18n[lang]["network_error"]} ({err_name})'
     except Exception as e:
         auto_warning(f'Fetch failed: {url}', exc_info=e)
         ret['msg'] = 'ERROR: ' + i18n[lang]['internal_error']

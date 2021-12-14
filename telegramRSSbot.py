@@ -1,4 +1,9 @@
 import asyncio
+try:
+    import uvloop
+    uvloop.install()
+except ImportError:  # uvloop do not support Windows
+    uvloop = None
 from functools import partial
 from time import sleep
 from typing import Optional
@@ -59,6 +64,7 @@ def main():
                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
                 f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
+                f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
 
     bot.loop.run_until_complete(

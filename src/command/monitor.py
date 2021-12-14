@@ -1,7 +1,8 @@
 import asyncio
+from datetime import datetime, timedelta
 from email.utils import format_datetime
 from json import loads, dumps
-from typing import Union, MutableMapping, Final
+from typing import Union, MutableMapping, Final, Optional
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
 
 from . import inner
@@ -19,6 +20,7 @@ CACHED: Final = 'cached'
 EMPTY: Final = 'empty'
 FAILED: Final = 'failed'
 UPDATED: Final = 'updated'
+SKIPPED: Final = 'skipped'
 
 
 class MonitoringLogs:
@@ -28,18 +30,21 @@ class MonitoringLogs:
     empty = 0
     failed = 0
     updated = 0
+    skipped = 0
 
     @classmethod
-    def log(cls, not_updated: int, cached: int, empty: int, failed: int, updated: int):
+    def log(cls, not_updated: int, cached: int, empty: int, failed: int, updated: int, skipped: int):
         cls.not_updated += not_updated
         cls.cached += cached
         cls.empty += empty
         cls.failed += failed
         cls.updated += updated
+        cls.skipped += skipped
         logger.debug(f'Finished feeds monitoring task: '
                      f'updated({updated}), '
                      f'not updated({not_updated}, including {cached} cached and {empty} empty), '
-                     f'fetch failed({failed})')
+                     f'fetch failed({failed}), '
+                     f'skipped({skipped})')
         cls.monitoring_counts += 1
         if cls.monitoring_counts == 10:
             cls.print_summary()
@@ -50,9 +55,10 @@ class MonitoringLogs:
             f'Monitoring tasks summary in last 10 minutes: '
             f'updated({cls.updated}), '
             f'not updated({cls.not_updated}, including {cls.cached} cached and {cls.empty} empty), '
-            f'fetch failed({cls.failed})'
+            f'fetch failed({cls.failed}), '
+            f'skipped({cls.skipped})'
         )
-        cls.not_updated = cls.cached = cls.empty = cls.failed = cls.updated = 0
+        cls.not_updated = cls.cached = cls.empty = cls.failed = cls.updated = cls.skipped = 0
         cls.monitoring_counts = 0
 
 
@@ -72,6 +78,7 @@ async def run_monitor_task():
     empty = 0
     failed = 0
     updated = 0
+    skipped = 0
 
     for r in result:
         if r is NOT_UPDATED:
@@ -86,8 +93,10 @@ async def run_monitor_task():
             updated += 1
         elif r is FAILED:
             failed += 1
+        elif r is SKIPPED:
+            skipped += 1
 
-    MonitoringLogs.log(not_updated, cached, empty, failed, updated)
+    MonitoringLogs.log(not_updated, cached, empty, failed, updated, skipped)
 
 
 async def __monitor(feed: db.Feed) -> str:
@@ -97,6 +106,10 @@ async def __monitor(feed: db.Feed) -> str:
     :param feed: the feed object to be monitored
     :return: monitoring result
     """
+    now = datetime.utcnow()
+    if feed.next_check_time and now < feed.next_check_time:
+        return SKIPPED  # skip this monitor task
+
     headers = {
         'If-Modified-Since': format_datetime(feed.last_modified or feed.updated_at)
     }
@@ -106,8 +119,9 @@ async def __monitor(feed: db.Feed) -> str:
     d = await feed_get(feed.link, headers=headers, verbose=bool(feed.error_count and feed.error_count % 10 == 0))
     rss_d = d['rss_d']
 
-    if (rss_d is not None or d['status'] == 304) and feed.error_count > 0:
+    if (rss_d is not None or d['status'] == 304) and (feed.error_count > 0 or feed.next_check_time):
         feed.error_count = 0
+        feed.next_check_time = None
         await feed.save()
 
     if d['status'] == 304:  # cached
@@ -122,6 +136,11 @@ async def __monitor(feed: db.Feed) -> str:
         feed.error_count += 1
         if feed.error_count % 10 == 0:
             logger.warning(f'Fetch failed ({feed.error_count}th retry): {feed.link}')
+        if feed.error_count >= 10:  # too much error, delay next check
+            interval = feed.interval or db.effective_utils.EffectiveOptions.default_interval
+            next_check_interval = min(interval, 15) * min((int(feed.error_count / 10) + 1), 5)
+            if next_check_interval > interval:
+                feed.next_check_time = now + timedelta(minutes=next_check_interval)
         await feed.save()
         return FAILED
 

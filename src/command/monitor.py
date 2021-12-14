@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from json import loads, dumps
 from typing import Union, MutableMapping, Final, Optional
@@ -106,7 +106,7 @@ async def __monitor(feed: db.Feed) -> str:
     :param feed: the feed object to be monitored
     :return: monitoring result
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if feed.next_check_time and now < feed.next_check_time:
         return SKIPPED  # skip this monitor task
 

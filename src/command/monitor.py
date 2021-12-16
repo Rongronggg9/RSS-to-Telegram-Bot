@@ -207,10 +207,10 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
 
 
 async def __deactivate_feed_and_notify_all(feed: db.Feed):
+    subs = await db.Sub.filter(feed=feed, state=1).prefetch_related('user')
     await deactivate_feed(feed)
 
-    subs = await db.Sub.filter(feed=feed, state=1).prefetch_related('user')
-    if not subs:  # nobody has subbed it
+    if not subs:  # nobody has subbed it or no active sub exists
         return
 
     await asyncio.gather(

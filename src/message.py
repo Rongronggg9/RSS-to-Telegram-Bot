@@ -73,7 +73,7 @@ class Message:
                     async with semaphore:
                         await self._send(chat_id, reply_to_msg_id)
         except FloodError:  # telethon has retried due to flood control for too many times
-            logger.warning('Msg dropped due to too many flood control retries')
+            logger.error('Msg dropped due to too many flood control retries')
             return
 
     async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):

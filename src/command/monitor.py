@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from json import loads, dumps
-from typing import Union, MutableMapping, Final, Optional
+from typing import Union, MutableMapping, Final
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
 
 from . import inner
@@ -116,7 +116,7 @@ async def __monitor(feed: db.Feed) -> str:
     if feed.etag:
         headers['If-None-Match'] = feed.etag
 
-    d = await feed_get(feed.link, headers=headers, verbose=bool(feed.error_count and (feed.error_count + 1) % 10 == 0))
+    d = await feed_get(feed.link, headers=headers, verbose=False)
     rss_d = d['rss_d']
 
     if (rss_d is not None or d['status'] == 304) and (feed.error_count > 0 or feed.next_check_time):
@@ -135,7 +135,7 @@ async def __monitor(feed: db.Feed) -> str:
             return FAILED
         feed.error_count += 1
         if feed.error_count % 10 == 0:
-            logger.warning(f'Fetch failed ({feed.error_count}th retry): {feed.link}')
+            logger.warning(f'Fetch failed ({feed.error_count}th retry, {d["msg"]}): {feed.link}')
         if feed.error_count >= 10:  # too much error, delay next check
             interval = feed.interval or db.effective_utils.EffectiveOptions.default_interval
             next_check_interval = min(interval, 15) * min((int(feed.error_count / 10) + 1), 5)
@@ -201,8 +201,8 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             await env.bot.send_message(sub.user_id, post, parse_mode='html')
             return
         await post.send_message(sub.user_id)
-    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
-        logger.error(f'User blocked: {sub.user_id}')
+    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError) as e:
+        logger.error(f'User blocked ({e.__class__.__name__}): {sub.user_id}')
         await inner.sub.unsub_all(sub.user_id)
 
 

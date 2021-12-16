@@ -6,6 +6,7 @@ from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
+from telethon.errors import FloodError
 
 from src import env, log, db
 from src.i18n import i18n
@@ -232,6 +233,8 @@ def permission_required(func: Optional[Callable] = None,
                 + (f' in {chat_title} ({chat_id})' if chat_id != sender_id else ''),
                 exc_info=e
             )
+            if isinstance(e, FloodError):
+                return  # if a flood error occurred, mostly we cannot send an error msg...
             await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
 
     return wrapper

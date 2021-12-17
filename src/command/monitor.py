@@ -138,7 +138,7 @@ async def __monitor(feed: db.Feed) -> str:
             logger.warning(f'Fetch failed ({feed.error_count}th retry, {d["msg"]}): {feed.link}')
         if feed.error_count >= 10:  # too much error, delay next check
             interval = feed.interval or db.effective_utils.EffectiveOptions.default_interval
-            next_check_interval = min(interval, 15) * min((int(feed.error_count / 10) + 1), 5)
+            next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
             if next_check_interval > interval:
                 feed.next_check_time = now + timedelta(minutes=next_check_interval)
         await feed.save()

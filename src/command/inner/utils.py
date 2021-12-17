@@ -89,6 +89,8 @@ async def get_sub_choosing_buttons(user_id: int,
         return None
 
     subs_count_per_page = columns * rows
+    user_sub_count = len(user_sub_list)
+    page = min(user_sub_count // subs_count_per_page + bool(user_sub_count % subs_count_per_page), page)  # ensure page
     page_start = (page - 1) * subs_count_per_page
     page_end = page_start + subs_count_per_page
     buttons_to_arrange = tuple(Button.inline(_sub.feed.title,

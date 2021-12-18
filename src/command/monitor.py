@@ -166,7 +166,7 @@ async def __monitor(feed: db.Feed) -> str:
         return NOT_UPDATED
 
     logger.debug(f'Updated: {feed.link}')
-    length = max(len(rss_d.entries) * 2, 20)
+    length = max(len(rss_d.entries) * 2, 100)
     new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
     feed.entry_hashes = dumps(new_hashes)
     http_caching_d = inner.utils.get_http_caching_headers(d['headers'])

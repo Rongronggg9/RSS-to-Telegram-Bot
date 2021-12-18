@@ -155,7 +155,10 @@ async def __monitor(feed: db.Feed) -> str:
     updated_hashes = []
     updated_entries = []
     for entry in rss_d.entries:
-        h = get_hash(entry.get('guid', entry['link']))
+        guid = entry.get('guid') or entry.get('link')
+        if not guid:
+            continue  # IDK why there are some feeds containing entries w/o a link, should we set up a feed hospital?
+        h = get_hash(guid)
         if h in old_hashes:
             continue
         updated_hashes.append(h)

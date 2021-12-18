@@ -74,7 +74,7 @@ def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post'
                 content = content[0]
         content = content.get('value', '')
 
-    link = entry['link']
+    link = entry.get('link') or entry.get('guid')
     author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
     title = entry['title']
     return Post(content, title, feed_title, link, author, feed_link=feed_link)

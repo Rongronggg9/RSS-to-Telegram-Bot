@@ -53,7 +53,7 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> Dict[s
                 http_caching_d = get_http_caching_headers(d['headers'])
                 feed.etag = http_caching_d['ETag']
                 feed.last_modified = http_caching_d['Last-Modified']
-                feed.entry_hashes = dumps([get_hash(entry.get('guid', entry['link'])) for entry in rss_d.entries])
+                feed.entry_hashes = dumps([get_hash(entry.get('guid') or entry.get('link')) for entry in rss_d.entries])
                 await feed.save()  # now we get the id
                 db.effective_utils.EffectiveTasks.update(feed.id)
 

@@ -36,7 +36,7 @@ if not env.API_ID or not env.API_HASH:
         API_ID = API_IDs.pop()
         API_HASH = env.SAMPLE_APIS[API_ID]
         try:
-            bot = TelegramClient('config/bot', API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=4,
+            bot = TelegramClient('config/bot', API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
                                  raise_last_call_error=True).start(bot_token=env.TOKEN)
             break
         except ApiIdPublishedFloodError:
@@ -45,7 +45,7 @@ if not env.API_ID or not env.API_HASH:
 
 else:
     _use_sample_api = False
-    bot = TelegramClient('config/bot', env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=4,
+    bot = TelegramClient('config/bot', env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
                          raise_last_call_error=True).start(bot_token=env.TOKEN)
 
 if bot is None:

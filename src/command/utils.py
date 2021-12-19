@@ -107,8 +107,8 @@ def permission_required(func: Optional[Callable] = None,
             chat_id = event.chat_id
             is_callback = isinstance(event, events.CallbackQuery.Event)
             is_chat_action = isinstance(event, events.ChatAction.Event)
-            command = (event.text
-                       if hasattr(event, 'text') and event.text else
+            command = (event.raw_text
+                       if hasattr(event, 'raw_text') and event.raw_text else
                        f'(Callback){event.data.decode()}'
                        if is_callback else
                        f'(ChatAction, {event.action_message and event.action_message.action.__class__.__name__})'

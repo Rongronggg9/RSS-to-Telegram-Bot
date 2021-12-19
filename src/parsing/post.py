@@ -171,7 +171,7 @@ class Post:
 
                 # errors caused by server instability or network instability between img server and telegram server
                 except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
-                    if self.media.change_all_server():
+                    if await self.media.change_all_server():
                         logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
                                      f'Changed img server and retrying...')
                         await self.send_message(chat_ids)

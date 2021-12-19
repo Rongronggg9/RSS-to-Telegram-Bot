@@ -70,7 +70,7 @@ def proxy_filter(url: str) -> bool:
 
 
 async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False) \
+              headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
         -> Dict[str, Union[Mapping[str, str], bytes, str, int]]:
     if not timeout:
         timeout = 12
@@ -99,7 +99,9 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
                                headers=_headers) as session:
             async with session.get(url) as response:
                 status = response.status
-                content = await (response.text() if decode else response.read()) if status == 200 else None
+                content = (await (response.text() if decode else response.read())
+                           if status == 200 and not no_body
+                           else None)
                 return {'url': str(response.url),  # get the redirected url
                         'content': content,
                         'headers': response.headers,

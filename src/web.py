@@ -6,7 +6,7 @@ import aiohttp.client_exceptions
 import feedparser
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
-from aiohttp_retry import RetryClient
+from aiohttp_retry import RetryClient, ExponentialRetry
 from typing import Union, Optional, Mapping, Dict
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
@@ -43,9 +43,14 @@ HEADER_TEMPLATE = OrderedDict({
     'Accept': '*/*',
     'Accept-Encoding': 'gzip, deflate, br',
 })
-
 FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
               'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
+
+RETRY_OPTION = ExponentialRetry(attempts=3, start_timeout=1,
+                                exceptions={asyncio.exceptions.TimeoutError,
+                                            aiohttp.client_exceptions.ClientError,
+                                            ConnectionError,
+                                            TimeoutError})
 
 
 def proxy_filter(url: str) -> bool:
@@ -95,8 +100,8 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
         await semaphore.acquire() if semaphore else None
 
     try:
-        async with RetryClient(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
-                               headers=_headers) as session:
+        async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
+                               timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
             async with session.get(url) as response:
                 status = response.status
                 content = (await (response.text() if decode else response.read())
@@ -117,8 +122,8 @@ async def get_session(timeout: int = None):
 
     proxy_connector = ProxyConnector.from_url(PROXY) if PROXY else None
 
-    session = RetryClient(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
-                          headers={'User-Agent': env.USER_AGENT})
+    session = RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
+                          timeout=aiohttp.ClientTimeout(total=timeout), headers={'User-Agent': env.USER_AGENT})
 
     return session
 

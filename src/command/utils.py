@@ -6,7 +6,8 @@ from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
-from telethon.errors import FloodError
+from telethon.errors import FloodError, UserNotParticipantError, UserIsBlockedError, ChatWriteForbiddenError, \
+    UserIdInvalidError
 
 from src import env, log, db
 from src.i18n import i18n
@@ -72,7 +73,10 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
     if isinstance(event, events.CallbackQuery.Event):
         await event.answer(msg, alert=alert, cache_time=cache_time)
     else:
-        await event.respond(msg, *args, **kwargs)
+        try:
+            await event.respond(msg, *args, **kwargs)
+        except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
+            pass
 
 
 def permission_required(func: Optional[Callable] = None,
@@ -133,10 +137,13 @@ def permission_required(func: Optional[Callable] = None,
                 '__chat_action__'
             )
 
+            # get the user's lang
             lang_in_db = await db.User.get_or_none(id=chat_id).values_list('lang', flat=True)
             lang = lang_in_db if lang_in_db != 'null' else None
             if not lang and not ignore_tg_lang:
                 lang = sender.lang_code if hasattr(sender, 'lang_code') else None
+                if not lang and sender_id != chat_id:
+                    lang = db.User.get_or_none(id=sender_id).values_list('lang', flat=True)
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
                 await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
@@ -169,7 +176,7 @@ def permission_required(func: Optional[Callable] = None,
                     and not only_manager
             ):  # receiving a command in a group, or, a callback in a channel
                 if isinstance(sender, types.Channel):
-                    raise events.StopPropagation  # bound channel messages in discussion groups are none of my business
+                    raise events.StopPropagation  # channel messages are none of my business
 
                 # supergroup is a special form of channel
                 input_chat: Optional[Union[types.InputChannel,
@@ -186,19 +193,40 @@ def permission_required(func: Optional[Callable] = None,
 
                 if isinstance(input_chat, types.InputPeerChat):
                     # oops, the group hasn't been migrated to a supergroup. a migration is needed
-                    await respond_or_answer(event,
-                                            '\n\n'.join(i18n.get_all_l10n_string('group_upgrade_needed_prompt')))
+                    await event.respond('\n\n'.join(i18n.get_all_l10n_string('group_upgrade_needed_prompt')))
                     logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
                                    f'{chat_title} ({chat_id}) because a group migration to supergroup is needed')
                     raise events.StopPropagation
 
+                # check if self is in the group/chanel and if is an admin
+                self_is_admin = True  # bypass check if the event is a callback query, set to True for convenience
+                if is_callback:
+                    try:
+                        self_participant: types.channels.ChannelParticipant = await env.bot(
+                            GetParticipantRequest(input_chat, env.bot_input_peer))
+                        self_is_admin = isinstance(self_participant.participant,
+                                                   (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
+                    except UserNotParticipantError:  # I am not a participant of the group/channel, none of my business!
+                        await respond_or_answer(event, i18n[lang]['permission_denied_bot_not_member'], cache_time=15)
+                        raise events.StopPropagation
+
+                # user permission check
                 if is_chat_action:
                     is_admin = True
                     participant_type = 'ChatAction, bypassing admin check'
                 elif sender_id is not None:  # a "real" user triggering the command
                     input_sender: types.InputPeerUser = await event.get_input_sender()
-                    participant: types.channels.ChannelParticipant = await env.bot(
-                        GetParticipantRequest(input_chat, input_sender))
+                    try:
+                        participant: types.channels.ChannelParticipant = await env.bot(
+                            GetParticipantRequest(input_chat, input_sender))
+                    except UserNotParticipantError:
+                        await respond_or_answer(event,
+                                                i18n[lang]['permission_denied_not_member'] if self_is_admin else
+                                                i18n[lang]['promote_to_admin_prompt'],
+                                                cache_time=15)
+                        logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
+                                       f'{chat_title} ({chat_id}) because they is not a participant')
+                        raise events.StopPropagation
                     is_admin = isinstance(participant.participant,
                                           (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
                     participant_type = type(participant.participant).__name__
@@ -207,7 +235,7 @@ def permission_required(func: Optional[Callable] = None,
                     participant_type = 'AnonymousAdmin'
 
                 if not is_admin:
-                    await respond_or_answer(event, i18n[lang]['permission_denied_not_chat_admin'])
+                    await respond_or_answer(event, i18n[lang]['permission_denied_not_chat_admin'], cache_time=15)
                     logger.warning(
                         f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
                         f'in {chat_title} ({chat_id}).')

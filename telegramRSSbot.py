@@ -53,7 +53,8 @@ if bot is None:
     exit(1)
 
 env.bot = bot
-env.bot_peer = asyncio.get_event_loop().run_until_complete(bot.get_me())
+env.bot_peer = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=False))
+env.bot_input_peer = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=True))
 env.bot_id = env.bot_peer.id
 
 

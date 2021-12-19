@@ -12,7 +12,7 @@ from . import inner
 
 @permission_required(only_manager=True)
 async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.text)
+    args = parse_command(event.raw_text)
     if len(args) < 3:  # return options info
         options = db.effective_utils.EffectiveOptions.options
         msg = (
@@ -52,7 +52,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
 
 @permission_required(only_manager=True)
 async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.text)
+    args = parse_command(event.raw_text)
     if len(args) < 2:
         await event.respond(i18n[lang]['test_cmd_usage_prompt_html'], parse_mode='html')
         return

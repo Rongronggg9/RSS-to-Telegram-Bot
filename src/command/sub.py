@@ -9,7 +9,7 @@ from .utils import permission_required, parse_command, escape_html, parse_callba
 
 @permission_required(only_manager=False)
 async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.text)
+    args = parse_command(event.raw_text)
     filtered_urls = inner.utils.filter_urls(args)
 
     if not filtered_urls:
@@ -35,7 +35,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Opti
 
 @permission_required(only_manager=False)
 async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.text)
+    args = parse_command(event.raw_text)
     user_id = event.chat_id
 
     unsub_result = await inner.sub.unsubs(user_id, args, lang=lang)

@@ -19,6 +19,9 @@
   "permission_denied_not_bot_manager": "此命令只可由机器人的管理员使用。",
   "permission_denied_not_chat_admin": "此命令只可由群/频道管理员使用。",
   "permission_denied_not_in_private_chat": "此命令只可在私聊中使用。",
+  "permission_denied_not_member": "你不在本群/频道里，不可以使用这个 bot。",
+  "permission_denied_bot_not_member": "本 bot 已经不在本群/频道里，不会在此工作。",
+  "promote_to_admin_prompt": "如果你是本群组的匿名管理员，请将 bot 提升为管理员 (不需要任何权限)，这样 bot 才能验证你的身份。",
   "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作：\n1. 转到群组信息，点击「管理群组」\n2. 将「历史记录对新成员」设置为「可见」\n3. 保存历史记录可见性设置\n4. 保存所有设置\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」\n6. 现在你应该可以使用这个 bot 了",
 
   "subscribe": "添加订阅",

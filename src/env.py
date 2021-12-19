@@ -2,7 +2,7 @@ import os
 import logging
 import re
 from telethon import TelegramClient
-from telethon.tl.types import User
+from telethon.tl.types import User, InputPeerUser
 from typing import Optional, Final, List
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
@@ -194,3 +194,4 @@ if os.path.exists('config/rss.db'):
 bot: Optional[TelegramClient] = None  # placeholder
 bot_id: Optional[int] = None  # placeholder
 bot_peer: Optional[User] = None  # placeholder
+bot_input_peer: Optional[InputPeerUser] = None  # placeholder

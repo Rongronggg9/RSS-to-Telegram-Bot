@@ -85,11 +85,15 @@ class Medium:
     def __eq__(self, other):
         return type(self) == type(other) and self.original_url == other.original_url
 
-    def change_server(self):
+    async def change_server(self):
         if self._server_change_count >= 1:
             return False
         self._server_change_count += 1
         self.url = env.IMG_RELAY_SERVER + self.url
+        try:
+            await web.get(url=self.url, no_body=True)  # let the img relay sever cache the img
+        except Exception:
+            pass
         return True
 
 
@@ -100,9 +104,9 @@ class Image(Medium):
     def telegramize(self):
         return InputMediaPhotoExternal(self.url)
 
-    def change_server(self):
+    async def change_server(self):
         if not serverParser.search(self.url):  # is not a weibo img
-            return super().change_server()
+            return await super().change_server()
 
         if self._server_change_count >= 4:
             return False
@@ -173,8 +177,8 @@ class Media:
     def get_invalid_link(self):
         return tuple(m.get_link(only_invalid=True) for m in self._media if not m)
 
-    def change_all_server(self):
-        if sum(map(lambda m: m.change_server(), self._media)):
+    async def change_all_server(self):
+        if sum(await asyncio.gather(*(media.change_server() for media in self._media))):
             return True
         return False
 

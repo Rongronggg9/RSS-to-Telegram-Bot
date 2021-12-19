@@ -142,10 +142,9 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
     if new_interval < curr_interval or force_update:  # if not force_update, will only reduce the interval
         feed.interval = new_interval if not default_flag else None
         await feed.save()
-        db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
         return
 
-    if not db.effective_utils.EffectiveTasks.exist(feed.id):
+    if db.effective_utils.EffectiveTasks.get_interval(feed.id) != new_interval:
         db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
 
 

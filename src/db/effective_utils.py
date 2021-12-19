@@ -194,8 +194,19 @@ class EffectiveTasks:
         Check if a task exists.
 
         :param feed_id: the id of the feed in the task
+        :return `bool`: if the task exists
         """
         return feed_id in cls.__all_tasks
+
+    @classmethod
+    def get_interval(cls, feed_id: int) -> Optional[int]:
+        """
+        Get the interval of a task.
+
+        :param feed_id: the id of the feed in the task
+        :return `int`: the interval of the task, or `None` if task do not exist
+        """
+        return cls.__all_tasks[feed_id] if cls.exist(feed_id) else None
 
     def __get_tasks(self) -> Set[int]:
         if len(self.__all_feeds) == 0:

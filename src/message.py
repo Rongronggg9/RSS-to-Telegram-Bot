@@ -2,7 +2,7 @@ import asyncio
 from collections import defaultdict
 from typing import List, Union, Optional, Tuple, Dict
 from telethon.tl.types import DocumentAttributeVideo, DocumentAttributeAnimated
-from telethon.errors.rpcerrorlist import FloodError
+from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError
 from readerwriterlock.rwlock_async import RWLockWrite
 from asyncio import BoundedSemaphore
 from functools import partial
@@ -63,18 +63,23 @@ class Message:
         self.retries = 0
 
     async def send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
-        # do not need flood control waiting or network error retrying because telethon will automatically perform them
-        try:
-            rwlock = self.__rwlock_bucket_per_user[chat_id]
-            rlock_or_wlock = (await rwlock.gen_wlock() if self.__lock_type == 'w' else await rwlock.gen_rlock())
-            semaphore = self.__semaphore_bucket_per_user[chat_id]
-            async with self.__overall_semaphore:
-                async with rlock_or_wlock:
-                    async with semaphore:
-                        await self._send(chat_id, reply_to_msg_id)
-        except FloodError:  # telethon has retried due to flood control for too many times
-            logger.error('Msg dropped due to too many flood control retries')
-            return
+        while True:
+            try:
+                rwlock = self.__rwlock_bucket_per_user[chat_id]
+                rlock_or_wlock = (await rwlock.gen_wlock() if self.__lock_type == 'w' else await rwlock.gen_rlock())
+                semaphore = self.__semaphore_bucket_per_user[chat_id]
+                async with self.__overall_semaphore:
+                    async with rlock_or_wlock:
+                        async with semaphore:
+                            await self._send(chat_id, reply_to_msg_id)
+                            return
+            except (FloodWaitError, SlowModeWaitError) as e:
+                # telethon has retried for us, but we release locks and retry again here to see if it will be better
+                if self.retries >= 1:
+                    logger.error(f'Msg dropped due to too many flood control retries ({chat_id})')
+                    return
+                self.retries += 1
+                await asyncio.sleep(e.seconds * 2)
 
     async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         pass

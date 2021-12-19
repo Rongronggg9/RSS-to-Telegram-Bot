@@ -333,8 +333,8 @@ class AddedToGroupAction(events.ChatAction):
             return False
         if event.created:
             return True  # group created or migrated
-        if event.user_added:  # `event.user_joined` is not needed because a bot cannot join a group on its own
-            return env.bot_id in event.user_ids  # joint to a group
+        if event.user_added or isinstance(event.action_message.action, types.MessageActionChatAddUser):
+            return env.bot_id in event.user_ids  # added to a group
         return False
 
 

@@ -15,18 +15,13 @@ emoji==1.6.1
 
 # db
 tortoise-orm[asyncpg]==0.17.8
-aerich==0.6.0
-
-# tortoise-orm accel
-uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-ciso8601>=2.1.2,<2.2;  sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-python-rapidjson>=1.5
+aerich==0.6.1
 
 # network
 aiohttp[speedups]==3.8.1
 aiohttp-socks==0.7.1
 aiohttp-retry==2.4.6
-python-socks[asyncio]==2.0.0
+python-socks[asyncio]==2.0.1
 aiodns==3.0.0
 
 # utils
@@ -35,3 +30,11 @@ APScheduler==3.8.1
 python-dotenv==0.19.2
 readerwriterlock==1.0.9
 multidict==5.2.0
+
+# tortoise-orm accel
+uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
+ciso8601>=2.1.2,<2.2; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
+python-rapidjson>=1.5
+
+
+

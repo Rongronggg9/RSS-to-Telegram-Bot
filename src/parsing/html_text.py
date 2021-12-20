@@ -5,7 +5,7 @@ class Text:
     tag: Optional[str] = None
     attr: Optional[str] = None
 
-    def __init__(self, content: Union["Text", str, list], param: Optional[str] = None):
+    def __init__(self, content: Union["Text", str, list], param: Optional[str] = None, *_args, **_kwargs):
         self.param = param
         if type(content) is type(self) or type(content) is Text:
             self.content = content.content
@@ -23,7 +23,7 @@ class Text:
     def copy(self):
         if not self.is_nested():
             return self
-        return type(self)(self.content.copy(), self.param)
+        return type(self)(self.content.copy(), self.param, copy=True)
 
     def strip(self, deeper: bool = False, strip_l: Optional[bool] = True, strip_r: Optional[bool] = True):
         if not self.is_nested():  # str
@@ -161,38 +161,53 @@ class Text:
         return self.get_html()
 
 
-# ---- HTML Tags ----
-class Link(Text):
+# ---- HTML tags super class ----
+class TagWithParam(Text):
+    pass
+
+
+class TagWithoutParam(Text):
+    def __init__(self, content: Union["Text", str, list], *_args, **_kwargs):
+        super().__init__(content)
+
+
+class ListParent(TagWithoutParam):
+    pass
+
+
+# ---- HTML tags ----
+class Link(TagWithParam):
     tag = 'a'
     attr = 'href'
 
 
-class Bold(Text):
+class Bold(TagWithoutParam):
     tag = 'b'
 
 
-class Italic(Text):
+class Italic(TagWithoutParam):
     tag = 'i'
 
 
-class Underline(Text):
+class Underline(TagWithoutParam):
     tag = 'u'
 
 
-class Strike(Text):
+class Strike(TagWithoutParam):
     tag = 's'
 
 
-class Code(Text):
+class Code(TagWithParam):
     tag = 'code'
+    attr = 'class'
 
 
-class Pre(Text):
+class Pre(TagWithoutParam):
     tag = 'pre'
 
 
-class Br(Text):
-    def __init__(self, count: int = 1):
+class Br(TagWithoutParam):
+    def __init__(self, count: int = 1, *_args, **_kwargs):
         if not isinstance(count, int):
             count = 1
         super().__init__('\n' * count)
@@ -203,8 +218,8 @@ class Br(Text):
         return super().get_html()
 
 
-class Hr(Text):
-    def __init__(self, _content=None, _param=None):
+class Hr(TagWithoutParam):
+    def __init__(self, *_args, **_kwargs):
         super().__init__('\n----------------------\n')
 
     def get_html(self, plain: bool = False):
@@ -213,9 +228,11 @@ class Hr(Text):
         return super().get_html()
 
 
-class ListItem(Text):
-    def __init__(self, content, _param=None):
+class ListItem(TagWithoutParam):
+    def __init__(self, content, *_args, copy: bool = False, **_kwargs):
         super().__init__(content)
+        if copy:
+            return
         nested_lists = self.find_instances(ListParent)
         if not nested_lists:
             return
@@ -229,13 +246,11 @@ class ListItem(Text):
             nested_list_items[-1].rstrip(deeper=True)
 
 
-class ListParent(Text):
-    pass
-
-
 class OrderedList(ListParent):
-    def __init__(self, content, _param=None):
+    def __init__(self, content, *_args, copy: bool = False, **_kwargs):
         super().__init__(content)
+        if copy:
+            return
         list_items = self.find_instances(ListItem, shallow=True)
         if not list_items:
             return
@@ -246,8 +261,10 @@ class OrderedList(ListParent):
 
 
 class UnorderedList(ListParent):
-    def __init__(self, content, _param=None):
+    def __init__(self, content, *_args, copy: bool = False, **_kwargs):
         super().__init__(content)
+        if copy:
+            return
         list_items = self.find_instances(ListItem, shallow=True)
         if not list_items:
             return

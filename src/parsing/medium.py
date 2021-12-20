@@ -91,7 +91,7 @@ class Medium:
         self._server_change_count += 1
         self.url = env.IMG_RELAY_SERVER + self.url
         try:
-            await web.get(url=self.url, no_body=True)  # let the img relay sever cache the img
+            await web.get(url=self.url, semaphore=False, no_body=True)  # let the img relay sever cache the img
         except Exception:
             pass
         return True

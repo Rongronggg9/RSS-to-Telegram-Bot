@@ -19,7 +19,8 @@ from telethon.errors.rpcerrorlist import (
     VideoContentTypeInvalidError, VideoFileInvalidError,
 
     # errors caused by server instability or network instability between img server and telegram server
-    WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError,
+    WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, FileReferenceExpiredError,
+    BadRequestError,  # only FILE_REFERENCE_\d_EXPIRED
 
     # errors caused by lack of permission
     UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError
@@ -44,6 +45,7 @@ warnings.warn = warnings.original_warn
 stripNewline = re.compile(r'\n{3,}', )
 stripLineEnd = re.compile(r'[ \t\xa0]+\n')
 isEmoticon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|[01](\.\d)?em)')
+fileReferenceNExpired = re.compile(r'FILE_REFERENCE_(?:\d_)?EXPIRED')
 
 # load emoji dict
 with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
@@ -171,7 +173,10 @@ class Post:
                     return
 
                 # errors caused by server instability or network instability between img server and telegram server
-                except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
+                except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, FileReferenceExpiredError,
+                        BadRequestError) as e:
+                    if type(e) == BadRequestError and not fileReferenceNExpired.search(e.message):
+                        raise e  # only catch FILE_REFERENCE_\d_EXPIRED here
                     if await self.media.change_all_server():
                         logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
                                      f'Changed img server and retrying...')
@@ -188,7 +193,7 @@ class Post:
                     raise e  # let monitoring task to deal with it
 
                 except Exception as e:
-                    logger.warning(f'Sending {self.link} failed: ', exc_info=e)
+                    logger.warning(f'Sending {self.link} failed (feed: {self.feed_link}): ', exc_info=e)
                     error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
                                          traceback.format_exc().replace('\n', '<br>'),
                                          self.title, self.feed_title, self.link, self.author, service_msg=True)

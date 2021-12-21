@@ -35,9 +35,9 @@ class Text:
             if not deeper:
                 return
             self.content.strip()
-        while strip_l and type(self.content[0]) is Br:
+        while strip_l and self.content and type(self.content[0]) is Br:
             self.content.pop(0)
-        while strip_r and type(self.content[-1]) is Br:
+        while strip_r and self.content and type(self.content[-1]) is Br:
             self.content.pop()
         if deeper:
             any(map(lambda text: text.strip(strip_l=strip_l, strip_r=strip_r), self.content))

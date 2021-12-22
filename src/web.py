@@ -11,7 +11,6 @@ from typing import Union, Optional, Mapping, Dict
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
-from collections import OrderedDict
 from aiodns import DNSResolver
 from socket import AF_INET6
 
@@ -37,12 +36,11 @@ PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
                           'fc00::/7',  # ULA
                           ))
 
-HEADER_TEMPLATE = OrderedDict({
-    'Host': None,  # to be filled
+HEADER_TEMPLATE = {
     'User-Agent': env.USER_AGENT,
     'Accept': '*/*',
     'Accept-Encoding': 'gzip, deflate, br',
-})
+}
 FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
               'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
@@ -91,7 +89,6 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
     _headers = HEADER_TEMPLATE.copy()
     if headers:
         _headers.update(headers)
-    _headers['Host'] = host
 
     proxy_connector = ProxyConnector.from_url(PROXY, family=socket_family) if (PROXY and proxy_filter(url)) \
         else aiohttp.TCPConnector(family=socket_family)

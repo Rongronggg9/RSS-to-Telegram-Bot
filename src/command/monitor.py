@@ -2,8 +2,9 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from json import loads, dumps
-from typing import Union, MutableMapping, Final
+from typing import Union, MutableMapping, Final, Dict
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
+from collections import defaultdict
 
 from . import inner
 from .utils import escape_html
@@ -21,6 +22,9 @@ EMPTY: Final = 'empty'
 FAILED: Final = 'failed'
 UPDATED: Final = 'updated'
 SKIPPED: Final = 'skipped'
+
+# it may cause memory leak, but a lock is too small that leaking thousands of that is still not a big deal!
+__user_unsub_all_lock_bucket: Dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 
 
 class MonitoringLogs:
@@ -199,14 +203,20 @@ async def __notify_all(feed: db.Feed, entry: MutableMapping):
 
 async def __send(sub: db.Sub, post: Union[str, Post]):
     # TODO: customized format
+    user_id = sub.user_id
     try:
         if isinstance(post, str):
-            await env.bot.send_message(sub.user_id, post, parse_mode='html')
+            await env.bot.send_message(user_id, post, parse_mode='html')
             return
-        await post.send_message(sub.user_id)
+        await post.send_message(user_id)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError) as e:
-        logger.error(f'User blocked ({e.__class__.__name__}): {sub.user_id}')
-        await inner.sub.unsub_all(sub.user_id)
+        user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
+        if user_unsub_all_lock.locked():
+            return  # no need to unsub twice!
+        async with user_unsub_all_lock:
+            # TODO: leave the group/channel if still in it
+            logger.error(f'User blocked ({e.__class__.__name__}): {user_id}')
+            await inner.sub.unsub_all(user_id)
 
 
 async def __deactivate_feed_and_notify_all(feed: db.Feed):

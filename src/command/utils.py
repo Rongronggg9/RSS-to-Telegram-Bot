@@ -19,7 +19,7 @@ logger = log.getLogger('RSStT.command')
 
 
 def parse_command(command: str) -> list[AnyStr]:
-    return re.compile(r'\s+').split(command.strip())
+    return re.split(r'\s+', command.strip())
 
 
 def parse_callback_data_with_page(callback_data: bytes) -> Tuple[int, int]:
@@ -114,8 +114,9 @@ def permission_required(func: Optional[Callable] = None,
                        f'(ChatAction, {event.action_message and event.action_message.action.__class__.__name__})'
                        if is_chat_action else
                        '(no command, other message)')
-            if command.startswith('/') and '@' in command:
-                mention = parse_command(command)[0].split('@')[-1]
+            command_header = parse_command(command)[0]
+            if command_header.startswith('/') and '@' in command_header:
+                mention = command_header.split('@')[-1]
                 if mention != env.bot_peer.username:
                     raise events.StopPropagation  # none of my business!
 

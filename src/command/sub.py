@@ -13,7 +13,8 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Opti
     filtered_urls = inner.utils.filter_urls(args)
 
     if not filtered_urls:
-        await event.respond(i18n[lang]['sub_reply_feed_url_prompt_html'],
+        await event.respond(i18n[lang]['sub_reply_feed_url_prompt_html'] if not event.is_channel or event.is_group
+                            else i18n[lang]['sub_usage_in_channel_html'],
                             parse_mode='html',
                             buttons=Button.force_reply(single_use=True,
                                                        selective=True,

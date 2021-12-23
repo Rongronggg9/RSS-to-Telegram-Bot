@@ -30,6 +30,7 @@
   "processing": "正在处理中，请稍候...",
 
   "sub_reply_feed_url_prompt_html": "请回复订阅链接。\n或者，你也可以使用 <code>/sub url1 url2 url3 ...</code> 来批量订阅。",
+  "sub_usage_in_channel_html": "请使用 <code>/sub url1 url2 url3 ...</code> 来订阅。",
   "sub_successful": "订阅成功",
   "sub_failed": "订阅失败",
 

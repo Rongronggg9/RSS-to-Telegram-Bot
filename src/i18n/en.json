@@ -30,6 +30,7 @@
   "processing": "Processing, please wait for a moment...",
 
   "sub_reply_feed_url_prompt_html": "Please reply the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 ...</code> to subscribe in bulk.",
+  "sub_usage_in_channel_html": "Please use <code>/sub url1 url2 url3 ...</code> to subscribe.",
   "sub_successful": "Subscribed successfully",
   "sub_failed": "Subscribed failed",
 

@@ -30,6 +30,7 @@
   "processing": "處理緊，唔該等陣...",
 
   "sub_reply_feed_url_prompt_html": "唔該回復訂閲連結。\n或者，用 <code>/sub url1 url2 url3 ...</code> 嚟批量訂閲都得。",
+  "sub_usage_in_channel_html": "唔該用 <code>/sub url1 url2 url3 ...</code> 嚟訂閲。",
   "sub_successful": "訂閲成功",
   "sub_failed": "訂閲失敗",
 

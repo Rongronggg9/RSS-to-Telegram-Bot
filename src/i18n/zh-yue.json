@@ -15,6 +15,7 @@
   "internal_error": "內部錯誤",
   "status_code_error": "HTTP 狀態碼錯誤",
   "uncaught_internal_error": "冇捉到嘅內部錯誤",
+  "flood_wait_prompt": "你操作得太快喇，搞到機械人超出咗 Telegram 嘅速率限制。唔該慢少少。",
 
   "permission_denied_not_bot_manager": "只有機械人嘅管理員先畀用呢條命令。",
   "permission_denied_not_chat_admin": "只有谷/台嘅管理員先畀用呢條命令。",

@@ -1,3 +1,4 @@
+import asyncio
 import re
 from functools import partial, wraps
 from typing import Union, Optional, AnyStr, Any, List, Tuple, Callable
@@ -263,8 +264,12 @@ def permission_required(func: Optional[Callable] = None,
                 exc_info=e
             )
             if isinstance(e, FloodError):
-                return  # if a flood error occurred, mostly we cannot send an error msg...
+                if hasattr(e, 'seconds') and e.seconds is not None:
+                    await asyncio.sleep(e.seconds)
+                await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
+                raise events.StopPropagation
             await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
+            raise events.StopPropagation
 
     return wrapper
 

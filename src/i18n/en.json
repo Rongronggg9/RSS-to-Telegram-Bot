@@ -15,6 +15,7 @@
   "internal_error": "Internal error",
   "status_code_error": "HTTP status code error",
   "uncaught_internal_error": "Uncaught internal error",
+  "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
 
   "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
   "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",

@@ -5,12 +5,13 @@ from json import loads, dumps
 from typing import Union, MutableMapping, Final, Dict
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, \
     ChannelPrivateError
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from . import inner
 from .utils import escape_html
 from .inner.utils import get_hash, update_interval, deactivate_feed
 from src import log, db, env
+from src.exceptions import EntityNotFoundError
 from src.i18n import i18n
 from src.parsing.post import get_post_from_entry, Post
 from src.web import feed_get
@@ -24,9 +25,9 @@ FAILED: Final = 'failed'
 UPDATED: Final = 'updated'
 SKIPPED: Final = 'skipped'
 
-# it may cause memory leak, but a lock is too small that leaking thousands of that is still not a big deal!
+# it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
 __user_unsub_all_lock_bucket: Dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
-
+__user_entity_not_found_counter = Counter()
 
 class MonitoringLogs:
     monitoring_counts = 0
@@ -206,11 +207,24 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
     # TODO: customized format
     user_id = sub.user_id
     try:
+        try:
+            await env.bot.get_input_entity(user_id)  # verify that the input entity can be get first
+        except ValueError:  # if not, self may be banned
+            if __user_entity_not_found_counter['user_id'] >= 5:  # fail for 5 times, consider been banned
+                del __user_entity_not_found_counter['user_id']
+                raise EntityNotFoundError(user_id)
+            __user_entity_not_found_counter['user_id'] += 1
+            return  # skip once
+
+        if __user_entity_not_found_counter['user_id']:  # reset the counter if success
+            del __user_entity_not_found_counter['user_id']
+
         if isinstance(post, str):
             await env.bot.send_message(user_id, post, parse_mode='html')
             return
         await post.send_message(user_id)
-    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError) as e:
+    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
+            EntityNotFoundError) as e:
         user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
         if user_unsub_all_lock.locked():
             return  # no need to unsub twice!

@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from json import loads, dumps
 from typing import Union, MutableMapping, Final, Dict
-from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError
+from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, \
+    ChannelPrivateError
 from collections import defaultdict
 
 from . import inner
@@ -209,7 +210,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             await env.bot.send_message(user_id, post, parse_mode='html')
             return
         await post.send_message(user_id)
-    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError) as e:
+    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError) as e:
         user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
         if user_unsub_all_lock.locked():
             return  # no need to unsub twice!

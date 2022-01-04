@@ -37,8 +37,11 @@ class Medium:
     def get_url(self):
         return self.url
 
-    def invalidate(self):
-        self.valid = False
+    def invalidate(self) -> bool:
+        if self.valid:
+            self.valid = False
+            return True
+        return False
 
     async def validate(self):  # warning: only design for weibo
         if self.valid is not None:  # already validated
@@ -142,8 +145,8 @@ class Media:
             return
         self._media.append(medium)
 
-    def invalidate_all(self):
-        any(map(lambda m: m.invalidate(), self._media))
+    def invalidate_all(self) -> bool:
+        return bool(self._media and sum(media.invalidate() for media in self._media))
 
     async def validate(self):
         if not self._media:
@@ -178,9 +181,7 @@ class Media:
         return tuple(m.get_link(only_invalid=True) for m in self._media if not m)
 
     async def change_all_server(self):
-        if sum(await asyncio.gather(*(media.change_server() for media in self._media))):
-            return True
-        return False
+        return bool(self._media and sum(await asyncio.gather(*(media.change_server() for media in self._media))))
 
     def __len__(self):
         return len(self._media)

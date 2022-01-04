@@ -16,14 +16,14 @@ from telethon.errors.rpcerrorlist import (
     PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
     PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
     GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
-    VideoContentTypeInvalidError, VideoFileInvalidError,
+    VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError,
 
     # errors caused by server instability or network instability between img server and telegram server
     WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, FileReferenceExpiredError,
     BadRequestError,  # only FILE_REFERENCE_\d_EXPIRED
 
     # errors caused by lack of permission
-    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError
+    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError
 )
 
 from src import env, message, log, web
@@ -136,76 +136,75 @@ class Post:
         self._add_metadata()
         self._add_invalid_media()
 
-    async def send_message(self, chat_ids: Union[List[Union[str, int]], str, int], reply_to_msg_id: int = None):
+    async def send_message(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         if not self.messages and not self.telegraph_post:
             await self.generate_message()
 
         if self.telegraph_post:
-            await self.telegraph_post.send_message(chat_ids, reply_to_msg_id)
+            await self.telegraph_post.send_message(chat_id, reply_to_msg_id)
             return
-
-        if type(chat_ids) is not list:
-            chat_ids = [chat_ids]
 
         if self.messages and len(self.messages) >= 5:
             logger.debug(f'Too large, send a pure link message instead: "{self.title}"')
             pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=self.link)
-            await pure_link_post.send_message(chat_ids, reply_to_msg_id)
+            await pure_link_post.send_message(chat_id, reply_to_msg_id)
             return
 
-        while len(chat_ids) >= 1:
-            chat_id = chat_ids[0]
-            for msg in self.messages:
-                try:
-                    await msg.send(chat_id, reply_to_msg_id)
+        tries = 0
+        file_reference_expired_flag = False
+        e = None  # placeholder
+        while True:
+            if tries >= 5:
+                logger.error(f'Sending {self.link} failed after {tries} tries'
+                             f'{", w/ `FileReferenceError` occurred" * file_reference_expired_flag}. '
+                             f'Sometime it means that there may be some bugs in the code :(', exc_info=e)
+                break
+            tries += 1
 
-                # errors caused by invalid img/video(s)
-                except (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
-                        PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
-                        GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
-                        VideoContentTypeInvalidError, VideoFileInvalidError) as e:
+            try:
+                for msg in self.messages:
+                    await msg.send(chat_id, reply_to_msg_id)
+                break
+
+            # errors caused by invalid img/video(s)
+            except (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
+                    PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
+                    GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
+                    VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as e:
+                if self.invalidate_all_media():
                     logger.debug(f'All media was set invalid because some of them are invalid '
                                  f'({e.__class__.__name__}: {str(e)})')
-                    self.invalidate_all_media()
                     await self.generate_message()
-                    await self.send_message(chat_ids)
-                    return
+                continue
 
-                # errors caused by server instability or network instability between img server and telegram server
-                except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, FileReferenceExpiredError,
-                        BadRequestError) as e:
-                    if (
-                            not isinstance(e, (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError,
-                                               FileReferenceExpiredError))
-                            and type(e) != BadRequestError
-                    ) or (
-                            type(e) == BadRequestError and not fileReferenceNExpired.search(e.message)
-                    ):
-                        raise e  # only catch FILE_REFERENCE_\d_EXPIRED here
-                    if await self.media.change_all_server():
-                        logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
-                                     f'Changed img server and retrying...')
-                        await self.send_message(chat_ids)
-                        return
+            except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError) as e:
+                raise e  # let monitoring task to deal with it
+
+            # errors caused by server instability or network instability between img server and telegram server
+            except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
+                if await self.media.change_all_server():
+                    logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
+                                 f'Changed img server and retrying...')
+                if self.invalidate_all_media():
                     logger.debug('All media was set invalid '
                                  'because Telegram still cannot fetch some media after changing img server.')
-                    self.invalidate_all_media()
                     await self.generate_message()
-                    await self.send_message(chat_ids)
-                    return
+                continue
 
-                except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError) as e:
-                    raise e  # let monitoring task to deal with it
-
-                except Exception as e:
-                    logger.warning(f'Sending {self.link} failed (feed: {self.feed_link}): ', exc_info=e)
-                    error_message = Post('Something went wrong while sending this message. Please check:<br><br>' +
-                                         traceback.format_exc().replace('\n', '<br>'),
-                                         self.title, self.feed_title, self.link, self.author, service_msg=True)
-                    await error_message.send_message(env.MANAGER)
-
-            chat_ids.pop(0)
+            except Exception as e:
+                if type(e) == FileReferenceExpiredError \
+                        or (type(e) == BadRequestError and fileReferenceNExpired.search(str(e))):
+                    file_reference_expired_flag = True
+                    continue
+                logger.warning(f'Sending {self.link} failed (feed: {self.feed_link}, user: {chat_id}): ', exc_info=e)
+                error_message = Post(f'Something went wrong while sending this message '
+                                     f'(feed: {self.feed_link}, user: {chat_id}). '
+                                     f'Please check:<br><br>' +
+                                     traceback.format_exc().replace('\n', '<br>'),
+                                     self.title, self.feed_title, self.link, self.author, service_msg=True)
+                await error_message.send_message(env.MANAGER)
+                break
 
     async def telegraph_ify(self):
         try:
@@ -298,10 +297,12 @@ class Post:
         return len(self.messages)
 
     def invalidate_all_media(self):
-        self.media.invalidate_all()
-        self.text = self.origin_text
+        if not self.media.invalidate_all():
+            return False
+        self.text = self.origin_text.copy()
         self._add_metadata()
         self._add_invalid_media()
+        return True
 
     def get_split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096):
         split_html = [stripNewline.sub('\n\n',

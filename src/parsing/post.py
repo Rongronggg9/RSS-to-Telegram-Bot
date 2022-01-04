@@ -175,7 +175,13 @@ class Post:
                 # errors caused by server instability or network instability between img server and telegram server
                 except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, FileReferenceExpiredError,
                         BadRequestError) as e:
-                    if type(e) == BadRequestError and not fileReferenceNExpired.search(e.message):
+                    if (
+                            not isinstance(e, (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError,
+                                               FileReferenceExpiredError))
+                            and type(e) != BadRequestError
+                    ) or (
+                            type(e) == BadRequestError and not fileReferenceNExpired.search(e.message)
+                    ):
                         raise e  # only catch FILE_REFERENCE_\d_EXPIRED here
                     if await self.media.change_all_server():
                         logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '

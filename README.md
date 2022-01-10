@@ -87,7 +87,7 @@ docker-compose up -d
 
 ### Manual Execution
 
-Python 3.9+
+Python 3.7+
 
 ```sh
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git

@@ -10,8 +10,8 @@ from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
-from telethon.errors import FloodError, UserNotParticipantError, UserIsBlockedError, ChatWriteForbiddenError, \
-    UserIdInvalidError
+from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, \
+    UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, ChannelPrivateError
 
 from src import env, log, db
 from src.i18n import i18n
@@ -65,7 +65,7 @@ def parse_sub_customization_callback_data(callback_data: bytes) \
 async def respond_or_answer(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], msg: str,
                             alert: bool = True, cache_time: int = 120, *args, **kwargs):
     """
-    Respond to a ``NewMessage`` event, or answer to a ``CallbackQuery`` event.
+    Respond to a ``NewMessage`` event, or answer to an unanswered ``CallbackQuery`` event.
 
     :param event: a telethon Event object, NewMessage or CallbackQuery
     :param msg: the message to send
@@ -74,13 +74,14 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
     :param args: additional params (only for NewMessage)
     :param kwargs: additional params (only for NewMessage)
     """
-    if isinstance(event, events.CallbackQuery.Event):
-        await event.answer(msg, alert=alert, cache_time=cache_time)
-    else:
-        try:
+    try:
+        # noinspection PyProtectedMember
+        if isinstance(event, events.CallbackQuery.Event) and not event._answered:
+            await event.answer(msg, alert=alert, cache_time=cache_time)
+        else:
             await event.respond(msg, *args, **kwargs)
-        except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError):
-            pass
+    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError):
+        pass
 
 
 def permission_required(func: Optional[Callable] = None,
@@ -270,6 +271,9 @@ def permission_required(func: Optional[Callable] = None,
                 if hasattr(e, 'seconds') and e.seconds is not None:
                     await asyncio.sleep(e.seconds)
                 await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
+                raise events.StopPropagation
+            if isinstance(e, MessageNotModifiedError):
+                await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])
                 raise events.StopPropagation
             await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
             raise events.StopPropagation

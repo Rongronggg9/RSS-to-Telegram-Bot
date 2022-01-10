@@ -1,10 +1,12 @@
+from __future__ import annotations
+from collections.abc import Iterator, Iterable
+
 import json
 import re
 import traceback
 import asyncio
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
-from typing import List, Iterator, Iterable
 from emoji import emojize
 from urllib.parse import urlparse, urljoin
 from aiographfix import exceptions
@@ -117,7 +119,7 @@ class Post:
         self.text = Text('')
         self.service_msg = service_msg
         self.telegraph_url = telegraph_url
-        self.messages: Optional[List[message.Message]] = None
+        self.messages: Optional[list[message.Message]] = None
         self.origin_text = self.text.copy()
         self.title = emojify(unescape(title.strip())) if title else None
         self.feed_title = feed_title

@@ -1,7 +1,10 @@
+from __future__ import annotations
+from typing import Union, Optional, AnyStr, Any
+from collections.abc import Callable
+
 import asyncio
 import re
 from functools import partial, wraps
-from typing import Union, Optional, AnyStr, Any, List, Tuple, Callable
 from telethon import events
 from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
@@ -19,11 +22,11 @@ logger = log.getLogger('RSStT.command')
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
 
-def parse_command(command: str) -> List[AnyStr]:
+def parse_command(command: str) -> list[AnyStr]:
     return re.split(r'\s+', command.strip())
 
 
-def parse_callback_data_with_page(callback_data: bytes) -> Tuple[int, int]:
+def parse_callback_data_with_page(callback_data: bytes) -> tuple[int, int]:
     """
     callback data = command_{id}[|{page}]
 
@@ -38,7 +41,7 @@ def parse_callback_data_with_page(callback_data: bytes) -> Tuple[int, int]:
 
 
 def parse_sub_customization_callback_data(callback_data: bytes) \
-        -> Tuple[Optional[int], Optional[str], Optional[Union[int, str]], int]:
+        -> tuple[Optional[int], Optional[str], Optional[Union[int, str]], int]:
     """
     callback data = command[_{id}[_{action}[_{param}]]][|{page_number}]
 
@@ -358,7 +361,7 @@ class GroupMigratedAction(events.ChatAction):
                 return cls.Event(msg)
 
 
-def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> List[types.BotCommand]:
+def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> list[types.BotCommand]:
     commands = [
         types.BotCommand(command="sub", description=i18n[lang]['cmd_description_sub']),
         types.BotCommand(command="unsub", description=i18n[lang]['cmd_description_unsub']),
@@ -393,7 +396,7 @@ async def set_bot_commands(scope: Union[types.BotCommandScopeDefault,
                                         types.BotCommandScopePeerUser,
                                         types.BotCommandScopeChatAdmins],
                            lang_code: str,
-                           commands: List[types.BotCommand]):
+                           commands: list[types.BotCommand]):
     await env.bot(
         SetBotCommandsRequest(scope=scope, lang_code=lang_code, commands=commands)
     )

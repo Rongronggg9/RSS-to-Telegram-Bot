@@ -1,6 +1,8 @@
+from __future__ import annotations
+from typing import Optional
+
 from json import load
 from os import listdir, path
-from typing import Optional, Tuple
 from multidict import CIMultiDict, istr
 
 I18N_PATH = path.split(path.realpath(__file__))[0]
@@ -37,7 +39,7 @@ class _I18N:
         return self.__l10n_d[lang_code] if lang_code in self.__l10n_d else self.get_fallback_l10n(lang_code)
 
     def get_all_l10n_string(self, key: str, html_escaped: bool = False,
-                            only_iso_639_1: bool = False) -> Tuple[str, ...]:
+                            only_iso_639_1: bool = False) -> tuple[str, ...]:
         languages = ALL_LANGUAGES if not only_iso_639_1 else self.__iso_639_1_d.keys()
         res = (
             tuple(self[lang_code][key] for lang_code in languages if self[lang_code].key_exist(key))

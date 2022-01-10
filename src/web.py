@@ -1,3 +1,7 @@
+from __future__ import annotations
+from typing import Union, Optional
+from collections.abc import Mapping
+
 import asyncio
 import functools
 import os
@@ -7,7 +11,6 @@ import feedparser
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
 from aiohttp_retry import RetryClient, ExponentialRetry
-from typing import Union, Optional, Mapping, Dict
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
@@ -74,7 +77,7 @@ def proxy_filter(url: str) -> bool:
 
 async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None,
               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
-        -> Dict[str, Union[Mapping[str, str], bytes, str, int]]:
+        -> dict[str, Union[Mapping[str, str], bytes, str, int]]:
     if not timeout:
         timeout = 12
 
@@ -127,7 +130,7 @@ async def get_session(timeout: int = None):
 
 async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
                    headers: Optional[dict] = None, lang: Optional[str] = None, verbose: bool = True) \
-        -> Dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
+        -> dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
     auto_warning = logger.warning if verbose else logger.debug
     ret = {'url': url,
            'rss_d': None,

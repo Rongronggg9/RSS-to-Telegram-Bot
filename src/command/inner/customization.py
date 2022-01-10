@@ -1,4 +1,6 @@
-from typing import Union, Tuple, Optional
+from __future__ import annotations
+from typing import Union, Optional
+
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
@@ -19,7 +21,7 @@ async def get_sub_info(sub: db.Sub,
 
 async def get_sub_customization_buttons(sub: db.Sub,
                                         lang: Optional[str] = None,
-                                        page: Optional[int] = None) -> Tuple[Tuple[KeyboardButtonCallback, ...], ...]:
+                                        page: Optional[int] = None) -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
     page = page or 1
     buttons = (
         (
@@ -44,7 +46,7 @@ async def get_sub_customization_buttons(sub: db.Sub,
 
 async def get_set_interval_buttons(sub: Union[db.Sub, int],
                                    lang: Optional[str] = None,
-                                   page: Optional[int] = None) -> Tuple[Tuple[KeyboardButtonCallback, ...], ...]:
+                                   page: Optional[int] = None) -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
     sub_id = sub if isinstance(sub, int) else sub.id
     page = page or 1
 

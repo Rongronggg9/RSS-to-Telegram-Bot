@@ -1,19 +1,19 @@
-import os
-import logging
-import re
-from telethon import TelegramClient
-from telethon.tl.types import User, InputPeerUser
-from typing import Optional, List
-from python_socks import parse_proxy_url
-from dotenv import load_dotenv
+from __future__ import annotations
+from typing import Optional, Any
 
 # workaround for Python 3.7
 try:
     from typing import Final
 except ImportError:
-    from typing import Any
-
     Final = Any
+
+import os
+import logging
+import re
+from telethon import TelegramClient
+from telethon.tl.types import User, InputPeerUser
+from python_socks import parse_proxy_url
+from dotenv import load_dotenv
 
 
 # ----- utils -----
@@ -32,7 +32,7 @@ def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
     return default_value
 
 
-def __list_parser(var: Optional[str]) -> List[str]:
+def __list_parser(var: Optional[str]) -> list[str]:
     if not var:
         return []
 

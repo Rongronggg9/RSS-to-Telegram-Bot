@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import re
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal
-from typing import List
 
 from src import env, log, web
 from src.parsing import post
@@ -138,7 +139,7 @@ class Animation(Medium):
 
 class Media:
     def __init__(self):
-        self._media: List[Medium] = []
+        self._media: list[Medium] = []
 
     def add(self, medium: Medium):
         if medium in self._media:

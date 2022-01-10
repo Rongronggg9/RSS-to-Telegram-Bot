@@ -1,11 +1,14 @@
-from typing import Optional, Dict, Callable, Any, NoReturn, Set, Union
-from math import ceil
+from __future__ import annotations
+from typing import Optional, Any, NoReturn, Union
+from collections.abc import Callable
 
 # workaround for Python 3.7
 try:
     from typing import Final
 except ImportError:
     Final = Any
+
+from math import ceil
 
 from src.db import models
 
@@ -29,19 +32,19 @@ class __EffectiveOptions:
             return
         self.__initialized = True
 
-        self.__options: Dict[str, Union[str, int]] = {}
+        self.__options: dict[str, Union[str, int]] = {}
         self.__cached = False
-        self.__default_options: Dict[str, Union[str, int]] = {
+        self.__default_options: dict[str, Union[str, int]] = {
             "default_interval": 10,
             "minimal_interval": 5,
         }
 
     @property
-    def options(self) -> Dict[str, Union[str, int]]:
+    def options(self) -> dict[str, Union[str, int]]:
         return self.__options.copy()
 
     @property
-    def default_options(self) -> Dict[str, Union[str, int]]:
+    def default_options(self) -> dict[str, Union[str, int]]:
         return self.__default_options.copy()
 
     @property
@@ -120,8 +123,8 @@ class EffectiveTasks:
 
     A task dispatcher.
     """
-    __task_buckets: Dict[int, "EffectiveTasks"] = {}  # key: interval, value: EffectiveTasks
-    __all_tasks: Dict[int, int] = {}  # key: id, value: interval
+    __task_buckets: dict[int, "EffectiveTasks"] = {}  # key: interval, value: EffectiveTasks
+    __all_tasks: dict[int, int] = {}  # key: id, value: interval
 
     def __init__(self, interval: int) -> NoReturn:
         self.interval: Final = interval
@@ -217,7 +220,7 @@ class EffectiveTasks:
         """
         return cls.__all_tasks[feed_id] if cls.exist(feed_id) else None
 
-    def __get_tasks(self) -> Set[int]:
+    def __get_tasks(self) -> set[int]:
         if len(self.__all_feeds) == 0:
             return set()  # nothing to run
         if self.__run_count == 0:
@@ -229,7 +232,7 @@ class EffectiveTasks:
         return tasks_to_run
 
     @classmethod
-    def get_tasks(cls) -> Set[int]:
+    def get_tasks(cls) -> set[int]:
         """
         Get tasks to be run.
 

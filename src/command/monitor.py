@@ -1,19 +1,20 @@
-import asyncio
-from datetime import datetime, timedelta, timezone
-from email.utils import format_datetime
-from json import loads, dumps
-from typing import Union, MutableMapping, Dict
-from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, \
-    ChannelPrivateError
-from collections import defaultdict, Counter
+from __future__ import annotations
+from typing import Union, Any
+from collections.abc import MutableMapping
 
 # workaround for Python 3.7
 try:
     from typing import Final
 except ImportError:
-    from typing import Any
-
     Final = Any
+
+import asyncio
+from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
+from json import loads, dumps
+from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, \
+    ChannelPrivateError
+from collections import defaultdict, Counter
 
 from . import inner
 from .utils import escape_html
@@ -34,7 +35,7 @@ UPDATED: Final = 'updated'
 SKIPPED: Final = 'skipped'
 
 # it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
-__user_unsub_all_lock_bucket: Dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
+__user_unsub_all_lock_bucket: dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 __user_entity_not_found_counter = Counter()
 
 

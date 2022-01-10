@@ -2,10 +2,18 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from json import loads, dumps
-from typing import Union, MutableMapping, Final, Dict
+from typing import Union, MutableMapping, Dict
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, \
     ChannelPrivateError
 from collections import defaultdict, Counter
+
+# workaround for Python 3.7
+try:
+    from typing import Final
+except ImportError:
+    from typing import Any
+
+    Final = Any
 
 from . import inner
 from .utils import escape_html
@@ -28,6 +36,7 @@ SKIPPED: Final = 'skipped'
 # it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
 __user_unsub_all_lock_bucket: Dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 __user_entity_not_found_counter = Counter()
+
 
 class MonitoringLogs:
     monitoring_counts = 0
@@ -143,7 +152,7 @@ async def __monitor(feed: db.Feed) -> str:
         if feed.error_count % 10 == 0:
             logger.warning(f'Fetch failed ({feed.error_count}th retry, {d["msg"]}): {feed.link}')
         if feed.error_count >= 10:  # too much error, delay next check
-            interval = feed.interval or db.effective_utils.EffectiveOptions.default_interval
+            interval = feed.interval or db.EffectiveOptions.default_interval
             next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
             if next_check_interval > interval:
                 feed.next_check_time = now + timedelta(minutes=next_check_interval)

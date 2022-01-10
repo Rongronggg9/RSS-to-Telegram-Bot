@@ -1,7 +1,7 @@
 import json
 import re
 import traceback
-import asyncio.exceptions
+import asyncio
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
 from typing import List, Iterator, Iterable
@@ -221,7 +221,7 @@ class Post:
                 return pure_link_post
             logger.debug('Telegraph API error: ' + str(e))
             return None
-        except (TimeoutError, asyncio.exceptions.TimeoutError):
+        except (TimeoutError, asyncio.TimeoutError):
             logger.debug('Generate Telegraph post error: network timeout.')
             return None
         except (ClientError, ConnectionError) as e:

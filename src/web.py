@@ -24,7 +24,7 @@ logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 _semaphore = asyncio.BoundedSemaphore(5)
-_resolver = DNSResolver()
+_resolver = DNSResolver(timeout=3)
 
 PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
 PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
@@ -45,7 +45,7 @@ FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, '
               'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
 RETRY_OPTION = ExponentialRetry(attempts=3, start_timeout=1,
-                                exceptions={asyncio.exceptions.TimeoutError,
+                                exceptions={asyncio.TimeoutError,
                                             aiohttp.client_exceptions.ClientError,
                                             ConnectionError,
                                             TimeoutError})
@@ -179,7 +179,7 @@ async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union
     except aiohttp.client_exceptions.InvalidURL:
         auto_warning(f'Fetch failed (URL invalid): {url}')
         ret['msg'] = 'ERROR: ' + i18n[lang]['url_invalid']
-    except (asyncio.exceptions.TimeoutError,
+    except (asyncio.TimeoutError,
             aiohttp.client_exceptions.ClientError,
             SSLError,
             OSError,

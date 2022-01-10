@@ -19,7 +19,7 @@ logger = log.getLogger('RSStT.command')
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
 
-def parse_command(command: str) -> list[AnyStr]:
+def parse_command(command: str) -> List[AnyStr]:
     return re.split(r'\s+', command.strip())
 
 

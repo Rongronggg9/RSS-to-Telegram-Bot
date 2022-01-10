@@ -32,7 +32,7 @@ async def get_sub_customization_buttons(sub: db.Sub,
                           i18n[lang]['notification_normal' if sub.notify else 'notification_muted'],
                           data=f'set_{sub.id}_notify|{page}'),
             Button.inline(i18n[lang]['monitor_interval'] + ': ' +
-                          str(sub.interval or db.effective_utils.EffectiveOptions.default_interval),
+                          str(sub.interval or db.EffectiveOptions.default_interval),
                           data=f'set_{sub.id}_interval|{page}'),
         ),
         (
@@ -48,10 +48,8 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
     sub_id = sub if isinstance(sub, int) else sub.id
     page = page or 1
 
-    # noinspection PyTypeChecker
-    minimal_interval: int = db.effective_utils.EffectiveOptions.minimal_interval
-    # noinspection PyTypeChecker
-    default_interval: int = db.effective_utils.EffectiveOptions.default_interval
+    minimal_interval: int = db.EffectiveOptions.minimal_interval
+    default_interval: int = db.EffectiveOptions.default_interval
 
     if sub.user_id == env.MANAGER:
         minimal_interval = min(minimal_interval, 5)
@@ -74,9 +72,9 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
 
 async def set_sub_interval(sub: db.Sub,
                            interval: int) -> db.Sub:
-    # noinspection PyTypeChecker
-    if interval < db.effective_utils.EffectiveOptions.minimal_interval and sub.user_id != env.MANAGER:
-        interval = db.effective_utils.EffectiveOptions.minimal_interval
+    minimal_interval = db.EffectiveOptions.minimal_interval
+    if interval < minimal_interval and sub.user_id != env.MANAGER:
+        interval = minimal_interval
 
     if interval == sub.interval:
         return sub

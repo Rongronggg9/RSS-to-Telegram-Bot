@@ -14,7 +14,7 @@ from . import inner
 async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     if len(args) < 3:  # return options info
-        options = db.effective_utils.EffectiveOptions.options
+        options = db.EffectiveOptions.options
         msg = (
                 f'<b>{i18n[lang]["current_options"]}</b>\n\n'
                 + '\n'.join(f'<code>{key}</code> = <code>{value}</code> '
@@ -28,7 +28,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
     value = args[2]
 
     try:
-        await db.effective_utils.EffectiveOptions.set(key, value)
+        await db.EffectiveOptions.set(key, value)
     except KeyError:
         await event.respond(f'ERROR: {i18n[lang]["option_key_invalid"]}')
         return

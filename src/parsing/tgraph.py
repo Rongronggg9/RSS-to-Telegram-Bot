@@ -59,7 +59,7 @@ class APIs:
         self.tokens = tokens
         self._accounts: list[Telegraph] = []
         self._curr_id = 0
-        asyncio.get_event_loop().run_until_complete(self.init())
+        env.loop.run_until_complete(self.init())
 
     async def init(self):
         for token in self.tokens:

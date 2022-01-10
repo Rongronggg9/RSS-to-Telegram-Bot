@@ -11,6 +11,8 @@ User = models.User
 Feed = models.Feed
 Sub = models.Sub
 Option = models.Option
+EffectiveOptions = effective_utils.EffectiveOptions
+EffectiveTasks = effective_utils.EffectiveTasks
 
 
 async def init():

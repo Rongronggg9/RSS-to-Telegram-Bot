@@ -1,53 +1,62 @@
-from typing import Optional, Dict, Final, Callable, Any, NoReturn, Set, Union
+from typing import Optional, Dict, Callable, Any, NoReturn, Set, Union
 from math import ceil
+
+# workaround for Python 3.7
+try:
+    from typing import Final
+except ImportError:
+    Final = Any
 
 from src.db import models
 
 
-async def init():
-    await EffectiveOptions.init()
-    await EffectiveTasks.init()
-
-
-class EffectiveOptions:
+class __EffectiveOptions:
     """
-    EffectiveOptions class.
+    EffectiveOptions singleton class.
 
     Implement a write-through cache that caches all options to reduce db load.
     """
-    __options: Dict[str, Union[str, int]] = {}
-    __initialized = False
-    __default_options: Dict[str, Union[str, int]] = {
-        "default_interval": 10,
-        "minimal_interval": 5,
-    }
+    __singleton: Optional["__EffectiveOptions"] = None
+    __initialized: bool = False
 
-    @classmethod
+    def __new__(cls, *args, **kwargs):
+        if not cls.__singleton:
+            cls.__singleton = super().__new__(cls)
+        return cls.__singleton
+
+    def __init__(self):
+        if self.__initialized:
+            return
+        self.__initialized = True
+
+        self.__options: Dict[str, Union[str, int]] = {}
+        self.__cached = False
+        self.__default_options: Dict[str, Union[str, int]] = {
+            "default_interval": 10,
+            "minimal_interval": 5,
+        }
+
     @property
-    def options(cls) -> Dict[str, Union[str, int]]:
-        return cls.__options.copy()
+    def options(self) -> Dict[str, Union[str, int]]:
+        return self.__options.copy()
 
-    @classmethod
     @property
-    def default_options(cls) -> Dict[str, Union[str, int]]:
-        return cls.__default_options.copy()
+    def default_options(self) -> Dict[str, Union[str, int]]:
+        return self.__default_options.copy()
 
-    @classmethod
     @property
-    def default_interval(cls) -> int:
-        return cls.get('default_interval')
+    def default_interval(self) -> int:
+        return self.get('default_interval')
 
-    @classmethod
     @property
-    def minimal_interval(cls) -> int:
-        return cls.get("minimal_interval")
+    def minimal_interval(self) -> int:
+        return self.get("minimal_interval")
 
-    @classmethod
-    def validate(cls, key: str, value: Union[int, str], ignore_type_error: bool = False) -> Union[int, str]:
+    def validate(self, key: str, value: Union[int, str], ignore_type_error: bool = False) -> Union[int, str]:
         if len(key) > 255:
             raise KeyError("Option key must be 255 characters or less")
 
-        value_type = type(cls.__default_options[key])
+        value_type = type(self.__default_options[key])
         if value_type is str:
             return str(value)
 
@@ -56,53 +65,53 @@ class EffectiveOptions:
                 return int(value)
 
             if ignore_type_error:
-                return cls.__default_options[key]
+                return self.__default_options[key]
             raise ValueError("Option value must be an integer")
 
         return value
 
-    @classmethod
-    def get(cls, key: str) -> Union[str, int]:
+    def get(self, key: str) -> Union[str, int]:
         """
         Get the value of an Option.
 
         :param key: option key
         :return: option value
         """
-        if not cls.__initialized:
-            raise RuntimeError("EffectiveOptions not initialized")
-        return cls.__options[key]
+        if not self.__cached:
+            raise RuntimeError("Options cache not initialized")
+        return self.__options[key]
 
-    @classmethod
-    async def set(cls, key: str, value: Union[int, str]) -> NoReturn:
+    async def set(self, key: str, value: Union[int, str]) -> NoReturn:
         """
         Set the value of an Option. (write-through to the DB)
 
         :param key: option key
         :param value: option value
         """
-        value = cls.validate(key, value)
+        value = self.validate(key, value)
         await models.Option.update_or_create(defaults={'value': str(value)}, key=key)
-        cls.__options[key] = value
+        self.__options[key] = value
 
-    @classmethod
-    async def init(cls) -> NoReturn:
+    async def cache(self) -> NoReturn:
         """
         Cache all options from the DB.
         """
         options = await models.Option.all()
         for option in options:
-            if option.key not in cls.__default_options:  # invalid option
+            if option.key not in self.__default_options:  # invalid option
                 continue
-            cls.__options[option.key] = cls.validate(option.key, option.value, ignore_type_error=True)
+            self.__options[option.key] = self.validate(option.key, option.value, ignore_type_error=True)
 
-        for key, value in cls.__default_options.items():
-            if key in cls.__options:
+        for key, value in self.__default_options.items():
+            if key in self.__options:
                 continue
-            cls.__options[key] = value
+            self.__options[key] = value
             # await models.Option.create(key=key, value=value)  # init option
 
-        cls.__initialized = True
+        self.__cached = True
+
+
+EffectiveOptions = __EffectiveOptions()
 
 
 class EffectiveTasks:
@@ -233,3 +242,8 @@ class EffectiveTasks:
                 tasks_to_run.update(tasks)
 
         return tasks_to_run
+
+
+async def init():
+    await EffectiveOptions.cache()
+    await EffectiveTasks.init()

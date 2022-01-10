@@ -3,9 +3,17 @@ import logging
 import re
 from telethon import TelegramClient
 from telethon.tl.types import User, InputPeerUser
-from typing import Optional, Final, List
+from typing import Optional, List
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
+
+# workaround for Python 3.7
+try:
+    from typing import Final
+except ImportError:
+    from typing import Any
+
+    Final = Any
 
 
 # ----- utils -----

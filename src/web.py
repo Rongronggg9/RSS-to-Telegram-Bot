@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 import asyncio
 import functools
-import os
+import aiodns
 import aiohttp
 import aiohttp.client_exceptions
 import feedparser
@@ -14,20 +14,16 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
-from aiodns import DNSResolver
 from socket import AF_INET6
 
 from src import env, log
 from src.i18n import i18n
 
-if os.name == "nt":  # workaround for aiodns on Windows
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 _semaphore = asyncio.BoundedSemaphore(5)
-_resolver = DNSResolver(timeout=3)
+_resolver = aiodns.DNSResolver(timeout=3, loop=env.loop)
 
 PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
 PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
@@ -85,8 +81,10 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
     v6_address = None
     try:
         v6_address = await _resolver.query(host, 'AAAA') if env.IPV6_PRIOR else None
-    except Exception:
+    except aiodns.error.DNSError:
         pass
+    except Exception as e:
+        logger.debug(f'Error occurred when querying {url} AAAA:', exc_info=e)
     socket_family = AF_INET6 if v6_address else 0
 
     _headers = HEADER_TEMPLATE.copy()

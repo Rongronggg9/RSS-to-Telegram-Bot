@@ -7,6 +7,7 @@ try:
 except ImportError:
     Final = Any
 
+import asyncio
 import os
 import logging
 import re
@@ -203,3 +204,8 @@ bot: Optional[TelegramClient] = None  # placeholder
 bot_id: Optional[int] = None  # placeholder
 bot_peer: Optional[User] = None  # placeholder
 bot_input_peer: Optional[InputPeerUser] = None  # placeholder
+
+if os.name == "nt":  # workaround for aiodns on Windows
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)

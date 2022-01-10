@@ -1,9 +1,12 @@
 import asyncio
+
 try:
     import uvloop
+
     uvloop.install()
 except ImportError:  # uvloop do not support Windows
     uvloop = None
+
 from functools import partial
 from time import sleep
 from typing import Optional
@@ -24,41 +27,43 @@ from src.parsing import tgraph
 logger = log.getLogger('RSStT')
 
 # initializing bot
+loop = env.loop
+
 Path("config").mkdir(parents=True, exist_ok=True)
 bot: Optional[TelegramClient] = None
 if not env.API_ID or not env.API_HASH:
-    _use_sample_api = True
     logger.info('API_ID and/or API_HASH not set, use sample APIs instead. API_ID_PUBLISHED_FLOOD_ERROR may occur.')
-    API_IDs = sample(tuple(env.SAMPLE_APIS.keys()), len(env.SAMPLE_APIS))
-    sleep_for = 0
-    while API_IDs:
-        sleep_for += 10
-        API_ID = API_IDs.pop()
-        API_HASH = env.SAMPLE_APIS[API_ID]
-        try:
-            bot = TelegramClient('config/bot', API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
-                                 raise_last_call_error=True).start(bot_token=env.TOKEN)
-            break
-        except ApiIdPublishedFloodError:
-            logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
-            sleep(sleep_for)
-
+    API_KEYs = {api_id: env.SAMPLE_APIS[api_id]
+                for api_id in sample(tuple(env.SAMPLE_APIS.keys()), len(env.SAMPLE_APIS))}
 else:
-    _use_sample_api = False
-    bot = TelegramClient('config/bot', env.API_ID, env.API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
-                         raise_last_call_error=True).start(bot_token=env.TOKEN)
+    API_KEYs = {env.API_ID: env.API_HASH}
+
+sleep_for = 0
+while API_KEYs:
+    sleep_for += 10
+    API_ID, API_HASH = API_KEYs.popitem()
+    try:
+        bot = TelegramClient('config/bot', API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
+                             raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
+        break
+    except ApiIdPublishedFloodError:
+        if not API_KEYs:
+            logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred.')
+            break
+        logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
+        sleep(sleep_for)
 
 if bot is None:
     logger.critical('LOGIN FAILED!')
     exit(1)
 
 env.bot = bot
-env.bot_peer = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=False))
-env.bot_input_peer = asyncio.get_event_loop().run_until_complete(bot.get_me(input_peer=True))
+env.bot_peer = loop.run_until_complete(bot.get_me(input_peer=False))
+env.bot_input_peer = loop.run_until_complete(bot.get_me(input_peer=True))
 env.bot_id = env.bot_peer.id
 
 
-def main():
+async def pre():
     logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
                 f"MANAGER: {env.MANAGER}\n"
                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
@@ -68,14 +73,13 @@ def main():
                 f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
 
-    bot.loop.run_until_complete(
-        db.init()
-    )
+    await db.init()
 
-    manager_lang = bot.loop.run_until_complete(db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True))
+    # noinspection PyTypeChecker
+    manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
 
     try:  # set bot command
-        bot.loop.run_until_complete(asyncio.gather(
+        await asyncio.gather(
             command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(), lang_code='',
                                            commands=command.utils.get_commands_list()),
             *(
@@ -87,7 +91,7 @@ def main():
             command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
                                            lang_code='',
                                            commands=command.utils.get_commands_list(lang=manager_lang, manager=True)),
-        ))
+        )
     except Exception as e:
         logger.warning('Set command error: ', exc_info=e)
 
@@ -159,16 +163,22 @@ def main():
     bot.add_event_handler(command.management.cmd_start,
                           command.utils.GroupMigratedAction())
 
-    scheduler = AsyncIOScheduler()
+
+async def post():
+    await db.close()
+
+
+if __name__ == '__main__':
+    loop.run_until_complete(
+        pre()
+    )
+
+    scheduler = AsyncIOScheduler(event_loop=loop)
     scheduler.add_job(command.monitor.run_monitor_task, trigger='cron', minute='*/1', max_instances=5, timezone='UTC')
     scheduler.start()
 
     bot.run_until_disconnected()
 
-    bot.loop.run_until_complete(
-        db.close()
+    loop.run_until_complete(
+        post()
     )
-
-
-if __name__ == '__main__':
-    main()

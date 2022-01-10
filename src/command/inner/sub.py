@@ -1,7 +1,10 @@
+from __future__ import annotations
+from typing import Union, Optional
+from collections.abc import Sequence
+
 import asyncio
 from datetime import datetime
 from json import dumps
-from typing import Dict, Union, Optional, Sequence
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
@@ -14,7 +17,7 @@ with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
 
 
-async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> Dict[str, Union[int, str, db.Sub, None]]:
+async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[str, Union[int, str, db.Sub, None]]:
     ret = {'url': feed_url,
            'sub': None,
            'status': -1,
@@ -80,7 +83,7 @@ async def subs(user_id: int,
                feed_urls: Sequence[str],
                lang: Optional[str] = None,
                bypass_url_filter: bool = False) \
-        -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
+        -> Optional[dict[str, Union[dict[str, Union[int, str, db.Sub, None]], str]]]:
     feed_urls = filter_urls(feed_urls) if not bypass_url_filter else feed_urls
     if not feed_urls:
         return None
@@ -105,7 +108,7 @@ async def subs(user_id: int,
 
 
 async def unsub(user_id: int, feed_url: str = None, sub_id: int = None, lang: Optional[str] = None) \
-        -> Dict[str, Union[str, db.Sub, None]]:
+        -> dict[str, Union[str, db.Sub, None]]:
     ret = {'url': feed_url,
            'sub': None,
            'msg': None}
@@ -146,7 +149,7 @@ async def unsubs(user_id: int,
                  sub_ids: Sequence[int] = None,
                  lang: Optional[str] = None,
                  bypass_url_filter: bool = False) \
-        -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
+        -> Optional[dict[str, Union[dict[str, Union[int, str, db.Sub, None]], str]]]:
     feed_urls = filter_urls(feed_urls) if not bypass_url_filter else feed_urls
     if not (feed_urls or sub_ids):
         return None
@@ -176,7 +179,7 @@ async def unsubs(user_id: int,
 
 
 async def unsub_all(user_id: int, lang: Optional[str] = None) \
-        -> Optional[Dict[str, Union[Dict[str, Union[int, str, db.Sub, None]], str]]]:
+        -> Optional[dict[str, Union[dict[str, Union[int, str, db.Sub, None]], str]]]:
     user_sub_list = await db.Sub.filter(user=user_id)
     sub_ids = tuple(_sub.id for _sub in user_sub_list)
     return await unsubs(user_id, sub_ids=sub_ids, lang=lang)

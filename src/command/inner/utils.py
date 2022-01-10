@@ -1,5 +1,8 @@
+from __future__ import annotations
+from typing import AnyStr, Any, Union, Optional
+from collections.abc import Iterable, Mapping
+
 import asyncio
-from typing import AnyStr, Iterable, Tuple, Any, Union, Optional, Mapping, Dict, List
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from zlib import crc32
@@ -16,14 +19,14 @@ def get_hash(string: AnyStr) -> str:
     return hex(crc32(string))[2:]
 
 
-def filter_urls(urls: Optional[Iterable[str]]) -> Tuple[str, ...]:
+def filter_urls(urls: Optional[Iterable[str]]) -> tuple[str, ...]:
     if not urls:
         return tuple()
 
     return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls))
 
 
-def get_http_caching_headers(headers: Optional[Mapping]) -> Dict[str, Optional[Union[str, datetime]]]:
+def get_http_caching_headers(headers: Optional[Mapping]) -> dict[str, Optional[Union[str, datetime]]]:
     """
     :param headers: dict of headers
     :return: a dict containing "Etag" (`str` or `None`) and "Last-Modified" (`datetime.datetime` or `None`) headers
@@ -42,7 +45,7 @@ def get_http_caching_headers(headers: Optional[Mapping]) -> Dict[str, Optional[U
     }
 
 
-def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Optional[Tuple[Tuple[Any, ...], ...]]:
+def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Optional[tuple[tuple[Any, ...], ...]]:
     """
     :param to_arrange: `Iterable` containing objects to arrange
     :param columns: 1-based, telegram limit: 8 (row 1-12), 4 (row 13)
@@ -67,7 +70,7 @@ async def get_sub_choosing_buttons(user_id: int,
                                    lang: Optional[str] = None,
                                    rows: int = 12,
                                    columns: int = 2,
-                                   *args, **kwargs) -> Optional[Tuple[Tuple[KeyboardButtonCallback, ...], ...]]:
+                                   *args, **kwargs) -> Optional[tuple[tuple[KeyboardButtonCallback, ...], ...]]:
     """
     :param user_id: user id
     :param page: page number (1-based)
@@ -148,7 +151,7 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
         db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
 
 
-async def list_sub(user_id: int, *args, **kwargs) -> List[db.Sub]:
+async def list_sub(user_id: int, *args, **kwargs) -> list[db.Sub]:
     return await db.Sub.filter(user=user_id, *args, **kwargs).prefetch_related('feed')
 
 
@@ -216,7 +219,7 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
     return sub
 
 
-async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> Tuple[Optional[db.Sub], ...]:
+async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> tuple[Optional[db.Sub], ...]:
     """
     :param user_id: user id
     :param activate: activate all subs if `Ture`, deactivate if `False`

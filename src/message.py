@@ -1,6 +1,8 @@
+from __future__ import annotations
+from typing import Union, Optional
+
 import asyncio
 from collections import defaultdict
-from typing import List, Union, Optional, Tuple, Dict
 from telethon.tl.types import DocumentAttributeVideo, DocumentAttributeAnimated
 from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError
 from readerwriterlock.rwlock_async import RWLockWrite
@@ -19,10 +21,10 @@ class Message:
     __overall_semaphore = BoundedSemaphore(__overall_concurrency)
 
     __max_concurrency_per_user = 3
-    __semaphore_bucket_per_user: Dict[Union[int, str], BoundedSemaphore] = defaultdict(
+    __semaphore_bucket_per_user: dict[Union[int, str], BoundedSemaphore] = defaultdict(
         partial(BoundedSemaphore, __max_concurrency_per_user))
 
-    __rwlock_bucket_per_user: Dict[Union[int, str], RWLockWrite] = defaultdict(RWLockWrite)
+    __rwlock_bucket_per_user: dict[Union[int, str], RWLockWrite] = defaultdict(RWLockWrite)
 
     __lock_type = 'r'
 
@@ -55,7 +57,7 @@ class Message:
 
     def __init__(self,
                  text: Optional[str] = None,
-                 media: Optional[Union[List[Medium], Tuple[Medium], Medium]] = None,
+                 media: Optional[Union[list[Medium], list[Medium], Medium]] = None,
                  parse_mode: Optional[str] = 'HTML'):
         self.text = text
         self.media = media

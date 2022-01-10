@@ -1,7 +1,9 @@
+from __future__ import annotations
+from typing import Union
+
 import asyncio
 import time
 import aiographfix as aiograph
-from typing import List, Union
 from bs4 import BeautifulSoup
 from aiohttp import ClientTimeout, ClientError
 from aiohttp_retry import RetryClient
@@ -51,11 +53,11 @@ class Telegraph(aiograph.Telegraph):
 
 
 class APIs:
-    def __init__(self, tokens: Union[str, List[str]]):
+    def __init__(self, tokens: Union[str, list[str]]):
         if isinstance(tokens, str):
             tokens = [tokens]
         self.tokens = tokens
-        self._accounts: List[Telegraph] = []
+        self._accounts: list[Telegraph] = []
         self._curr_id = 0
         asyncio.get_event_loop().run_until_complete(self.init())
 

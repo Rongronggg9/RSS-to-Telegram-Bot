@@ -47,20 +47,23 @@ class MonitoringLogs:
     failed = 0
     updated = 0
     skipped = 0
+    timeout = 0
 
     @classmethod
-    def log(cls, not_updated: int, cached: int, empty: int, failed: int, updated: int, skipped: int):
+    def log(cls, not_updated: int, cached: int, empty: int, failed: int, updated: int, skipped: int, timeout: int):
         cls.not_updated += not_updated
         cls.cached += cached
         cls.empty += empty
         cls.failed += failed
         cls.updated += updated
         cls.skipped += skipped
+        cls.timeout += timeout
         logger.debug(f'Finished feeds monitoring task: '
                      f'updated({updated}), '
                      f'not updated({not_updated}, including {cached} cached and {empty} empty), '
                      f'fetch failed({failed}), '
-                     f'skipped({skipped})')
+                     f'skipped({skipped}), '
+                     f'timeout({timeout})')
         cls.monitoring_counts += 1
         if cls.monitoring_counts == 10:
             cls.print_summary()
@@ -72,9 +75,10 @@ class MonitoringLogs:
             f'updated({cls.updated}), '
             f'not updated({cls.not_updated}, including {cls.cached} cached and {cls.empty} empty), '
             f'fetch failed({cls.failed}), '
-            f'skipped({cls.skipped})'
+            f'skipped({cls.skipped}), '
+            f'timeout({cls.timeout})'
         )
-        cls.not_updated = cls.cached = cls.empty = cls.failed = cls.updated = cls.skipped = 0
+        cls.not_updated = cls.cached = cls.empty = cls.failed = cls.updated = cls.skipped = cls.timeout = 0
         cls.monitoring_counts = 0
 
 
@@ -86,8 +90,11 @@ async def run_monitor_task():
     feeds = await db.Feed.filter(id__in=feed_id_to_monitor)
 
     logger.debug('Started feeds monitoring task.')
+    wait_for = 300
+    timeout_errors = []
 
-    result = await asyncio.gather(*(__monitor(feed) for feed in feeds))
+    result = await asyncio.gather(*(asyncio.wait_for(__monitor(feed), timeout=wait_for) for feed in feeds),
+                                  return_exceptions=True)
 
     not_updated = 0
     cached = 0
@@ -95,6 +102,7 @@ async def run_monitor_task():
     failed = 0
     updated = 0
     skipped = 0
+    timeout = 0
 
     for r in result:
         if r is NOT_UPDATED:
@@ -111,8 +119,20 @@ async def run_monitor_task():
             failed += 1
         elif r is SKIPPED:
             skipped += 1
+        elif isinstance(r, asyncio.TimeoutError):
+            timeout += 1
+            timeout_errors.append(r)
+        elif isinstance(r, BaseException):
+            raise r
+        else:
+            raise TypeError(f'Unknown monitor result type: {r}')
 
-    MonitoringLogs.log(not_updated, cached, empty, failed, updated, skipped)
+    MonitoringLogs.log(not_updated, cached, empty, failed, updated, skipped, timeout)
+    if timeout_errors:
+        logger.error(f'Timeout detected during a feeds monitoring task, '
+                     f'totally {timeout} feed(s) timed out after {wait_for}s:')
+        for index, error in enumerate(timeout_errors):
+            logger.error(f'The TimeoutError of the {index}th feed in the task:', exc_info=error)
 
 
 async def __monitor(feed: db.Feed) -> str:

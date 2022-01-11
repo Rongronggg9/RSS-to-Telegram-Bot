@@ -22,8 +22,9 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
     buttons = await inner.utils.get_sub_choosing_buttons(user_id, page=page, lang=lang,
                                                          callback='set',
                                                          get_page_callback='get_set_page')
-    await event.respond(i18n[lang]['set_choose_sub_prompt'], buttons=buttons) if not is_callback else \
-        await event.edit(buttons=buttons)
+    msg = i18n[lang]['set_choose_sub_prompt']
+    await event.respond(msg, buttons=buttons) if not is_callback else \
+        await event.edit(msg, buttons=buttons)
 
 
 @command_gatekeeper(only_manager=False)
@@ -43,8 +44,6 @@ async def callback_set(event: events.CallbackQuery.Event,
         await event.edit(i18n[lang]['subscription_not_exist'])
         return
 
-    message: Message = await event.get_message()
-
     if (
             action is None
             or (action == 'interval' and isinstance(param, int))
@@ -60,7 +59,7 @@ async def callback_set(event: events.CallbackQuery.Event,
 
         info = await inner.customization.get_sub_info(sub, lang)
         buttons = await inner.customization.get_sub_customization_buttons(sub, lang=lang, page=page)
-        await event.edit(info if info != message.text else None, buttons=buttons, parse_mode='html')
+        await event.edit(info, buttons=buttons, parse_mode='html')
         return
 
     if action == 'interval':
@@ -92,16 +91,13 @@ async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQ
                                                    page: Optional[int] = None,
                                                    **__):  # callback data: get_(activate|deactivate)_page_{page}
     event_is_msg = not isinstance(event, events.CallbackQuery.Event)
-    origin_msg = None  # placeholder
-    if not event_is_msg:
-        origin_msg = (await event.get_message()).text
     if page is None:
         page = int(event.data.decode().strip().split('_')[-1]) if not event_is_msg else 1
     have_subs = await inner.utils.have_subs(event.chat_id)
     if not have_subs:
         no_subscription_msg = i18n[lang]['no_subscription']
         await (event.respond(no_subscription_msg) if event_is_msg
-               else event.edit(no_subscription_msg if not no_subscription_msg == origin_msg else None))
+               else event.edit(no_subscription_msg))
         return
     sub_buttons = await inner.utils.get_sub_choosing_buttons(
         event.chat_id,
@@ -123,7 +119,7 @@ async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQ
             + sub_buttons
     ) if sub_buttons else None
     await (event.respond(msg, buttons=buttons) if event_is_msg
-           else event.edit(msg if not msg == origin_msg else None, buttons=buttons))
+           else event.edit(msg, buttons=buttons))
 
 
 @command_gatekeeper(only_manager=False)

@@ -13,7 +13,7 @@ from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, \
     UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, ChannelPrivateError
 
-from src import env, log, db
+from src import env, log, db, locks
 from src.i18n import i18n
 
 logger = log.getLogger('RSStT.command')
@@ -75,23 +75,28 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
     :param kwargs: additional params (only for NewMessage)
     """
     try:
-        # noinspection PyProtectedMember
-        if isinstance(event, events.CallbackQuery.Event) and not event._answered:
-            await event.answer(msg, alert=alert, cache_time=cache_time)
-        else:
-            await event.respond(msg, *args, **kwargs)
+        async with await locks.user_flood_rwlock(event.chat_id).gen_rlock():
+            # noinspection PyProtectedMember
+            if isinstance(event, events.CallbackQuery.Event) and not event._answered:
+                await event.answer(msg, alert=alert, cache_time=cache_time)
+            else:
+                await event.respond(msg, *args, **kwargs)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError):
         pass
 
 
-def permission_required(func: Optional[Callable] = None,
-                        *,
-                        only_manager: bool = False,
-                        only_in_private_chat: bool = False,
-                        ignore_tg_lang: bool = False):
+def command_gatekeeper(func: Optional[Callable] = None,
+                       *,
+                       only_manager: bool = False,
+                       only_in_private_chat: bool = False,
+                       ignore_tg_lang: bool = False,
+                       timeout: int = 60):
     if func is None:
-        return partial(permission_required, only_manager=only_manager,
-                       only_in_private_chat=only_in_private_chat)
+        return partial(command_gatekeeper,
+                       only_manager=only_manager,
+                       only_in_private_chat=only_in_private_chat,
+                       ignore_tg_lang=ignore_tg_lang,
+                       timeout=timeout)
 
     @wraps(func)
     async def wrapper(event: Union[events.NewMessage.Event, Message,
@@ -101,17 +106,53 @@ def permission_required(func: Optional[Callable] = None,
         # placeholders
         lang = None
         command: Optional[str] = None
-        sender_id: Optional[int] = None
         sender: Optional[Union[types.User, types.Channel]] = None
         sender_fullname: Optional[str] = None
-        chat_id: Optional[int] = None
         chat_title: Optional[str] = None
         participant_type: Optional[str] = None
 
+        sender_id = event.sender_id
+        chat_id = event.chat_id
+        flood_rwlock = locks.user_flood_rwlock(chat_id)
+        pending_callbacks = locks.user_pending_callbacks(chat_id)
+        is_callback = isinstance(event, events.CallbackQuery.Event)
+        is_chat_action = isinstance(event, events.ChatAction.Event)
+
+        def describe_user():
+            chat_info = None
+            if (chat_title or chat_id) and chat_id != sender_id:
+                chat_info = f'{chat_title or chat_id}' + (f' ({chat_id})' if chat_title and chat_id else '')
+            return f'{sender_fullname} ({sender_id}' \
+                   + (f', {participant_type}' if participant_type and chat_info else '') \
+                   + ')' \
+                   + (f' in {chat_info}' if chat_info else '')
+
+        async def execute():
+            callback_msg_id = event.message_id if is_callback else None
+            # skip if already executing a callback for this msg
+            if callback_msg_id and callback_msg_id in pending_callbacks:
+                logger.info(f'Skipped {describe_user()} to use {command}: already executing a callback for this msg')
+                await respond_or_answer(event, i18n[lang]['callback_already_running_prompt'], cache_time=0)
+                raise events.StopPropagation
+
+            if callback_msg_id:
+                pending_callbacks.add(callback_msg_id)
+            try:
+                if lang_in_db is None:
+                    await db.User.get_or_create(id=chat_id, lang='null')  # create the user if it doesn't exist
+                logger.info(f'Allow {describe_user()} to use {command}')
+                async with await flood_rwlock.gen_rlock():
+                    await asyncio.wait_for(func(event, *args, lang=lang, **kwargs), timeout=timeout)
+            except asyncio.TimeoutError as _e:
+                logger.error(f'Cancel {command} for {describe_user()} due to timeout ({timeout}s)', exc_info=_e)
+            finally:
+                if callback_msg_id:
+                    try:
+                        pending_callbacks.remove(callback_msg_id)
+                    except KeyError:
+                        pass
+
         try:
-            chat_id = event.chat_id
-            is_callback = isinstance(event, events.CallbackQuery.Event)
-            is_chat_action = isinstance(event, events.ChatAction.Event)
             command = (event.raw_text
                        if hasattr(event, 'raw_text') and event.raw_text else
                        f'(Callback){event.data.decode()}'
@@ -153,8 +194,8 @@ def permission_required(func: Optional[Callable] = None,
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
                 await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
-                logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} '
-                               f'because the command can only be used by a bot manager.')
+                logger.warning(f'Refused {describe_user()} to use {command} '
+                               f'because the command can only be used by a bot manager')
                 raise events.StopPropagation
 
             if (
@@ -168,10 +209,7 @@ def permission_required(func: Optional[Callable] = None,
                     )
                     and not only_manager and not only_in_private_chat
             ):  # we can deal with private chats and channels in the same way
-                if lang_in_db is None:
-                    await db.User.get_or_create(id=sender_id, lang='null')  # create the user if it doesn't exist
-                logger.info(f'Allowed {sender_fullname} ({sender_id}) to use {command}.')
-                await func(event, lang=lang, *args, **kwargs)
+                await execute()
                 raise events.StopPropagation
 
             if (
@@ -193,15 +231,15 @@ def permission_required(func: Optional[Callable] = None,
 
                 if only_in_private_chat:
                     await respond_or_answer(event, i18n[lang]['permission_denied_not_in_private_chat'])
-                    logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
-                                   f'{chat_title} ({chat_id}) because the command can only be used in a private chat')
+                    logger.warning(f'Refused {describe_user()} to use {command} '
+                                   f'because the command can only be used in a private chat')
                     raise events.StopPropagation
 
                 if isinstance(input_chat, types.InputPeerChat):
                     # oops, the group hasn't been migrated to a supergroup. a migration is needed
                     await event.respond('\n\n'.join(i18n.get_all_l10n_string('group_upgrade_needed_prompt')))
-                    logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
-                                   f'{chat_title} ({chat_id}) because a group migration to supergroup is needed')
+                    logger.warning(f'Refused {describe_user()} to use {command} '
+                                   f'because a group migration to supergroup is needed')
                     raise events.StopPropagation
 
                 # check if self is in the group/chanel and if is an admin
@@ -230,8 +268,8 @@ def permission_required(func: Optional[Callable] = None,
                                                 i18n[lang]['permission_denied_not_member'] if self_is_admin else
                                                 i18n[lang]['promote_to_admin_prompt'],
                                                 cache_time=15)
-                        logger.warning(f'Refused {sender_fullname} ({sender_id}) to use {command} in '
-                                       f'{chat_title} ({chat_id}) because they is not a participant')
+                        logger.warning(f'Refused Refused {describe_user()} to use {command} '
+                                       f'because they is not a participant')
                         raise events.StopPropagation
                     is_admin = isinstance(participant.participant,
                                           (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
@@ -243,16 +281,10 @@ def permission_required(func: Optional[Callable] = None,
                 if not is_admin:
                     await respond_or_answer(event, i18n[lang]['permission_denied_not_chat_admin'], cache_time=15)
                     logger.warning(
-                        f'Refused {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                        f'in {chat_title} ({chat_id}).')
+                        f'Refused {describe_user()} to use {command}')
                     raise events.StopPropagation
 
-                if lang_in_db is None:
-                    await db.User.get_or_create(id=chat_id, lang='null')  # create the user if it doesn't exist
-                logger.info(
-                    f'Allowed {sender_fullname} ({sender_id}, {participant_type}) to use {command} '
-                    f'in {chat_title} ({chat_id}).')
-                await func(event, lang=lang, *args, **kwargs)
+                await execute()
                 raise events.StopPropagation
 
         except events.StopPropagation as e:
@@ -267,16 +299,25 @@ def permission_required(func: Optional[Callable] = None,
                 + (f' in {chat_title} ({chat_id})' if chat_id != sender_id else ''),
                 exc_info=e
             )
-            if isinstance(e, FloodError):
-                if hasattr(e, 'seconds') and e.seconds is not None:
-                    await asyncio.sleep(e.seconds)
-                await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
+            try:
+                if isinstance(e, FloodError):
+                    # blocking other commands to be executed and messages to be sent
+                    async with await flood_rwlock.gen_wlock():
+                        if hasattr(e, 'seconds') and e.seconds is not None:
+                            await asyncio.sleep(e.seconds + 1)
+                        await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
+                        await env.bot(e.request)  # resend
+                # usually occurred because the user hits the same button during auto flood wait
+                elif isinstance(e, MessageNotModifiedError):
+                    await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])
+                else:
+                    await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
+            except (FloodError, MessageNotModifiedError):
+                pass  # we can do nothing but be a pessimism to drop it
+            except Exception as e:
+                logger.error('Uncaught error occurred when dealing with an uncaught error', exc_info=e)
+            finally:
                 raise events.StopPropagation
-            if isinstance(e, MessageNotModifiedError):
-                await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])
-                raise events.StopPropagation
-            await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
-            raise events.StopPropagation
 
     return wrapper
 

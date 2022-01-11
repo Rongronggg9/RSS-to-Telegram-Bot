@@ -3,12 +3,12 @@ from telethon import events, Button
 from telethon.tl.patched import Message
 
 from . import inner
-from .utils import permission_required, parse_sub_customization_callback_data, parse_callback_data_with_page
+from .utils import command_gatekeeper, parse_sub_customization_callback_data, parse_callback_data_with_page
 from src import db
 from src.i18n import i18n
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
                                            *_,
                                            lang: Optional[str] = None,
@@ -26,7 +26,7 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
         await event.edit(buttons=buttons)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_set(event: events.CallbackQuery.Event,
                        *_,
                        lang: Optional[str] = None,
@@ -73,7 +73,7 @@ async def callback_set(event: events.CallbackQuery.Event,
     return
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_activate_or_deactivate_subs(event: Union[events.NewMessage.Event, Message],
                                           activate: bool,
                                           *_,
@@ -82,7 +82,7 @@ async def cmd_activate_or_deactivate_subs(event: Union[events.NewMessage.Event, 
     await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, page=1)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQuery.Event,
                                                                 events.NewMessage.Event,
                                                                 Message],
@@ -126,7 +126,7 @@ async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQ
            else event.edit(msg if not msg == origin_msg else None, buttons=buttons))
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_activate_or_deactivate_all_subs(event: events.CallbackQuery.Event,
                                                    activate: bool,
                                                    *_,
@@ -136,7 +136,7 @@ async def callback_activate_or_deactivate_all_subs(event: events.CallbackQuery.E
     await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, page=1)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
                                               activate: bool,
                                               *_,

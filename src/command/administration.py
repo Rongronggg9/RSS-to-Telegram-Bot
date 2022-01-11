@@ -6,11 +6,11 @@ from telethon.tl.patched import Message
 from src import web, db
 from src.i18n import i18n
 from src.parsing.post import get_post_from_entry
-from .utils import permission_required, parse_command, logger
+from .utils import command_gatekeeper, parse_command, logger
 from . import inner
 
 
-@permission_required(only_manager=True)
+@command_gatekeeper(only_manager=True)
 async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     if len(args) < 3:  # return options info
@@ -50,7 +50,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
                         parse_mode='html')
 
 
-@permission_required(only_manager=True)
+@command_gatekeeper(only_manager=True)
 async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     if len(args) < 2:

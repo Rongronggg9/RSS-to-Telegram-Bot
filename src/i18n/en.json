@@ -17,6 +17,7 @@
   "uncaught_internal_error": "Uncaught internal error",
   "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
   "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
+  "callback_already_running_prompt": "You have requested another command. Please retry after if finishes.",
 
   "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
   "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",

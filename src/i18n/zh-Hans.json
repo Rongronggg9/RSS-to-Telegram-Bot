@@ -17,6 +17,7 @@
   "uncaught_internal_error": "未被捕捉的内部错误",
   "flood_wait_prompt": "你的操作太快了，导致 bot 超过了 Telegram 的速率限制，请慢一点。",
   "edit_conflict_prompt": "你的操作太快了，导致操作冲突，请慢一点。",
+  "callback_already_running_prompt": "你已经请求过其它命令，请等待它完成后重试。",
 
   "permission_denied_not_bot_manager": "此命令只可由机器人的管理员使用。",
   "permission_denied_not_chat_admin": "此命令只可由群/频道管理员使用。",

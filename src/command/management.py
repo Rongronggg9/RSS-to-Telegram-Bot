@@ -5,11 +5,11 @@ from telethon.tl import types
 
 from src import env, db
 from src.i18n import i18n, ALL_LANGUAGES
-from .utils import permission_required, logger, set_bot_commands, get_commands_list
+from .utils import command_gatekeeper, logger, set_bot_commands, get_commands_list
 from . import inner
 
 
-@permission_required(only_manager=False, ignore_tg_lang=True)
+@command_gatekeeper(only_manager=False, ignore_tg_lang=True)
 async def cmd_start(event: Union[events.NewMessage.Event, Message], *_, lang=None, **__):
     if lang is None:
         await cmd_lang.__wrapped__(event)
@@ -17,7 +17,7 @@ async def cmd_start(event: Union[events.NewMessage.Event, Message], *_, lang=Non
     await cmd_or_callback_help.__wrapped__(event, lang=lang)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
     msg = '\n'.join(f"{i18n[lang]['select_lang_prompt']}"
                     for lang in ALL_LANGUAGES)
@@ -27,7 +27,7 @@ async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
     await event.respond(msg, buttons=buttons)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # callback data: set_lang_{lang_code}
     lang = event.data.decode().strip().split('set_lang_')[-1]
     welcome_msg = i18n[lang]['welcome_prompt']
@@ -40,7 +40,7 @@ async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # cal
     await event.edit(welcome_msg, buttons=help_button)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
                                *_,
                                lang: Optional[str] = None,
@@ -51,6 +51,6 @@ async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, ev
         else await event.edit(msg, parse_mode='html')
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_version(event: Union[events.NewMessage.Event, Message], *_, **__):
     await event.respond(env.VERSION)

@@ -8,10 +8,10 @@ from telethon.tl.patched import Message
 from src import env
 from src.i18n import i18n
 from . import inner
-from .utils import permission_required, logger
+from .utils import command_gatekeeper, logger
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_import(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     await event.respond(i18n[lang]['send_opml_prompt'],
                         buttons=Button.force_reply(single_use=True,
@@ -20,7 +20,7 @@ async def cmd_import(event: Union[events.NewMessage.Event, Message], *_, lang: O
                         reply_to=event.id if event.is_group else None)
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_export(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     opml_file = await inner.sub.export_opml(event.chat_id)
     if opml_file is None:
@@ -31,7 +31,7 @@ async def cmd_export(event: Union[events.NewMessage.Event, Message], *_, lang: O
                             f"RSStT_export_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.opml"),))
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False, timeout=300)
 async def opml_import(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     reply_message: Message = await event.get_reply_message()
     if not (event.is_private or event.is_channel and not event.is_group) and reply_message.sender_id != env.bot_id:

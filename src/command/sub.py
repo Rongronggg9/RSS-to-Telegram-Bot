@@ -4,10 +4,10 @@ from telethon.tl.patched import Message
 
 from src.i18n import i18n
 from . import inner
-from .utils import permission_required, parse_command, escape_html, parse_callback_data_with_page
+from .utils import command_gatekeeper, parse_command, escape_html, parse_callback_data_with_page
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     filtered_urls = inner.utils.filter_urls(args)
@@ -34,7 +34,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Opti
     await msg.edit(sub_result["msg"], parse_mode='html')
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     user_id = event.chat_id
@@ -52,14 +52,14 @@ async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *_, lang: Op
     await event.respond(unsub_result['msg'], parse_mode='html')
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     unsub_all_result = await inner.sub.unsub_all(event.chat_id)
     await event.respond(unsub_all_result['msg'] if unsub_all_result else i18n[lang]['no_subscription'],
                         parse_mode='html')
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def cmd_list(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     subs = await inner.utils.list_sub(event.chat_id)
     if not subs:
@@ -74,7 +74,7 @@ async def cmd_list(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
     await event.respond(list_result, parse_mode='html')
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_unsub(event: events.CallbackQuery.Event, *_, lang: Optional[str] = None, **__):
     # callback data = unsub_{sub_id}|{page}
     sub_id, page = parse_callback_data_with_page(event.data)
@@ -95,7 +95,7 @@ async def callback_unsub(event: events.CallbackQuery.Event, *_, lang: Optional[s
     await event.respond(msg, parse_mode='html')  # make unsubscribing multiple subscriptions more efficiency
 
 
-@permission_required(only_manager=False)
+@command_gatekeeper(only_manager=False)
 async def callback_get_unsub_page(event: events.CallbackQuery.Event,
                                   *_,
                                   page: Optional[int] = None,

@@ -19,10 +19,16 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
     if not page:
         page, _ = parse_callback_data_with_page(event.data) if is_callback else (1, None)
 
-    buttons = await inner.utils.get_sub_choosing_buttons(user_id, page=page, lang=lang,
-                                                         callback='set',
-                                                         get_page_callback='get_set_page')
-    msg = i18n[lang]['set_choose_sub_prompt']
+    have_subs = await inner.utils.have_subs(event.chat_id)
+    if not have_subs:
+        msg = i18n[lang]['no_subscription']
+        buttons = None
+    else:
+        msg = i18n[lang]['set_choose_sub_prompt']
+        buttons = await inner.utils.get_sub_choosing_buttons(user_id, page=page, lang=lang,
+                                                             callback='set',
+                                                             get_page_callback='get_set_page')
+
     await event.respond(msg, buttons=buttons) if not is_callback else \
         await event.edit(msg, buttons=buttons)
 

@@ -10,7 +10,7 @@ from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
-from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, \
+from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, QueryIdInvalidError, \
     UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, ChannelPrivateError
 
 from src import env, log, db, locks
@@ -75,14 +75,19 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
     :param kwargs: additional params (only for NewMessage)
     """
     try:
-        async with await locks.user_flood_rwlock(event.chat_id).gen_rlock():
-            # noinspection PyProtectedMember
-            if isinstance(event, events.CallbackQuery.Event) and not event._answered:
+        # noinspection PyProtectedMember
+        if isinstance(event, events.CallbackQuery.Event) and not event._answered:
+            # answering callback query is of a tolerant rate limit, no lock needed
+            try:
                 await event.answer(msg, alert=alert, cache_time=cache_time)
-            else:
-                await event.respond(msg, *args, **kwargs)
+                return  # return if answering successfully
+            except QueryIdInvalidError:  # callback query expired
+                pass  # respond instead
+
+        async with await locks.user_flood_rwlock(event.chat_id).gen_rlock():
+            await event.respond(msg, *args, **kwargs)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError):
-        pass
+        pass  # silently ignore
 
 
 def command_gatekeeper(func: Optional[Callable] = None,
@@ -145,7 +150,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     await asyncio.wait_for(func(event, *args, lang=lang, **kwargs), timeout=timeout)
             except asyncio.TimeoutError as _e:
                 logger.error(f'Cancel {command} for {describe_user()} due to timeout ({timeout}s)', exc_info=_e)
-                await respond_or_answer(event, 'ERROR: '+i18n[lang]['operation_timeout_error'])
+                await respond_or_answer(event, 'ERROR: ' + i18n[lang]['operation_timeout_error'])
             finally:
                 if callback_msg_id:
                     try:

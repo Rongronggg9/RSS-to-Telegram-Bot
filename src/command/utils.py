@@ -107,6 +107,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
     async def wrapper(event: Union[events.NewMessage.Event, Message,
                                    events.CallbackQuery.Event,
                                    events.ChatAction.Event],
+                      # Note: `events.ChatAction.Event` only have ChatGetter, do not have SenderGetter like others
                       *args, **kwargs):
         # placeholders
         lang = None
@@ -115,8 +116,8 @@ def command_gatekeeper(func: Optional[Callable] = None,
         sender_fullname: Optional[str] = None
         chat_title: Optional[str] = None
         participant_type: Optional[str] = None
+        sender_id: Optional[int] = None
 
-        sender_id = event.sender_id
         chat_id = event.chat_id
         flood_rwlock = locks.user_flood_rwlock(chat_id)
         pending_callbacks = locks.user_pending_callbacks(chat_id)

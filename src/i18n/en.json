@@ -15,6 +15,7 @@
   "internal_error": "Internal error",
   "status_code_error": "HTTP status code error",
   "uncaught_internal_error": "Uncaught internal error",
+  "operation_timeout_error": "Operation timeout",
   "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
   "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
   "callback_already_running_prompt": "You have requested another command. Please retry after if finishes.",

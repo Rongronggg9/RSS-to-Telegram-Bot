@@ -145,6 +145,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     await asyncio.wait_for(func(event, *args, lang=lang, **kwargs), timeout=timeout)
             except asyncio.TimeoutError as _e:
                 logger.error(f'Cancel {command} for {describe_user()} due to timeout ({timeout}s)', exc_info=_e)
+                await respond_or_answer(event, 'ERROR: '+i18n[lang]['operation_timeout_error'])
             finally:
                 if callback_msg_id:
                     try:

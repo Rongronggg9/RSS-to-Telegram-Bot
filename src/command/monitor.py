@@ -90,7 +90,7 @@ async def run_monitor_task():
     feeds = await db.Feed.filter(id__in=feed_id_to_monitor)
 
     logger.debug('Started feeds monitoring task.')
-    wait_for = 300
+    wait_for = 10 * 60
     timeout_errors = []
 
     result = await asyncio.gather(*(asyncio.wait_for(__monitor(feed), timeout=wait_for) for feed in feeds),

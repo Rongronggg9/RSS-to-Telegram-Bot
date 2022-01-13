@@ -174,7 +174,7 @@ if __name__ == '__main__':
     )
 
     scheduler = AsyncIOScheduler(event_loop=loop)
-    scheduler.add_job(command.monitor.run_monitor_task, trigger='cron', minute='*/1', max_instances=5, timezone='UTC')
+    scheduler.add_job(command.monitor.run_monitor_task, trigger='cron', minute='*/1', max_instances=10, timezone='UTC')
     scheduler.start()
 
     bot.run_until_disconnected()

@@ -34,12 +34,10 @@ class Message:
         flood_rlock_or_wlock = await flood_rwlock.gen_rlock()  # always acquire a read lock first
 
         async with semaphore:  # acquire user semaphore first to reduce per user concurrency
-            sleep_for = 0
             while True:
                 try:
                     async with rlock_or_wlock:  # acquire a msg rwlock
                         async with flood_rlock_or_wlock:  # acquire a flood rwlock
-                            await asyncio.sleep(sleep_for)  # sleep
                             async with self.__overall_semaphore:  # only acquire overall semaphore when sending
                                 await self._send(chat_id, reply_to_msg_id)
                     return
@@ -51,7 +49,9 @@ class Message:
 
                     self.retries += 1
                     flood_rlock_or_wlock = await flood_rwlock.gen_wlock()  # enforce a wlock here block other attempts
-                    sleep_for = e.seconds * 2
+                    if not flood_rwlock.v_write_count:  # only flood wait once, thus only lock once
+                        async with flood_rlock_or_wlock:  # acquire a flood rwlock
+                            await asyncio.sleep(e.seconds + 1)  # sleep
 
     async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
         pass

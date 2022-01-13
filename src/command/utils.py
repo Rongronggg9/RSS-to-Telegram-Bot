@@ -309,11 +309,14 @@ def command_gatekeeper(func: Optional[Callable] = None,
             try:
                 if isinstance(e, FloodError):
                     # blocking other commands to be executed and messages to be sent
-                    async with await flood_rwlock.gen_wlock():
-                        if hasattr(e, 'seconds') and e.seconds is not None:
+                    flood_wlock = await flood_rwlock.gen_wlock()
+                    if hasattr(e, 'seconds') \
+                            and e.seconds is not None \
+                            and not flood_rwlock.v_write_count:  # only lock once
+                        async with flood_wlock:
                             await asyncio.sleep(e.seconds + 1)
-                        await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
-                        await env.bot(e.request)  # resend
+                    await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
+                    await env.bot(e.request)  # resend
                 # usually occurred because the user hits the same button during auto flood wait
                 elif isinstance(e, MessageNotModifiedError):
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])

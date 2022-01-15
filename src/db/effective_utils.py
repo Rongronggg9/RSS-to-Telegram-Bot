@@ -1,12 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Any, NoReturn, Union
 from collections.abc import Callable
-
-# workaround for Python 3.7
-try:
-    from typing import Final
-except ImportError:
-    Final = Any
+from src.compat import Final
 
 from math import ceil
 

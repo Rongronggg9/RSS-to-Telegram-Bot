@@ -1,12 +1,7 @@
 from __future__ import annotations
-from typing import Union, Any
+from typing import Union
 from collections.abc import MutableMapping
-
-# workaround for Python 3.7
-try:
-    from typing import Final
-except ImportError:
-    Final = Any
+from src.compat import Final
 
 import asyncio
 from datetime import datetime, timedelta, timezone

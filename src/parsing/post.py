@@ -173,7 +173,8 @@ class Post:
             except (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
                     PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
                     GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
-                    VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as e:
+                    VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as err:
+                e = err
                 if self.invalidate_all_media():
                     logger.debug(f'All media was set invalid because some of them are invalid '
                                  f'({e.__class__.__name__}: {str(e)})')
@@ -184,7 +185,8 @@ class Post:
                 raise e  # let monitoring task to deal with it
 
             # errors caused by server instability or network instability between img server and telegram server
-            except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
+            except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as err:
+                e = err
                 if await self.media.change_all_server():
                     logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
                                  f'Changed img server and retrying...')
@@ -194,7 +196,8 @@ class Post:
                     await self.generate_message()
                 continue
 
-            except Exception as e:
+            except Exception as err:
+                e = err
                 if type(e) == FileReferenceExpiredError \
                         or (type(e) == BadRequestError and fileReferenceNExpired.search(str(e))):
                     file_reference_expired_flag = True

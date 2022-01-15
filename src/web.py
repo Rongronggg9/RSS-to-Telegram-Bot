@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Mapping
+from src.compat import nullcontext
 
 import asyncio
 import functools
@@ -14,7 +15,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
-from socket import AF_INET6
+from socket import AF_INET, AF_INET6
 
 from src import env, log
 from src.i18n import i18n
@@ -77,6 +78,8 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
     if not timeout:
         timeout = 12
 
+    semaphore_to_use = _semaphore if semaphore in (None, True) else (semaphore or nullcontext())
+
     host = urlparse(url).hostname
     v6_address = None
     try:
@@ -91,27 +94,39 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
     if headers:
         _headers.update(headers)
 
-    proxy_connector = ProxyConnector.from_url(PROXY, family=socket_family) if (PROXY and proxy_filter(url)) \
-        else aiohttp.TCPConnector(family=socket_family)
+    tries = 0
+    retry_in_v4_flag = False
+    while True:
+        tries += 1
+        assert tries <= 2, 'Too many tries'
 
-    await _semaphore.acquire() if semaphore is None or semaphore is True else \
-        await semaphore.acquire() if semaphore else None
+        if retry_in_v4_flag:
+            socket_family = AF_INET
+        proxy_connector = ProxyConnector.from_url(PROXY, family=socket_family) if (PROXY and proxy_filter(url)) \
+            else aiohttp.TCPConnector(family=socket_family)
 
-    try:
-        async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
-                               timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
-            async with session.get(url) as response:
-                status = response.status
-                content = (await (response.text() if decode else response.read())
-                           if status == 200 and not no_body
-                           else None)
-                return {'url': str(response.url),  # get the redirected url
-                        'content': content,
-                        'headers': response.headers,
-                        'status': status}
-    finally:
-        _semaphore.release() if semaphore is None or semaphore is True else \
-            semaphore.release() if semaphore else None
+        try:
+            async with semaphore_to_use:
+                async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
+                                       timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
+                    async with session.get(url) as response:
+                        status = response.status
+                        content = (await (response.text() if decode else response.read())
+                                   if status == 200 and not no_body
+                                   else None)
+                        if status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
+                            retry_in_v4_flag = True
+                            continue
+                        return {'url': str(response.url),  # get the redirected url
+                                'content': content,
+                                'headers': response.headers,
+                                'status': status}
+        except Exception as e:
+            if socket_family != AF_INET6 or tries > 1:
+                raise e
+            logger.debug(f'{e.__class__.__name__}: {e}')
+            retry_in_v4_flag = True
+            continue
 
 
 async def get_session(timeout: int = None):

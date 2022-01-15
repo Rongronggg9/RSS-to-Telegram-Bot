@@ -170,7 +170,7 @@ async def __monitor(feed: db.Feed) -> str:
             await __deactivate_feed_and_notify_all(feed)
             return FAILED
         feed.error_count += 1
-        if feed.error_count % 10 == 0:
+        if feed.error_count % 20 == 0:  # error_count is always > 0
             logger.warning(f'Fetch failed ({feed.error_count}th retry, {d["msg"]}): {feed.link}')
         if feed.error_count >= 10:  # too much error, delay next check
             interval = feed.interval or db.EffectiveOptions.default_interval

@@ -11,17 +11,17 @@ bs4==0.0.1
 beautifulsoup4==4.10.0
 lxml==4.7.1
 fuzzywuzzy==0.18.0
-emoji==1.6.1
+emoji==1.6.3
 
 # db
-tortoise-orm[asyncpg]==0.17.8
+tortoise-orm[asyncpg]==0.17.8  # waiting aerich 0.6.2
 aerich==0.6.1
 
 # network
 aiohttp[speedups]==3.8.1
 aiohttp-socks==0.7.1
 aiohttp-retry==2.4.6
-python-socks[asyncio]==2.0.1
+python-socks[asyncio]==2.0.2
 aiodns==3.0.0
 
 # utils

@@ -1,4 +1,4 @@
-FROM python:3.9-slim AS builder
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN \
 
 #----------------------------------------
 
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 

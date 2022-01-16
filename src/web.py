@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Mapping
-from src.compat import nullcontext
+from src.compat import nullcontext, ssl_create_default_context
 
 import asyncio
 import functools
@@ -102,8 +102,11 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
 
         if retry_in_v4_flag:
             socket_family = AF_INET
-        proxy_connector = ProxyConnector.from_url(PROXY, family=socket_family) if (PROXY and proxy_filter(url)) \
-            else aiohttp.TCPConnector(family=socket_family)
+        ssl_context = ssl_create_default_context()
+        proxy_connector = (
+            ProxyConnector.from_url(PROXY, family=socket_family, ssl=ssl_context) if (PROXY and proxy_filter(url))
+            else aiohttp.TCPConnector(family=socket_family, ssl=ssl_context)
+        )
 
         try:
             async with semaphore_to_use:

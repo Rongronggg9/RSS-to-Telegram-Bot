@@ -23,7 +23,7 @@ aiohttp-retry==2.4.6
 python-socks[asyncio]==2.0.0
 
 # utils
-fasteners==0.16.3
+fasteners==0.17.2
 colorlog==6.6.0
 APScheduler==3.8.1
 python-dotenv==0.19.2

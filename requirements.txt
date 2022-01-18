@@ -14,7 +14,7 @@ fuzzywuzzy==0.18.0
 emoji==1.6.1
 
 # db
-redis==4.0.2
+redis==4.1.1
 
 # network
 aiohttp[speedups]==3.8.1

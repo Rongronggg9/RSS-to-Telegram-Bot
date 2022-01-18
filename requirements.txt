@@ -14,8 +14,8 @@ fuzzywuzzy==0.18.0
 emoji==1.6.3
 
 # db
-tortoise-orm[asyncpg]==0.17.8  # waiting aerich 0.6.2
-aerich==0.6.1
+tortoise-orm[asyncpg]==0.18.1
+aerich==0.6.2
 
 # network
 aiohttp[speedups]==3.8.1

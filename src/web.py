@@ -17,13 +17,12 @@ from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
 from socket import AF_INET, AF_INET6
 
-from src import env, log
+from src import env, log, locks
 from src.i18n import i18n
 
 logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
-_semaphore = asyncio.BoundedSemaphore(5)
 _resolver = aiodns.DNSResolver(timeout=3, loop=env.loop)
 
 PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
@@ -51,11 +50,11 @@ RETRY_OPTION = ExponentialRetry(attempts=3, start_timeout=1,
                                             TimeoutError})
 
 
-def proxy_filter(url: str) -> bool:
+def proxy_filter(url: str, parse: bool = True) -> bool:
     if not (env.PROXY_BYPASS_PRIVATE or env.PROXY_BYPASS_DOMAINS):
         return True
 
-    hostname = urlparse(url).hostname
+    hostname = urlparse(url).hostname if parse else url
     if env.PROXY_BYPASS_PRIVATE:
         try:
             ip_a = ip_address(hostname)
@@ -65,22 +64,22 @@ def proxy_filter(url: str) -> bool:
         except ValueError:
             pass  # not an IP, continue
     if env.PROXY_BYPASS_DOMAINS:
-        is_bypassed = any(hostname.endswith(domain) and hostname[-len(domain) - 1] == '.'
+        is_bypassed = any(hostname.endswith(domain) and (hostname == domain or hostname[-len(domain) - 1] == '.')
                           for domain in env.PROXY_BYPASS_DOMAINS)
         if is_bypassed:
             return False
     return True
 
 
-async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Semaphore] = None,
+async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
         -> dict[str, Union[Mapping[str, str], bytes, str, int]]:
     if not timeout:
         timeout = 12
 
-    semaphore_to_use = _semaphore if semaphore in (None, True) else (semaphore or nullcontext())
-
     host = urlparse(url).hostname
+    semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
+        else (semaphore or nullcontext())
     v6_address = None
     try:
         v6_address = await _resolver.query(host, 'AAAA') if env.IPV6_PRIOR else None
@@ -104,35 +103,39 @@ async def get(url: str, timeout: int = None, semaphore: Union[bool, asyncio.Sema
             socket_family = AF_INET
         ssl_context = ssl_create_default_context()
         proxy_connector = (
-            ProxyConnector.from_url(PROXY, family=socket_family, ssl=ssl_context) if (PROXY and proxy_filter(url))
+            ProxyConnector.from_url(PROXY, family=socket_family, ssl=ssl_context)
+            if (PROXY and proxy_filter(host, parse=False))
             else aiohttp.TCPConnector(family=socket_family, ssl=ssl_context)
         )
 
         try:
-            async with semaphore_to_use:
-                async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
-                                       timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
-                    async with session.get(url) as response:
-                        status = response.status
-                        content = (await (response.text() if decode else response.read())
-                                   if status == 200 and not no_body
-                                   else None)
-                        if status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
-                            retry_in_v4_flag = True
-                            continue
-                        return {'url': str(response.url),  # get the redirected url
-                                'content': content,
-                                'headers': response.headers,
-                                'status': status}
+            async with locks.overall_web_semaphore:
+                async with semaphore_to_use:
+                    async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
+                                           timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
+                        async with session.get(url) as response:
+                            status = response.status
+                            content = (await (response.text() if decode else response.read())
+                                       if status == 200 and not no_body
+                                       else None)
+                            if status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
+                                retry_in_v4_flag = True
+                                continue
+                            return {'url': str(response.url),  # get the redirected url
+                                    'content': content,
+                                    'headers': response.headers,
+                                    'status': status}
         except Exception as e:
             if socket_family != AF_INET6 or tries > 1:
                 raise e
-            logger.debug(f'{e.__class__.__name__}: {e}')
+            err_msg = str(e).strip()
+            logger.debug(f'Fetch failed ({e.__class__.__name__}' + (f': {err_msg}' if err_msg else '')
+                         + f') using IPv6, retrying using IPv4: {url}')
             retry_in_v4_flag = True
             continue
 
 
-async def get_session(timeout: int = None):
+async def get_session(timeout: Optional[float] = None):
     if not timeout:
         timeout = 12
 
@@ -144,7 +147,7 @@ async def get_session(timeout: int = None):
     return session
 
 
-async def feed_get(url: str, timeout: Optional[int] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
+async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
                    headers: Optional[dict] = None, lang: Optional[str] = None, verbose: bool = True) \
         -> dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
     auto_warning = logger.warning if verbose else logger.debug

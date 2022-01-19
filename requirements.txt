@@ -14,7 +14,7 @@ fuzzywuzzy==0.18.0
 emoji==1.6.3
 
 # db
-tortoise-orm[asyncpg]==0.18.1
+tortoise-orm[asyncpg,accel]==0.18.1
 aerich==0.6.2
 
 # network
@@ -30,11 +30,4 @@ APScheduler==3.8.1
 python-dotenv==0.19.2
 readerwriterlock==1.0.9
 multidict==5.2.0
-
-# tortoise-orm accel
 uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-ciso8601>=2.1.2,<2.2; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-python-rapidjson>=1.5
-
-
-

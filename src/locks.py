@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from asyncio import BoundedSemaphore
 from collections import defaultdict
+from functools import partial
 from typing import Union
+from urllib.parse import urlparse
+
 from readerwriterlock.rwlock_async import RWLockWrite
 
 _USER_LIKE = Union[int, str]
 
+
+# ----- user locks -----
 
 class _UserLockBucket:
     _max_concurrency_of_semaphore = 3
@@ -42,6 +47,16 @@ def user_msg_locks(user: _USER_LIKE) -> tuple[BoundedSemaphore, RWLockWrite, RWL
 
 def user_pending_callbacks(user: _USER_LIKE) -> set:
     return _user_bucket[user].pending_callbacks
+
+
+# ----- web locks -----
+_hostname_semaphore_bucket: defaultdict[str, BoundedSemaphore] = defaultdict(partial(BoundedSemaphore, 5))
+overall_web_semaphore = BoundedSemaphore(100)
+
+
+def hostname_semaphore(url: str, parse: bool = True) -> BoundedSemaphore:
+    hostname = urlparse(url).hostname if parse else url
+    return _hostname_semaphore_bucket[hostname]
 
 # Q: Why msg rwlock is needed?
 #

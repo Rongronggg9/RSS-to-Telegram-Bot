@@ -62,7 +62,7 @@ class Feed(Model, Base):
     interval = fields.SmallIntField(null=True, description='Monitoring task interval. '
                                                            'Should be the minimal interval of all subs to the feed,'
                                                            'default interval will be applied if null')
-    entry_hashes = fields.TextField(null=True, description='Hashes (CRC32) of entries')
+    entry_hashes = fields.JSONField(null=True, description='Hashes (CRC32) of entries')
     etag = fields.CharField(max_length=128, null=True,
                             description='The etag of webpage, will be changed each time the feed is updated. '
                                         'Can be null because some websites do not support')

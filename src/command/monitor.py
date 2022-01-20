@@ -6,7 +6,6 @@ from src.compat import Final
 import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
-from json import loads, dumps
 from telethon.errors.rpcerrorlist import UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, \
     ChannelPrivateError
 from collections import defaultdict, Counter
@@ -182,7 +181,7 @@ async def __monitor(feed: db.Feed) -> str:
         return EMPTY
 
     # sequence matters so we cannot use a set
-    old_hashes = loads(feed.entry_hashes) if feed.entry_hashes else []
+    old_hashes: list = feed.entry_hashes if isinstance(feed.entry_hashes, list) else []
     updated_hashes = []
     updated_entries = []
     for entry in rss_d.entries:
@@ -202,7 +201,7 @@ async def __monitor(feed: db.Feed) -> str:
     logger.debug(f'Updated: {feed.link}')
     length = max(len(rss_d.entries) * 2, 100)
     new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
-    feed.entry_hashes = dumps(new_hashes)
+    feed.entry_hashes = new_hashes
     http_caching_d = inner.utils.get_http_caching_headers(d['headers'])
     feed.etag = http_caching_d['ETag']
     feed.last_modified = http_caching_d['Last-Modified']

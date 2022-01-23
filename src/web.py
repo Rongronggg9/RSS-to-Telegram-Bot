@@ -7,7 +7,6 @@ import asyncio
 import functools
 import aiodns
 import aiohttp
-import aiohttp.client_exceptions
 import feedparser
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
@@ -43,10 +42,12 @@ HEADER_TEMPLATE = {
 FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
               'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
-RETRY_OPTION = ExponentialRetry(attempts=3, start_timeout=1,
+RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1,
                                 exceptions={asyncio.TimeoutError,
-                                            aiohttp.client_exceptions.ClientError,
-                                            ConnectionError,
+                                            # aiohttp.ClientPayloadError,
+                                            # aiohttp.ClientResponseError,
+                                            # aiohttp.ClientConnectionError,
+                                            aiohttp.ServerConnectionError,
                                             TimeoutError})
 
 
@@ -74,9 +75,24 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
 async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
         -> dict[str, Union[Mapping[str, str], bytes, str, int]]:
+    """
+    :param url: URL to fetch
+    :param timeout: timeout in seconds
+    :param semaphore: semaphore to use for limiting concurrent connections
+    :param headers: headers to use
+    :param decode: whether to decode the response body
+    :param no_body: whether to return the response headers only
+    :return: {url, content, headers, status}
+    """
     if not timeout:
         timeout = 12
+    wait_for_timeout = (timeout * 2 + 5) * (2 if env.IPV6_PRIOR else 1)
+    return await asyncio.wait_for(_get(url, timeout, semaphore, headers, decode, no_body), wait_for_timeout)
 
+
+async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
+               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
+        -> dict[str, Union[Mapping[str, str], bytes, str, int]]:
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -198,11 +214,11 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             return ret
 
         ret['rss_d'] = rss_d
-    except aiohttp.client_exceptions.InvalidURL:
+    except aiohttp.InvalidURL:
         auto_warning(f'Fetch failed (URL invalid): {url}')
         ret['msg'] = 'ERROR: ' + i18n[lang]['url_invalid']
     except (asyncio.TimeoutError,
-            aiohttp.client_exceptions.ClientError,
+            aiohttp.ClientError,
             SSLError,
             OSError,
             ConnectionError,

@@ -39,6 +39,36 @@ def __list_parser(var: Optional[str]) -> list[str]:
 # ----- load .env -----
 load_dotenv(override=True)
 
+# ----- get version -----
+# noinspection PyBroadException
+try:
+    with open('.version', 'r') as v:
+        _version = v.read().strip()
+except Exception:
+    _version = 'dirty'
+
+if _version == 'dirty':
+    from subprocess import Popen, PIPE, DEVNULL
+
+    # noinspection PyBroadException
+    try:
+        with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+            __.wait(3)
+            _version = __.stdout.read().decode().strip()
+        with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+            __.wait(3)
+            __ = __.stdout.read().decode().strip()
+            if __:
+                _version += f'@{__}'
+    except Exception:
+        _version = 'dirty'
+
+if not _version or _version == '@':
+    _version = 'dirty'
+
+VERSION: Final = _version
+del _version
+
 # ----- basic config -----
 SAMPLE_APIS: Final = {
     # https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
@@ -69,7 +99,7 @@ try:
     del _chatid
     del _manager
 
-    if TOKEN is None or MANAGER is None:
+    if not all((TOKEN, MANAGER)):
         logging.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
         exit(1)
 except Exception as e:
@@ -78,14 +108,12 @@ except Exception as e:
 
 TELEGRAPH_TOKEN: Final = __list_parser(os.environ.get('TELEGRAPH_TOKEN'))
 
-_multiuser = os.environ.get('MULTIUSER', '')
-if _multiuser is None or _multiuser == '0' or _multiuser.lower() == 'false':
-    MULTIUSER: Final = False
-else:
-    MULTIUSER: Final = True
+MULTIUSER: Final = __bool_parser(os.environ.get('MULTIUSER'), default_value=True)
 
 # ----- proxy config -----
-DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', None))
+DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY') or os.environ.get('socks_proxy') \
+                       or os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy') \
+                       or os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
 
 TELEGRAM_PROXY: Final = os.environ.get('T_PROXY', DEFAULT_PROXY)
 if TELEGRAM_PROXY:
@@ -122,7 +150,7 @@ else:
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
-USER_AGENT: Final = os.environ.get('USER_AGENT', 'RSStT')
+USER_AGENT: Final = os.environ.get('USER_AGENT', 'RSStT RSS ')
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 # ----- img relay server config -----
@@ -138,34 +166,6 @@ del _database_url
 
 # ----- debug config -----
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
-
-# ----- get version -----
-try:
-    with open('.version', 'r') as v:
-        _version = v.read().strip()
-except Exception:
-    _version = 'dirty'
-
-if _version == 'dirty':
-    from subprocess import Popen, PIPE, DEVNULL
-
-    try:
-        with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-            __.wait(3)
-            _version = __.stdout.read().decode().strip()
-        with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-            __.wait(3)
-            __ = __.stdout.read().decode().strip()
-            if __:
-                _version += f'@{__}'
-    except Exception:
-        _version = 'dirty'
-
-if not _version or _version == '@':
-    _version = 'dirty'
-
-VERSION: Final = _version
-del _version
 
 # !!!!! DEPRECATED WARNING !!!!!
 if os.environ.get('DELAY'):

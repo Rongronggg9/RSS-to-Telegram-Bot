@@ -244,9 +244,9 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             del __user_entity_not_found_counter['user_id']
 
         if isinstance(post, str):
-            await env.bot.send_message(user_id, post, parse_mode='html')
+            await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
             return
-        await post.send_message(user_id)
+        await post.send_message(user_id, silent=not sub.notify)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
             EntityNotFoundError) as e:
         user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
@@ -254,8 +254,9 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             return  # no need to unsub twice!
         async with user_unsub_all_lock:
             # TODO: leave the group/channel if still in it
-            logger.error(f'User blocked ({e.__class__.__name__}): {user_id}')
-            await inner.sub.unsub_all(user_id)
+            if await inner.utils.have_subs(user_id):
+                logger.error(f'User blocked ({e.__class__.__name__}): {user_id}')
+                await inner.sub.unsub_all(user_id)
 
 
 async def __deactivate_feed_and_notify_all(feed: db.Feed):

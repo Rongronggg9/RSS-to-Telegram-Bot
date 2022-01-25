@@ -138,19 +138,19 @@ class Post:
         self._add_metadata()
         self._add_invalid_media()
 
-    async def send_message(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def send_message(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         if not self.messages and not self.telegraph_post:
             await self.generate_message()
 
         if self.telegraph_post:
-            await self.telegraph_post.send_message(chat_id, reply_to_msg_id)
+            await self.telegraph_post.send_message(chat_id, reply_to_msg_id, silent)
             return
 
         if self.messages and len(self.messages) >= 5:
             logger.debug(f'Too large, send a pure link message instead: "{self.title}"')
             pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
                                   link=self.link, author=self.author, telegraph_url=self.link)
-            await pure_link_post.send_message(chat_id, reply_to_msg_id)
+            await pure_link_post.send_message(chat_id, reply_to_msg_id, silent)
             return
 
         tries = 0
@@ -166,7 +166,7 @@ class Post:
 
             try:
                 for msg in self.messages:
-                    await msg.send(chat_id, reply_to_msg_id)
+                    await msg.send(chat_id, reply_to_msg_id, silent)
                 break
 
             # errors caused by invalid img/video(s)

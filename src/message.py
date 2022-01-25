@@ -28,7 +28,7 @@ class Message:
         self.parse_mode = parse_mode
         self.retries = 0
 
-    async def send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         semaphore, rwlock, flood_rwlock = locks.user_msg_locks(chat_id)
         rlock_or_wlock = await rwlock.gen_wlock() if self.__lock_type == 'w' else await rwlock.gen_rlock()
         flood_rlock_or_wlock = await flood_rwlock.gen_rlock()  # always acquire a read lock first
@@ -39,7 +39,7 @@ class Message:
                     async with rlock_or_wlock:  # acquire a msg rwlock
                         async with flood_rlock_or_wlock:  # acquire a flood rwlock
                             async with self.__overall_semaphore:  # only acquire overall semaphore when sending
-                                await self._send(chat_id, reply_to_msg_id)
+                                await self._send(chat_id, reply_to_msg_id, silent)
                     return
                 except (FloodWaitError, SlowModeWaitError) as e:
                     # telethon has retried for us, but we release locks and retry again here to see if it will be better
@@ -53,18 +53,19 @@ class Message:
                         async with flood_rlock_or_wlock:  # acquire a flood rwlock
                             await asyncio.sleep(e.seconds + 1)  # sleep
 
-    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         pass
 
 
 class TextMsg(Message):
     link_preview = False
 
-    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         await env.bot.send_message(chat_id, self.text,
                                    parse_mode=self.parse_mode,
                                    link_preview=self.link_preview,
-                                   reply_to=reply_to_msg_id)
+                                   reply_to=reply_to_msg_id,
+                                   silent=silent)
 
 
 class BotServiceMsg(TextMsg):
@@ -80,39 +81,43 @@ class MediaMsg(Message):
 
 
 class PhotoMsg(MediaMsg):
-    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         await env.bot.send_message(chat_id, self.text,
                                    file=self.media.telegramize(),
                                    parse_mode=self.parse_mode,
-                                   reply_to=reply_to_msg_id)
+                                   reply_to=reply_to_msg_id,
+                                   silent=silent)
 
 
 class VideoMsg(MediaMsg):
-    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         await env.bot.send_message(chat_id, self.text,
                                    file=self.media.telegramize(),
                                    attributes=(DocumentAttributeVideo(0, 0, 0),),
                                    parse_mode=self.parse_mode,
-                                   reply_to=reply_to_msg_id)
+                                   reply_to=reply_to_msg_id,
+                                   silent=silent)
 
 
 class AnimationMsg(MediaMsg):
-    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         await env.bot.send_message(chat_id, self.text,
                                    file=self.media.telegramize(),
                                    attributes=(DocumentAttributeAnimated(),),
                                    parse_mode=self.parse_mode,
-                                   reply_to=reply_to_msg_id)
+                                   reply_to=reply_to_msg_id,
+                                   silent=silent)
 
 
 class MediaGroupMsg(MediaMsg):
     __lock_type = 'w'
 
-    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None):
+    async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         media_list = list(map(lambda m: m.telegramize(), self.media))
         await asyncio.sleep(0.25)  # extra sleep to avoid flood control
         await env.bot.send_message(chat_id, self.text,
                                    file=media_list,
                                    parse_mode=self.parse_mode,
-                                   reply_to=reply_to_msg_id)
+                                   reply_to=reply_to_msg_id,
+                                   silent=silent)
         await asyncio.sleep(0.25)  # extra sleep to avoid flood control

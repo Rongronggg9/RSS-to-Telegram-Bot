@@ -146,15 +146,15 @@ async def __monitor(feed: db.Feed) -> str:
     if feed.etag:
         headers['If-None-Match'] = feed.etag
 
-    d = await feed_get(feed.link, headers=headers, verbose=False)
-    rss_d = d['rss_d']
+    wf = await feed_get(feed.link, headers=headers, verbose=False)
+    rss_d = wf.rss_d
 
-    if (rss_d is not None or d['status'] == 304) and (feed.error_count > 0 or feed.next_check_time):
+    if (rss_d is not None or wf.status == 304) and (feed.error_count > 0 or feed.next_check_time):
         feed.error_count = 0
         feed.next_check_time = None
         await feed.save()
 
-    if d['status'] == 304:  # cached
+    if wf.status == 304:  # cached
         logger.debug(f'Fetched (not updated, cached): {feed.link}')
         return CACHED
 
@@ -165,7 +165,7 @@ async def __monitor(feed: db.Feed) -> str:
             return FAILED
         feed.error_count += 1
         if feed.error_count % 20 == 0:  # error_count is always > 0
-            logger.warning(f'Fetch failed ({feed.error_count}th retry, {d["msg"]}): {feed.link}')
+            logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.msg}): {feed.link}')
         if feed.error_count >= 10:  # too much error, delay next check
             interval = feed.interval or db.EffectiveOptions.default_interval
             next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
@@ -175,8 +175,8 @@ async def __monitor(feed: db.Feed) -> str:
         return FAILED
 
     if not rss_d.entries:  # empty
-        if d['url'] != feed.link:
-            await inner.sub.migrate_to_new_url(feed, d['url'])
+        if wf.url != feed.link:
+            await inner.sub.migrate_to_new_url(feed, wf.url)
         logger.debug(f'Fetched (empty): {feed.link}')
         return EMPTY
 
@@ -202,13 +202,13 @@ async def __monitor(feed: db.Feed) -> str:
     length = max(len(rss_d.entries) * 2, 100)
     new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
     feed.entry_hashes = new_hashes
-    http_caching_d = inner.utils.get_http_caching_headers(d['headers'])
+    http_caching_d = inner.utils.get_http_caching_headers(wf.headers)
     feed.etag = http_caching_d['ETag']
     feed.last_modified = http_caching_d['Last-Modified']
     await feed.save()
 
-    if d['url'] != feed.link:
-        new_url_feed = await inner.sub.migrate_to_new_url(feed, d['url'])
+    if wf.url != feed.link:
+        new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
         feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
     await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries))

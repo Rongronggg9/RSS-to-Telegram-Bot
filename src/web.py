@@ -1,6 +1,5 @@
 from __future__ import annotations
-from typing import Union, Optional
-from collections.abc import Mapping
+from typing import Union, Optional, AnyStr
 from src.compat import nullcontext, ssl_create_default_context
 
 import asyncio
@@ -15,6 +14,8 @@ from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
 from socket import AF_INET, AF_INET6
+from multidict import CIMultiDictProxy
+from attr import define
 
 from src import env, log, locks
 from src.i18n import i18n
@@ -42,13 +43,33 @@ HEADER_TEMPLATE = {
 FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
               'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
-RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1,
-                                exceptions={asyncio.TimeoutError,
-                                            # aiohttp.ClientPayloadError,
-                                            # aiohttp.ClientResponseError,
-                                            # aiohttp.ClientConnectionError,
-                                            aiohttp.ServerConnectionError,
-                                            TimeoutError})
+EXCEPTIONS_SHOULD_RETRY = (asyncio.TimeoutError,
+                           # aiohttp.ClientPayloadError,
+                           # aiohttp.ClientResponseError,
+                           # aiohttp.ClientConnectionError,
+                           aiohttp.ServerConnectionError,
+                           TimeoutError)
+
+RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
+
+
+@define
+class WebResponse:
+    url: str  # redirected url
+    content: Optional[AnyStr]
+    headers: CIMultiDictProxy[str]
+    status: int
+    reason: Optional[str]
+
+
+@define
+class WebFeed:
+    url: str  # redirected url
+    headers: Optional[CIMultiDictProxy[str]] = None
+    status: int = -1
+    reason: Optional[str] = None
+    rss_d: Optional[feedparser.FeedParserDict] = None
+    msg: Optional[str] = None
 
 
 def proxy_filter(url: str, parse: bool = True) -> bool:
@@ -73,8 +94,7 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
 
 
 async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
-        -> dict[str, Union[Mapping[str, str], bytes, str, int]]:
+              headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) -> WebResponse:
     """
     :param url: URL to fetch
     :param timeout: timeout in seconds
@@ -91,8 +111,7 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
 
 
 async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) \
-        -> dict[str, Union[Mapping[str, str], bytes, str, int]]:
+               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) -> WebResponse:
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -137,11 +156,12 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                             if status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
                                 retry_in_v4_flag = True
                                 continue
-                            return {'url': str(response.url),  # get the redirected url
-                                    'content': content,
-                                    'headers': response.headers,
-                                    'status': status}
-        except Exception as e:
+                            return WebResponse(url=url,
+                                               content=content,
+                                               headers=response.headers,
+                                               status=status,
+                                               reason=response.reason)
+        except EXCEPTIONS_SHOULD_RETRY as e:
             if socket_family != AF_INET6 or tries > 1:
                 raise e
             err_msg = str(e).strip()
@@ -164,14 +184,10 @@ async def get_session(timeout: Optional[float] = None):
 
 
 async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
-                   headers: Optional[dict] = None, lang: Optional[str] = None, verbose: bool = True) \
-        -> dict[str, Union[Mapping[str, str], feedparser.FeedParserDict, str, int, None]]:
+                   headers: Optional[dict] = None, lang: Optional[str] = None, verbose: bool = True) -> WebFeed:
+    ret = WebFeed(url=url)
+
     auto_warning = logger.warning if verbose else logger.debug
-    ret = {'url': url,
-           'rss_d': None,
-           'headers': None,
-           'status': -1,
-           'msg': None}
     _headers = {}
     if headers:
         _headers.update(headers)
@@ -179,25 +195,26 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
         _headers['Accept'] = FEED_ACCEPT
 
     try:
-        _ = await get(url, timeout, web_semaphore, headers=_headers)
-        rss_content = _['content']
-        ret['url'] = _['url']
-        ret['headers'] = _['headers']
-        ret['status'] = _['status']
+        resp = await get(url, timeout, web_semaphore, headers=_headers)
+        rss_content = resp.content
+        ret.url = resp.url
+        ret.headers = resp.headers
+        ret.status = resp.status
 
         # some rss feed implement http caching improperly :(
-        if ret['status'] == 200 and int(ret['headers'].get('Content-Length', 1)) == 0:
-            ret['status'] = 304
-            ret['msg'] = f'"Content-Length" is 0'
+        if resp.status == 200 and int(resp.headers.get('Content-Length', '1')) == 0:
+            ret.status = 304
+            ret.msg = f'"Content-Length" is 0'
             return ret
 
-        if ret['status'] == 304:
-            ret['msg'] = f'304 Not Modified'
+        if resp.status == 304:
+            ret.msg = f'304 Not Modified'
             return ret  # 304 Not Modified, feed not updated
 
         if rss_content is None:
-            auto_warning(f'Fetch failed (status code error, {ret["status"]}): {url}')
-            ret['msg'] = f'ERROR: {i18n[lang]["status_code_error"]} ({_["status"]})'
+            status_caption = f'{resp.status}' + f' {resp.reason}' if resp.reason else ''
+            auto_warning(f'Fetch failed (status code error, {status_caption}): {url}')
+            ret.msg = f'ERROR: {i18n[lang]["status_code_error"]} ({status_caption})'
             return ret
 
         if len(rss_content) <= 524288:
@@ -210,13 +227,13 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
 
         if 'title' not in rss_d.feed:
             auto_warning(f'Fetch failed (feed invalid): {url}')
-            ret['msg'] = 'ERROR: ' + i18n[lang]['feed_invalid']
+            ret.msg = 'ERROR: ' + i18n[lang]['feed_invalid']
             return ret
 
-        ret['rss_d'] = rss_d
+        ret.rss_d = rss_d
     except aiohttp.InvalidURL:
         auto_warning(f'Fetch failed (URL invalid): {url}')
-        ret['msg'] = 'ERROR: ' + i18n[lang]['url_invalid']
+        ret.msg = 'ERROR: ' + i18n[lang]['url_invalid']
     except (asyncio.TimeoutError,
             aiohttp.ClientError,
             SSLError,
@@ -225,8 +242,9 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             TimeoutError) as e:
         err_name = e.__class__.__name__
         auto_warning(f'Fetch failed (network error, {err_name}): {url}')
-        ret['msg'] = f'ERROR: {i18n[lang]["network_error"]} ({err_name})'
+        ret.msg = f'ERROR: {i18n[lang]["network_error"]} ({err_name})'
     except Exception as e:
         auto_warning(f'Fetch failed: {url}', exc_info=e)
-        ret['msg'] = 'ERROR: ' + i18n[lang]['internal_error']
+        ret.msg = 'ERROR: ' + i18n[lang]['internal_error']
+
     return ret

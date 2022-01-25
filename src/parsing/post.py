@@ -514,7 +514,7 @@ class Post:
             if not text:
                 # noinspection PyBroadException
                 try:
-                    page = (await web.get(src, decode=True, semaphore=False))['content']
+                    page = (await web.get(src, decode=True, semaphore=False)).content
                     text = BeautifulSoup(page, 'lxml').title.text
                 except Exception:
                     pass

@@ -30,12 +30,12 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[s
         if feed:
             _sub = await db.Sub.get_or_none(user=user_id, feed=feed)
         if not feed or feed.state == 0:
-            d = await web.feed_get(feed_url, lang=lang)
-            rss_d = d['rss_d']
-            ret['status'] = d['status']
-            ret['msg'] = d['msg']
+            wf = await web.feed_get(feed_url, lang=lang)
+            rss_d = wf.rss_d
+            ret['status'] = wf.status
+            ret['msg'] = wf.msg
             feed_url_original = feed_url
-            ret['url'] = feed_url = d['url']  # get the redirected url
+            ret['url'] = feed_url = wf.url  # get the redirected url
 
             if rss_d is None:
                 logger.warning(f'Sub {feed_url} for {user_id} failed')
@@ -52,7 +52,7 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[s
                 feed.state = 1
                 feed.error_count = 0
                 feed.next_check_time = None
-                http_caching_d = get_http_caching_headers(d['headers'])
+                http_caching_d = get_http_caching_headers(wf.headers)
                 feed.etag = http_caching_d['ETag']
                 feed.last_modified = http_caching_d['Last-Modified']
                 feed.entry_hashes = [get_hash(entry.get('guid') or entry.get('link')) for entry in rss_d.entries]

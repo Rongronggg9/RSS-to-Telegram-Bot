@@ -74,11 +74,11 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
     uid = event.chat_id
 
     try:
-        d = await web.feed_get(url, web_semaphore=False, lang=lang)
-        rss_d = d['rss_d']
+        wf = await web.feed_get(url, web_semaphore=False, lang=lang)
+        rss_d = wf.rss_d
 
         if rss_d is None:
-            await event.respond(d['msg'])
+            await event.respond(wf.msg)
             return
 
         if start >= len(rss_d.entries):

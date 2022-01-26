@@ -1,6 +1,7 @@
 {
   "lang_code": "zh-Hans",
-  "iso_639_1_code": "zh",
+  "iso_639_code": "zh",
+  "language_name": "Simplified Chinese",
   "lang_native_name": "简体中文",
   "select_lang_prompt": "请选择语言。",
   "welcome_prompt": "欢迎使用 RSS to Telegram Bot。",

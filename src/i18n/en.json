@@ -1,6 +1,7 @@
 {
   "lang_code": "en",
-  "iso_639_1_code": "en",
+  "iso_639_code": "en",
+  "language_name": "English",
   "lang_native_name": "English",
   "select_lang_prompt": "Please select a language.",
   "welcome_prompt": "Welcome to RSS to Telegram Bot.",

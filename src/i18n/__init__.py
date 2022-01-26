@@ -22,13 +22,13 @@ class _I18N:
     def __init__(self):
         if not self.__initialized:
             self.__l10n_d: CIMultiDict[_L10N] = CIMultiDict()
-            self.__iso_639_1_d: CIMultiDict[str] = CIMultiDict()
+            self.__iso_639_d: CIMultiDict[str] = CIMultiDict()
             for lang in ALL_LANGUAGES:
                 l10n = _L10N(lang)
-                iso_639_1_code = l10n['iso_639_1_code']
+                iso_639_code = l10n['iso_639_code']
                 self.__l10n_d[lang] = l10n
-                if iso_639_1_code:
-                    self.__iso_639_1_d[iso_639_1_code] = lang
+                if iso_639_code:
+                    self.__iso_639_d[iso_639_code] = lang
 
             self.__initialized = True
             self.set_help_msg_html()
@@ -39,8 +39,8 @@ class _I18N:
         return self.__l10n_d[lang_code] if lang_code in self.__l10n_d else self.get_fallback_l10n(lang_code)
 
     def get_all_l10n_string(self, key: str, html_escaped: bool = False,
-                            only_iso_639_1: bool = False) -> tuple[str, ...]:
-        languages = ALL_LANGUAGES if not only_iso_639_1 else self.__iso_639_1_d.keys()
+                            only_iso_639: bool = False) -> tuple[str, ...]:
+        languages = ALL_LANGUAGES if not only_iso_639 else self.__iso_639_d.keys()
         res = (
             tuple(self[lang_code][key] for lang_code in languages if self[lang_code].key_exist(key))
             if not html_escaped else
@@ -51,19 +51,19 @@ class _I18N:
     def get_fallback_l10n(self, lang_code: Optional[str] = None) -> "_L10N":
         if not lang_code or not isinstance(lang_code, str):
             return self.__l10n_d[FALLBACK_LANGUAGE]
-        iso_639_1_code = lang_code[:2]
-        if iso_639_1_code in self.__iso_639_1_d:
-            return self.__l10n_d[self.__iso_639_1_d[iso_639_1_code]]
+        iso_639_code = lang_code.split('-')[0].split('_')[0]
+        if iso_639_code in self.__iso_639_d:
+            return self.__l10n_d[self.__iso_639_d[iso_639_code]]
         return self.__l10n_d[FALLBACK_LANGUAGE]
 
     def set_help_msg_html(self):
         cmd_lang_description = ' / '.join(self.get_all_l10n_string('cmd_description_lang', html_escaped=True,
-                                                                   only_iso_639_1=True))
+                                                                   only_iso_639=True))
         for l10n in self.__l10n_d.values():
             l10n_cmd_description_lang = l10n['cmd_description_lang']
             _cmd_description_lang = (
                     (f'{l10n_cmd_description_lang} / '
-                     if not l10n['iso_639_1_code'] and l10n_cmd_description_lang not in cmd_lang_description else '')
+                     if not l10n['iso_639_code'] and l10n_cmd_description_lang not in cmd_lang_description else '')
                     + cmd_lang_description
             )
             help_msg_html = (
@@ -101,7 +101,7 @@ class _L10N:
             return self.__l10n_lang[key]
         elif self.__lang_code != FALLBACK_LANGUAGE:
             return _I18N().get_fallback_l10n(
-                self.__lang_code if not self.__l10n_lang['iso_639_1_code'] else None  # get iso-639-1 fallback if needed
+                self.__lang_code if not self.__l10n_lang['iso_639_code'] else None  # get ISO 639 fallback if needed
             )[key]
         else:
             return key

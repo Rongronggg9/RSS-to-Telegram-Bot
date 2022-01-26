@@ -1,6 +1,7 @@
 {
-  "lang_code": "zh-yue",
-  "iso_639_1_code": "",
+  "lang_code": "yue",
+  "iso_639_code": "yue",
+  "language_name": "Cantonese",
   "lang_native_name": "廣東話",
   "select_lang_prompt": "請選擇語言。",
   "welcome_prompt": "歡迎使用 RSS to Telegram Bot。",

@@ -82,9 +82,9 @@ async def pre():
                                            commands=command.utils.get_commands_list()),
             *(
                 command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
-                                               lang_code=i18n[lang]['iso_639_1_code'],
+                                               lang_code=i18n[lang]['iso_639_code'],
                                                commands=command.utils.get_commands_list(lang=lang))
-                for lang in ALL_LANGUAGES if i18n[lang]['iso_639_1_code']
+                for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
             ),
             command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
                                            lang_code='',

@@ -8,7 +8,7 @@
 
 <a href="https://github.com/Rongronggg9/RSS-to-Telegram-Bot"><img src="https://rongronggg9.github.io/external-resources/RSS-to-Telegram-Bot/RSStT_icon.svg" width = "256" height = "256"  alt="RSStT_icon"/><a/>
 
-[更新日志 CHANGELOG](CHANGELOG.md)
+[更新日志](docs/CHANGELOG_ZH.md) [CHANGELOG](docs/CHANGELOG.md)
 
 本项目现改以 AGPLv3 许可证分发，这是为了将来的多用户功能准备的。
 

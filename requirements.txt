@@ -21,7 +21,7 @@ aerich==0.6.2
 aiohttp[speedups]==3.8.1
 aiohttp-socks==0.7.1
 aiohttp-retry==2.4.6
-python-socks[asyncio]==2.0.2
+python-socks[asyncio]==2.0.3
 aiodns==3.0.0
 
 # utils
@@ -29,6 +29,6 @@ colorlog==6.6.0
 APScheduler==3.8.1
 python-dotenv==0.19.2
 readerwriterlock==1.0.9
-multidict==5.2.0
+multidict==6.0.2
 attrs==21.4.0
 uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

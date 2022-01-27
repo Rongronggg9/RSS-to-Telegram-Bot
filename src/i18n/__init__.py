@@ -91,7 +91,15 @@ class _L10N:
         self.__lang_code: str = lang_code
         self.__l10n_lang: CIMultiDict[str]
         with open(path.join(I18N_PATH, lang_code + '.json'), encoding='utf-8') as f:
-            self.__l10n_lang = CIMultiDict(load(f))
+            l10n_d = load(f)
+        l10n_d_flatten = {}
+        assert isinstance(l10n_d, dict)
+        for key, value in l10n_d.items():
+            assert isinstance(value, dict)
+            for k, v in value.items():
+                assert isinstance(v, str) and k not in l10n_d_flatten
+                l10n_d_flatten[k] = v
+        self.__l10n_lang = CIMultiDict(l10n_d_flatten)
 
     def key_exist(self, key: str):
         return key in self.__l10n_lang

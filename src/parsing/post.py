@@ -148,8 +148,8 @@ class Post:
 
         if self.messages and len(self.messages) >= 5:
             logger.debug(f'Too large, send a pure link message instead: "{self.title}"')
-            pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
-                                  link=self.link, author=self.author, telegraph_url=self.link)
+            pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title, link=self.link,
+                                  author=self.author, telegraph_url=self.link, feed_link=self.feed_link)
             await pure_link_post.send_message(chat_id, reply_to_msg_id, silent)
             return
 
@@ -207,7 +207,8 @@ class Post:
                                      f'(feed: {self.feed_link}, user: {chat_id}). '
                                      f'Please check:<br><br>' +
                                      traceback.format_exc().replace('\n', '<br>'),
-                                     self.title, self.feed_title, self.link, self.author, service_msg=True)
+                                     self.title, self.feed_title, self.link, self.author, feed_link=self.feed_link,
+                                     service_msg=True)
                 await error_message.send_message(env.MANAGER)
                 break
 
@@ -215,14 +216,14 @@ class Post:
         try:
             telegraph_url = await tgraph.TelegraphIfy(self.xml, title=self.title, link=self.link,
                                                       feed_title=self.feed_title, author=self.author).telegraph_ify()
-            telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title,
-                                  link=self.link, author=self.author, telegraph_url=telegraph_url)
+            telegraph_post = Post(xml='', title=self.title, feed_title=self.feed_title, link=self.link,
+                                  author=self.author, telegraph_url=telegraph_url, feed_link=self.feed_link)
             return telegraph_post
         except exceptions.TelegraphError as e:
             if str(e) == 'CONTENT_TOO_BIG':
                 logger.debug(f'Content too big, send a pure link message instead: "{self.title}"')
-                pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title,
-                                      link=self.link, author=self.author, telegraph_url=self.link)
+                pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title, link=self.link,
+                                      author=self.author, telegraph_url=self.link, feed_link=self.feed_link)
                 return pure_link_post
             logger.debug('Telegraph API error: ' + str(e))
             return None

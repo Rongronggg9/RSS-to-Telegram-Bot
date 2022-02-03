@@ -1,14 +1,75 @@
+from __future__ import annotations
+from typing import Optional
+from src.compat import Final
+
+import asyncio
 import os
 import logging
+import re
 from telethon import TelegramClient
-from typing import Optional, Final
+from telethon.tl.types import User, InputPeerUser
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
+
+
+# ----- utils -----
+def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
+    if not var:
+        return default_value
+
+    if var.isdecimal() or var.lstrip('-').isdecimal():
+        return int(var) > 0
+
+    var = var.upper()
+    if var in ('FALSE', 'NONE', 'NULL', 'NO', 'NOT', 'DISABLE', 'DISABLED', 'INACTIVE', 'DEACTIVATED', 'OFF'):
+        return False
+    if var in ('TRUE', 'YES', 'OK', 'ENABLE', 'ENABLED', 'ACTIVE', 'ACTIVATED', 'ON'):
+        return True
+    return default_value
+
+
+def __list_parser(var: Optional[str]) -> list[str]:
+    if not var:
+        return []
+
+    var_t = re.split(r'[\s,;，；]+', var.strip())
+    return var_t
+
 
 # ----- load .env -----
 load_dotenv(override=True)
 
-# ----- base config -----
+# ----- get version -----
+# noinspection PyBroadException
+try:
+    with open('.version', 'r') as v:
+        _version = v.read().strip()
+except Exception:
+    _version = 'dirty'
+
+if _version == 'dirty':
+    from subprocess import Popen, PIPE, DEVNULL
+
+    # noinspection PyBroadException
+    try:
+        with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+            __.wait(3)
+            _version = __.stdout.read().decode().strip()
+        with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+            __.wait(3)
+            __ = __.stdout.read().decode().strip()
+            if __:
+                _version += f'@{__}'
+    except Exception:
+        _version = 'dirty'
+
+if not _version or _version == '@':
+    _version = 'dirty'
+
+VERSION: Final = _version
+del _version
+
+# ----- basic config -----
 SAMPLE_APIS: Final = {
     # https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java
     4: '014b35b6184100b085b0d0572f9b5103',
@@ -28,40 +89,33 @@ SAMPLE_APIS: Final = {
 
 API_ID: Final = int(os.environ['API_ID']) if os.environ.get('API_ID') else None
 API_HASH: Final = os.environ.get('API_HASH')
-TOKEN = os.environ.get('TOKEN')
-_chatid: Final = os.environ.get('CHATID')
-DELAY: Final = int(os.environ.get('DELAY', 300))
-
-if TOKEN is None or _chatid is None:
-    logging.critical('TOKEN OR CHATID NOT SET! PLEASE CHECK YOUR SETTINGS!')
-    exit(1)
+TOKEN: Final = os.environ.get('TOKEN')
 
 try:
-    CHATID: Final = int(_chatid) if _chatid.lstrip('-').isdecimal() else _chatid
-    del _chatid
-
-    _manager = os.environ.get('MANAGER', CHATID)
+    _chatid = os.environ.get('CHATID')
+    _chatid = int(_chatid) if isinstance(_chatid, str) and _chatid.lstrip('-').isdecimal() else _chatid
+    _manager = os.environ.get('MANAGER') or _chatid
     MANAGER: Final = int(_manager) if isinstance(_manager, str) and _manager.lstrip('-').isdecimal() else _manager
+    del _chatid
     del _manager
-except ValueError:
-    logging.critical('INVALID CHATID OR MANAGER! PLEASE CHECK YOUR SETTINGS!')
+
+    if not all((TOKEN, MANAGER)):
+        logging.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
+        exit(1)
+except Exception as e:
+    logging.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
 
-_telegraph_token = os.environ.get('TELEGRAPH_TOKEN')
-if _telegraph_token:
-    TELEGRAPH_TOKEN: Final = _telegraph_token.strip(). \
-        replace('\n', ',') \
-        .replace('，', ',') \
-        .replace(';', ',') \
-        .replace('；', ',') \
-        .replace(' ', ',')
-else:
-    TELEGRAPH_TOKEN: Final = None
+TELEGRAPH_TOKEN: Final = __list_parser(os.environ.get('TELEGRAPH_TOKEN'))
+
+MULTIUSER: Final = __bool_parser(os.environ.get('MULTIUSER'), default_value=True)
 
 # ----- proxy config -----
-DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY', os.environ.get('HTTP_PROXY', None))
+DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY') or os.environ.get('socks_proxy') \
+                       or os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy') \
+                       or os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
 
-TELEGRAM_PROXY: Final = os.environ.get('T_PROXY', DEFAULT_PROXY)
+TELEGRAM_PROXY: Final = os.environ.get('T_PROXY') or DEFAULT_PROXY
 if TELEGRAM_PROXY:
     _parsed = parse_proxy_url(TELEGRAM_PROXY.replace('socks5h', 'socks5'))
     TELEGRAM_PROXY_DICT: Final = {
@@ -85,7 +139,7 @@ else:
     TELEGRAM_PROXY_DICT: Final = None
     TELEGRAPH_PROXY_DICT: Final = None
 
-R_PROXY: Final = os.environ.get('R_PROXY', DEFAULT_PROXY)
+R_PROXY: Final = os.environ.get('R_PROXY') or DEFAULT_PROXY
 
 if R_PROXY:
     REQUESTS_PROXIES: Final = {
@@ -94,62 +148,59 @@ if R_PROXY:
 else:
     REQUESTS_PROXIES: Final = {}
 
+PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
+PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
+USER_AGENT: Final = os.environ.get('USER_AGENT') or 'RSStT/2.0 RSS Reader'
+IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
+
 # ----- img relay server config -----
-_img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
-IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith('/') else '/')
+_img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'
+IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith(('/', '=')) else '/')
 del _img_relay_server
 
-# ----- redis config -----
-REDIS_HOST: Final = os.environ.get('REDISHOST')
-REDIS_USER: Final = os.environ.get('REDISUSER')
-REDIS_PASSWORD: Final = os.environ.get('REDISPASSWORD')
-
-_redis_port = os.environ.get('REDISPORT')
-REDIS_PORT: Final = int(_redis_port) if _redis_port else None
-del _redis_port
-
-_redis_num = os.environ.get('REDIS_NUM')
-REDIS_NUM: Final = int(_redis_num) if _redis_num else None
-del _redis_num
+# ----- db config -----
+_database_url = os.environ.get('DATABASE_URL') or 'sqlite://config/db.sqlite3?journal_mode=OFF'
+DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
+                       else _database_url)
+del _database_url
 
 # ----- debug config -----
-if os.environ.get('DEBUG'):
-    DEBUG: Final = True
-else:
-    DEBUG: Final = False
+DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 
-# ----- get version -----
-try:
-    with open('.version', 'r') as v:
-        _version = v.read().strip()
-except Exception:
-    _version = 'dirty'
+# !!!!! DEPRECATED WARNING !!!!!
+if os.environ.get('DELAY'):
+    logging.warning('Env var "DELAY" is DEPRECATED and of no use!\n'
+                    'To avoid this warning, remove this env var.')
 
-if _version == 'dirty':
-    from subprocess import Popen, PIPE, DEVNULL
+if os.environ.get('CHATID'):
+    logging.warning('Env var "CHATID" is DEPRECATED!\n'
+                    'To avoid this warning, remove this env var.')
 
-    try:
-        with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-            __.wait(3)
-            _version = __.stdout.read().decode().strip()
-        with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-            __.wait(3)
-            __ = __.stdout.read().decode().strip()
-            if __:
-                _version += f'@{__}'
-    except Exception:
-        _version = 'dirty'
+if any((os.environ.get('REDISHOST'), os.environ.get('REDISUSER'), os.environ.get('REDISPASSWORD'),
+        os.environ.get('REDISPORT'), os.environ.get('REDIS_NUM'),)):
+    logging.warning('Redis DB is DEPRECATED!\n'
+                    'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
+                    'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.\n\n'
+                    'Please remove these env vars (if exist):\n'
+                    'REDISHOST\n'
+                    'REDISUSER\n'
+                    'REDISPASSWORD\n'
+                    'REDISPORT\n'
+                    'REDIS_NUM')
 
-if not _version or _version == '@':
-    _version = 'dirty'
-
-VERSION: Final = _version
-del _version
+if os.path.exists('config/rss.db'):
+    os.rename('config/rss.db', 'config/rss.db.bak')
+    logging.warning('Sqlite DB "rss.db" with old schema is DEPRECATED and renamed to "rss.db.bak" automatically!\n'
+                    'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
+                    'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.')
 
 # ----- shared var -----
 bot: Optional[TelegramClient] = None  # placeholder
 bot_id: Optional[int] = None  # placeholder
+bot_peer: Optional[User] = None  # placeholder
+bot_input_peer: Optional[InputPeerUser] = None  # placeholder
 
-REQUESTS_HEADERS: Final = {
-    'user-agent': os.environ.get('USER_AGENT', 'RSStT')
-}
+if os.name == "nt":  # workaround for aiodns on Windows
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)

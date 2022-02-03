@@ -1,0 +1,123 @@
+{
+    "l10n_info": {
+        "lang_code": "yue",
+        "iso_639_code": "yue",
+        "language_name": "Cantonese",
+        "lang_native_name": "廣東話",
+        "select_lang_prompt": "請選擇語言。",
+        "welcome_prompt": "歡迎使用 RSS to Telegram Bot。",
+        "rsstt_slogan": "RSS to Telegram Bot，關心你嘅閲讀體驗嘅 Telegram RSS 機械人。"
+    },
+    "l10n_sub_status": {
+        "no_subscription": "冇訂閲",
+        "already_subscribed": "訂閲過喇",
+        "subscription_not_exist": "冇呢個訂閲"
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "RSS 無效",
+        "url_invalid": "連結唔啱",
+        "network_error": "網絡錯誤",
+        "internal_error": "內部錯誤",
+        "status_code_error": "HTTP 狀態碼錯誤",
+        "uncaught_internal_error": "冇捉到嘅內部錯誤",
+        "operation_timeout_error": "操作超時",
+        "action_invalid": "操作唔啱",
+        "flood_wait_prompt": "你操作得太快喇，搞到機械人超出咗 Telegram 嘅速率限制。唔該慢少少。",
+        "edit_conflict_prompt": "你操作得太快喇，搞到操作衝突。唔該慢少少。",
+        "callback_already_running_prompt": "你已經請求咗其他命令，唔該等佢搞掂再來過。"
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "只有機械人嘅管理員先畀用呢條命令。",
+        "permission_denied_not_chat_admin": "只有谷/台嘅管理員先畀用呢條命令。",
+        "permission_denied_not_in_private_chat": "只有喺私人傾偈入面先畀用呢條命令。",
+        "permission_denied_not_member": "你唔喺呢個谷/台入面，用唔到呢個機械人。",
+        "permission_denied_bot_not_member": "呢個機械人已經唔喺呢個谷/台入面，唔會喺度運轉。",
+        "promote_to_admin_prompt": "如果你係呢個谷嘅匿名管理員，唔該將機械人升做管理員 (乜權限都唔洗)，咁機械人先可以驗證你嘅身份。",
+        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇"
+    },
+    "l10n_misc": {
+        "subscribe": "加訂閲",
+        "unsubscribe": "退訂",
+        "subscription_list": "訂閲清單",
+        "processing": "處理緊，唔該等陣…"
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "唔該回復訂閲連結。\n或者，用 <code>/sub url1 url2 url3 …</code> 嚟批量訂閲都得。",
+        "sub_usage_in_channel_html": "唔該用 <code>/sub url1 url2 url3 …</code> 嚟訂閲。",
+        "sub_successful": "訂閲成功",
+        "sub_failed": "訂閲失敗"
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "唔該選個你想退訂嘅訂閲。\n或者，用 <code>/unsub url1 url2 url3 …</code> 嚟批量退訂都得。",
+        "unsub_successful": "退訂成功",
+        "unsub_failed": "退訂失敗"
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "唔該送出要匯入嘅 OPML 檔案 (副檔名一定要係 .opml)。",
+        "send_opml_reply_placeholder": "OPML 檔案 (副檔名一定要係 .opml)",
+        "fetch_file_failed": "攞唔到檔案",
+        "opml_import_processing": "如果訂閲太多或者訂閲喺嘅伺服器太慢，可能會處理好耐，唔該多等陣。",
+        "opml_parse_error": "解讀唔到 OPML"
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "唔該選個你想設定嘅訂閲。",
+        "status": "狀態",
+        "status_activated": "開",
+        "status_deactivated": "閂",
+        "notification": "通知",
+        "notification_normal": "正常",
+        "notification_muted": "靜音",
+        "monitor_interval": "監視間隔",
+        "set_interval_prompt": "唔該選個監視間隔。"
+    },
+    "l10n_choose_sub": {
+        "choose_sub_prompt": "唔該選個訂閲",
+        "previous_page": "上一頁",
+        "next_page": "下一頁",
+        "back": "返回"
+    },
+    "l10n_sub_info": {
+        "subscription_info": "訂閲資訊",
+        "subscription_title": "訂閲標題",
+        "feed_url": "RSS URL"
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": "監視任務已經連續失敗咗 100 次，對呢個 RSS 嘅訂閲已經畀閂咗。\n如果要開返佢，唔該用 /activate_subs 命令。"
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "呢啲訂閲而家閂咗，唔該選個你想開返嘅訂閲。\n開返之後，會監視訂閲更新。",
+        "activate_all_subs": "開返晒我啲訂閲",
+        "all_subs_are_activated": "所有訂閲都開晒。"
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "呢啲訂閲而家開咗，唔該選個你想閂嘅訂閲。\n閂咗之後，會暫停監視訂閲更新；如果你晤再需要呢個訂閲，唔該考慮吓退訂而唔係閂咗佢。",
+        "deactivate_all_subs": "閂晒我啲訂閲",
+        "all_subs_are_deactivated": "所有訂閲都閂晒。"
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "命令用法: <code>/test RSS_URL 條目編號起點(選填) 條目編號終點(選填)</code>",
+        "set_option_cmd_usage_prompt_html": "命令用法: <code>/set_option 鍵 值</code>",
+        "current_options": "而家嘅選項",
+        "option_value_type": "值嘅類型",
+        "option_key_invalid": "選項嘅鍵唔啱",
+        "option_value_invalid": "選項嘅值唔啱，唔該檢查吓佢嘅類型",
+        "option_updated": "選項改咗"
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "命令",
+        "cmd_description_sub": "加訂閲",
+        "cmd_description_unsub": "退訂",
+        "cmd_description_unsub_all": "退訂晒所有訂閲",
+        "cmd_description_list": "列出訂閲清單",
+        "cmd_description_set": "自訂訂閲設定",
+        "cmd_description_import": "從 OPML 匯入訂閲",
+        "cmd_description_export": "匯出訂閲到 OPML",
+        "cmd_description_activate_subs": "開訂閲",
+        "cmd_description_deactivate_subs": "閂訂閲",
+        "cmd_description_version": "檢查機械人版本",
+        "cmd_description_lang": "選擇語言",
+        "cmd_description_help": "睇幫助",
+        "cmd_description_test": "測試 (僅機械人管理員)",
+        "cmd_description_set_option": "改機械人選項 (僅機械人管理員)"
+    }
+}

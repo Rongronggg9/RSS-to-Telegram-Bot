@@ -163,7 +163,7 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
+venv*/
 ENV/
 env.bak/
 venv.bak/
@@ -299,5 +299,8 @@ icon/
 *.sh
 *.bat
 *.cmd
+*.bak
 docker-compose*.yml
 .version
+src/db/config_**_sample.py
+src/db/create_migrations.py

@@ -1,0 +1,123 @@
+{
+    "l10n_info": {
+        "lang_code": "en",
+        "iso_639_code": "en",
+        "language_name": "English",
+        "lang_native_name": "English",
+        "select_lang_prompt": "Please select a language.",
+        "welcome_prompt": "Welcome to RSS to Telegram Bot.",
+        "rsstt_slogan": "RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience."
+    },
+    "l10n_sub_status": {
+        "no_subscription": "You have no subscriptions",
+        "already_subscribed": "Already subscribed",
+        "subscription_not_exist": "Subscription does not exist"
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "The RSS feed is invalid",
+        "url_invalid": "The URL is invalid",
+        "network_error": "Network error",
+        "internal_error": "Internal error",
+        "status_code_error": "HTTP status code error",
+        "uncaught_internal_error": "Uncaught internal error",
+        "operation_timeout_error": "Operation timeout",
+        "action_invalid": "Action invalid",
+        "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
+        "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
+        "callback_already_running_prompt": "You have requested another command. Please retry after if finishes."
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
+        "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",
+        "permission_denied_not_in_private_chat": "This command can only be used in a private chat.",
+        "permission_denied_not_member": "You are not in this group/channel, thus cannot use the bot.",
+        "permission_denied_bot_not_member": "The bot is no longer in this group/channel, thus won't work here.",
+        "promote_to_admin_prompt": "If you are an anonymous admin of this group, please promote the bot to an admin (no permission needed) to empower the bot to verify your identity.",
+        "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\"\n2. Change \"Chat history for new members\" to \"Visible\"\n3. Save chat history visibility setting\n4. Save all settings\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again\n6. Now you should be able to use the bot"
+    },
+    "l10n_misc": {
+        "subscribe": "Subscribe",
+        "unsubscribe": "Unsubscribe",
+        "subscription_list": "Subscription list",
+        "processing": "Processing, please wait for a moment…"
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "Please reply the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
+        "sub_usage_in_channel_html": "Please use <code>/sub url1 url2 url3 …</code> to subscribe.",
+        "sub_successful": "Subscribed successfully",
+        "sub_failed": "Subscribed failed"
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe. \nOr, you may use <code>/unsub url1 url2 url3 …</code> to unsubscribe in bulk.",
+        "unsub_successful": "Unsubscribed successfully",
+        "unsub_failed": "Unsubscribed failed"
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "Please send me the OPML file to be imported (extension name must be .opml).",
+        "send_opml_reply_placeholder": "The OPML file to be imported (extension name must be .opml)",
+        "fetch_file_failed": "Failed fetching the file",
+        "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
+        "opml_parse_error": "OPML parsing error"
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "Please choose a subscription you'd like to customize.",
+        "status": "Status",
+        "status_activated": "Activated",
+        "status_deactivated": "Deactivated",
+        "notification": "Notification",
+        "notification_normal": "Normal",
+        "notification_muted": "Muted",
+        "monitor_interval": "Monitor interval",
+        "set_interval_prompt": "Please select a monitor interval."
+    },
+    "l10n_choose_sub": {
+        "choose_sub_prompt": "Please choose a subscription",
+        "previous_page": "Previous page",
+        "next_page": "Next page",
+        "back": "Back"
+    },
+    "l10n_sub_info": {
+        "subscription_info": "Subscription info",
+        "subscription_title": "Subscription title",
+        "feed_url": "Feed URL"
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": "The monitoring task had failed for 100 consecutive times. Your subscription to the RSS feed has been deactivated.\nTo reactivate it, please use the /activate_subs command."
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "The subscriptions below are deactivated, choose one to activate.\nAfter activated, their updates will be monitored.",
+        "activate_all_subs": "Activate all my subscriptions",
+        "all_subs_are_activated": "All subscriptions are activated."
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "The subscriptions below are activated, choose one to deactivate.\nAfter deactivated, their updates will be suspended from monitoring. If you don't need the subscription any more, please consider unsubscribing it instead of deactivating it.",
+        "deactivate_all_subs": "Deactivate all my subscriptions",
+        "all_subs_are_deactivated": "All subscriptions are deactivated."
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "Command usage: <code>/test RSS_URL entry_start_number(optional) entry_end_number(optional)</code>",
+        "set_option_cmd_usage_prompt_html": "Command usage: <code>/set_option key value</code>",
+        "current_options": "Current options",
+        "option_value_type": "Value type",
+        "option_key_invalid": "The Option key is invalid",
+        "option_value_invalid": "The Option value is invalid, please check its type",
+        "option_updated": "The option has been updated"
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "Commands",
+        "cmd_description_sub": "Subscribe",
+        "cmd_description_unsub": "Unsubscribe",
+        "cmd_description_unsub_all": "Unsubscribe all subscriptions",
+        "cmd_description_list": "Check the subscription list",
+        "cmd_description_set": "Customize subscriptions",
+        "cmd_description_import": "Import subscriptions from an OPML file",
+        "cmd_description_export": "Export subscriptions to an OPML file",
+        "cmd_description_activate_subs": "Activate subscriptions",
+        "cmd_description_deactivate_subs": "Deactivate subscriptions",
+        "cmd_description_version": "Check the bot version",
+        "cmd_description_lang": "Select a language",
+        "cmd_description_help": "View help",
+        "cmd_description_test": "Test (bot manager only)",
+        "cmd_description_set_option": "Set bot options (bot manager only)"
+    }
+}

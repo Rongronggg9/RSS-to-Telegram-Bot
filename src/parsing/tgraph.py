@@ -1,7 +1,9 @@
+from __future__ import annotations
+from typing import Union
+
 import asyncio
 import time
 import aiographfix as aiograph
-from typing import List, Union
 from bs4 import BeautifulSoup
 from aiohttp import ClientTimeout, ClientError
 from aiohttp_retry import RetryClient
@@ -51,13 +53,13 @@ class Telegraph(aiograph.Telegraph):
 
 
 class APIs:
-    def __init__(self, tokens: Union[str, List[str]]):
+    def __init__(self, tokens: Union[str, list[str]]):
         if isinstance(tokens, str):
             tokens = [tokens]
         self.tokens = tokens
-        self._accounts: List[Telegraph] = []
+        self._accounts: list[Telegraph] = []
         self._curr_id = 0
-        asyncio.get_event_loop().run_until_complete(self.init())
+        env.loop.run_until_complete(self.init())
 
     async def init(self):
         for token in self.tokens:
@@ -101,7 +103,7 @@ class APIs:
 
 apis = None
 if env.TELEGRAPH_TOKEN:
-    apis = APIs(env.TELEGRAPH_TOKEN.split(','))
+    apis = APIs(env.TELEGRAPH_TOKEN)
     if not apis.valid:
         logger.error('Cannot set up Telegraph, fallback to non-Telegraph mode.')
         apis = None
@@ -157,7 +159,7 @@ class TelegraphIfy:
             raise OverflowError
 
         if self.retries >= 1:
-            logger.info('Retrying using another telegraph account...' if apis.count > 1 else 'Retrying...')
+            logger.debug('Retrying using another telegraph account...' if apis.count > 1 else 'Retrying...')
 
         telegraph_account = apis.get_account()
         try:
@@ -170,18 +172,18 @@ class TelegraphIfy:
             e_msg = str(e)
             if e_msg.startswith('FLOOD_WAIT_'):  # exceed flood control
                 retry_after = int(e_msg.split('_')[-1])
-                logger.warning(f'Flood control exceeded. Wait {retry_after}.0 seconds')
+                logger.debug(f'Flood control exceeded. Wait {retry_after}.0 seconds')
                 self.retries += 1
                 rets = await asyncio.gather(self.telegraph_ify(), telegraph_account.flood_wait(retry_after))
 
                 return rets[0]
             else:
                 raise e
-        except (TimeoutError, asyncio.exceptions.TimeoutError) as e:
+        except (TimeoutError, asyncio.TimeoutError) as e:
             raise e  # aiohttp_retry will retry automatically, so it means too many retries if caught
         except (ClientError, ConnectionError) as e:
             if self.retries < 3:
-                logger.warning(
+                logger.debug(
                     f'Network error ({e.__class__.__name__}) occurred when creating telegraph page, will retry')
                 return await self.telegraph_ify()
             raise e

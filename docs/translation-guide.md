@@ -19,6 +19,12 @@ You can contribute by helping us to translate the bot to your language.
 
 4. Commit your translation and create a Pull Request.
 
+## Weblate
+
+> Experimental
+
+https://hosted.weblate.org/projects/rss-to-telegram-bot/
+
 [^1]: Shorter is better. Usually, it's the same as `iso_639_code`. However, if a language does have multiple common variants and of which no one can be a common standard, consider using an extended [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) instead. Please make sure the language code is [IANA-registered](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) and not deprecated or not about to be deprecated.
 
 [^2]: `yue` is a valid ISO 639-3 code, while `zh-yue` is non-standard.

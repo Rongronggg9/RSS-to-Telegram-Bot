@@ -21,9 +21,9 @@ def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
         return int(var) > 0
 
     var = var.upper()
-    if var in ('FALSE', 'NONE', 'NULL', 'NO', 'NOT', 'DISABLE', 'DISABLED', 'INACTIVE', 'DEACTIVATED'):
+    if var in ('FALSE', 'NONE', 'NULL', 'NO', 'NOT', 'DISABLE', 'DISABLED', 'INACTIVE', 'DEACTIVATED', 'OFF'):
         return False
-    if var in ('TRUE', 'YES', 'OK', 'ENABLE', 'ENABLED', 'ACTIVE', 'ACTIVATED'):
+    if var in ('TRUE', 'YES', 'OK', 'ENABLE', 'ENABLED', 'ACTIVE', 'ACTIVATED', 'ON'):
         return True
     return default_value
 
@@ -94,7 +94,7 @@ TOKEN: Final = os.environ.get('TOKEN')
 try:
     _chatid = os.environ.get('CHATID')
     _chatid = int(_chatid) if isinstance(_chatid, str) and _chatid.lstrip('-').isdecimal() else _chatid
-    _manager = os.environ.get('MANAGER', _chatid)
+    _manager = os.environ.get('MANAGER') or _chatid
     MANAGER: Final = int(_manager) if isinstance(_manager, str) and _manager.lstrip('-').isdecimal() else _manager
     del _chatid
     del _manager
@@ -115,7 +115,7 @@ DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY') or os.environ.get('socks_pr
                        or os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy') \
                        or os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
 
-TELEGRAM_PROXY: Final = os.environ.get('T_PROXY', DEFAULT_PROXY)
+TELEGRAM_PROXY: Final = os.environ.get('T_PROXY') or DEFAULT_PROXY
 if TELEGRAM_PROXY:
     _parsed = parse_proxy_url(TELEGRAM_PROXY.replace('socks5h', 'socks5'))
     TELEGRAM_PROXY_DICT: Final = {
@@ -139,7 +139,7 @@ else:
     TELEGRAM_PROXY_DICT: Final = None
     TELEGRAPH_PROXY_DICT: Final = None
 
-R_PROXY: Final = os.environ.get('R_PROXY', DEFAULT_PROXY)
+R_PROXY: Final = os.environ.get('R_PROXY') or DEFAULT_PROXY
 
 if R_PROXY:
     REQUESTS_PROXIES: Final = {
@@ -150,16 +150,16 @@ else:
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
-USER_AGENT: Final = os.environ.get('USER_AGENT', 'RSStT RSS ')
+USER_AGENT: Final = os.environ.get('USER_AGENT') or 'RSStT/2.0 RSS Reader'
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 # ----- img relay server config -----
-_img_relay_server = os.environ.get('IMG_RELAY_SERVER', 'https://rsstt-img-relay.rongrong.workers.dev/')
-IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith('/') else '/')
+_img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'
+IMG_RELAY_SERVER: Final = _img_relay_server + ('' if _img_relay_server.endswith(('/', '=')) else '/')
 del _img_relay_server
 
 # ----- db config -----
-_database_url = os.environ.get('DATABASE_URL', 'sqlite://config/db.sqlite3?journal_mode=OFF')
+_database_url = os.environ.get('DATABASE_URL') or 'sqlite://config/db.sqlite3?journal_mode=OFF'
 DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
                        else _database_url)
 del _database_url

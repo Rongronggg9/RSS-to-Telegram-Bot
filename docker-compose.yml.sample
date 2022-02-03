@@ -9,7 +9,7 @@ services:
     volumes:
       - ./config:/app/config
     environment:
-      - TOKEN='1234567890:A1BCd2EF3gH45IJK6lMN7oPqr8ST9UvWX0Yz0'  # get it from @BotFather
+      - TOKEN=1234567890:A1BCd2EF3gH45IJK6lMN7oPqr8ST9UvWX0Yz0  # get it from @BotFather
       - MANAGER=1234567890  # get it from @userinfobot
 
 # ↓------ To disable sending via Telegraph, comment out this area ------↓ #
@@ -28,15 +28,15 @@ services:
 # ↓------ Advanced settings ------↓ #
 # Please read https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/master/docs/advanced-settings.md for more details.
       #- MULTIUSER=0  # default: 1
-      #- DATABASE_URL='postgres://username:password@host:port/db_name'  # default: sqlite://config/db.sqlite3?journal_mode=OFF
+      #- DATABASE_URL=postgres://username:password@host:port/db_name  # default: sqlite://config/db.sqlite3?journal_mode=OFF
       #- API_ID=1025907  # get it from https://core.telegram.org/api/obtaining_api_id
       #- API_HASH=452b0359b988148995f22ff0f4229750  # get it from https://core.telegram.org/api/obtaining_api_id
-      #- IMG_RELAY_SERVER='https://images.weserv.nl/?url='  # default: https://rsstt-img-relay.rongrong.workers.dev/
-      #- USER_AGENT='Mozilla/5.0 (Android 12; Mobile; rv:68.0) Gecko/68.0 Firefox/96.0'  # default: RSStT/2.0 RSS Reader
+      #- IMG_RELAY_SERVER=https://images.weserv.nl/?url=  # default: https://rsstt-img-relay.rongrong.workers.dev/
+      #- USER_AGENT=Mozilla/5.0 (Android 12; Mobile; rv:68.0) Gecko/68.0 Firefox/96.0  # default: RSStT/2.0 RSS Reader
       #- IPV6_PRIOR=1  # default: 0
-      #- T_PROXY='socks5://172.17.0.1:1080'  # Proxy used to connect to the Telegram API
-      #- R_PROXY='socks5://172.17.0.1:1080'  # Proxy used to fetch feeds
+      #- T_PROXY=socks5://172.17.0.1:1080  # Proxy used to connect to the Telegram API
+      #- R_PROXY=socks5://172.17.0.1:1080  # Proxy used to fetch feeds
       #- PROXY_BYPASS_PRIVATE=1  # default: 0
-      #- PROXY_BYPASS_DOMAINS='example.com;example.net'
+      #- PROXY_BYPASS_DOMAINS=example.com;example.net
       #- DEBUG=1  # debug logging, default: 0
 # ↑------ Advanced settings ------↑ #

@@ -1,4 +1,4 @@
-FROM python:3.9-slim AS builder
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
@@ -22,14 +22,14 @@ COPY . /app
 RUN \
     echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; \
     if test $(expr length "$(cat .version)") -le 3; then echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; fi ; \
-    rm -rf .git .github resources config && \
+    rm -rf .git .github config docs && \
     mkdir -p config && \
     ls -la ; \
     cat .version
 
 #----------------------------------------
 
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 

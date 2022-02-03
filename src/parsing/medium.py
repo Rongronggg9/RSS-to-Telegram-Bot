@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import re
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal
-from typing import List
 
 from src import env, log, web
 from src.parsing import post
@@ -37,8 +38,11 @@ class Medium:
     def get_url(self):
         return self.url
 
-    def invalidate(self):
-        self.valid = False
+    def invalidate(self) -> bool:
+        if self.valid:
+            self.valid = False
+            return True
+        return False
 
     async def validate(self):  # warning: only design for weibo
         if self.valid is not None:  # already validated
@@ -85,11 +89,15 @@ class Medium:
     def __eq__(self, other):
         return type(self) == type(other) and self.original_url == other.original_url
 
-    def change_server(self):
+    async def change_server(self):
         if self._server_change_count >= 1:
             return False
         self._server_change_count += 1
         self.url = env.IMG_RELAY_SERVER + self.url
+        try:
+            await web.get(url=self.url, semaphore=False, no_body=True)  # let the img relay sever cache the img
+        except Exception:
+            pass
         return True
 
 
@@ -100,9 +108,9 @@ class Image(Medium):
     def telegramize(self):
         return InputMediaPhotoExternal(self.url)
 
-    def change_server(self):
+    async def change_server(self):
         if not serverParser.search(self.url):  # is not a weibo img
-            return super().change_server()
+            return await super().change_server()
 
         if self._server_change_count >= 4:
             return False
@@ -131,15 +139,15 @@ class Animation(Medium):
 
 class Media:
     def __init__(self):
-        self._media: List[Medium] = []
+        self._media: list[Medium] = []
 
     def add(self, medium: Medium):
         if medium in self._media:
             return
         self._media.append(medium)
 
-    def invalidate_all(self):
-        any(map(lambda m: m.invalidate(), self._media))
+    def invalidate_all(self) -> bool:
+        return bool(self._media and sum(media.invalidate() for media in self._media))
 
     async def validate(self):
         if not self._media:
@@ -173,10 +181,8 @@ class Media:
     def get_invalid_link(self):
         return tuple(m.get_link(only_invalid=True) for m in self._media if not m)
 
-    def change_all_server(self):
-        if sum(map(lambda m: m.change_server(), self._media)):
-            return True
-        return False
+    async def change_all_server(self):
+        return bool(self._media and sum(await asyncio.gather(*(media.change_server() for media in self._media))))
 
     def __len__(self):
         return len(self._media)

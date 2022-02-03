@@ -1,5 +1,7 @@
+import asyncio
 import logging
 import colorlog
+from threading import Thread
 
 from src import env
 
@@ -7,18 +9,18 @@ getLogger = colorlog.getLogger
 
 colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
                      datefmt='%Y-%m-%d-%H:%M:%S',
-                     level=logging.DEBUG if env.DEBUG else logging.INFO)
+                     level=colorlog.DEBUG if env.DEBUG else colorlog.INFO)
 
 _muted = colorlog.INFO if env.DEBUG else colorlog.WARNING
 _shut_upped = colorlog.ERROR if env.DEBUG else colorlog.CRITICAL
 
-getLogger("telegram").setLevel(colorlog.INFO)
-getLogger("requests").setLevel(_shut_upped)
-getLogger("urllib3").setLevel(_shut_upped)
-getLogger('apscheduler').setLevel(_muted)
+getLogger('apscheduler').setLevel(colorlog.WARNING)
 getLogger('aiohttp_retry').setLevel(_muted)
 getLogger('asyncio').setLevel(_muted)
 getLogger('telethon').setLevel(_muted)
+getLogger('aiosqlite').setLevel(_muted)
+getLogger('tortoise').setLevel(_muted)
+getLogger('asyncpg').setLevel(_muted)
 
 
 # flit log from apscheduler.scheduler
@@ -31,12 +33,16 @@ class APSCFilter(logging.Filter):
         msg = record.msg % record.args
         if 'skipped: maximum number of running instances reached' in msg:
             self.count += 1
-            if self.count % 10 == 0:
-                env.bot.send_message(
-                    env.MANAGER, 'RSS 更新检查发生冲突，程序可能出现问题，请记录日志并重启。\n'
-                                 '（这也可能是由过短的检查间隔和过多的订阅引起，请适度调整后观察是否还有错误）\n\n'
-                                 + msg
+            if self.count % 5 == 0:
+                if self.count >= 15:
+                    exit(-1)
+                coro = env.bot.send_message(
+                    env.MANAGER,
+                    'RSS monitor tasks have conflicted too many times! Please store the log and restart.\n'
+                    ' (sometimes it may be caused by too many subscriptions)\n\n'
+                    + msg
                 )
+                Thread(target=asyncio.run, args=(coro,)).start()
             return True
         if ' executed successfully' in msg:
             self.count = -3  # only >= 4 consecutive failures lead to a manager warning

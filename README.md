@@ -24,7 +24,7 @@ Public bot [@RSStT_Bot](https://t.me/RSStT_Bot) | Telegram channel [@RSStT_Chann
 
 - Multi-user
 - I18n
-    - English, Simplified Chinese, Cantonese, and [more](docs/translation-guide.md)!
+    - English, Simplified Chinese, Cantonese, Italian, and [more](docs/translation-guide.md)!
 - The content of the posts of an RSS feed will be sent to Telegram
     - Keep rich-text format
     - Keep media

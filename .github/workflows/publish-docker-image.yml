@@ -6,6 +6,10 @@ on:
       - dev
     tags:
       - '**'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '**.sample'
 jobs:
   push_to_docker_hub:
     name: Push Docker image to Docker Hub

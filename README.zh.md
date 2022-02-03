@@ -24,7 +24,7 @@
 
 - 多用户
 - 国际化
-    - 英语，简体中文，粤语，还有[更多](docs/translation-guide.md)！
+    - 英语、简体中文、粤语、意大利语还有[更多](docs/translation-guide.md)！
 - RSS 源的文章内容可被发送至 Telegram
     - 保持富文本格式
     - 保持媒体文件

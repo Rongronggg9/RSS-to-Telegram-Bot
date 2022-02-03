@@ -1,0 +1,123 @@
+{
+    "l10n_info": {
+        "lang_code": "it",
+        "iso_639_code": "it",
+        "language_name": "Italian",
+        "lang_native_name": "Italiano",
+        "select_lang_prompt": "Si prega di selezionare una lingua.",
+        "welcome_prompt": "Benvenuti su RSS to Telegram Bot (Lettore Feeds RSS).",
+        "rsstt_slogan": "RSS to Telegram Bot (Lettore Feeds RSS), un bot di Telegram che si occupa della tua esperienza di lettura."
+    },
+    "l10n_sub_status": {
+        "no_subscription": "Non hai abbonamenti",
+        "already_subscribed": "Già iscritto",
+        "subscription_not_exist": "L'abbonamento non esiste"
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "Il feed RSS non è valido",
+        "url_invalid": "L'URL non è valido",
+        "network_error": "Errore di rete",
+        "internal_error": "Errore interno",
+        "status_code_error": "Errore del codice di stato HTTP",
+        "uncaught_internal_error": "Errore interno non rilevato",
+        "operation_timeout_error": "Timeout dell'operazione",
+        "action_invalid": "Azione non valida",
+        "flood_wait_prompt": "Stai operando così troppo frequentemente che il bot ha superato il limite di velocità di Telegram. Per favore rallenta.",
+        "edit_conflict_prompt": "State operando così troppo frequentemente che l'operazione va in conflitto. Per favore, rallenta.",
+        "callback_already_running_prompt": "Hai richiesto un altro comando. Si prega di riprovare dopo che è terminato."
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "Questo comando può essere usato solo dal bot manager.",
+        "permission_denied_not_chat_admin": "Questo comando può essere usato solo dagli amministratori di questo gruppo/canale.",
+        "permission_denied_not_in_private_chat": "Questo comando può essere usato solo in una chat privata.",
+        "permission_denied_not_member": "Non sei in questo gruppo/canale, quindi non puoi usare il bot.",
+        "permission_denied_bot_not_member": "Il bot non è più in questo gruppo/canale, quindi non funzionerà qui.",
+        "promote_to_admin_prompt": "Se sei un amministratore anonimo di questo gruppo, per favore promuovi il bot a un amministratore (non è necessario un permesso) per permettere al bot di verificare la tua identità.",
+        "group_upgrade_needed_prompt": "Ops, il tuo gruppo non è stato aggiornato a un supergruppo. Generalmente, il server Telegram dovrebbe eseguire automaticamente questo aggiornamento in un certo momento, ma se non lo fa, devi aggiornarlo manualmente prima di poter utilizzare il bot.\nPer favore segui questi passi:\n1. Vai alle informazioni sul gruppo, poi clicca su \"Gestisci gruppo\".\n2. Cambia \"Cronologia chat per i nuovi membri\" in \"Visibile\".\n3. Salva l'impostazione della visibilità della cronologia della chat\n4. Salva tutte le impostazioni\n5. (Opzionale) Se necessario, puoi cambiare \"Storia della chat per i nuovi membri\" di nuovo in \"Nascosto\n6. Ora dovresti essere in grado di usare il bot"
+    },
+    "l10n_misc": {
+        "subscribe": "Iscriviti",
+        "unsubscribe": "Cancella l'iscrizione",
+        "subscription_list": "Elenco degli abbonamenti",
+        "processing": "Elaborazione, si prega di attendere un momento..."
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "Si prega di inserire l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
+        "sub_usage_in_channel_html": "Per favore usa <code>/sub url1 url2 url3 …</code> per iscriverti.",
+        "sub_successful": "Iscritta con successo",
+        "sub_failed": "Iscritta fallita"
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "Per favore, scegli l'abbonamento che vuoi cancellare. \nOppure, puoi usare <code>/unsub url1 url2 url3 …</code> per cancellarti in blocco.",
+        "unsub_successful": "Disabbonati con successo",
+        "unsub_failed": "Disabbonato fallito"
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "Per favore inviatemi il file OPML da importare (il nome dell'estensione deve essere .opml).",
+        "send_opml_reply_placeholder": "Il file OPML da importare (l'estensione deve essere .opml)",
+        "fetch_file_failed": "Fallito il recupero del file",
+        "opml_import_processing": "Se il numero di feed è grande o i server dei feed sono lenti, l'attesa può essere lunga. Siediti e rilassati.",
+        "opml_parse_error": "Errore di analisi OPML"
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "Per favore, scegli un abbonamento che vuoi personalizzare.",
+        "status": "Stato",
+        "status_activated": "Attivato",
+        "status_deactivated": "Disattivato",
+        "notification": "Notifica",
+        "notification_normal": "Normale",
+        "notification_muted": "Muto",
+        "monitor_interval": "Monitorare l'intervallo",
+        "set_interval_prompt": "Si prega di selezionare un intervallo del monitor."
+    },
+    "l10n_choose_sub": {
+        "choose_sub_prompt": "Per favore, scegli un abbonamento",
+        "previous_page": "Pagina precedente",
+        "next_page": "Pagina successiva",
+        "back": "Indietro"
+    },
+    "l10n_sub_info": {
+        "subscription_info": "Informazioni sull'abbonamento",
+        "subscription_title": "Titolo dell'abbonamento",
+        "feed_url": "URL del feed"
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": "Il compito di monitoraggio è fallito per 100 volte consecutive. Il tuo abbonamento al feed RSS è stato disattivato.\nPer riattivarlo, usa il comando /activate_subs."
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "Gli abbonamenti qui sotto sono disattivati, scegline uno da attivare.\nDopo l'attivazione, i loro aggiornamenti saranno monitorati.",
+        "activate_all_subs": "Attivare tutti i miei abbonamenti",
+        "all_subs_are_activated": "Tutti gli abbonamenti sono attivati."
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "Gli abbonamenti qui sotto sono attivati, scegline uno da disattivare.\nDopo la disattivazione, i loro aggiornamenti saranno sospesi dal monitoraggio. Se l'abbonamento non ti serve più, prendi in considerazione la possibilità di cancellarlo invece di disattivarlo.",
+        "deactivate_all_subs": "Disattivare tutti i miei abbonamenti",
+        "all_subs_are_deactivated": "Tutti gli abbonamenti sono disattivati."
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "Uso del comando: <code>/test RSS_URL numero_d'inizio_della_voce(opzionale) numero_finale_della_voce(opzionale)</code>",
+        "set_option_cmd_usage_prompt_html": "Uso del comando: <code>/set_option chiave valore</code>",
+        "current_options": "Opzioni attuali",
+        "option_value_type": "Tipo di valore",
+        "option_key_invalid": "Il tasto opzione non è valido",
+        "option_value_invalid": "Il valore dell'opzione non è valido, controlla il suo tipo",
+        "option_updated": "L'opzione è stata aggiornata"
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "Comandi",
+        "cmd_description_sub": "Iscriviti",
+        "cmd_description_unsub": "Cancella l'iscrizione",
+        "cmd_description_unsub_all": "Disdire tutte le sottoscrizioni",
+        "cmd_description_list": "Controlla la lista degli abbonamenti",
+        "cmd_description_set": "Personalizzare gli abbonamenti",
+        "cmd_description_import": "Importare abbonamenti da un file OPML",
+        "cmd_description_export": "Esportare le sottoscrizioni in un file OPML",
+        "cmd_description_activate_subs": "Attivare gli abbonamenti",
+        "cmd_description_deactivate_subs": "Disattivare gli abbonamenti",
+        "cmd_description_version": "Controlla la versione del bot",
+        "cmd_description_lang": "Selezionare una lingua",
+        "cmd_description_help": "Visualizza l'aiuto",
+        "cmd_description_test": "Test (solo manager di bot)",
+        "cmd_description_set_option": "Imposta le opzioni del bot (solo per il bot manager)"
+    }
+}

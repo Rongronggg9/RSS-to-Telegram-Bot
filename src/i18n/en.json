@@ -99,8 +99,8 @@
         "set_option_cmd_usage_prompt_html": "Command usage: <code>/set_option key value</code>",
         "current_options": "Current options",
         "option_value_type": "Value type",
-        "option_key_invalid": "The Option key is invalid",
-        "option_value_invalid": "The Option value is invalid, please check its type",
+        "option_key_invalid": "The option key is invalid",
+        "option_value_invalid": "The option value is invalid, please check its type",
         "option_updated": "The option has been updated"
     },
     "l10n_cmd_descriptions": {

@@ -455,3 +455,7 @@ async def set_bot_commands(scope: Union[types.BotCommandScopeDefault,
     await env.bot(
         SetBotCommandsRequest(scope=scope, lang_code=lang_code, commands=commands)
     )
+
+
+async def answer_callback_query_null(event: events.CallbackQuery.Event):
+    await event.answer(cache_time=3600)

@@ -1,6 +1,7 @@
 from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl.patched import Message
+from asyncio import sleep
 
 from src.i18n import i18n
 from . import inner
@@ -60,18 +61,40 @@ async def cmd_unsub_all(event: Union[events.NewMessage.Event, Message], *_, lang
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_list(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    subs = await inner.utils.list_sub(event.chat_id)
-    if not subs:
+async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
+                                             *_,
+                                             lang: Optional[str] = None,
+                                             **__):
+    is_callback = isinstance(event, events.CallbackQuery.Event)
+    if is_callback:
+        page_number, _ = parse_callback_data_with_page(event.data)
+    else:
+        page_number = 1
+
+    user_id = event.chat_id
+
+    # Telegram only allow <= 100 parsing entities in a message
+    page_number, page_count, page, sub_count = \
+        await inner.utils.get_sub_list_by_page(user_id=user_id, page_number=page_number, size=99)
+
+    if page_count == 0:
         await event.respond(i18n[lang]['no_subscription'])
         return
 
     list_result = (
-            f'<b>{i18n[lang]["subscription_list"]}</b>\n'
-            + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.feed.title)}</a>' for sub in subs)
+            f'<b>{i18n[lang]["subscription_list"]}</b>'  # it occupies a parsing entity
+            + '\n'
+            + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.feed.title)}</a>' for sub in page)
     )
 
-    await event.respond(list_result, parse_mode='html')
+    page_buttons = inner.utils.get_page_buttons(page_number=page_number,
+                                                page_count=page_count,
+                                                get_page_callback='get_list_page',
+                                                total_count=sub_count,
+                                                lang=lang)
+
+    await event.edit(list_result, parse_mode='html', buttons=page_buttons) if is_callback else \
+        await event.respond(list_result, parse_mode='html', buttons=page_buttons)
 
 
 @command_gatekeeper(only_manager=False)

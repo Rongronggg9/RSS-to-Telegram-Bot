@@ -63,14 +63,14 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Opti
 
 
 async def get_sub_list_by_page(user_id: int, page_number: int, size: int, *args, **kwargs) \
-        -> tuple[int, int, list[db.Sub]]:
+        -> tuple[int, int, list[db.Sub], int]:
     """
     :param user_id: user id
     :param page_number: page number (1-based)
     :param size: page size
     :param args: args for `Sub.filter`
     :param kwargs: kwargs for `Sub.filter`
-    :return: tuple of (total_count, page_count, page)
+    :return: (page_count, page_number, subs_page, total_count)
     """
     if page_number <= 0:
         # raise IndexError('Page number must be positive.')
@@ -78,7 +78,7 @@ async def get_sub_list_by_page(user_id: int, page_number: int, size: int, *args,
 
     sub_count = await db.Sub.filter(user=user_id, *args, **kwargs).count()
     if sub_count == 0:
-        return 0, 0, []
+        return 0, 0, [], 0
 
     page_count = (sub_count - 1) // size + 1
     if page_number > page_count:
@@ -88,7 +88,27 @@ async def get_sub_list_by_page(user_id: int, page_number: int, size: int, *args,
     offset = (page_number - 1) * size
     page = await db.Sub.filter(user=user_id, *args, **kwargs).order_by('id').limit(size).offset(offset) \
         .prefetch_related('feed')
-    return page_number, page_count, page
+    return page_number, page_count, page, sub_count
+
+
+def get_page_buttons(page_number: int,
+                     page_count: int,
+                     get_page_callback: str,
+                     total_count: Optional[int] = None,
+                     lang: Optional[str] = None) -> list[Button]:
+    page_number = min(page_number, page_count)
+    page_buttons = [
+        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}')
+        if page_number > 1
+        else Button.inline(' ', data='null'),
+
+        Button.inline(f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else ''), data='null'),
+
+        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}')
+        if page_number < page_count
+        else Button.inline(' ', data='null'),
+    ]
+    return page_buttons
 
 
 async def get_sub_choosing_buttons(user_id: int,
@@ -117,7 +137,7 @@ async def get_sub_choosing_buttons(user_id: int,
         raise IndexError('Page number must be positive.')
 
     size = columns * rows
-    page_number, page_count, page = \
+    page_number, page_count, page, sub_count = \
         await get_sub_list_by_page(user_id=user_id, page_number=page_number, size=size, *args, **kwargs)
 
     if page_count == 0:
@@ -129,19 +149,11 @@ async def get_sub_choosing_buttons(user_id: int,
                                for _sub in page)
     buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)
 
-    page_buttons = None
-    if page_count > 1:
-        page_buttons = [
-            Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}')
-            if page_number > 1
-            else Button.inline(' ', data='null'),
-
-            Button.inline(f'{page_number} / {page_count}', data='null'),
-
-            Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}')
-            if page_number < page_count
-            else Button.inline(' ', data='null'),
-        ]
+    page_buttons = get_page_buttons(page_number=page_number,
+                                    page_count=page_count,
+                                    get_page_callback=get_page_callback,
+                                    total_count=sub_count,
+                                    lang=lang)
 
     return buttons + (tuple(page_buttons),) if page_buttons else buttons
 

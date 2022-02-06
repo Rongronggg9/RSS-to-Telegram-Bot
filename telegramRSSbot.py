@@ -104,7 +104,7 @@ async def pre():
                           events.NewMessage(pattern='(/remove|/unsub)([^_]|$)'))
     bot.add_event_handler(command.sub.cmd_unsub_all,
                           events.NewMessage(pattern='/remove_all|/unsub_all'))
-    bot.add_event_handler(command.sub.cmd_list,
+    bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,
                           events.NewMessage(pattern='/list'))
     bot.add_event_handler(command.opml.cmd_import,
                           events.NewMessage(pattern='/import'))
@@ -133,6 +133,8 @@ async def pre():
     # callback query handler
     bot.add_event_handler(command.utils.answer_callback_query_null,  # null callback query
                           events.CallbackQuery(data='null'))
+    bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,
+                          events.CallbackQuery(pattern=r'^get_list_page_\d+$'))
     bot.add_event_handler(command.sub.callback_unsub,
                           events.CallbackQuery(pattern=r'^unsub_\d+(\|\d+)$'))
     bot.add_event_handler(command.sub.callback_get_unsub_page,

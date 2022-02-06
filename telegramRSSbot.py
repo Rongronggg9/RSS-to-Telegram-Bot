@@ -131,6 +131,8 @@ async def pre():
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern='/set_option'))
     # callback query handler
+    bot.add_event_handler(command.utils.answer_callback_query_null,  # null callback query
+                          events.CallbackQuery(data='null'))
     bot.add_event_handler(command.sub.callback_unsub,
                           events.CallbackQuery(pattern=r'^unsub_\d+(\|\d+)$'))
     bot.add_event_handler(command.sub.callback_get_unsub_page,

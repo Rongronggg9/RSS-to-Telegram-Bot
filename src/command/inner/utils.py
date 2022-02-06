@@ -129,13 +129,19 @@ async def get_sub_choosing_buttons(user_id: int,
                                for _sub in page)
     buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)
 
-    page_buttons = []
-    if page_number > 1:
-        page_buttons.append(
-            Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}'))
-    if page_number < page_count:
-        page_buttons.append(
-            Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}'))
+    page_buttons = None
+    if page_count > 1:
+        page_buttons = [
+            Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}')
+            if page_number > 1
+            else Button.inline(' ', data='null'),
+
+            Button.inline(f'{page_number} / {page_count}', data='null'),
+
+            Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}')
+            if page_number < page_count
+            else Button.inline(' ', data='null'),
+        ]
 
     return buttons + (tuple(page_buttons),) if page_buttons else buttons
 

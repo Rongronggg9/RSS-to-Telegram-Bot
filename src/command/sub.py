@@ -42,7 +42,7 @@ async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *_, lang: Op
     unsub_result = await inner.sub.unsubs(user_id, args, lang=lang)
 
     if unsub_result is None:
-        buttons = await inner.utils.get_sub_choosing_buttons(user_id, lang=lang, page=1, callback='unsub',
+        buttons = await inner.utils.get_sub_choosing_buttons(user_id, lang=lang, page_number=1, callback='unsub',
                                                              get_page_callback='get_unsub_page')
         await event.respond(i18n[lang]['unsub_choose_sub_prompt_html'] if buttons else i18n[lang]['no_subscription'],
                             buttons=buttons,

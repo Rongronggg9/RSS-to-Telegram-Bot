@@ -25,7 +25,7 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
         buttons = None
     else:
         msg = i18n[lang]['set_choose_sub_prompt']
-        buttons = await inner.utils.get_sub_choosing_buttons(user_id, page=page, lang=lang,
+        buttons = await inner.utils.get_sub_choosing_buttons(user_id, page_number=page, lang=lang,
                                                              callback='set',
                                                              get_page_callback='get_set_page')
 
@@ -107,7 +107,7 @@ async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQ
         return
     sub_buttons = await inner.utils.get_sub_choosing_buttons(
         event.chat_id,
-        page=page,
+        page_number=page,
         callback='activate_sub' if activate else 'deactivate_sub',
         get_page_callback='get_activate_page' if activate else 'get_deactivate_page',
         lang=lang,

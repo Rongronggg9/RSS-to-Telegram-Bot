@@ -177,7 +177,7 @@ class Post:
                 e = err
                 if self.invalidate_all_media():
                     logger.debug(f'All media was set invalid because some of them are invalid '
-                                 f'({e.__class__.__name__}: {str(e)})')
+                                 f'({e.__class__.__name__})')
                     await self.generate_message()
                 continue
 
@@ -190,9 +190,10 @@ class Post:
                 if await self.media.change_all_server():
                     logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
                                  f'Changed img server and retrying...')
-                if self.invalidate_all_media():
-                    logger.debug('All media was set invalid '
-                                 'because Telegram still cannot fetch some media after changing img server.')
+                elif self.invalidate_all_media():
+                    logger.debug(f'All media was set invalid '
+                                 f'because Telegram still cannot fetch some media after changing img server '
+                                 f'({e.__class__.__name__}).')
                     await self.generate_message()
                 continue
 

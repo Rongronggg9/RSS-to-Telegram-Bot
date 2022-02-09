@@ -23,6 +23,7 @@ aiohttp-socks==0.7.1
 aiohttp-retry==2.4.6
 python-socks[asyncio]==2.0.3
 aiodns==3.0.0
+url-normalize==1.4.3
 
 # utils
 colorlog==6.6.0

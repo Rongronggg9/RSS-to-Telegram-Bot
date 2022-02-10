@@ -88,12 +88,12 @@
     },
     "l10n_cmd_activate": {
         "choose_sub_to_be_activated": "以下订阅处于停用状态，请选择你需要启用的订阅。\n启用后，会监控订阅更新。",
-        "activate_all_subs": "启用我的全部订阅",
+        "activate_all_subs": "启用我的所有订阅",
         "all_subs_are_activated": "所有订阅都已启用。"
     },
     "l10n_cmd_deactivate": {
         "choose_sub_to_be_deactivated": "以下订阅处于启用状态，请选择你需要停用的订阅。\n停用后，会暂停监控订阅更新；如果您永远不再需要这个订阅，请考虑退订而不是停用它。",
-        "deactivate_all_subs": "停用我的全部订阅",
+        "deactivate_all_subs": "停用我的所有订阅",
         "all_subs_are_deactivated": "所有订阅都已停用。"
     },
     "l10n_administration": {

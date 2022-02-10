@@ -25,7 +25,7 @@
         "flood_wait_prompt": "Stai operando così troppo frequentemente che il bot ha superato il limite di velocità di Telegram. Per favore rallenta.",
         "edit_conflict_prompt": "State operando così troppo frequentemente che l'operazione va in conflitto. Per favore, rallenta.",
         "callback_already_running_prompt": "Hai richiesto un altro comando. Si prega di riprovare dopo che è terminato.",
-        "message_too_long_prompt": "Il comando avrebbe dovuto essere eseguito correttamente, ma il messaggio di ritorno è troppo lungo e non può essere inviato"
+        "message_too_long_prompt": "Il comando avrebbe dovuto essere eseguito correttamente, ma il messaggio di ritorno è troppo lungo e non può essere inviato."
     },
     "l10n_permission_denied_reasons": {
         "permission_denied_not_bot_manager": "Questo comando può essere usato solo dal bot manager.",

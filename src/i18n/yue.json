@@ -36,6 +36,10 @@
         "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇"
     },
     "l10n_misc": {
+        "choose_sub_prompt": "唔該選個訂閲",
+        "previous_page": "上一頁",
+        "next_page": "下一頁",
+        "back": "返回",
         "subscribe": "加訂閲",
         "unsubscribe": "退訂",
         "subscription_list": "訂閲清單",
@@ -69,12 +73,6 @@
         "notification_muted": "靜音",
         "monitor_interval": "監視間隔",
         "set_interval_prompt": "唔該選個監視間隔。"
-    },
-    "l10n_choose_sub": {
-        "choose_sub_prompt": "唔該選個訂閲",
-        "previous_page": "上一頁",
-        "next_page": "下一頁",
-        "back": "返回"
     },
     "l10n_sub_info": {
         "subscription_info": "訂閲資訊",

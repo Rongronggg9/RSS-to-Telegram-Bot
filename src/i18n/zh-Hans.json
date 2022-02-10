@@ -36,6 +36,10 @@
         "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作：\n1. 转到群组信息，点击「管理群组」\n2. 将「历史记录对新成员」设置为「可见」\n3. 保存历史记录可见性设置\n4. 保存所有设置\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」\n6. 现在你应该可以使用这个 bot 了"
     },
     "l10n_misc": {
+        "choose_sub_prompt": "请选择订阅",
+        "previous_page": "上一页",
+        "next_page": "下一页",
+        "back": "返回",
         "subscribe": "添加订阅",
         "unsubscribe": "退订订阅",
         "subscription_list": "订阅列表",
@@ -69,12 +73,6 @@
         "notification_muted": "静音",
         "monitor_interval": "检查间隔",
         "set_interval_prompt": "请选择检查间隔。"
-    },
-    "l10n_choose_sub": {
-        "choose_sub_prompt": "请选择订阅",
-        "previous_page": "上一页",
-        "next_page": "下一页",
-        "back": "返回"
     },
     "l10n_sub_info": {
         "subscription_info": "订阅信息",

@@ -2,7 +2,7 @@
 
 You can contribute by helping us to translate the bot to your language.
 
-## Steps
+## GitHub Pull Request
 
 1. Copy the [src/i18n/](../src/i18n)`en.json` to [src/i18n/](../src/i18n)`<lang_code>.json`.
 
@@ -20,10 +20,10 @@ You can contribute by helping us to translate the bot to your language.
 4. Commit your translation and create a Pull Request.
 
 ## Weblate
+> Recommended for those who are not familiar with Git and GitHub.
 
-> Experimental
-
-https://hosted.weblate.org/projects/rss-to-telegram-bot/
+<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/open-graph.png" width = "500" alt="" /></a>
+<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/multi-auto.svg" width = "500" alt="" /></a>
 
 ## Special thanks
 

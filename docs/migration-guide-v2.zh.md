@@ -5,8 +5,8 @@
 1. **转到你的 bot。发送 `/export` 来备份你的订阅。**
 1. (可选) 备份你的 `/path/to/bot/config/`。
 1. 删除 `/path/to/bot/config/`。
-1. 从头[重新部署](deployment-guide.md)你的 bot。
-1. 转到你的 bot。发送 `/import` 来重新导入你的订阅。按需配置[其他环境变量](advanced-settings.md)。
+1. 从头[重新部署](deployment-guide.md)你的 bot。按需配置[其他环境变量](advanced-settings.md)。
+1. 转到你的 bot。发送 `/import` 来重新导入你的订阅。
 
 ## Railway.app
 

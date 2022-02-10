@@ -85,8 +85,10 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
             except QueryIdInvalidError:  # callback query expired
                 pass  # respond instead
 
-        async with await locks.user_flood_rwlock(event.chat_id).gen_rlock():
-            await event.respond(msg, *args, **kwargs)
+        async with locks.user_flood_lock(event.chat_id):
+            pass  # wait for flood wait
+
+        await event.respond(msg, *args, **kwargs)
     except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError):
         pass  # silently ignore
 
@@ -120,7 +122,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
         sender_id: Optional[int] = None
 
         chat_id = event.chat_id
-        flood_rwlock = locks.user_flood_rwlock(chat_id)
+        flood_lock = locks.user_flood_lock(chat_id)
         pending_callbacks = locks.user_pending_callbacks(chat_id)
         is_callback = isinstance(event, events.CallbackQuery.Event)
         is_chat_action = isinstance(event, events.ChatAction.Event)
@@ -148,7 +150,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 if lang_in_db is None:
                     await db.User.get_or_create(id=chat_id, lang='null')  # create the user if it doesn't exist
                 logger.info(f'Allow {describe_user()} to use {command}')
-                async with await flood_rwlock.gen_rlock():
+                async with flood_lock:
                     await asyncio.wait_for(func(event, *args, lang=lang, **kwargs), timeout=timeout)
             except asyncio.TimeoutError as _e:
                 logger.error(f'Cancel {command} for {describe_user()} due to timeout ({timeout}s)', exc_info=_e)
@@ -310,12 +312,10 @@ def command_gatekeeper(func: Optional[Callable] = None,
             try:
                 if isinstance(e, FloodError):
                     # blocking other commands to be executed and messages to be sent
-                    flood_wlock = await flood_rwlock.gen_wlock()
-                    if hasattr(e, 'seconds') \
-                            and e.seconds is not None \
-                            and not flood_rwlock.v_write_count:  # only lock once
-                        async with flood_wlock:
-                            await asyncio.sleep(e.seconds + 1)
+                    if hasattr(e, 'seconds') and e.seconds is not None:
+                        await locks.user_flood_wait(chat_id, e.seconds)  # acquire a flood wait
+                    async with locks.user_flood_lock(chat_id):
+                        pass  # wait for flood wait (if another request has acquired a flood wait)
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
                     await env.bot(e.request)  # resend
                 # usually occurred because the user hits the same button during auto flood wait

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from asyncio import BoundedSemaphore
+import asyncio
+from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 from functools import partial
 from typing import Union
 from urllib.parse import urlparse
-
 from readerwriterlock.rwlock_async import RWLockWrite
 
 _USER_LIKE = Union[int, str]
@@ -19,7 +19,7 @@ class _UserLockBucket:
     def __init__(self):
         self.msg_semaphore = BoundedSemaphore(self._max_concurrency_of_semaphore)
         self.msg_rwlock = RWLockWrite()
-        self.flood_rwlock = RWLockWrite()
+        self.flood_lock = Lock()
         self.pending_callbacks = set()
 
 
@@ -34,19 +34,34 @@ def user_msg_rwlock(user: _USER_LIKE) -> RWLockWrite:
     return _user_bucket[user].msg_rwlock
 
 
-def user_flood_rwlock(user: _USER_LIKE) -> RWLockWrite:
-    return _user_bucket[user].flood_rwlock
+def user_flood_lock(user: _USER_LIKE) -> Lock:
+    return _user_bucket[user].flood_lock
 
 
-def user_msg_locks(user: _USER_LIKE) -> tuple[BoundedSemaphore, RWLockWrite, RWLockWrite]:
+def user_msg_locks(user: _USER_LIKE) -> tuple[BoundedSemaphore, RWLockWrite, Lock]:
     """
     :return: user_msg_semaphore, user_msg_rwlock, user_flood_rwlock
     """
-    return user_msg_semaphore(user), user_msg_rwlock(user), user_flood_rwlock(user)
+    return user_msg_semaphore(user), user_msg_rwlock(user), user_flood_lock(user)
 
 
 def user_pending_callbacks(user: _USER_LIKE) -> set:
     return _user_bucket[user].pending_callbacks
+
+
+async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
+    flood_lock = user_flood_lock(user)
+    if not flood_lock.locked():
+        try:
+            await asyncio.wait_for(flood_lock.acquire(), timeout=2)  # double insurance to make sure only wait once
+            try:
+                await asyncio.sleep(seconds + 1)
+            finally:
+                flood_lock.release()
+        except asyncio.TimeoutError:
+            return False
+        return True
+    return False
 
 
 # ----- web locks -----

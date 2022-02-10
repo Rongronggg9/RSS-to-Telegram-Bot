@@ -36,10 +36,14 @@
         "group_upgrade_needed_prompt": "Ops, il tuo gruppo non è stato aggiornato a un supergruppo. Generalmente, il server Telegram dovrebbe eseguire automaticamente questo aggiornamento in un certo momento, ma se non lo fa, devi aggiornarlo manualmente prima di poter utilizzare il bot.\nPer favore segui questi passi:\n1. Vai alle informazioni sul gruppo, poi clicca su \"Gestisci gruppo\".\n2. Cambia \"Cronologia chat per i nuovi membri\" in \"Visibile\".\n3. Salva l'impostazione della visibilità della cronologia della chat\n4. Salva tutte le impostazioni\n5. (Opzionale) Se necessario, puoi cambiare \"Storia della chat per i nuovi membri\" di nuovo in \"Nascosto\n6. Ora dovresti essere in grado di usare il bot"
     },
     "l10n_misc": {
+        "choose_sub_prompt": "Per favore, scegli un abbonamento",
+        "previous_page": "Pagina precedente",
+        "next_page": "Pagina successiva",
+        "back": "Indietro",
         "subscribe": "Iscriviti",
         "unsubscribe": "Cancella l'iscrizione",
         "subscription_list": "Elenco degli abbonamenti",
-        "processing": "Elaborazione, si prega di attendere un momento..."
+        "processing": "Elaborazione, si prega di attendere un momento…"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Si prega di inserire l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
@@ -69,12 +73,6 @@
         "notification_muted": "Muto",
         "monitor_interval": "Monitorare l'intervallo",
         "set_interval_prompt": "Si prega di selezionare un intervallo del monitor."
-    },
-    "l10n_choose_sub": {
-        "choose_sub_prompt": "Per favore, scegli un abbonamento",
-        "previous_page": "Pagina precedente",
-        "next_page": "Pagina successiva",
-        "back": "Indietro"
     },
     "l10n_sub_info": {
         "subscription_info": "Informazioni sull'abbonamento",

@@ -36,10 +36,16 @@
         "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\"\n2. Change \"Chat history for new members\" to \"Visible\"\n3. Save chat history visibility setting\n4. Save all settings\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again\n6. Now you should be able to use the bot"
     },
     "l10n_misc": {
+        "choose_sub_prompt": "Please choose a subscription",
+        "previous_page": "Previous page",
+        "next_page": "Next page",
+        "back": "Back",
+        "cancel": "Cancel",
         "subscribe": "Subscribe",
         "unsubscribe": "Unsubscribe",
         "subscription_list": "Subscription list",
-        "processing": "Processing, please wait for a moment…"
+        "processing": "Processing, please wait for a moment…",
+        "canceled_by_user": "Canceled by user."
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Please reply the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
@@ -51,6 +57,12 @@
         "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe. \nOr, you may use <code>/unsub url1 url2 url3 …</code> to unsubscribe in bulk.",
         "unsub_successful": "Unsubscribed successfully",
         "unsub_failed": "Unsubscribed failed"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "Are you sure you want to unsubscribe all subscriptions?",
+        "unsub_all_confirm": "Yes, unsubscribe all subscriptions",
+        "unsub_all_cancel": "No, cancel",
+        "unsub_all_successful": "Unsubscribed all subscriptions successfully"
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Please send me the OPML file to be imported (extension name must be .opml).",
@@ -69,12 +81,6 @@
         "notification_muted": "Muted",
         "monitor_interval": "Monitor interval",
         "set_interval_prompt": "Please select a monitor interval."
-    },
-    "l10n_choose_sub": {
-        "choose_sub_prompt": "Please choose a subscription",
-        "previous_page": "Previous page",
-        "next_page": "Next page",
-        "back": "Back"
     },
     "l10n_sub_info": {
         "subscription_info": "Subscription info",

@@ -24,7 +24,8 @@
         "action_invalid": "操作不合法",
         "flood_wait_prompt": "你的操作太快了，导致 bot 超过了 Telegram 的速率限制，请慢一点。",
         "edit_conflict_prompt": "你的操作太快了，导致操作冲突，请慢一点。",
-        "callback_already_running_prompt": "你已经请求过其它命令，请等待它完成后重试。"
+        "callback_already_running_prompt": "你已经请求过其它命令，请等待它完成后重试。",
+        "message_too_long_prompt": "命令应已成功执行，但返回消息太长了，无法发送。"
     },
     "l10n_permission_denied_reasons": {
         "permission_denied_not_bot_manager": "此命令只可由机器人的管理员使用。",
@@ -43,7 +44,10 @@
         "subscribe": "添加订阅",
         "unsubscribe": "退订订阅",
         "subscription_list": "订阅列表",
-        "processing": "正在处理中，请稍候…"
+        "processing": "正在处理中，请稍候…",
+        "cancel": "取消",
+        "canceled_by_user": "被用户取消。",
+        "n_subscriptions_in_total": "总共 %d 个订阅"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "请回复订阅链接。\n或者，你也可以使用 <code>/sub url1 url2 url3 …</code> 来批量订阅。",
@@ -117,5 +121,11 @@
         "cmd_description_help": "查看帮助",
         "cmd_description_test": "测试 (仅 bot 管理员)",
         "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_successful": "成功退订所有订阅",
+        "unsub_all_confirm_prompt": "你确定要退订所有订阅吗？",
+        "unsub_all_confirm": "是的，退订所有订阅",
+        "unsub_all_cancel": "不，取消"
     }
 }

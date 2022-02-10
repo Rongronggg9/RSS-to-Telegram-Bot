@@ -6,7 +6,8 @@ from telethon.errors.rpcerrorlist import MessageTooLongError, EntitiesTooLongErr
 
 from src.i18n import i18n
 from . import inner
-from .utils import command_gatekeeper, parse_command, escape_html, parse_callback_data_with_page
+from .utils import command_gatekeeper, parse_command, escape_html, parse_callback_data_with_page, \
+    send_success_and_failure_msg
 
 
 @command_gatekeeper(only_manager=False)
@@ -14,9 +15,11 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Opti
     args = parse_command(event.raw_text)
     filtered_urls = inner.utils.filter_urls(args)
 
+    prompt = (i18n[lang]['sub_reply_feed_url_prompt_html'] if not event.is_channel or event.is_group
+              else i18n[lang]['sub_usage_in_channel_html'])
+
     if not filtered_urls:
-        await event.respond(i18n[lang]['sub_reply_feed_url_prompt_html'] if not event.is_channel or event.is_group
-                            else i18n[lang]['sub_usage_in_channel_html'],
+        await event.respond(prompt,
                             parse_mode='html',
                             buttons=Button.force_reply(single_use=True,
                                                        selective=True,
@@ -29,11 +32,10 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Opti
     sub_result = await inner.sub.subs(event.chat_id, filtered_urls, lang=lang, bypass_url_filter=True)
 
     if sub_result is None:
-        await msg.edit(i18n[lang]['sub_reply_feed_url_prompt_html'],
-                       parse_mode='html')
+        await msg.edit(prompt, parse_mode='html')
         return
 
-    await msg.edit(sub_result["msg"], parse_mode='html')
+    await send_success_and_failure_msg(msg, **sub_result, lang=lang, edit=True)
 
 
 @command_gatekeeper(only_manager=False)
@@ -51,7 +53,7 @@ async def cmd_unsub(event: Union[events.NewMessage.Event, Message], *_, lang: Op
                             parse_mode='html')
         return
 
-    await event.respond(unsub_result['msg'], parse_mode='html')
+    await send_success_and_failure_msg(event, **unsub_result, lang=lang, edit=False)
 
 
 @command_gatekeeper(only_manager=False)
@@ -74,13 +76,7 @@ async def cmd_or_callback_unsub_all(event: Union[events.NewMessage.Event, Messag
         )
 
         unsub_all_result = await inner.sub.unsub_all(user_id)
-        try:
-            await event.edit((f'<b>{i18n[lang]["unsub_all_successful"]}</b>\n\n' + unsub_all_result['msg'])
-                             if unsub_all_result
-                             else i18n[lang]['no_subscription'],
-                             parse_mode='html')
-        except (EntitiesTooLongError, MessageTooLongError):
-            await event.edit(i18n[lang]['unsub_all_successful'])
+        await send_success_and_failure_msg(event, **unsub_all_result, lang=lang, edit=True)
         return
 
     if await inner.utils.have_subs(user_id):

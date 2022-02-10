@@ -13,7 +13,7 @@
 
 | Key               | Description                                                 | Example                                                             | Default      |
 |-------------------|-------------------------------------------------------------|---------------------------------------------------------------------|--------------|
-| `API_ID`          | [Your Telegram API ID][telegram_api]                          | `1025907`                                                           | (predefined) |
+| `API_ID`          | [Your Telegram API ID][telegram_api]                        | `1025907`                                                           | (predefined) |
 | `API_HASH`        | [Your Telegram API hash][telegram_api]                      | `452b0359b988148995f22ff0f4229750`                                  | (predefined) |
 | `TELEGRAPH_TOKEN` | Telegraph API access token. Get [here][telegraph_api]. [^1] | `1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d` [^2] |              |
 
@@ -38,12 +38,13 @@
 
 ### Misc settings
 
-| Key                | Description                       | Example                                       | Default                                         |
-|--------------------|-----------------------------------|-----------------------------------------------|-------------------------------------------------|
-| `MULTIUSER`        | Enable multi-user feature or not? | `0`                                           | `1`                                             |
-| `IMG_RELAY_SERVER` | Media relay server URL            | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/` |
-| `DATABASE_URL`     | Database URL [^4]                 | `postgres://user:pass@example.com:5432/table` | `sqlite://config/db.sqlite3?journal_mode=OFF`   |
-| `DEBUG`            | Enable debug logging or not?      | `1`                                           | `0`                                             |
+| Key                | Description                                                            | Example                                       | Default                                         |
+|--------------------|------------------------------------------------------------------------|-----------------------------------------------|-------------------------------------------------|
+| `MULTIUSER`        | Enable multi-user feature or not?                                      | `0`                                           | `1`                                             |
+| `CRON_SECOND`      | Run the feed monitoring task at the n-th second of each minute? (0-59) | `30`                                          | `0`                                             |
+| `IMG_RELAY_SERVER` | Media relay server URL                                                 | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/` |
+| `DATABASE_URL`     | Database URL [^4]                                                      | `postgres://user:pass@example.com:5432/table` | `sqlite://config/db.sqlite3?journal_mode=OFF`   |
+| `DEBUG`            | Enable debug logging or not?                                           | `1`                                           | `0`                                             |
 
 ## Manager options
 

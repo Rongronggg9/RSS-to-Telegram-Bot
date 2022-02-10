@@ -11,7 +11,8 @@ from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, QueryIdInvalidError, \
-    UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, ChannelPrivateError
+    UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, ChannelPrivateError, EntitiesTooLongError, \
+    MessageTooLongError
 
 from src import env, log, db, locks
 from src.i18n import i18n
@@ -455,3 +456,59 @@ async def set_bot_commands(scope: Union[types.BotCommandScopeDefault,
     await env.bot(
         SetBotCommandsRequest(scope=scope, lang_code=lang_code, commands=commands)
     )
+
+
+async def send_success_and_failure_msg(message: Union[Message, events.NewMessage.Event, events.CallbackQuery.Event],
+                                       success_msg: str,
+                                       failure_msg: str,
+                                       success_count: int,
+                                       failure_count: int,
+                                       *_,
+                                       lang: Optional[str] = None,
+                                       edit: bool = False,
+                                       **__):
+    for i in range(4):
+        success_msg_short = (
+                success_msg.split('\n', 1)[0] + '\n'
+                + i18n[lang]['n_subscriptions_in_total'] % success_count
+        ) if success_count else ''
+        failure_msg_short = (
+                failure_msg.split('\n', 1)[0] + '\n'
+                + i18n[lang]['n_subscriptions_in_total'] % failure_count
+        ) if failure_count else ''
+
+        if i == 0:
+            msg_html = (
+                    success_msg
+                    + ('\n\n' if success_msg and failure_msg else '')
+                    + failure_msg
+            )
+
+        elif i == 1:
+            msg_html = (
+                    success_msg_short
+                    + ('\n\n' if success_msg_short and failure_msg else '')
+                    + failure_msg
+            )
+
+        elif i == 2:
+            msg_html = (
+                    success_msg
+                    + ('\n\n' if success_msg and failure_msg_short else '')
+                    + failure_msg_short
+            )
+
+        else:
+            msg_html = (
+                    success_msg_short
+                    + ('\n\n' if success_msg_short and failure_msg_short else '')
+                    + failure_msg_short
+            )
+
+        try:
+            await (message.edit(msg_html, parse_mode='html') if edit else message.respond(msg_html, parse_mode='html'))
+            return
+        except (EntitiesTooLongError, MessageTooLongError) as e:
+            if i < 3:
+                continue
+            raise e

@@ -45,7 +45,8 @@
         "unsubscribe": "Unsubscribe",
         "subscription_list": "Subscription list",
         "processing": "Processing, please wait for a moment…",
-        "canceled_by_user": "Canceled by user."
+        "canceled_by_user": "Canceled by user.",
+        "n_subscriptions_in_total": "%d subscriptions in total"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Please reply the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",

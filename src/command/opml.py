@@ -8,7 +8,7 @@ from telethon.tl.patched import Message
 from src import env
 from src.i18n import i18n
 from . import inner
-from .utils import command_gatekeeper, logger
+from .utils import command_gatekeeper, logger, send_success_and_failure_msg
 
 
 @command_gatekeeper(only_manager=False)
@@ -53,4 +53,4 @@ async def opml_import(event: Union[events.NewMessage.Event, Message], *_, lang: 
 
     import_result = await inner.sub.subs(event.chat_id, tuple(feed.url for feed in opml_d.feeds), lang=lang)
     logger.info(f'Imported feed(s) for {event.chat_id}')
-    await reply.edit(import_result["msg"], parse_mode='html')
+    await send_success_and_failure_msg(reply, **import_result, lang=lang, edit=True)

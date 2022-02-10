@@ -92,16 +92,25 @@ async def subs(user_id: int,
     success = tuple(sub_d for sub_d in result if sub_d['sub'])
     failure = tuple(sub_d for sub_d in result if not sub_d['sub'])
 
-    msg = (
+    success_msg = (
             (f'<b>{i18n[lang]["sub_successful"]}</b>\n' if success else '')
             + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">{escape_html(sub_d["sub"].feed.title)}</a>'
                         for sub_d in success)
-            + ('\n\n' if success and failure else '')
-            + (f'<b>{i18n[lang]["sub_failed"]}</b>\n' if failure else '')
+    )
+    failure_msg = (
+            (f'<b>{i18n[lang]["sub_failed"]}</b>\n' if failure else '')
             + '\n'.join(f'{escape_html(sub_d["url"])} ({sub_d["msg"]})' for sub_d in failure)
     )
 
-    ret = {'sub_d_l': result, 'msg': msg}
+    msg = (
+            success_msg
+            + ('\n\n' if success and failure else '')
+            + failure_msg
+    )
+
+    ret = {'sub_d_l': result, 'msg': msg,
+           'success_count': len(success), 'failure_count': len(failure),
+           'success_msg': success_msg, 'failure_msg': failure_msg}
 
     return ret
 
@@ -163,16 +172,24 @@ async def unsubs(user_id: int,
     success = tuple(unsub_d for unsub_d in result if unsub_d['sub'])
     failure = tuple(unsub_d for unsub_d in result if not unsub_d['sub'])
 
-    msg = (
+    success_msg = (
             (f'<b>{i18n[lang]["unsub_successful"]}</b>\n' if success else '')
             + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">{escape_html(sub_d["sub"].feed.title)}</a>'
                         for sub_d in success)
-            + ('\n\n' if success and failure else '')
-            + (f'<b>{i18n[lang]["unsub_failed"]}</b>\n' if failure else '')
+    )
+    failure_msg = (
+            (f'<b>{i18n[lang]["unsub_failed"]}</b>\n' if failure else '')
             + '\n'.join(f'{escape_html(sub_d["url"])} ({sub_d["msg"]})' for sub_d in failure)
     )
+    msg = (
+            success_msg
+            + ('\n\n' if success and failure else '')
+            + failure_msg
+    )
 
-    ret = {'unsub_d_l': result, 'msg': msg}
+    ret = {'unsub_d_l': result, 'msg': msg,
+           'success_count': len(success), 'failure_count': len(failure),
+           'success_msg': success_msg, 'failure_msg': failure_msg}
 
     return ret
 

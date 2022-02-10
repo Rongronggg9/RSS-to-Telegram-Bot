@@ -24,7 +24,8 @@
         "action_invalid": "操作唔啱",
         "flood_wait_prompt": "你操作得太快喇，搞到機械人超出咗 Telegram 嘅速率限制。唔該慢少少。",
         "edit_conflict_prompt": "你操作得太快喇，搞到操作衝突。唔該慢少少。",
-        "callback_already_running_prompt": "你已經請求咗其他命令，唔該等佢搞掂再來過。"
+        "callback_already_running_prompt": "你已經請求咗其他命令，唔該等佢搞掂再來過。",
+        "message_too_long_prompt": "命令應該執行成功咗，但係返回嘅訊息太長，傳送唔到。"
     },
     "l10n_permission_denied_reasons": {
         "permission_denied_not_bot_manager": "只有機械人嘅管理員先畀用呢條命令。",
@@ -43,7 +44,10 @@
         "subscribe": "加訂閲",
         "unsubscribe": "退訂",
         "subscription_list": "訂閲清單",
-        "processing": "處理緊，唔該等陣…"
+        "processing": "處理緊，唔該等陣…",
+        "cancel": "取消",
+        "canceled_by_user": "畀用戶取消咗。",
+        "n_subscriptions_in_total": "總共 %d 個訂閲"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "唔該回復訂閲連結。\n或者，用 <code>/sub url1 url2 url3 …</code> 嚟批量訂閲都得。",
@@ -117,5 +121,11 @@
         "cmd_description_help": "睇幫助",
         "cmd_description_test": "測試 (僅機械人管理員)",
         "cmd_description_set_option": "改機械人選項 (僅機械人管理員)"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_successful": "成功噉退訂晒所有訂閲",
+        "unsub_all_confirm_prompt": "你真係要退訂晒所有訂閲？",
+        "unsub_all_cancel": "唔洗，取消",
+        "unsub_all_confirm": "冇錯，退訂晒所有訂閲"
     }
 }

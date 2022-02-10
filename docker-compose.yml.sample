@@ -28,6 +28,7 @@ services:
 # ↓------ Advanced settings ------↓ #
 # Please read https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/master/docs/advanced-settings.md for more details.
       #- MULTIUSER=0  # default: 1
+      #- CRON_SECOND=30  # 0-59, default: 0
       #- DATABASE_URL=postgres://username:password@host:port/db_name  # default: sqlite://config/db.sqlite3?journal_mode=OFF
       #- API_ID=1025907  # get it from https://core.telegram.org/api/obtaining_api_id
       #- API_HASH=452b0359b988148995f22ff0f4229750  # get it from https://core.telegram.org/api/obtaining_api_id

@@ -11,6 +11,7 @@ from functools import partial
 from time import sleep
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from telethon import TelegramClient, events
 from telethon.errors import ApiIdPublishedFloodError
 from telethon.tl import types
@@ -176,7 +177,9 @@ if __name__ == '__main__':
     )
 
     scheduler = AsyncIOScheduler(event_loop=loop)
-    scheduler.add_job(command.monitor.run_monitor_task, trigger='cron', minute='*/1', max_instances=10, timezone='UTC')
+    scheduler.add_job(func=command.monitor.run_monitor_task,
+                      trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
+                      max_instances=10)
     scheduler.start()
 
     bot.run_until_disconnected()

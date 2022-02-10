@@ -110,6 +110,8 @@ TELEGRAPH_TOKEN: Final = __list_parser(os.environ.get('TELEGRAPH_TOKEN'))
 
 MULTIUSER: Final = __bool_parser(os.environ.get('MULTIUSER'), default_value=True)
 
+CRON_SECOND: Final = int(os.environ.get('CRON_SECOND') or 0) % 60
+
 # ----- proxy config -----
 DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY') or os.environ.get('socks_proxy') \
                        or os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy') \

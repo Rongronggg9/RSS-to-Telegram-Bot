@@ -1,0 +1,131 @@
+{
+    "l10n_info": {
+        "lang_code": "zh-Hant",
+        "iso_639_code": "",
+        "language_name": "Traditional Chinese",
+        "lang_native_name": "正體中文",
+        "select_lang_prompt": "請選擇語言。",
+        "welcome_prompt": "歡迎使用 RSS to Telegram Bot。",
+        "rsstt_slogan": "RSS to Telegram Bot，關心您的閱讀體驗的 Telegram RSS 機器人。"
+    },
+    "l10n_sub_status": {
+        "no_subscription": "無訂閲",
+        "already_subscribed": "已被訂閲",
+        "subscription_not_exist": "訂閱不存在"
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "RSS 源無效",
+        "url_invalid": "URL 無效",
+        "network_error": "網路錯誤",
+        "internal_error": "內部錯誤",
+        "status_code_error": "HTTP 狀態碼錯誤",
+        "uncaught_internal_error": "未捕獲的內部錯誤",
+        "operation_timeout_error": "操作超時",
+        "action_invalid": "操作無效",
+        "flood_wait_prompt": "您的操作太頻繁，以至於機器人已超出 Telegram 的速率限制。請放慢速度。",
+        "edit_conflict_prompt": "您的操作太頻繁，導致操作衝突。請放慢速度。",
+        "callback_already_running_prompt": "您已請求另一個命令。請在它完成後重試。",
+        "message_too_long_prompt": "該命令應該已經執行成功，但是返回消息太長，無法發送。"
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "此命令只能由機器人管理員使用。",
+        "permission_denied_not_chat_admin": "此命令只能由該群組/頻道的管理員使用。",
+        "permission_denied_not_in_private_chat": "此命令只能在私人聊天中使用。",
+        "permission_denied_not_member": "您不在此群組/頻道中，因此無法使用該機器人。",
+        "permission_denied_bot_not_member": "該機器人不再在此群組/頻道中，因此不會在這里工作。",
+        "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升為管理員 (無需權限)，以授權機器人驗證您的身份。",
+        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級為超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改為「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改為「隱藏」\n6. 現在您應該能夠使用機器人了"
+    },
+    "l10n_misc": {
+        "choose_sub_prompt": "請選擇訂閱",
+        "previous_page": "上一頁",
+        "next_page": "下一頁",
+        "back": "後退",
+        "cancel": "取消",
+        "subscribe": "增加訂閲",
+        "unsubscribe": "退訂訂閲",
+        "subscription_list": "訂閱清單",
+        "processing": "正在處理中，請稍等片刻…",
+        "canceled_by_user": "由用戶取消。",
+        "n_subscriptions_in_total": "共有 %d 個訂閲"
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "請回復 RSS 源的網址。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批量訂閱。",
+        "sub_usage_in_channel_html": "請使用 <code>/sub url1 url2 url3 …</code> 以訂閱。",
+        "sub_successful": "訂閱成功",
+        "sub_failed": "訂閱失敗"
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "請選擇您要退訂的訂閱。\n或者，您可以使用 <code>/unsub url1 url2 url3 …</code> 以批量退訂訂閲。",
+        "unsub_successful": "退訂成功",
+        "unsub_failed": "退訂失敗"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "是否確實要退訂所有訂閱？",
+        "unsub_all_confirm": "是，退訂所有訂閱",
+        "unsub_all_cancel": "否，取消",
+        "unsub_all_successful": "已成功退訂所有訂閱"
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "請發送要匯入的 OPML 檔 (擴展名必須為 .opml)。",
+        "send_opml_reply_placeholder": "OPML 檔 (擴展名必須為 .opml)",
+        "fetch_file_failed": "提取文件失敗",
+        "opml_import_processing": "如果訂閲數目很大或訂閲所在之伺服器速度較慢，則可能需要等待較長時間，坐下來放鬆一下。",
+        "opml_parse_error": "OPML 解析錯誤"
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "請選擇您要定制的訂閱。",
+        "status": "狀態",
+        "status_activated": "啟動",
+        "status_deactivated": "停用",
+        "notification": "通知",
+        "notification_normal": "常規",
+        "notification_muted": "靜音",
+        "monitor_interval": "監視間隔",
+        "set_interval_prompt": "請選擇監視間隔。"
+    },
+    "l10n_sub_info": {
+        "subscription_info": "訂閱資訊",
+        "subscription_title": "訂閱標題",
+        "feed_url": "源網址"
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": "監視任務連續 100 次失敗。您對該 RSS 源的訂閱已停用。\n要重新啟動它，請使用 /activate_subs 命令。"
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "以下訂閱已停用，請選擇要啟動的訂閱。\n啟動後，將監視其更新。",
+        "activate_all_subs": "啟動我的所有訂閱",
+        "all_subs_are_activated": "所有訂閱均已啟動。"
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "以下訂閱已啟動，請選擇要停用的訂閱。\n停用后，其更新將被暫停監視。如果您不再需要該訂閱，請考慮退訂而不是停用它。",
+        "deactivate_all_subs": "停用我的所有訂閱",
+        "all_subs_are_deactivated": "所有訂閱均已停用。"
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "命令用法: <code>/test RSS_URL 條目編號起點(可選) 條目編號終點(可選)</code>",
+        "set_option_cmd_usage_prompt_html": "命令用法: <code>/set_option 鍵 值</code>",
+        "current_options": "當前選項",
+        "option_value_type": "值類型",
+        "option_key_invalid": "選項鍵無效",
+        "option_value_invalid": "選項值無效，請檢查其類型",
+        "option_updated": "選項已更新"
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "命令",
+        "cmd_description_sub": "增加訂閲",
+        "cmd_description_unsub": "退訂訂閲",
+        "cmd_description_unsub_all": "退訂所有訂閲",
+        "cmd_description_list": "查看訂閱清單",
+        "cmd_description_set": "定制訂閲",
+        "cmd_description_import": "從 OPML 檔匯入訂閱",
+        "cmd_description_export": "將訂閱匯出到 OPML 檔",
+        "cmd_description_activate_subs": "啟動訂閲",
+        "cmd_description_deactivate_subs": "停用訂閱",
+        "cmd_description_version": "檢查機器人版本",
+        "cmd_description_lang": "選擇語言",
+        "cmd_description_help": "查看幫助",
+        "cmd_description_test": "測試 (僅限機器人管理員)",
+        "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)"
+    }
+}

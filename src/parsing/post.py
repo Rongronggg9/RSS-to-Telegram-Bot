@@ -25,7 +25,10 @@ from telethon.errors.rpcerrorlist import (
     BadRequestError,  # only FILE_REFERENCE_\d_EXPIRED
 
     # errors caused by lack of permission
-    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError
+    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
+
+    # errors caused by too much entity data
+    EntitiesTooLongError
 )
 
 from src import env, message, log, web
@@ -169,6 +172,12 @@ class Post:
                     await msg.send(chat_id, reply_to_msg_id, silent)
                 break
 
+            # errors caused by too much entity data
+            except EntitiesTooLongError:
+                await self.generate_message(force_telegraph=True)
+                await self.telegraph_post.send_message(chat_id, reply_to_msg_id, silent)
+                return
+
             # errors caused by invalid img/video(s)
             except (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
                     PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
@@ -245,11 +254,27 @@ class Post:
         self.text = Text('Content decoding failed!\n内容解码失败！')
         self._add_metadata()
 
-    async def generate_message(self, no_telegraph: bool = False) -> Optional[int]:
+    async def generate_message(self, no_telegraph: bool = False, force_telegraph: bool = False) -> Optional[int]:
         # generate telegraph post if the post is too long
-        if not no_telegraph and tgraph.apis and not self.service_msg and not self.telegraph_url \
-                and (len(self.soup.getText()) >= 4096
-                     or (len(self.messages) if self.messages else await self.generate_message(no_telegraph=True)) >= 2):
+        if (
+                force_telegraph or
+                (
+                        (
+                                not no_telegraph and tgraph.apis and not self.service_msg and not self.telegraph_url
+                        )
+                        and
+                        (
+                                len(self.soup.getText()) >= 4096
+                                or
+                                (
+                                        (
+                                                len(self.messages) if self.messages
+                                                else await self.generate_message(no_telegraph=True)
+                                        ) >= 2
+                                )
+                        )
+                )
+        ):
             logger.debug(f'Will be sent via Telegraph: "{self.title}"')
             self.telegraph_post = await self.telegraph_ify()  # telegraph post sent successful
             if self.telegraph_post:

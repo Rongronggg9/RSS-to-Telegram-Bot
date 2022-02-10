@@ -170,6 +170,10 @@ class TagWithParam(Text):
         super().__init__(content, param)
 
 
+class TagWithOptionalParam(Text):
+    pass
+
+
 class TagWithoutParam(Text):
     def __init__(self, content: Union["Text", str, list], *_args, **_kwargs):
         super().__init__(content)
@@ -187,7 +191,13 @@ class Link(TagWithParam):
     def __init__(self, content: Union["Text", str, list], param: str, copy: bool = False, *_args, **_kwargs):
         super().__init__(content, param)
         if not copy:
-            self.param = url_normalize(self.param)
+            try:
+                self.param = url_normalize(self.param)
+            except (ValueError, TypeError):
+                # clear invalid URL
+                self.param = None
+                self.tag = None
+                self.attr = None
 
 
 class Bold(TagWithoutParam):
@@ -206,7 +216,7 @@ class Strike(TagWithoutParam):
     tag = 's'
 
 
-class Code(TagWithParam):
+class Code(TagWithOptionalParam):
     tag = 'code'
     attr = 'class'
 

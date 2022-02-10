@@ -54,6 +54,6 @@
 ## 翻译
 
 在[这里](docs/translation-guide.md)阅读翻译指南。  
-你可以通过[weblate](https://hosted.weblate.org/projects/rss-to-telegram-bot/)帮助翻译这个 bot。
+你可以通过 [weblate](https://hosted.weblate.org/projects/rss-to-telegram-bot/) 帮助翻译这个 bot。
 
 <a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/open-graph.png" width = "500" alt="" /></a>

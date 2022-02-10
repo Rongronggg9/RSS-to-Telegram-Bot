@@ -321,6 +321,8 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 # usually occurred because the user hits the same button during auto flood wait
                 elif isinstance(e, MessageNotModifiedError):
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])
+                elif isinstance(e, (EntitiesTooLongError, MessageTooLongError)):
+                    await respond_or_answer(event, 'ERROR: ' + i18n[lang]['message_too_long_prompt'])
                 else:
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
             except (FloodError, MessageNotModifiedError):

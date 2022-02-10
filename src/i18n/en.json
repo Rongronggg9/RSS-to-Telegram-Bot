@@ -24,7 +24,8 @@
         "action_invalid": "Action invalid",
         "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
         "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
-        "callback_already_running_prompt": "You have requested another command. Please retry after if finishes."
+        "callback_already_running_prompt": "You have requested another command. Please retry after if finishes.",
+        "message_too_long_prompt": "The command should have been executed successfully, but the return message is too long and cannot be sent."
     },
     "l10n_permission_denied_reasons": {
         "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",

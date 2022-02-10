@@ -4,7 +4,7 @@
 
 [English README](README.md)
 
-[![Translating Status](https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/svg-badge.svg)](https://hosted.weblate.org/engage/rss-to-telegram-bot/)
+[![Translating Status](https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/svg-badge.svg)](https://hosted.weblate.org/engage/rss-to-telegram-bot/)
 [![Build Status (master)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/master?label=build%20%28master%29)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Amaster)
 [![Build Status (dev)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/dev?label=build%20%28dev%29)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Adev)
 [![Docker Pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
@@ -53,7 +53,12 @@
 
 ## 翻译
 
-在[这里](docs/translation-guide.md)阅读翻译指南。  
-你可以通过 [weblate](https://hosted.weblate.org/projects/rss-to-telegram-bot/) 帮助翻译这个 bot。
+在[这里](docs/translation-guide.md)阅读翻译指南。
 
-<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/open-graph.png" width = "500" alt="" /></a>
+你可以通过 [Hosted Weblate](https://hosted.weblate.org/projects/rss-to-telegram-bot/) 帮助翻译这个 bot。特别感谢他们为自由项目提供的免费托管服务！
+
+<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
+
+## 许可证
+
+本项目使用的是 [AGPLv3 许可证](LICENSE)。严禁闭源的分发或机器人托管。如果您修改了代码并分发或托管它，请确保任何可以使用您的 bot 的用户都可以获得源代码 (通过在 [`src/i18n/__init__.py`](src/i18n/__init__.py) 中编辑仓库 URL)。

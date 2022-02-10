@@ -17,7 +17,7 @@ serverParser = re.compile(r'(?P<url_prefix>^https?://[a-zA-Z_-]+)'
                           r'(?P<server_id>\d)'
                           r'(?P<url_suffix>\.sinaimg\.\S+$)')
 
-_web_semaphore = asyncio.BoundedSemaphore(5)
+_web_semaphore = asyncio.BoundedSemaphore(15)
 
 class Medium:
     type = 'medium_base_class'

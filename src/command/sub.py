@@ -2,7 +2,6 @@ from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl import types
 from telethon.tl.patched import Message
-from telethon.errors.rpcerrorlist import MessageTooLongError, EntitiesTooLongError
 
 from src.i18n import i18n
 from . import inner

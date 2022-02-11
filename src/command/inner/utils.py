@@ -95,14 +95,18 @@ def get_page_buttons(page_number: int,
                      page_count: int,
                      get_page_callback: str,
                      total_count: Optional[int] = None,
+                     display_cancel: bool = False,
                      lang: Optional[str] = None) -> list[Button]:
     page_number = min(page_number, page_count)
+    page_info = f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else '')
     page_buttons = [
         Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}')
         if page_number > 1
         else Button.inline(' ', data='null'),
 
-        Button.inline(f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else ''), data='null'),
+        Button.inline(page_info + ' | ' + i18n[lang]['cancel'], data='cancel')
+        if display_cancel
+        else Button.inline(page_info, data='null'),
 
         Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}')
         if page_number < page_count
@@ -118,7 +122,7 @@ async def get_sub_choosing_buttons(user_id: int,
                                    callback_contain_page_num: bool = True,
                                    lang: Optional[str] = None,
                                    rows: int = 12,
-                                   columns: int = 2,
+                                   columns: int = 1,
                                    *args, **kwargs) -> Optional[tuple[tuple[KeyboardButtonCallback, ...], ...]]:
     """
     :param user_id: user id
@@ -153,6 +157,7 @@ async def get_sub_choosing_buttons(user_id: int,
                                     page_count=page_count,
                                     get_page_callback=get_page_callback,
                                     total_count=sub_count,
+                                    display_cancel=True,
                                     lang=lang)
 
     return buttons + (tuple(page_buttons),) if page_buttons else buttons

@@ -1,8 +1,8 @@
 {
     "l10n_info": {
         "lang_code": "ca",
-        "iso_639_code": "",
-        "language_name": "Català",
+        "iso_639_code": "ca",
+        "language_name": "Catalan",
         "lang_native_name": "Català",
         "select_lang_prompt": "Seleccionar un idioma.",
         "welcome_prompt": "Benvingut a l'RSS de Telegram Bot.",
@@ -50,13 +50,13 @@
         "n_subscriptions_in_total": "%d subscripcions en total"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "Respon l'adreça URL d'un canal RSS. \nO bé, pots utilitzar-lo <code>/subs url1 url2 url3 …</code> per a subscriure't de manera massiva.",
-        "sub_usage_in_channel_html": "Si us plau, utilitza <code>/subs url1 url2 url3 …</code> per a subscriure't.",
+        "sub_reply_feed_url_prompt_html": "Respon l'adreça URL d'un canal RSS. \nO bé, pots utilitzar-lo <code>/sub url1 url2 url3 …</code> per a subscriure't de manera massiva.",
+        "sub_usage_in_channel_html": "Si us plau, utilitza <code>/sub url1 url2 url3 …</code> per a subscriure't.",
         "sub_successful": "T'has subscrit correctament",
         "sub_failed": "S'ha produït un error en subscriure't"
     },
     "l10n_cmd_unsub": {
-        "unsub_choose_sub_prompt_html": "Tria la subscripció que vulguis cancel·lar. \nO bé, pots utilitzar <code>/deixar subs url1 url2 url3 …</code> per a donar-te de baixa massivament.",
+        "unsub_choose_sub_prompt_html": "Tria la subscripció que vulguis cancel·lar.\nO bé, pots utilitzar <code>/unsub url1 url2 url3 …</code> per a donar-te de baixa massivament.",
         "unsub_successful": "S'ha cancel·lat la subscripció correctament",
         "unsub_failed": "S'ha produït un error en donar-te de baixa"
     },
@@ -103,8 +103,8 @@
         "all_subs_are_deactivated": "Totes les subscripcions estan desactivades."
     },
     "l10n_administration": {
-        "test_cmd_usage_prompt_html": "Ús de l'ordre: <code>/prova RSS_URL número_inicial_entrada (opcional) número_final_entrada (opcional)</code>",
-        "set_option_cmd_usage_prompt_html": "Ús de l'ordre: <code>/establir _valor clau opció</code>",
+        "test_cmd_usage_prompt_html": "Ús de l'ordre: <code>/test RSS_URL número_inicial_entrada(opcional) número_final_entrada(opcional)</code>",
+        "set_option_cmd_usage_prompt_html": "Ús de l'ordre: <code>/set_option clau opció</code>",
         "current_options": "Opcions actuals",
         "option_value_type": "Tipus de valor",
         "option_key_invalid": "La clau d'opció no és vàlida",

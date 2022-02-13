@@ -1,0 +1,131 @@
+{
+    "l10n_info": {
+        "lang_code": "ca",
+        "iso_639_code": "",
+        "language_name": "Català",
+        "lang_native_name": "Català",
+        "select_lang_prompt": "Seleccionar un idioma.",
+        "welcome_prompt": "Benvingut a l'RSS de Telegram Bot.",
+        "rsstt_slogan": "RSS a Telegram Bot, un bot RSS de Telegram que es preocupa per la teva experiència de lectura."
+    },
+    "l10n_sub_status": {
+        "no_subscription": "No tens subscripcions",
+        "already_subscribed": "Ja subscrit",
+        "subscription_not_exist": "La subscripció no existeix"
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "El canal RSS no és vàlid",
+        "url_invalid": "L'adreça URL no és vàlida",
+        "network_error": "Error de xarxa",
+        "internal_error": "Error intern",
+        "status_code_error": "Error del codi d'estat HTTP",
+        "uncaught_internal_error": "Error intern no detectat",
+        "operation_timeout_error": "Temps d'espera de l'operació",
+        "action_invalid": "L'acció no és vàlida",
+        "flood_wait_prompt": "Estàs operant amb tanta freqüència que el bot ha superat el límit de velocitat de Telegram. Si us plau, baixa el ritme.",
+        "edit_conflict_prompt": "Estàs operant amb massa freqüència i l'operació entra en conflicte. Si us plau, baixa el ritme.",
+        "callback_already_running_prompt": "Has sol·licitat una altra ordre. Torna-ho a provar un cop finalitzi.",
+        "message_too_long_prompt": "L'ordre s'hauria d'haver executat correctament, però el missatge de retorn és massa llarg i no es pot enviar."
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "Aquesta ordre només la pot utilitzar el gestor de bots.",
+        "permission_denied_not_chat_admin": "Aquesta ordre només la poden utilitzar els administradors d'aquest grup/canal.",
+        "permission_denied_not_in_private_chat": "Aquesta ordre només es pot utilitzar en un xat privat.",
+        "permission_denied_not_member": "No estàs en aquest grup/canal, per tant no pots utilitzar el bot.",
+        "permission_denied_bot_not_member": "El bot ja no és en aquest grup/canal, per tant, no funcionarà aquí.",
+        "promote_to_admin_prompt": "Si ets un administrador anònim d'aquest grup, promociona el bot a un administrador (no cal permís) per a donar poder al bot per a verificar la teva identitat.",
+        "group_upgrade_needed_prompt": "Oops, el teu grup no s'ha actualitzat a un supergrup. En general, el servidor de Telegram hauria de realitzar automàticament aquesta actualització en algun moment, però si no, has d'actualitzar-la manualment abans de poder utilitzar el bot.\nSi us plau, segueix aquests passos:\n1. Ves a la informació del grup i, a continuació, fes clic a «Gestionar el grup»\n2. Canvia «Historial de xat per a nous membres» a «Visible»\n3. Desa la configuració de visibilitat de l'historial de xat\n4. Desa tots els paràmetres\n5. (Opcional) Si cal, pots canviar «Historial de xat per a membres nous» a «Ocult» de nou\n6. Ara hauries de poder utilitzar el bot"
+    },
+    "l10n_misc": {
+        "choose_sub_prompt": "Triar una subscripció",
+        "previous_page": "Pàgina anterior",
+        "next_page": "Pàgina següent",
+        "back": "Tornar",
+        "cancel": "Cancel·lar",
+        "subscribe": "Subscriu-te",
+        "unsubscribe": "Donar-se de baixa",
+        "subscription_list": "Llista de subscripcions",
+        "processing": "Processant, espera un moment…",
+        "canceled_by_user": "Cancel·lat per l'usuari.",
+        "n_subscriptions_in_total": "%d subscripcions en total"
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "Respon l'adreça URL d'un canal RSS. \nO bé, pots utilitzar-lo <code>/subs url1 url2 url3 …</code> per a subscriure't de manera massiva.",
+        "sub_usage_in_channel_html": "Si us plau, utilitza <code>/subs url1 url2 url3 …</code> per a subscriure't.",
+        "sub_successful": "T'has subscrit correctament",
+        "sub_failed": "S'ha produït un error en subscriure't"
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "Tria la subscripció que vulguis cancel·lar. \nO bé, pots utilitzar <code>/deixar subs url1 url2 url3 …</code> per a donar-te de baixa massivament.",
+        "unsub_successful": "S'ha cancel·lat la subscripció correctament",
+        "unsub_failed": "S'ha produït un error en donar-te de baixa"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "Segur que vols cancel·lar totes les subscripcions?",
+        "unsub_all_confirm": "Sí, cancel·la totes les subscripcions",
+        "unsub_all_cancel": "No, cancel·la",
+        "unsub_all_successful": "S'han cancel·lat correctament totes les subscripcions"
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "Envia'm el fitxer OPML que s'importarà (el nom de l'extensió ha de ser .opml).",
+        "send_opml_reply_placeholder": "El fitxer OPML que s'ha d'importar (el nom de l'extensió ha de ser .opml)",
+        "fetch_file_failed": "No s'ha pogut obtenir el fitxer",
+        "opml_import_processing": "Si el nombre de canals de continguts és gran o els servidors d'alimentació són lents, pot ser una llarga espera. Asseu-te i relaxa't.",
+        "opml_parse_error": "Error d'anàlisi OPML"
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "Tria la subscripció que vulguis personalitzar.",
+        "status": "Estat",
+        "status_activated": "Activat",
+        "status_deactivated": "Desactivat",
+        "notification": "Notificació",
+        "notification_normal": "Normal",
+        "notification_muted": "Silenciat",
+        "monitor_interval": "Interval del monitor",
+        "set_interval_prompt": "Seleccionar un interval de monitor."
+    },
+    "l10n_sub_info": {
+        "subscription_info": "Informació de la subscripció",
+        "subscription_title": "Títol de la subscripció",
+        "feed_url": "URL del canal"
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": "La tasca de supervisió ha fallat durant 100 cops. S'ha desactivat la teva subscripció al canal RSS.\nPer reactivar-la, utilitza l'ordre /activate_subs."
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "Les subscripcions següents estan desactivades, tria una per a activar-la.\nDesprés d'activar-la, es supervisaran les teves actualitzacions.",
+        "activate_all_subs": "Activa totes les subscripcions meves",
+        "all_subs_are_activated": "Totes les subscripcions estan activades."
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "Les subscripcions següents estan activades, tria una per desactivar-la.\nDesprés de desactivar-la, les actualitzacions se suspendran de la supervisió. Si ja no necessites la subscripció, considera donar-te de baixa en lloc de desactivar-la.",
+        "deactivate_all_subs": "Desactivar totes les subscripcions meves",
+        "all_subs_are_deactivated": "Totes les subscripcions estan desactivades."
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "Ús de l'ordre: <code>/prova RSS_URL número_inicial_entrada (opcional) número_final_entrada (opcional)</code>",
+        "set_option_cmd_usage_prompt_html": "Ús de l'ordre: <code>/establir _valor clau opció</code>",
+        "current_options": "Opcions actuals",
+        "option_value_type": "Tipus de valor",
+        "option_key_invalid": "La clau d'opció no és vàlida",
+        "option_value_invalid": "El valor de l'opció no és vàlid, comprova el tipus",
+        "option_updated": "L'opció s'ha actualitzat correctament"
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "Ordres",
+        "cmd_description_sub": "Subscriu-te",
+        "cmd_description_unsub": "Donar-se de baixa",
+        "cmd_description_unsub_all": "Cancel·lar totes les subscripcions",
+        "cmd_description_list": "Consultar la llista de subscripcions",
+        "cmd_description_set": "Personalitzar les subscripcions",
+        "cmd_description_import": "Importar subscripcions des d'un fitxer OPML",
+        "cmd_description_export": "Exportar les subscripcions a un fitxer OPML",
+        "cmd_description_activate_subs": "Activar les subscripcions",
+        "cmd_description_deactivate_subs": "Desactivar subscripcions",
+        "cmd_description_version": "Comprovar la versió del bot",
+        "cmd_description_lang": "Seleccionar un idioma",
+        "cmd_description_help": "Visualitzar l'ajuda",
+        "cmd_description_test": "Provar (només gestor de bots)",
+        "cmd_description_set_option": "Establir les opcions del bot (només el gestor de bots)"
+    }
+}

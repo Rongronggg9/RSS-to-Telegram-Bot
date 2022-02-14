@@ -30,10 +30,10 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[s
         if feed:
             _sub = await db.Sub.get_or_none(user=user_id, feed=feed)
         if not feed or feed.state == 0:
-            wf = await web.feed_get(feed_url, lang=lang)
+            wf = await web.feed_get(feed_url)
             rss_d = wf.rss_d
             ret['status'] = wf.status
-            ret['msg'] = wf.msg
+            ret['msg'] = wf.error and wf.error.i18n_message(lang)
             feed_url_original = feed_url
             ret['url'] = feed_url = wf.url  # get the redirected url
 

@@ -6,6 +6,11 @@ from threading import Thread
 from src import env
 
 getLogger = colorlog.getLogger
+DEBUG = colorlog.DEBUG
+INFO = colorlog.INFO
+WARNING = colorlog.WARNING
+ERROR = colorlog.ERROR
+CRITICAL = colorlog.CRITICAL
 
 colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
                      datefmt='%Y-%m-%d-%H:%M:%S',

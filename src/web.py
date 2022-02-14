@@ -53,6 +53,38 @@ EXCEPTIONS_SHOULD_RETRY = (asyncio.TimeoutError,
 RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
 
 
+class WebError(Exception):
+    def __init__(self, error_name: str, status: Union[int, str] = None, url: str = None,
+                 base_error: Exception = None, hide_base_error: bool = False, log_level: int = log.DEBUG):
+        super().__init__(error_name)
+        self.error_name = error_name
+        self.status_code = status
+        self.url = url
+        self.base_error = base_error
+        self.hide_base_error = hide_base_error
+        if log_level < log.ERROR and base_error:
+            log_msg = f'Fetch failed ({error_name}'
+            log_msg += f', {base_error.__class__.__name__}' if not hide_base_error and base_error else ''
+            log_msg += f', {status}' if status else ''
+            log_msg += ')'
+            log_msg += f': {url}' if url else ''
+            logger.log(log_level, log_msg)
+        else:
+            logger.log(log_level, f'Fetch failed ({error_name})' + (f': {url}' if url else ''), exc_info=base_error)
+
+    def i18n_message(self, lang: str = None) -> str:
+        error_key = self.error_name.lower().replace(' ', '_')
+        msg = f'ERROR: {i18n[lang][error_key]}'
+        if not self.hide_base_error and self.base_error:
+            msg += f' ({self.base_error.__class__.__name__})'
+        if self.status_code:
+            msg += f' ({self.status_code})'
+        return msg
+
+    def __str__(self) -> str:
+        return self.i18n_message()
+
+
 @define
 class WebResponse:
     url: str  # redirected url
@@ -69,7 +101,7 @@ class WebFeed:
     status: int = -1
     reason: Optional[str] = None
     rss_d: Optional[feedparser.FeedParserDict] = None
-    msg: Optional[str] = None
+    error: Optional[WebError] = None
 
 
 def proxy_filter(url: str, parse: bool = True) -> bool:
@@ -184,10 +216,10 @@ async def get_session(timeout: Optional[float] = None):
 
 
 async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
-                   headers: Optional[dict] = None, lang: Optional[str] = None, verbose: bool = True) -> WebFeed:
+                   headers: Optional[dict] = None, verbose: bool = True) -> WebFeed:
     ret = WebFeed(url=url)
 
-    auto_warning = logger.warning if verbose else logger.debug
+    log_level = log.WARNING if verbose else log.DEBUG
     _headers = {}
     if headers:
         _headers.update(headers)
@@ -204,17 +236,16 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
         # some rss feed implement http caching improperly :(
         if resp.status == 200 and int(resp.headers.get('Content-Length', '1')) == 0:
             ret.status = 304
-            ret.msg = f'"Content-Length" is 0'
+            # ret.msg = f'"Content-Length" is 0'
             return ret
 
         if resp.status == 304:
-            ret.msg = f'304 Not Modified'
+            # ret.msg = f'304 Not Modified'
             return ret  # 304 Not Modified, feed not updated
 
         if rss_content is None:
             status_caption = f'{resp.status}' + f' {resp.reason}' if resp.reason else ''
-            auto_warning(f'Fetch failed (status code error, {status_caption}): {url}')
-            ret.msg = f'ERROR: {i18n[lang]["status_code_error"]} ({status_caption})'
+            ret.error = WebError(error_name='status code error', status=status_caption, url=url, log_level=log_level)
             return ret
 
         if len(rss_content) <= 524288:
@@ -226,25 +257,20 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
                                                                                      sanitize_html=False))
 
         if 'title' not in rss_d.feed:
-            auto_warning(f'Fetch failed (feed invalid): {url}')
-            ret.msg = 'ERROR: ' + i18n[lang]['feed_invalid']
+            ret.error = WebError(error_name='feed invalid', url=url, log_level=log_level)
             return ret
 
         ret.rss_d = rss_d
     except aiohttp.InvalidURL:
-        auto_warning(f'Fetch failed (URL invalid): {url}')
-        ret.msg = 'ERROR: ' + i18n[lang]['url_invalid']
+        ret.error = WebError(error_name='URL invalid', url=url, log_level=log_level)
     except (asyncio.TimeoutError,
             aiohttp.ClientError,
             SSLError,
             OSError,
             ConnectionError,
             TimeoutError) as e:
-        err_name = e.__class__.__name__
-        auto_warning(f'Fetch failed (network error, {err_name}): {url}')
-        ret.msg = f'ERROR: {i18n[lang]["network_error"]} ({err_name})'
+        ret.error = WebError(error_name='network error', url=url, base_error=e, log_level=log_level)
     except Exception as e:
-        auto_warning(f'Fetch failed: {url}', exc_info=e)
-        ret.msg = 'ERROR: ' + i18n[lang]['internal_error']
+        ret.error = WebError(error_name='internal error', url=url, base_error=e, log_level=log.ERROR)
 
     return ret

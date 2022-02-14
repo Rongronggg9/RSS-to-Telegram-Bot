@@ -179,6 +179,12 @@ async def __monitor(feed: db.Feed) -> str:
         logger.debug(f'Fetched (empty): {feed.link}')
         return EMPTY
 
+    title = rss_d.feed.title
+    if title != feed.title:
+        logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
+        feed.title = title
+        await feed.save()
+
     # sequence matters so we cannot use a set
     old_hashes: list = feed.entry_hashes if isinstance(feed.entry_hashes, list) else []
     updated_hashes = []

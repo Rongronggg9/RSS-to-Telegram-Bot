@@ -159,11 +159,11 @@ async def __monitor(feed: db.Feed) -> str:
         return CACHED
 
     if rss_d is None:  # error occurred
+        feed.error_count += 1
         if feed.error_count >= 100:
             logger.error(f'Deactivated feed due to too many errors: {feed.link}')
             await __deactivate_feed_and_notify_all(feed)
             return FAILED
-        feed.error_count += 1
         if feed.error_count % 20 == 0:  # error_count is always > 0
             logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.msg}): {feed.link}')
         if feed.error_count >= 10:  # too much error, delay next check

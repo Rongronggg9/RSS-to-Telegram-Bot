@@ -3,7 +3,7 @@ from typing import Union, Optional
 
 import asyncio
 from telethon.tl.types import DocumentAttributeVideo, DocumentAttributeAnimated
-from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError
+from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
 from asyncio import BoundedSemaphore
 
 from src import log, env, locks
@@ -51,6 +51,12 @@ class Message:
                     self.retries += 1
                     rlock_or_wlock = await rwlock.gen_wlock()  # ensure a wlock to reduce concurrency
                     await locks.user_flood_wait(chat_id, seconds=e.seconds)  # acquire a flood wait
+                except ServerError as e:
+                    # telethon has retried for us, so we just retry once more
+                    if self.retries >= 1:
+                        raise e
+
+                    self.retries += 1
 
     async def _send(self, chat_id: Union[str, int], reply_to_msg_id: int = None, silent: bool = None):
         pass

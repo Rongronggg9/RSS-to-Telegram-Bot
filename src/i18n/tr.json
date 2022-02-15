@@ -1,0 +1,131 @@
+{
+    "l10n_info": {
+        "lang_code": "tr",
+        "iso_639_code": "",
+        "language_name": "Turkish",
+        "lang_native_name": "Türkçe",
+        "select_lang_prompt": "Lütfen bir dil seçiniz.",
+        "welcome_prompt": "RSSden Telegrama Bot'una hoş geldiniz.",
+        "rsstt_slogan": "RSS'den Telegrama Botu, okuma deneyiminizi önemseyen bir Telegram RSS botudur."
+    },
+    "l10n_sub_status": {
+        "no_subscription": "Aboneliğiniz yok",
+        "already_subscribed": "Zaten abonesiniz",
+        "subscription_not_exist": "Abonelik mevcut değil"
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "RSS akışı geçersiz",
+        "url_invalid": "URL geçersiz",
+        "network_error": "Ağ hatası",
+        "internal_error": "Dahili hata",
+        "status_code_error": "HTTP hata kodu",
+        "uncaught_internal_error": "Çözülmemiş iç hata",
+        "operation_timeout_error": "İşlem zaman aşımı",
+        "action_invalid": "Eylem geçersiz",
+        "flood_wait_prompt": "Botu, Telegram'ın hız sınırını aşacak kadar sık çalıştırıyorsunuz. Lütfen yavaşlayın.",
+        "edit_conflict_prompt": "İşlem çatışmalarını çok sık yaşıyorsunuz. Lütfen yavaşlayın.",
+        "callback_already_running_prompt": "Başka bir komut istediniz. Lütfen bittikten sonra tekrar deneyin.",
+        "message_too_long_prompt": "Komut başarıyla yürütülmüş olmalı, ancak dönüş mesajı çok uzun ve gönderilemiyor."
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "Bu komut yalnızca bot yöneticisi tarafından kullanılabilir.",
+        "permission_denied_not_chat_admin": "Bu komut yalnızca bu grubun/kanalın yöneticileri tarafından kullanılabilir.",
+        "permission_denied_not_in_private_chat": "Bu komut yalnızca özel bir sohbette kullanılabilir.",
+        "permission_denied_not_member": "Bu grupta/kanalda değilsiniz, bu nedenle botu kullanamazsınız.",
+        "permission_denied_bot_not_member": "Bot artık bu grupta/kanalda değil, dolayısıyla burada çalışmayacak.",
+        "promote_to_admin_prompt": "Bu grubun anonim bir yöneticisiyseniz, botu kimliğinizi doğrulamasını sağlamak için lütfen botu bir yöneticiye (izne gerek yok) yükseltin.",
+        "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız"
+    },
+    "l10n_misc": {
+        "choose_sub_prompt": "Lütfen bir abonelik seçin",
+        "previous_page": "Önceki sayfa",
+        "next_page": "Sonraki Sayfa",
+        "back": "Geri",
+        "cancel": "İptal Et",
+        "subscribe": "Abone ol",
+        "unsubscribe": "Aboneliği iptal et",
+        "subscription_list": "Abonelik listesi",
+        "processing": "İşleniyor, lütfen biraz bekleyin…",
+        "canceled_by_user": "Kullanıcı tarafından iptal edildi.",
+        "n_subscriptions_in_total": "Toplamda %d abonelik"
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "Lütfen bir RSS beslemesi URL'si ile yanıtlayın.\nVeya toplu abone olmak için <code>/sub url1 url2 url3 …</code> kullanabilirsiniz.",
+        "sub_usage_in_channel_html": "Abone olmak için lütfen <code>/sub url1 url2 url3 …</code> kullanın.",
+        "sub_successful": "Başarıyla abone olundu",
+        "sub_failed": "Abone olunamadı"
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "Lütfen aboneliğinizi iptal etmek istediğiniz bir abonelik seçin.\nVeya toplu olarak abonelikten çıkmak için <code>/unsub url1 url2 url3 …</code> kullanabilirsiniz.",
+        "unsub_successful": "Abonelikten başarıyla çıkıldı",
+        "unsub_failed": "Abonelikten çıkılamadı"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "Tüm abonelikleri iptal etmek istediğinizden emin misiniz?",
+        "unsub_all_confirm": "Evet, tüm aboneliklerin aboneliğini iptal et",
+        "unsub_all_cancel": "Hayır, iptal et",
+        "unsub_all_successful": "Tüm aboneliklerin aboneliği başarıyla iptal edildi"
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "Lütfen içe aktarılacak OPML dosyasını bana gönderin (uzantı adı .opml olmalıdır).",
+        "send_opml_reply_placeholder": "İçe aktarılacak OPML dosyası (uzantı adı .opml olmalıdır)",
+        "fetch_file_failed": "Dosya getirilemedi",
+        "opml_import_processing": "Besleme sayısı fazlaysa veya besleme sunucuları yavaşsa, uzun bir bekleme olabilir. Arkana yaslan ve rahatla.",
+        "opml_parse_error": "OPML ayrıştırma hatası"
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "Lütfen özelleştirmek istediğiniz bir abonelik seçin.",
+        "status": "Durum",
+        "status_activated": "Aktif",
+        "status_deactivated": "Devre dışı",
+        "notification": "Bildirim",
+        "notification_normal": "Normal",
+        "notification_muted": "Sessiz",
+        "monitor_interval": "İzleme aralığı",
+        "set_interval_prompt": "Lütfen bir izleme aralığı seçin."
+    },
+    "l10n_sub_info": {
+        "subscription_info": "Abonelik bilgileri",
+        "subscription_title": "Abonelik başlığı",
+        "feed_url": "Besleme URL'si"
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": "İzleme görevi arka arkaya 100 kez başarısız olmuştu. RSS beslemesine aboneliğiniz devre dışı bırakıldı.\nYeniden etkinleştirmek için lütfen /activate_subs komutunu kullanın."
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "Aşağıdaki abonelikler devre dışı bırakıldı, etkinleştirmek için birini seçin.\nEtkinleştirildikten sonra güncellemeleri izlenecektir.",
+        "activate_all_subs": "Tüm aboneliklerimi etkinleştir",
+        "all_subs_are_activated": "Tüm abonelikler etkinleştirildi."
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "Aşağıdaki abonelikler etkinleştirildi, devre dışı bırakmak için birini seçin.\nDevre dışı bırakıldıktan sonra, güncelleştirmeleri izlemeden askıya alınır. Aboneliğe artık ihtiyacınız yoksa, lütfen devre dışı bırakmak yerine aboneliği iptal etmeyi düşünün.",
+        "deactivate_all_subs": "Tüm aboneliklerimi devre dışı bırak",
+        "all_subs_are_deactivated": "Tüm abonelikler devre dışı bırakıldı."
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "Komut kullanımı: <code>/test RSS_URL entry_start_number(isteğe bağlı) entry_end_number(isteğe bağlı)</code>",
+        "set_option_cmd_usage_prompt_html": "Komut kullanımı: <code>/set_option anahtar değeri</code>",
+        "current_options": "Mevcut seçenekler",
+        "option_value_type": "Değer türü",
+        "option_key_invalid": "Seçenek anahtarı geçersiz",
+        "option_value_invalid": "Seçenek değeri geçersiz, lütfen türünü kontrol edin",
+        "option_updated": "Seçenek güncelleştirildi"
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "Komutlar",
+        "cmd_description_sub": "Abone ol",
+        "cmd_description_unsub": "Aboneliği iptal et",
+        "cmd_description_unsub_all": "Tüm aboneliklerin aboneliğini iptal et",
+        "cmd_description_list": "Abonelik listesini denetle",
+        "cmd_description_set": "Abonelikleri özelleştir",
+        "cmd_description_import": "Bir OPML dosyasından abonelikleri içe aktarın",
+        "cmd_description_export": "Abonelikleri bir OPML dosyasına aktarın",
+        "cmd_description_activate_subs": "Abonelikleri etkinleştir",
+        "cmd_description_deactivate_subs": "Abonelikleri devre dışı bırak",
+        "cmd_description_version": "Bot sürümünü kontrol et",
+        "cmd_description_lang": "Bir dil seçin",
+        "cmd_description_help": "Yardımı görüntüle",
+        "cmd_description_test": "Test (yalnızca bot yöneticisi)",
+        "cmd_description_set_option": "Bot seçeneklerini ayarla (yalnızca bot yöneticisi)"
+    }
+}

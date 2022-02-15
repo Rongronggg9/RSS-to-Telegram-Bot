@@ -1,7 +1,5 @@
-import asyncio
 import logging
 import colorlog
-from threading import Thread
 
 from src import env
 
@@ -27,30 +25,33 @@ getLogger('aiosqlite').setLevel(_muted)
 getLogger('tortoise').setLevel(_muted)
 getLogger('asyncpg').setLevel(_muted)
 
+_logger = getLogger('watchdog')
 
 # flit log from apscheduler.scheduler
 class APSCFilter(logging.Filter):
     def __init__(self):
         super().__init__()
-        self.count = -3  # first 3 times muted
+        self.count = 0
 
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.msg % record.args
         if 'skipped: maximum number of running instances reached' in msg:
             self.count += 1
-            if self.count % 5 == 0:
+            if self.count != 0 and self.count % 5 == 0:
                 if self.count >= 15:
+                    _logger.critical(f'RSS monitor tasks have conflicted too many times ({self.count})! Exiting...')
                     exit(-1)
                 coro = env.bot.send_message(
                     env.MANAGER,
-                    'RSS monitor tasks have conflicted too many times! Please store the log and restart.\n'
+                    f'RSS monitor tasks have conflicted too many times ({self.count})! '
+                    'Please store the log and restart.\n'
                     ' (sometimes it may be caused by too many subscriptions)\n\n'
                     + msg
                 )
-                Thread(target=asyncio.run, args=(coro,)).start()
+                env.loop.create_task(coro)
             return True
         if ' executed successfully' in msg:
-            self.count = -3  # only >= 4 consecutive failures lead to a manager warning
+            self.count = 0
             return False
         if 'Running job "rss_monitor ' in msg:
             return False

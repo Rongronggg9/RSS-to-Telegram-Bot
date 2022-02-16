@@ -207,7 +207,9 @@ async def get_session(timeout: Optional[float] = None):
     if not timeout:
         timeout = 12
 
-    proxy_connector = ProxyConnector.from_url(PROXY) if PROXY else None
+    ssl_context = ssl_create_default_context()
+    proxy_connector = (ProxyConnector.from_url(PROXY, ssl=ssl_context) if PROXY
+                       else aiohttp.TCPConnector(ssl=ssl_context))
 
     session = RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
                           timeout=aiohttp.ClientTimeout(total=timeout), headers={'User-Agent': env.USER_AGENT})

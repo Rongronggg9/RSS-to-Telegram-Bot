@@ -4,6 +4,7 @@ from collections.abc import Callable
 from src.compat import Final
 
 from math import ceil
+from random import shuffle
 
 from src.db import models
 
@@ -122,17 +123,17 @@ class EffectiveTasks:
     __all_tasks: dict[int, int] = {}  # key: id, value: interval
 
     def __init__(self, interval: int) -> NoReturn:
-        self.interval: Final = interval
-        self.__all_feeds = set()
-        self.__pending_feeds = set()
-        # self.__checked_feeds = set()
-        self.__run_count = 0
+        self.interval: Final[int] = interval
+        self.__all_feeds: set[int] = set()
+        self.__pending_feeds: list[int] = []  # use a list here to make randomization easier
+        # self.__checked_feeds: set[int] = set()
+        self.__run_count: int = 0
 
     @staticmethod
-    def __ignore_key_error(func: Callable, *args, **kwargs) -> Optional[Any]:
+    def __ignore_key_or_value_error(func: Callable, *args, **kwargs) -> Optional[Any]:
         try:
             return func(*args, **kwargs)
-        except KeyError:
+        except (KeyError, ValueError):
             return None
 
     @classmethod
@@ -152,7 +153,10 @@ class EffectiveTasks:
 
     def __update(self, feed_id: int):
         self.__all_feeds.add(feed_id)
-        self.__pending_feeds.add(feed_id)
+        # no need to add it to the pending list, since it will be processed in the next cycle
+        #
+        # if feed_id not in self.__pending_feeds:
+        #     self.__pending_feeds.append(feed_id)
 
     @classmethod
     def update(cls, feed_id: int, interval: int = None) -> NoReturn:
@@ -175,8 +179,8 @@ class EffectiveTasks:
         cls.__task_buckets[interval].__update(feed_id)  # update task
 
     def __delete(self, feed_id: int) -> NoReturn:
-        self.__ignore_key_error(self.__all_feeds.remove, feed_id)
-        self.__ignore_key_error(self.__pending_feeds.remove, feed_id)
+        self.__ignore_key_or_value_error(self.__all_feeds.remove, feed_id)
+        self.__ignore_key_or_value_error(self.__pending_feeds.remove, feed_id)
 
     @classmethod
     def delete(cls, feed_id: int, _preserve_in_all_tasks: bool = False) -> NoReturn:
@@ -219,10 +223,13 @@ class EffectiveTasks:
         if len(self.__all_feeds) == 0:
             return set()  # nothing to run
         if self.__run_count == 0:
-            self.__pending_feeds.update(self.__all_feeds)
+            self.__pending_feeds = list(self.__all_feeds)
+            shuffle(self.__pending_feeds)  # randomize
 
         pop_count = ceil(len(self.__pending_feeds) / (self.interval - self.__run_count))
-        tasks_to_run = set(self.__pending_feeds.pop() for _ in range(pop_count) if self.__pending_feeds)
+        # tasks_to_run = set(self.__pending_feeds.pop() for _ in range(pop_count) if self.__pending_feeds)
+        tasks_to_run = set(self.__pending_feeds[:pop_count])
+        del self.__pending_feeds[:pop_count]
         self.__run_count = self.__run_count + 1 if self.__run_count + 1 < self.interval else 0
         return tasks_to_run
 

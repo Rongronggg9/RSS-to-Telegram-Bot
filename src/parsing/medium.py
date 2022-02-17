@@ -1,11 +1,18 @@
 from __future__ import annotations
+from src.compat import Final
+from typing import Optional, Union
 
 import asyncio
 import re
+import PIL.Image
+import PIL.ImageFile
+from io import BytesIO
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal
 
 from src import env, log, web
 from src.parsing import post
+
+PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 logger = log.getLogger('RSStT.medium')
 
@@ -17,10 +24,15 @@ serverParser = re.compile(r'(?P<url_prefix>^https?://[a-zA-Z_-]+)'
                           r'(?P<server_id>\d)'
                           r'(?P<url_suffix>\.sinaimg\.\S+$)')
 
-_web_semaphore = asyncio.BoundedSemaphore(15)
+IMAGE: Final = 'image'
+VIDEO: Final = 'video'
+ANIMATION: Final = 'animation'
+MEDIUM_BASE_CLASS: Final = 'medium'
+TypeMedium = Union[IMAGE, VIDEO, ANIMATION]
+
 
 class Medium:
-    type = 'medium_base_class'
+    type = MEDIUM_BASE_CLASS
     max_size = 20971520
 
     def __init__(self, url: str):
@@ -51,7 +63,7 @@ class Medium:
         max_size = self.max_size
         url = self.url
         try:
-            size, width, height = await get_medium_info(url)
+            size, width, height = await get_medium_info(url, medium_type=self.type)
             if size is None:
                 raise IOError
         except Exception as e:
@@ -94,15 +106,16 @@ class Medium:
             return False
         self._server_change_count += 1
         self.url = env.IMG_RELAY_SERVER + self.url
+        # noinspection PyBroadException
         try:
-            await web.get(url=self.url, semaphore=False, no_body=True)  # let the img relay sever cache the img
+            await web.get(url=self.url, semaphore=False, max_size=0)  # let the img relay sever cache the img
         except Exception:
             pass
         return True
 
 
 class Image(Medium):
-    type = 'image'
+    type = IMAGE
     max_size = 5242880
 
     def telegramize(self):
@@ -124,14 +137,14 @@ class Image(Medium):
 
 
 class Video(Medium):
-    type = 'video'
+    type = VIDEO
 
     def telegramize(self):
         return InputMediaDocumentExternal(self.url)
 
 
 class Animation(Medium):
-    type = 'animation'
+    type = ANIMATION
 
     def telegramize(self):
         return InputMediaDocumentExternal(self.url)
@@ -160,7 +173,7 @@ class Media:
         for medium in self._media:
             if not medium:
                 continue
-            if medium.type == 'animation':
+            if medium.type == ANIMATION:
                 # if len(result) > 0:
                 #     yield {'type': result[0].type, 'media': result[0]} if len(result) == 1 \
                 #         else {'type': 'media_group', 'media': result}
@@ -191,29 +204,33 @@ class Media:
         return bool(self._media)
 
 
-async def get_medium_info(url):
-    session = await web.get_session()
+async def get_medium_info(url: str, medium_type: Optional[TypeMedium] = None) -> tuple[int, int, int]:
+    is_image = medium_type is None or medium_type == IMAGE
+
+    r = await web.get(url=url, max_size=256 if is_image else 0)
+    size = int(r.headers.get('Content-Length') or -1)
+    content_type = r.headers.get('Content-Type')
+
+    width = height = -1
+    if not is_image:
+        return size, width, height
+
+    file_header = r.content
+
+    # noinspection PyBroadException
     try:
-        async with _web_semaphore:
-            async with session.get(url) as response:
-                size = int(response.headers.get('Content-Length', 256))
-                content_type = response.headers.get('Content-Type')
-
-                height = width = -1
-                if content_type != 'image/jpeg' and url.find('jpg') == -1 and url.find('jpeg') == -1:  # if not jpg
-                    return size, width, height
-
-                pic_header = await response.content.read(min(256, size))
-    finally:
-        await session.close()
-
-    pointer = -1
-    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
-        p = pic_header.find(marker)
-        if p != -1:
-            pointer = p
-    if pointer != -1:
-        width = int(pic_header[pointer + 7:pointer + 9].hex(), 16)
-        height = int(pic_header[pointer + 5:pointer + 7].hex(), 16)
+        image = PIL.Image.open(BytesIO(file_header))
+        width, height = image.size
+    except Exception:
+        if content_type == 'image/jpeg' or url.find('jpg') != -1 or url.find('jpeg') != -1:  # if jpg
+            pointer = -1
+            for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
+                p = file_header.find(marker)
+                if p != -1:
+                    pointer = p
+                    break
+            if pointer != -1 and pointer + 9 <= len(file_header):
+                width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
+                height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
 
     return size, width, height

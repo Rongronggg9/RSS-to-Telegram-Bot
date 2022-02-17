@@ -126,24 +126,24 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
 
 
 async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) -> WebResponse:
+              headers: Optional[dict] = None, decode: bool = False, max_size: Optional[int] = None) -> WebResponse:
     """
     :param url: URL to fetch
     :param timeout: timeout in seconds
     :param semaphore: semaphore to use for limiting concurrent connections
     :param headers: headers to use
-    :param decode: whether to decode the response body
-    :param no_body: whether to return the response headers only
+    :param decode: whether to decode the response body (cannot mix with max_size)
+    :param max_size: maximum size of the response body (in bytes), None=unlimited, 0=ignore response body
     :return: {url, content, headers, status}
     """
     if not timeout:
         timeout = 12
     wait_for_timeout = (timeout * 2 + 5) * (2 if env.IPV6_PRIOR else 1)
-    return await asyncio.wait_for(_get(url, timeout, semaphore, headers, decode, no_body), wait_for_timeout)
+    return await asyncio.wait_for(_get(url, timeout, semaphore, headers, decode, max_size), wait_for_timeout)
 
 
 async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-               headers: Optional[dict] = None, decode: bool = False, no_body: bool = False) -> WebResponse:
+               headers: Optional[dict] = None, decode: bool = False, max_size: Optional[int] = None) -> WebResponse:
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -182,10 +182,15 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                                            timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
                         async with session.get(url) as response:
                             status = response.status
-                            content = (await (response.text() if decode else response.read())
-                                       if status == 200 and not no_body
-                                       else None)
-                            if status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
+                            content = None
+                            if status == 200:
+                                if decode:
+                                    content = await response.text()
+                                elif max_size is None:
+                                    content = await response.read()
+                                elif max_size > 0:
+                                    content = await response.content.read(max_size)
+                            elif status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
                                 retry_in_v4_flag = True
                                 continue
                             return WebResponse(url=url,
@@ -201,20 +206,6 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                          + f') using IPv6, retrying using IPv4: {url}')
             retry_in_v4_flag = True
             continue
-
-
-async def get_session(timeout: Optional[float] = None):
-    if not timeout:
-        timeout = 12
-
-    ssl_context = ssl_create_default_context()
-    proxy_connector = (ProxyConnector.from_url(PROXY, ssl=ssl_context) if PROXY
-                       else aiohttp.TCPConnector(ssl=ssl_context))
-
-    session = RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
-                          timeout=aiohttp.ClientTimeout(total=timeout), headers={'User-Agent': env.USER_AGENT})
-
-    return session
 
 
 async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,

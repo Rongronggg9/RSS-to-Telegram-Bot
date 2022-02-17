@@ -24,6 +24,7 @@ getLogger('telethon').setLevel(_muted)
 getLogger('aiosqlite').setLevel(_muted)
 getLogger('tortoise').setLevel(_muted)
 getLogger('asyncpg').setLevel(_muted)
+getLogger('PIL').setLevel(_muted)
 
 _logger = getLogger('watchdog')
 

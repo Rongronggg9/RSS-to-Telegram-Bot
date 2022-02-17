@@ -26,5 +26,6 @@ Make sure you switch to the `master` or `dev` branch. For Railway, you can do th
 
 ## If you still would like to limit the bot to serve you only...
 
-Set the env variable `MULTIUSER` to `1`.  
-However, if you need to use the bot in a channel or group, you cannot switch off the multi-user mode for the moment. As a temporary workaround, you may first switch on the multi-user mode, subscribe to the feeds you like in your channel or group, and then switch off the multi-user mode.
+Set the env variable `MULTIUSER` to `0`.  
+However, if you need to use the bot in a channel, you cannot switch off the multi-user mode for the moment. As a temporary workaround, you may first switch on the multi-user mode, subscribe to the feeds you like in your channel, and then switch off the multi-user mode.  
+Using the bot in a group is possible even if you don't have the multi-user mode enabled, as long as you are an administrator of the group. [Make sure that the bot can identify you](FAQ.md#q-how-to-use-the-bot-in-my-channel-or-group), especially if you are an anonymous administrator of the group.

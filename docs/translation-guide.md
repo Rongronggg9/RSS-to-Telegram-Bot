@@ -41,8 +41,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 | [yue] / Cantonese / 廣東話                | [@Rongronggg9]       | [![yue_s]][yue_w]         |
 | [it] / Italian / Italiano              | [@Alfy] ([@AlfyT96]) | [![it_s]][it_w]           |
 | [ca] / Catalan / Català                | [@maite.guix]        | [![ca_s]][ca_w]           |
-
-[//]: # (| [tr] / Turkish / Türkçe                | [@wiseweb-works]     | [![tr_s]][tr_w]           |)
+| [tr] / Turkish / Türkçe                | [@wiseweb-works]     | [![tr_s]][tr_w]           |
 
 [i18n]: ../src/i18n
 

@@ -33,7 +33,7 @@ from telethon.errors.rpcerrorlist import (
 
 from src import env, message, log, web
 from src.parsing import tgraph
-from src.parsing.medium import Video, Image, Media, Animation
+from src.parsing.medium import Video, Image, Media, Animation, VIDEO, IMAGE, ANIMATION, MEDIA_GROUP
 from src.parsing.html_text import *
 
 logger = log.getLogger('RSStT.post')
@@ -150,7 +150,7 @@ class Post:
             return
 
         if self.messages and len(self.messages) >= 5:
-            logger.debug(f'Too large, send a pure link message instead: "{self.title}"')
+            logger.debug(f'Too large, send a pure link message instead: "{self.link}"')
             pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title, link=self.link,
                                   author=self.author, telegraph_url=self.link, feed_link=self.feed_link)
             await pure_link_post.send_message(chat_id, reply_to_msg_id, silent)
@@ -161,9 +161,9 @@ class Post:
         e = None  # placeholder
         while True:
             if tries >= 5:
-                logger.error(f'Sending {self.link} failed after {tries} tries'
+                logger.error(f'Sending {self.link} failed (feed: {self.feed_link}, user: {chat_id}) after {tries} tries'
                              f'{", w/ `FileReferenceError` occurred" * file_reference_expired_flag}. '
-                             f'Sometime it means that there may be some bugs in the code :(', exc_info=e)
+                             f'Sometimes it means that there may be some bugs in the code :(', exc_info=e)
                 break
             tries += 1
 
@@ -184,9 +184,9 @@ class Post:
                     GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
                     VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as err:
                 e = err
-                if self.invalidate_all_media():
+                if await self.invalidate_all_media():
                     logger.debug(f'All media was set invalid because some of them are invalid '
-                                 f'({e.__class__.__name__})')
+                                 f'({e.__class__.__name__}): {self.link}')
                     await self.generate_message()
                 continue
 
@@ -198,11 +198,11 @@ class Post:
                 e = err
                 if await self.media.change_all_server():
                     logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
-                                 f'Changed img server and retrying...')
-                elif self.invalidate_all_media():
+                                 f'Changed img server and retrying: {self.link}')
+                elif await self.invalidate_all_media():
                     logger.debug(f'All media was set invalid '
                                  f'because Telegram still cannot fetch some media after changing img server '
-                                 f'({e.__class__.__name__}).')
+                                 f'({e.__class__.__name__}): {self.link}')
                     await self.generate_message()
                 continue
 
@@ -231,7 +231,7 @@ class Post:
             return telegraph_post
         except exceptions.TelegraphError as e:
             if str(e) == 'CONTENT_TOO_BIG':
-                logger.debug(f'Content too big, send a pure link message instead: "{self.title}"')
+                logger.debug(f'Content too big, send a pure link message instead: "{self.link}"')
                 pure_link_post = Post(xml='', title=self.title, feed_title=self.feed_title, link=self.link,
                                       author=self.author, telegraph_url=self.link, feed_link=self.feed_link)
                 return pure_link_post
@@ -275,11 +275,11 @@ class Post:
                         )
                 )
         ):
-            logger.debug(f'Will be sent via Telegraph: "{self.title}"')
+            logger.debug(f'Will be sent via Telegraph: "{self.link}"')
             self.telegraph_post = await self.telegraph_ify()  # telegraph post sent successful
             if self.telegraph_post:
                 return
-            logger.debug(f'Cannot be sent via Telegraph, fallback to normal message: "{self.title}"')
+            logger.debug(f'Cannot be sent via Telegraph, fallback to normal message: "{self.link}"')
 
         if not self.text:
             await self.generate_text()
@@ -311,16 +311,16 @@ class Post:
             curr_media = curr['media']
             curr_text = msg_texts.pop(0) if msg_texts \
                 else f'<b><i><u>Media of "{Text(self.title).get_html()}"</u></i></b>'
-            if curr_type == 'image':
+            if curr_type == IMAGE:
                 self.messages.append(message.PhotoMsg(curr_text, curr_media))
                 continue
-            if curr_type == 'video':
+            if curr_type == VIDEO:
                 self.messages.append(message.VideoMsg(curr_text, curr_media))
                 continue
-            if curr_type == 'animation':
+            if curr_type == ANIMATION:
                 self.messages.append(message.AnimationMsg(curr_text, curr_media))
                 continue
-            if curr_type == 'media_group':
+            if curr_type == MEDIA_GROUP:
                 self.messages.append(message.MediaGroupMsg(curr_text, curr_media))
                 continue
         if msg_texts:
@@ -328,8 +328,8 @@ class Post:
 
         return len(self.messages)
 
-    def invalidate_all_media(self):
-        if not self.media.invalidate_all():
+    async def invalidate_all_media(self):
+        if not await self.media.invalidate_all():
             return False
         self.text = self.origin_text.copy()
         self._add_metadata()
@@ -390,14 +390,11 @@ class Post:
             return
         self.text = Text([self.text, text_invalid_media])
 
-    async def _get_item(self, soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]],
-                        get_source: bool = False):
+    async def _get_item(self, soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]]):
         result = []
         if isinstance(soup, Iterator):  # a Tag is also Iterable, but we only expect an Iterator here
             for child in soup:
-                item = await self._get_item(child, get_source)
-                if item and get_source and isinstance(item, list):
-                    result.extend(item)
+                item = await self._get_item(child)
                 if item:
                     result.append(item)
             if not result:
@@ -406,7 +403,7 @@ class Post:
 
         if isinstance(soup, NavigableString):
             if type(soup) is NavigableString:
-                if str(soup) == ' ' or get_source:
+                if str(soup) == ' ':
                     return None
                 return Text(str(soup))
             return None  # we do not expect a subclass of NavigableString here
@@ -415,15 +412,6 @@ class Post:
             return None
 
         tag = soup.name
-
-        if get_source:
-            if tag != 'source':
-                return None
-            src = soup.get('src')
-            if not src:
-                return None
-            return src
-
         if tag is None:
             return None
 
@@ -477,25 +465,23 @@ class Post:
             return None
 
         if tag == 'video':
-            video = None
             _src = soup.get('src')
+            poster = soup.get('poster')
             if _src:
-                multi_src = [_src]
+                _multi_src = [_src]
             else:
-                multi_src = await self._get_item(soup.children, get_source=True)
-            if not multi_src:
+                _multi_src = [t['src'] for t in soup.find_all(name='source') if t.get('src')]
+            if not _multi_src:
                 return None
-            for src in multi_src:
+            multi_src = []
+            for src in _multi_src:
                 if not isinstance(src, str):
                     continue
                 if not src.startswith('http'):
                     src = urljoin(self.feed_link, src)
-                video = Video(src)
-                await video.validate()
-                if video:  # if video is valid
-                    break
-            if video is not None:
-                self.media.add(video)
+                multi_src.append(src)
+            if multi_src:
+                self.media.add(Video(multi_src, poster=poster))
             return None
 
         if tag == 'b' or tag == 'strong':

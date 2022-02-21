@@ -214,7 +214,7 @@ async def export_opml(user_id: int) -> Optional[bytes]:
         opml.body.append(outline)
     if empty_flags:
         return None
-    logger.info('Exported feed(s).')
+    logger.info(f'Exported feed(s) for {user_id}')
     return opml.prettify().encode()
 
 

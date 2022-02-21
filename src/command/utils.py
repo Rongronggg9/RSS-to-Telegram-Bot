@@ -98,7 +98,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        only_manager: bool = False,
                        only_in_private_chat: bool = False,
                        ignore_tg_lang: bool = False,
-                       timeout: int = 60):
+                       timeout: Optional[int] = 60):
     if func is None:
         return partial(command_gatekeeper,
                        only_manager=only_manager,

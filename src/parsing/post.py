@@ -5,6 +5,7 @@ import json
 import re
 import traceback
 import asyncio
+import minify_html
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
 from emoji import emojize
@@ -114,9 +115,7 @@ class Post:
         :param feed_link: the url of the feed where the post from
         """
         self.retries = 0
-        xml = xml.replace('\n', '')
-        xml = emojify(xml)
-        self.xml = xml
+        self.xml = minify_html.minify(xml)
         self.soup = BeautifulSoup(xml, 'lxml')
         self.media: Media = Media()
         self.text = Text('')
@@ -349,7 +348,8 @@ class Post:
         elif len(self.text) == 0 and self.title:
             self.text = Text(self.title)
         elif self.title and ('微博' not in self.feed_title or env.DEBUG):
-            title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').strip().rstrip('.…')
+            title_tbc = self.title.replace('[图片]', '').replace('[视频]', '').replace('发布了: ', '') \
+                .strip().rstrip('.…')
             similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
             logger.debug(f'{self.title} ({self.link}) is {similarity}% likely to be of no title.')
             if similarity < 90:
@@ -403,10 +403,8 @@ class Post:
 
         if isinstance(soup, NavigableString):
             if type(soup) is NavigableString:
-                if str(soup) == ' ':
-                    return None
-                return Text(str(soup))
-            return None  # we do not expect a subclass of NavigableString here
+                return Text(emojify(str(soup)))
+            return None  # we do not expect a subclass of NavigableString here, drop it
 
         if not isinstance(soup, Tag):
             return None

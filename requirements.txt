@@ -12,6 +12,7 @@ beautifulsoup4==4.10.0
 lxml==4.8.0
 fuzzywuzzy==0.18.0
 emoji==1.6.3
+minify-html==0.8.0
 
 # db
 tortoise-orm[asyncpg,accel]==0.18.1

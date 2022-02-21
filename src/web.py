@@ -189,6 +189,7 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                                 elif max_size is None:
                                     content = await response.read()
                                 elif max_size > 0:
+                                    max_size = min(int(response.headers.get('Content-Length', max_size)), max_size)
                                     content = await response.content.read(max_size)
                             elif status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
                                 retry_in_v4_flag = True

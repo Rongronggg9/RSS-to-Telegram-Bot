@@ -268,6 +268,8 @@ async def get_medium_info(url: str, medium_type: Optional[TypeMedium]) -> Option
 
     try:
         r = await web.get(url=url, max_size=256 if is_image else 0)
+        if r.status != 200:
+            raise ValueError('status code not 200')
     except Exception as e:
         logger.debug(f'Dropped medium {url}: can not be fetched: ' + str(e), exc_info=e)
         return None

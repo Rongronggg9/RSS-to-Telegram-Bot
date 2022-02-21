@@ -49,7 +49,7 @@ warnings.warn = warnings.original_warn
 
 stripNewline = re.compile(r'\n{3,}', )
 stripLineEnd = re.compile(r'[ \t\xa0]+\n')
-isEmoticon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|[01](\.\d)?em)')
+isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 fileReferenceNExpired = re.compile(r'FILE_REFERENCE_(?:\d_)?EXPIRED')
 
 # load emoji dict
@@ -402,8 +402,6 @@ class Post:
                     result.append(item)
             if not result:
                 return None
-            if get_source:
-                return result
             return result[0] if len(result) == 1 else Text(result)
 
         if isinstance(soup, NavigableString):
@@ -465,11 +463,11 @@ class Post:
             return Link(await self._get_item(soup.children), href)
 
         if tag == 'img':
-            src, alt, _class, style = soup.get('src'), soup.get('alt'), soup.get('class', ''), soup.get('style', '')
-            if alt and (isEmoticon.search(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':'))):
-                return Text(emojify(alt))
+            src, alt, _class, style = soup.get('src'), soup.get('alt', ''), soup.get('class', ''), soup.get('style', '')
             if not src:
                 return None
+            if isSmallIcon(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')):
+                return Text(emojify(alt)) if alt else None
             if not src.startswith('http'):
                 src = urljoin(self.feed_link, src)
             if src.endswith('.gif'):

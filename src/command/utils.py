@@ -5,7 +5,7 @@ from collections.abc import Callable
 import asyncio
 import re
 from functools import partial, wraps
-from telethon import events
+from telethon import events, Button
 from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
@@ -15,7 +15,8 @@ from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticip
     MessageTooLongError
 
 from src import env, log, db, locks
-from src.i18n import i18n
+from src.i18n import i18n, ALL_LANGUAGES
+from . import inner
 
 logger = log.getLogger('RSStT.command')
 
@@ -97,12 +98,14 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        *,
                        only_manager: bool = False,
                        only_in_private_chat: bool = False,
+                       allow_in_old_fashioned_groups: bool = False,
                        ignore_tg_lang: bool = False,
                        timeout: Optional[int] = 60):
     if func is None:
         return partial(command_gatekeeper,
                        only_manager=only_manager,
                        only_in_private_chat=only_in_private_chat,
+                       allow_in_old_fashioned_groups=allow_in_old_fashioned_groups,
                        ignore_tg_lang=ignore_tg_lang,
                        timeout=timeout)
 
@@ -204,7 +207,12 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     lang = db.User.get_or_none(id=sender_id).values_list('lang', flat=True)
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
-                await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
+                if is_chat_action:  # chat action, bypassing
+                    raise events.StopPropagation
+                if not env.MULTIUSER and not only_manager and sender_id is None:  # anonymous admin
+                    await respond_or_answer(event, i18n[lang]['promote_to_admin_prompt'])
+                else:
+                    await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
                 logger.warning(f'Refused {describe_user()} to use {command} '
                                f'because the command can only be used by a bot manager')
                 raise events.StopPropagation
@@ -247,8 +255,13 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     raise events.StopPropagation
 
                 if isinstance(input_chat, types.InputPeerChat):
+                    if allow_in_old_fashioned_groups:
+                        # old-fashioned groups lacks of permission management, no need to check
+                        await execute()
+                        raise events.StopPropagation
                     # oops, the group hasn't been migrated to a supergroup. a migration is needed
-                    await event.respond('\n\n'.join(i18n.get_all_l10n_string('group_upgrade_needed_prompt')))
+                    guide_msg, guide_buttons = get_group_migration_help_msg(lang)
+                    await event.respond(guide_msg, buttons=guide_buttons)
                     logger.warning(f'Refused {describe_user()} to use {command} '
                                    f'because a group migration to supergroup is needed')
                     raise events.StopPropagation
@@ -407,7 +420,16 @@ class AddedToGroupAction(events.ChatAction):
 
 
 class GroupMigratedAction(events.ChatAction):
-    """Chat actions that are triggered when a group has been migrated to a supergroup."""
+    """
+    Chat actions that are triggered when a group has been migrated to a supergroup.
+
+    After a group migration, below updates will be sent:
+    UpdateChannel(*),
+    UpdateNewChannelMessage(message=MessageService(action=MessageActionChannelMigrateFrom(*)),
+    UpdateNewChannelMessage(message=MessageService(action=MessageActionChatMigrateTo(*))
+
+    This class only listens to the latest one.
+    """
 
     @classmethod
     def build(cls, update, others=None, self_id=None):
@@ -515,3 +537,15 @@ async def send_success_and_failure_msg(message: Union[Message, events.NewMessage
             if i < 3:
                 continue
             raise e
+
+
+def get_group_migration_help_msg(lang: Optional[str] = None) \
+        -> tuple[str, tuple[tuple[types.KeyboardButtonCallback, ...], ...]]:
+    msg = i18n[lang]['group_upgrade_needed_prompt']
+    buttons = inner.utils.arrange_grid(
+        (
+            Button.inline(i18n[_lang]['lang_native_name'], data=f'get_group_migration_help_{_lang}')
+            for _lang in ALL_LANGUAGES if _lang != lang
+        ),
+        columns=3)
+    return msg, buttons

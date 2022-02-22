@@ -9,8 +9,10 @@ from zlib import crc32
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
-from src import db
+from src import db, log
 from src.i18n import i18n
+
+logger = log.getLogger('RSStT.command')
 
 
 def get_hash(string: AnyStr) -> str:
@@ -24,6 +26,12 @@ def filter_urls(urls: Optional[Iterable[str]]) -> tuple[str, ...]:
         return tuple()
 
     return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls))
+
+
+# copied from command.utils
+def escape_html(raw: Any) -> str:
+    raw = str(raw)
+    return raw.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
 def get_http_caching_headers(headers: Optional[Mapping]) -> dict[str, Optional[Union[str, datetime]]]:

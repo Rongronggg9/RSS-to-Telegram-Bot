@@ -115,18 +115,18 @@ async def pre():
                           events.NewMessage(pattern='/set([^_]|$)'))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
-    bot.add_event_handler(command.management.cmd_start,
+    bot.add_event_handler(command.misc.cmd_start,
                           events.NewMessage(pattern='/start'))
-    bot.add_event_handler(command.management.cmd_or_callback_help,
+    bot.add_event_handler(command.misc.cmd_or_callback_help,
                           events.NewMessage(pattern='/help'))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=True),
                           events.NewMessage(pattern='/activate_subs'))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=False),
                           events.NewMessage(pattern='/deactivate_subs'))
-    bot.add_event_handler(command.management.cmd_version,
-                          events.NewMessage(pattern='/version'))
-    bot.add_event_handler(command.management.cmd_lang,
+    bot.add_event_handler(command.misc.cmd_lang,
                           events.NewMessage(pattern='/lang'))
+    bot.add_event_handler(command.misc.cmd_version,
+                          events.NewMessage(pattern='/version'))
     bot.add_event_handler(command.administration.cmd_test,
                           events.NewMessage(pattern='/test'))
     bot.add_event_handler(command.administration.cmd_set_option,
@@ -136,6 +136,8 @@ async def pre():
                           events.CallbackQuery(data='null'))
     bot.add_event_handler(command.misc.callback_cancel,
                           events.CallbackQuery(data='cancel'))
+    bot.add_event_handler(command.misc.callback_get_group_migration_help,
+                          events.CallbackQuery(pattern=r'^get_group_migration_help_[\w_\-]+$'))
     bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,
                           events.CallbackQuery(pattern=r'^get_list_page_\d+$'))
     bot.add_event_handler(command.sub.callback_unsub,
@@ -144,14 +146,14 @@ async def pre():
                           events.CallbackQuery(pattern=r'^get_unsub_page_\d+$'))
     bot.add_event_handler(command.sub.cmd_or_callback_unsub_all,
                           events.CallbackQuery(data='unsub_all'))
-    bot.add_event_handler(command.management.callback_set_lang,
+    bot.add_event_handler(command.misc.callback_set_lang,
                           events.CallbackQuery(pattern=r'^set_lang_[\w_\-]+$'))
-    bot.add_event_handler(command.management.cmd_or_callback_help,
-                          events.CallbackQuery(pattern=r'^help$'))
+    bot.add_event_handler(command.misc.cmd_or_callback_help,
+                          events.CallbackQuery(data='help'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_all_subs, activate=True),
-                          events.CallbackQuery(pattern=r'^activate_all_subs$'))
+                          events.CallbackQuery(data='activate_all_subs'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_all_subs, activate=False),
-                          events.CallbackQuery(pattern=r'^deactivate_all_subs$'))
+                          events.CallbackQuery(data='deactivate_all_subs'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_sub, activate=True),
                           events.CallbackQuery(pattern=r'^activate_sub_\d+(\|\d+)$'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_sub, activate=False),
@@ -165,9 +167,9 @@ async def pre():
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
                           events.CallbackQuery(pattern=r'^get_set_page_\d+$'))
     # being added to a group handler
-    bot.add_event_handler(command.management.cmd_start,
+    bot.add_event_handler(command.misc.cmd_start,
                           command.utils.AddedToGroupAction())
-    bot.add_event_handler(command.management.cmd_start,
+    bot.add_event_handler(command.misc.cmd_start,
                           command.utils.GroupMigratedAction())
 
 

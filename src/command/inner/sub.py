@@ -9,8 +9,7 @@ from bs4.element import Tag
 
 from src import db, web
 from src.i18n import i18n
-from ..utils import logger, escape_html
-from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls
+from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()

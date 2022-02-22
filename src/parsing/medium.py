@@ -134,9 +134,9 @@ class Image(Medium):
         if not serverParser(self.chosen_url):  # is not a weibo img
             return await super().change_server()
 
+        self._server_change_count += 1
         if self._server_change_count >= 4:
             return False
-        self._server_change_count += 1
         parsed = serverParser(self.chosen_url).groupdict()
         new_server_id = int(parsed['server_id']) + 1
         if new_server_id > 4:

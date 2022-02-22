@@ -36,9 +36,9 @@ docker-compose up -d
 
 > Uncheck the checkbox `Private repo?`! Or you are not able to update with ease.
 
-| master                                          | dev                                       |
-|-------------------------------------------------|-------------------------------------------|
-| [![Deploy on Railway (master)][button]][master] | [![Deploy on Railway (dev)][button]][dev] |
+|                      master                       |                     dev                     |
+|:-------------------------------------------------:|:-------------------------------------------:|
+|  [![Deploy on Railway (master)][button]][master]  |  [![Deploy on Railway (dev)][button]][dev]  |
 
 [button]: https://railway.app/button.svg
 
@@ -52,12 +52,13 @@ Turn to your GitHub repository and switch to the branch you've deployed, then cl
 
 ## Option 3: Dirty run
 
-Python 3.7+
+Minimal: Python 3.7+  
+Recommended: Python 3.9+
 
 ```sh
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git
 cd RSS-to-Telegram-Bot
 pip3 install -r requirements.txt
-vi .env # fill in env variables
+vi .env  # fill in env variables
 python3 -u telegramRSSbot.py
 ```

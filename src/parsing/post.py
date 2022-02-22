@@ -49,6 +49,14 @@ warnings.warn = warnings.original_warn
 stripNewline = re.compile(r'\n{3,}', )
 stripLineEnd = re.compile(r'[ \t\xa0]+\n')
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
+srcsetParser = re.compile(r'(?:^|,\s*)'
+                          r'(?P<url>\S+)'  # allow comma here because it is valid in URL
+                          r'(?:\s+'
+                          r'(?P<number>\d+(\.\d+)?)'
+                          r'(?P<unit>[wx])'
+                          r')?'
+                          r'\s*'
+                          r'(?=,|$)').finditer  # e.g.: url,url 1x,url 2x,url 100w,url 200w
 fileReferenceNExpired = re.compile(r'FILE_REFERENCE_(?:\d_)?EXPIRED')
 
 # load emoji dict
@@ -447,35 +455,63 @@ class Post:
             return Link(await self._get_item(soup.children), href)
 
         if tag == 'img':
-            src, alt, _class, style = soup.get('src'), soup.get('alt', ''), soup.get('class', ''), soup.get('style', '')
-            if not src:
-                return None
+            src, srcset, alt, _class, style = \
+                soup.get('src'), soup.get('srcset'), soup.get('alt', ''), soup.get('class', ''), soup.get('style', '')
             if isSmallIcon(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')):
                 return Text(emojify(alt)) if alt else None
-            if not src.startswith('http'):
-                src = urljoin(self.feed_link, src)
-            if src.endswith('.gif'):
-                self.media.add(Animation(src))
-                return None
-            self.media.add(Image(src))
+            is_gif = src.endswith('.gif')
+            _multi_src = []
+            if srcset:
+                srcset_matches: list[dict[str, Union[int, str]]] = [{
+                    'url': match['url'],
+                    'number': float(match['number']) if match['number'] else 1,
+                    'unit': match['unit'] if match['unit'] else 'x'
+                } for match in (
+                    match.groupdict() for match in srcsetParser(srcset)
+                )] + ([{'url': src, 'number': 1, 'unit': 'x'}] if src else [])
+                if srcset_matches:
+                    srcset_matches_unit_w = [match for match in srcset_matches if match['unit'] == 'w']
+                    srcset_matches_unit_x = [match for match in srcset_matches if match['unit'] == 'x']
+                    srcset_matches_unit_w.sort(key=lambda match: float(match['number']), reverse=True)
+                    srcset_matches_unit_x.sort(key=lambda match: float(match['number']), reverse=True)
+                    while True:
+                        src_match_unit_w = srcset_matches_unit_w.pop(0) if srcset_matches_unit_w else None
+                        src_match_unit_x = srcset_matches_unit_x.pop(0) if srcset_matches_unit_x else None
+                        if not (src_match_unit_w or src_match_unit_x):
+                            break
+                        if src_match_unit_w:
+                            _multi_src.append(src_match_unit_w['url'])
+                        if src_match_unit_x:
+                            if float(src_match_unit_x['number']) <= 1 and srcset_matches_unit_w:
+                                srcset_matches_unit_x.insert(0, src_match_unit_x)
+                                continue  # let src using unit w win
+                            _multi_src.append(src_match_unit_x['url'])
+            else:
+                _multi_src.append(src) if src else None
+            multi_src = []
+            for _src in _multi_src:
+                if not isinstance(_src, str):
+                    continue
+                if not _src.startswith('http'):
+                    _src = urljoin(self.feed_link, _src)
+                multi_src.append(_src)
+            if multi_src:
+                self.media.add(Image(multi_src) if not is_gif else Animation(multi_src))
             return None
 
         if tag == 'video':
-            _src = soup.get('src')
+            src = soup.get('src')
             poster = soup.get('poster')
-            if _src:
-                _multi_src = [_src]
-            else:
-                _multi_src = [t['src'] for t in soup.find_all(name='source') if t.get('src')]
-            if not _multi_src:
-                return None
+            _multi_src = [t['src'] for t in soup.find_all(name='source') if t.get('src')]
+            if src:
+                _multi_src.append(src)
             multi_src = []
-            for src in _multi_src:
-                if not isinstance(src, str):
+            for _src in _multi_src:
+                if not isinstance(_src, str):
                     continue
-                if not src.startswith('http'):
-                    src = urljoin(self.feed_link, src)
-                multi_src.append(src)
+                if not _src.startswith('http'):
+                    _src = urljoin(self.feed_link, _src)
+                multi_src.append(_src)
             if multi_src:
                 self.media.add(Video(multi_src, poster=poster))
             return None

@@ -12,9 +12,24 @@
 
 <a href="https://t.me/RSStT_Bot"><img src="docs/resources/RSStT_icon.svg" width = "256" height = "256" alt="RSStT_icon"/><a/>
 
-Public bot [@RSStT_Bot](https://t.me/RSStT_Bot) | Telegram channel [@RSStT_Channel](https://t.me/RSStT_Channel) | Discussion group [@RSStT_Group](https://t.me/RSStT_Group)
+|   Public bot   |  Telegram channel  |  Discussion group  |
+|:--------------:|:------------------:|:------------------:|
+|  [@RSStT_Bot]  |  [@RSStT_Channel]  |   [@RSStT_Group]   |
 
-[CHANGELOG](docs/CHANGELOG.md) | [Documentation](docs/README.md)
+| [CHANGELOG] | [Documentation] | [Channels Using RSStT] |
+|:-----------:|:---------------:|:----------------------:|
+
+[@RSStT_Bot]: https://t.me/RSStT_Bot
+
+[@RSStT_Channel]: https://t.me/RSStT_Channel
+
+[@RSStT_Group]: https://t.me/RSStT_Group
+
+[CHANGELOG]: docs/CHANGELOG.md
+
+[Documentation]: docs
+
+[Channels Using RSStT]: docs/channels-using-rsstt.md
 
 [![Deploy on Railway](https://railway.app/button.svg)](docs/deployment-guide.md#option-2-railwayapp)
 
@@ -58,6 +73,15 @@ Read the translation guide [here](docs/translation-guide.md).
 You can help to translate the bot using [Hosted Weblate](https://hosted.weblate.org/projects/rss-to-telegram-bot/). Special thanks to their free hosting service for libre projects!
 
 <a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
+
+## Using the public bot
+
+The [public bot](https://t.me/RSStT_Bot) comes with absolutely no warranty. I will try my best to maintain it, but I cannot guarantee that it will always work perfectly. Meanwhile, you should "fair use" the bot, avoid subscribing to too many RSS feeds.  
+If you use the [public bot](https://t.me/RSStT_Bot) in your Channel, consider mentioning the bot (or this project) in your channel description (or pinned message) to let more people know about it. That's not a compulsion.
+
+## Known channels using RSStT
+
+Want to preview what the messages sent by RSStT look like? Here is a [list of channels using RSStT](docs/channels-using-rsstt.md).
 
 ## License
 

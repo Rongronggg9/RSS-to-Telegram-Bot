@@ -19,3 +19,9 @@
 ### **Q**: Why do I still receive notifications even if I mute the subscription?
 
 **A**: "Muted" notification is not aimed to disable the notifications, but to **make the notifications with no sound**. Due to the limitation of Telegram, disabling notifications completely on the sender side is not possible.
+
+### **Q**: I want my bot to serve me only. What should I do?
+
+Set the env variable `MULTIUSER` to `0`.  
+However, if you need to use the bot in a channel, you cannot switch off the multi-user mode for the moment. As a temporary workaround, you may first switch on the multi-user mode, subscribe to the feeds you like in your channel, and then switch off the multi-user mode.    
+Using the bot in a group is possible even if you don't have the multi-user mode enabled, as long as you are an administrator of the group. [Make sure that the bot can identify you](FAQ.md#q-how-to-use-the-bot-in-my-channel-or-group), especially if you are an anonymous administrator of the group.

@@ -12,9 +12,24 @@
 
 <a href="https://t.me/RSStT_Bot"><img src="docs/resources/RSStT_icon.svg" width = "256" height = "256" alt="RSStT_icon"/><a/>
 
-公共 bot [@RSStT_Bot](https://t.me/RSStT_Bot) | Telegram 频道 [@RSStT_Channel](https://t.me/RSStT_Channel) | 讨论群组 [@RSStT_Group](https://t.me/RSStT_Group)
+|     公共 bot     |    Telegram 频道     |       讨论群组        |
+|:--------------:|:------------------:|:-----------------:|
+|  [@RSStT_Bot]  |  [@RSStT_Channel]  |  [@RSStT_Group]   |
 
-[更新日志](docs/CHANGELOG.zh.md) | [文档](docs/README.md)
+|  [更新日志]  |  [文档]  | [使用 RSStT 的频道] |
+|:--------:|:------:|:--------------:|
+
+[@RSStT_Bot]: https://t.me/RSStT_Bot
+
+[@RSStT_Channel]: https://t.me/RSStT_Channel
+
+[@RSStT_Group]: https://t.me/RSStT_Group
+
+[更新日志]: docs/CHANGELOG.zh.md
+
+[文档]: docs
+
+[使用 RSStT 的频道]: docs/channels-using-rsstt.md
 
 [![Deploy on Railway](https://railway.app/button.svg)](docs/deployment-guide.md#option-2-railwayapp)
 
@@ -59,6 +74,15 @@
 
 <a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
 
+## 使用公共 bot
+
+[公共 bot](https://t.me/RSStT_Bot) 没有服务保障。我会尽我所能维护它，但不能保证它永远完美运作。同时，你应该遵循“公平使用”，避免订阅过多 RSS 源。  
+如果你在频道里使用[公共 bot](https://t.me/RSStT_Bot) ，请考虑在频道简介 (或置顶消息) 里提及这个 bot (或这个项目)，来让更多人了解本项目。这不是强制的。
+
+## 使用 RSStT 的频道
+
+想要预览 RSStT 发送的消息的模样吗？这里有一个[使用 RSStT 的频道列表](docs/channels-using-rsstt.md)
+
 ## 许可证
 
-本项目使用的是 [AGPLv3 许可证](LICENSE)。严禁闭源的分发或机器人托管。如果您修改了代码并分发或托管它，请确保任何可以使用您的 bot 的用户都可以获得源代码 (通过在 [`src/i18n/__init__.py`](src/i18n/__init__.py) 中编辑仓库 URL)。
+本项目使用的是 [AGPLv3 许可证](LICENSE)。严禁闭源的分发或机器人托管。如果你修改了代码并分发或托管它，请确保任何可以使用你的 bot 的用户都可以获得源代码 (通过在 [`src/i18n/__init__.py`](src/i18n/__init__.py) 中编辑仓库 URL)。

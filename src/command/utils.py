@@ -11,12 +11,12 @@ from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, QueryIdInvalidError, \
-    UserIsBlockedError, ChatWriteForbiddenError, UserIdInvalidError, ChannelPrivateError, EntitiesTooLongError, \
-    MessageTooLongError
+    EntitiesTooLongError, MessageTooLongError
 
 from src import env, log, db, locks
 from src.i18n import i18n, ALL_LANGUAGES
 from . import inner
+from src.exceptions import UserBlockedErrors
 
 logger = log.getLogger('RSStT.command')
 
@@ -90,7 +90,7 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
             pass  # wait for flood wait
 
         await event.respond(msg, *args, **kwargs)
-    except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError):
+    except UserBlockedErrors:
         pass  # silently ignore
 
 

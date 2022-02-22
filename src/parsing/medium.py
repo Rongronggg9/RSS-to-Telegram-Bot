@@ -16,19 +16,19 @@ PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 logger = log.getLogger('RSStT.medium')
 
-weibo_sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
-weibo_size_parser = re.compile(r'(?P<domain>^https?://wx\d\.sinaimg\.\w+/)'
-                               r'(?P<size>\w+)'
-                               r'(?P<filename>/\w+\.\w+$)').match
+sinaimg_sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
+sinaimg_size_parser = re.compile(r'(?P<domain>^https?://wx\d\.sinaimg\.\w+/)'
+                                 r'(?P<size>\w+)'
+                                 r'(?P<filename>/\w+\.\w+$)').match
 pixiv_sizes = ['original', 'master']
 pixiv_size_parser = re.compile(r'(?P<url_prefix>^https?://i\.pixiv\.(cat|re)/img-)'
                                r'(?P<size>\w+)'
                                r'(?P<url_infix>/img/\d{4}/(\d{2}/){5})'
                                r'(?P<filename>\d+_p\d+)'
                                r'(?P<file_ext>\.\w+$)').match
-weibo_server_parser = re.compile(r'(?P<url_prefix>^https?://wx)'
-                                 r'(?P<server_id>\d)'
-                                 r'(?P<url_suffix>\.sinaimg\.\S+$)').match
+sinaimg_server_parser = re.compile(r'(?P<url_prefix>^https?://wx)'
+                                   r'(?P<server_id>\d)'
+                                   r'(?P<url_suffix>\.sinaimg\.\S+$)').match
 isTelegramCannotFetch = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
 
 IMAGE: Final = 'image'
@@ -120,14 +120,14 @@ class Image(Medium):
         super().__init__(url)
         new_urls = []
         for url in self.urls:
-            sinaimg_match = weibo_size_parser(url)
+            sinaimg_match = sinaimg_size_parser(url)
             pixiv_match = pixiv_size_parser(url)
             if not any([sinaimg_match, pixiv_match]):
                 new_urls.append(url)
                 continue
             if sinaimg_match:
-                parsed_sinaimg = sinaimg_match.groupdict()  # is a weibo img
-                for size_name in weibo_sizes:
+                parsed_sinaimg = sinaimg_match.groupdict()  # is a sinaimg img
+                for size_name in sinaimg_sizes:
                     new_url = parsed_sinaimg['domain'] + size_name + parsed_sinaimg['filename']
                     if new_url not in new_urls:
                         new_urls.append(new_url)
@@ -135,9 +135,8 @@ class Image(Medium):
                 parsed_pixiv = pixiv_match.groupdict()  # is a pixiv img
                 for size_name in pixiv_sizes:
                     new_url = parsed_pixiv['url_prefix'] + size_name + parsed_pixiv['url_infix'] \
-                              + parsed_pixiv['filename'] + parsed_pixiv['file_ext']
-                    if size_name == "master":
-                        new_url = new_url.replace(parsed_pixiv['file_ext'], '_master1200.jpg')
+                              + parsed_pixiv['filename'] \
+                              + ('_master1200.jpg' if size_name == 'master' else parsed_pixiv['file_ext'])
                     if new_url not in new_urls:
                         new_urls.append(new_url)
             if url not in new_urls:
@@ -148,13 +147,14 @@ class Image(Medium):
         return InputMediaPhotoExternal(self.chosen_url)
 
     async def change_server(self):
-        if not weibo_server_parser(self.chosen_url):  # is not a weibo img
+        sinaimg_server_match = sinaimg_server_parser(self.chosen_url)
+        if not sinaimg_server_match:  # is not a sinaimg img
             return await super().change_server()
 
         self._server_change_count += 1
         if self._server_change_count >= 4:
             return False
-        parsed = weibo_server_parser(self.chosen_url).groupdict()
+        parsed = sinaimg_server_match.groupdict()
         new_server_id = int(parsed['server_id']) + 1
         if new_server_id > 4:
             new_server_id = 1

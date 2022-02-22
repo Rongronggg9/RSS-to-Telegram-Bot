@@ -48,7 +48,11 @@ class Medium:
     max_size = MEDIA_MAX_SIZE
 
     def __init__(self, urls: Union[str, list[str]]):
-        self.urls: list[str] = urls if isinstance(urls, list) else [urls]
+        urls = urls if isinstance(urls, list) else [urls]
+        self.urls: list[str] = []
+        for url in urls:  # dedup, should not use a set because sequence is important
+            if url not in self.urls:
+                self.urls.append(url)
         self.original_urls: tuple[str, ...] = tuple(self.urls)
         self.chosen_url: Optional[str] = self.urls[0]
         self.valid: Optional[bool] = None

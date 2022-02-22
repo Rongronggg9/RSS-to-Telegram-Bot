@@ -25,9 +25,6 @@ from telethon.errors.rpcerrorlist import (
     WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, FileReferenceExpiredError,
     BadRequestError,  # only FILE_REFERENCE_\d_EXPIRED
 
-    # errors caused by lack of permission
-    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
-
     # errors caused by too much entity data
     EntitiesTooLongError
 )
@@ -36,6 +33,7 @@ from src import env, message, log, web
 from src.parsing import tgraph
 from src.parsing.medium import Video, Image, Media, Animation, VIDEO, IMAGE, ANIMATION, MEDIA_GROUP
 from src.parsing.html_text import *
+from src.exceptions import UserBlockedErrors
 
 logger = log.getLogger('RSStT.post')
 
@@ -189,7 +187,7 @@ class Post:
                     await self.generate_message()
                 continue
 
-            except (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError) as e:
+            except UserBlockedErrors as e:
                 raise e  # let monitoring task to deal with it
 
             # errors caused by server instability or network instability between img server and telegram server

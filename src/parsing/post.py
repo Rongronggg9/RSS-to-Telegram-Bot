@@ -57,7 +57,7 @@ srcsetParser = re.compile(r'(?:^|,\s*)'
                           r')?'
                           r'\s*'
                           r'(?=,|$)').finditer  # e.g.: url,url 1x,url 2x,url 100w,url 200w
-fileReferenceNExpired = re.compile(r'FILE_REFERENCE_(?:\d_)?EXPIRED')
+isFileReferenceNExpired = re.compile(r'FILE_REFERENCE_(?:\d_)?EXPIRED').search
 
 # load emoji dict
 with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
@@ -162,23 +162,43 @@ class Post:
             return
 
         tries = 0
-        file_reference_expired_flag = False
-        e = None  # placeholder
+        max_tries = 10
+        last_try = False
+        server_change_count = 0
+        media_fallback_count = 0
+        invalidate_count = 0
+        useless_invalidate_count = 0
+        err_list = []
         while True:
-            if tries >= 5:
-                logger.error(f'Sending {self.link} failed (feed: {self.feed_link}, user: {chat_id}) after {tries} tries'
-                             f'{", w/ `FileReferenceError` occurred" * file_reference_expired_flag}. '
-                             f'Sometimes it means that there may be some bugs in the code :(', exc_info=e)
-                break
+            if not (invalidate_count or useless_invalidate_count) and tries > max_tries and not last_try:
+                last_try = True  # try the last time
+            elif last_try or invalidate_count > 1 or useless_invalidate_count > 0 or tries > max_tries:
+                logger.error(
+                    f'Sending {self.link} failed (feed: {self.feed_link}, user: {chat_id}). \n'
+                    f'Counters: [tries={tries}, server_change_count={server_change_count}, '
+                    f'media_fallback_count={media_fallback_count}, invalidate_count={invalidate_count}, '
+                    f'useless_invalidate_count={useless_invalidate_count}]. \n'
+                    f'Errors: {err_list}'
+                    + (
+                        f'\nSometimes it means that there may be some bugs in the code :('
+                        if (
+                                last_try or invalidate_count > 1 or useless_invalidate_count > 0
+                                or sum((server_change_count, media_fallback_count,
+                                        invalidate_count, useless_invalidate_count)) != tries
+                        ) else ''
+                    )
+                )
+                return
             tries += 1
 
             try:
                 for msg in self.messages:
                     await msg.send(chat_id, reply_to_msg_id, silent)
-                break
+                return
 
             # errors caused by too much entity data
-            except EntitiesTooLongError:
+            except EntitiesTooLongError as e:
+                err_list.append(e)
                 await self.generate_message(force_telegraph=True)
                 await self.telegraph_post.send_message(chat_id, reply_to_msg_id, silent)
                 return
@@ -187,36 +207,58 @@ class Post:
             except (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
                     PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
                     GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
-                    VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as err:
-                e = err
-                if await self.invalidate_all_media():
-                    logger.debug(f'All media was set invalid because some of them are invalid '
+                    VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as e:
+                err_list.append(e)
+                if not last_try and await self.fallback_media():
+                    logger.debug(f'Media fall backed because some of them are invalid '
                                  f'({e.__class__.__name__}): {self.link}')
                     await self.generate_message()
+                    media_fallback_count += 1
+                else:
+                    if await self.fallback_media(force_invalidate_all=True):
+                        logger.debug(f'All media was set invalid because some of them are invalid '
+                                     f'({e.__class__.__name__}): {self.link}')
+                        await self.generate_message()
+                        invalidate_count += 1
+                    else:
+                        useless_invalidate_count += 1
                 continue
 
             except UserBlockedErrors as e:
+                err_list.append(e)
                 raise e  # let monitoring task to deal with it
 
             # errors caused by server instability or network instability between img server and telegram server
-            except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as err:
-                e = err
-                if await self.media.change_all_server():
+            except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
+                err_list.append(e)
+                if not last_try and await self.media.change_all_server():
                     logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
                                  f'Changed img server and retrying: {self.link}')
-                elif await self.invalidate_all_media():
-                    logger.debug(f'All media was set invalid '
+                    server_change_count += 1
+                elif not last_try and await self.fallback_media():
+                    logger.debug(f'Media fall backed '
                                  f'because Telegram still cannot fetch some media after changing img server '
                                  f'({e.__class__.__name__}): {self.link}')
                     await self.generate_message()
+                    media_fallback_count += 1
+                else:
+                    if await self.fallback_media(force_invalidate_all=True):
+                        logger.debug(f'All media was set invalid '
+                                     f'because Telegram still cannot fetch some media after changing img server '
+                                     f'({e.__class__.__name__}): {self.link}')
+                        await self.generate_message()
+                        invalidate_count += 1
+                    else:
+                        useless_invalidate_count += 1
                 continue
 
-            except Exception as err:
-                e = err
-                if type(e) == FileReferenceExpiredError \
-                        or (type(e) == BadRequestError and fileReferenceNExpired.search(str(e))):
-                    file_reference_expired_flag = True
+            except Exception as e:
+                if isinstance(e, FileReferenceExpiredError) \
+                        or (type(e) == BadRequestError and isFileReferenceNExpired(str(e))):
+                    err_list.append(e if isinstance(e, FileReferenceExpiredError)
+                                    else FileReferenceExpiredError(e.request))
                     continue
+                err_list.append(e)
                 logger.warning(f'Sending {self.link} failed (feed: {self.feed_link}, user: {chat_id}): ', exc_info=e)
                 error_message = Post(f'Something went wrong while sending this message '
                                      f'(feed: {self.feed_link}, user: {chat_id}). '
@@ -225,7 +267,7 @@ class Post:
                                      self.title, self.feed_title, self.link, self.author, feed_link=self.feed_link,
                                      service_msg=True)
                 await error_message.send_message(env.MANAGER)
-                break
+                return
 
     async def telegraph_ify(self):
         try:
@@ -333,8 +375,8 @@ class Post:
 
         return len(self.messages)
 
-    async def invalidate_all_media(self):
-        if not await self.media.invalidate_all():
+    async def fallback_media(self, force_invalidate_all: bool = False) -> bool:
+        if not (await self.media.fallback_all() if not force_invalidate_all else self.media.invalidate_all()):
             return False
         self.text = self.origin_text.copy()
         self._add_metadata()

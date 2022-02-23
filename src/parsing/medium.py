@@ -68,17 +68,16 @@ class Medium:
     def get_url(self):
         return self.chosen_url
 
-    async def invalidate(self) -> bool:
-        if self.valid:
-            self.valid = False
-            return True
-        return False
-
-    async def validate(self):
-        if self.valid is not None:  # already validated
+    async def validate(self, force: bool = False):
+        if self.valid is not None and not force:  # already validated
             return
 
-        for url in self.urls:
+        if not self.urls:
+            self.valid = False
+            return
+
+        while self.urls:
+            url = self.urls.pop(0)
             medium_info = await get_medium_info(url, medium_type=self.type)
             if medium_info is None:
                 continue
@@ -86,6 +85,7 @@ class Medium:
 
             if self.valid:
                 self.chosen_url = url
+                self._server_change_count = 0
                 if isTelegramCannotFetch(self.chosen_url):
                     await self.change_server()
                 return
@@ -94,6 +94,13 @@ class Medium:
 
         logger.debug(f'Dropped medium {self.chosen_url}: invalid or fetch failed')
         self.valid = False
+
+    async def fallback(self) -> bool:
+        urls_len = len(self.urls)
+        formerly_valid = self.valid
+        if self.valid:
+            await self.validate(force=True)
+        return self.valid != formerly_valid or (self.valid and urls_len != len(self.urls))
 
     def __bool__(self):
         if self.valid is None:
@@ -156,7 +163,7 @@ class Image(Medium):
             return await super().change_server()
 
         self._server_change_count += 1
-        if self._server_change_count >= 4:
+        if self._server_change_count >= 1:
             return False
         parsed = sinaimg_server_match.groupdict()
         new_server_id = int(parsed['server_id']) + 1
@@ -174,8 +181,8 @@ class Video(Medium):
         self.poster: Optional[Union[str, Image]] = poster
         self.fallback_to_poster: bool = False
 
-    async def validate(self):
-        await super().validate()
+    async def validate(self, force: bool = False):
+        await super().validate(force=force)
         if not self.valid and self.poster is not None and isinstance(self.poster, str):
             self.poster = Image(self.poster)
             await self.poster.validate()
@@ -187,16 +194,15 @@ class Video(Medium):
     def telegramize(self):
         return InputMediaDocumentExternal(self.chosen_url)
 
-    async def invalidate(self) -> bool:
-        if self.valid:
-            self.valid = False
-            await self.validate()
-            return True
+    async def fallback(self) -> bool:
         if self.fallback_to_poster:
-            await self.poster.invalidate()
+            await self.poster.fallback()
             self.fallback_to_poster = False
+            self.valid = False
             return True
-        return False
+        fallback_flag = await super().fallback()
+        fallback_flag = fallback_flag or self.fallback_to_poster
+        return fallback_flag
 
 
 class Animation(Medium):
@@ -215,16 +221,24 @@ class Media:
             return
         self._media.append(medium)
 
-    async def invalidate_all(self) -> bool:
+    async def fallback_all(self) -> bool:
         if not self._media:
             return False
-        invalidated = False
+        fallback_flag = False
         for medium in self._media:
-            if await medium.invalidate():
-                invalidated = True
-        if invalidated:
+            if await medium.fallback():
+                fallback_flag = True
+        if fallback_flag:
             self.video_fallback_to_poster()
-        return invalidated
+        return fallback_flag
+
+    def invalidate_all(self) -> bool:
+        invalidated_some_flag = False
+        for medium in self._media:
+            if medium.valid:
+                medium.valid = False
+                invalidated_some_flag = True
+        return invalidated_some_flag
 
     async def validate(self):
         if not self._media:

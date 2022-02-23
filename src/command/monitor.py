@@ -224,14 +224,12 @@ async def __notify_all(feed: db.Feed, entry: MutableMapping):
     if not subs:  # nobody has subbed it
         await update_interval(feed)
     post = get_post_from_entry(entry, feed.title, feed.link)
-    await post.generate_message()
     await asyncio.gather(
         *(__send(sub, post) for sub in subs)
     )
 
 
 async def __send(sub: db.Sub, post: Union[str, Post]):
-    # TODO: customized format
     user_id = sub.user_id
     try:
         try:
@@ -241,7 +239,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
         if isinstance(post, str):
             await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
             return
-        await post.send_message(user_id, silent=not sub.notify)
+        await post.send_formatted_post_according_to_sub(sub)
         if __user_blocked_counter[user_id]:  # reset the counter if success
             del __user_blocked_counter[user_id]
     except UserBlockedErrors as e:

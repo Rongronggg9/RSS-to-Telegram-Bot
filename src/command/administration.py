@@ -58,6 +58,11 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         return
     url = args[1]
 
+    all_format = False
+    if args[-1] == 'all_format':
+        args.pop()
+        all_format = True
+
     if len(args) > 2 and args[2] == 'all':
         start = 0
         end = None
@@ -90,7 +95,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         entries_to_send = rss_d.entries[start:end]
 
         await asyncio.gather(
-            *(__send(uid, entry, rss_d.feed.title, url) for entry in entries_to_send)
+            *(__send(uid, entry, rss_d.feed.title, url, in_all_format=all_format) for entry in entries_to_send)
         )
 
     except Exception as e:
@@ -99,8 +104,10 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         return
 
 
-async def __send(uid, entry, feed_title, link):
+async def __send(uid, entry, feed_title, link, in_all_format: bool = False):
     post = get_post_from_entry(entry, feed_title, link)
-    await post.generate_message()
     logger.debug(f"Sending {entry['title']} ({entry['link']})...")
-    await post.send_message(uid)
+    if not in_all_format:
+        await post.send_formatted_post(uid)
+        return
+    await post.test_all_format(uid)

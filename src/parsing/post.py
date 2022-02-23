@@ -497,9 +497,15 @@ class Post:
             return Link(await self._get_item(soup.children), href)
 
         if tag == 'img':
-            src, srcset, alt, _class, style = \
-                soup.get('src'), soup.get('srcset'), soup.get('alt', ''), soup.get('class', ''), soup.get('style', '')
-            if isSmallIcon(style) or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')):
+            src, srcset = soup.get('src'), soup.get('srcset')
+            if not (src or srcset):
+                return None
+            alt, _class = soup.get('alt', ''), soup.get('class', '')
+            style, width, height = soup.get('style', ''), soup.get('width', ''), soup.get('height', '')
+            width = int(width) if width and width.isdigit() else float('inf')
+            height = int(height) if height and height.isdigit() else float('inf')
+            if width <= 30 or height <= 30 or isSmallIcon(style) \
+                    or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')):
                 return Text(emojify(alt)) if alt else None
             is_gif = src.endswith('.gif')
             _multi_src = []

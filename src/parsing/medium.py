@@ -46,8 +46,11 @@ MEDIA_MAX_SIZE: Final = 20971520
 class Medium:
     type = MEDIUM_BASE_CLASS
     max_size = MEDIA_MAX_SIZE
+    # noinspection PyTypeChecker
+    type_fallback_to: Optional[type[Medium]] = None
+    type_fallback_allow_self_urls: bool = False
 
-    def __init__(self, urls: Union[str, list[str]]):
+    def __init__(self, urls: Union[str, list[str]], type_fallback_urls: Optional[Union[str, list[str]]] = None):
         urls = urls if isinstance(urls, list) else [urls]
         self.urls: list[str] = []
         for url in urls:  # dedup, should not use a set because sequence is important
@@ -58,6 +61,12 @@ class Medium:
         self.valid: Optional[bool] = None
         self._server_change_count: int = 0
         self.size = self.width = self.height = None
+        self.valid_urls: list[str] = []  # use for fallback if type_fallback_allow_self_urls
+        self.type_fallback_urls: list[str] = type_fallback_urls if isinstance(type_fallback_urls, list) \
+            else [type_fallback_urls] if type_fallback_urls and isinstance(type_fallback_urls, str) \
+            else []  # use for fallback if not type_fallback_allow_self_urls
+        self.type_fallback_medium: Optional[Medium] = None
+        self.need_type_fallback: bool = False
 
     def telegramize(self):
         raise NotImplementedError
@@ -72,10 +81,6 @@ class Medium:
         if self.valid is not None and not force:  # already validated
             return
 
-        if not self.urls:
-            self.valid = False
-            return
-
         while self.urls:
             url = self.urls.pop(0)
             medium_info = await get_medium_info(url, medium_type=self.type)
@@ -84,6 +89,7 @@ class Medium:
             self.size, self.width, self.height, self.valid = medium_info
 
             if self.valid:
+                self.valid_urls.append(url)
                 self.chosen_url = url
                 self._server_change_count = 0
                 if isTelegramCannotFetch(self.chosen_url):
@@ -92,15 +98,32 @@ class Medium:
 
             # TODO: reduce non-weibo pic size
 
-        logger.debug(f'Dropped medium {self.chosen_url}: invalid or fetch failed')
+        logger.debug(f'Dropped medium {self.original_urls[0]}: invalid or fetch failed')
         self.valid = False
 
+        fallback_urls = self.type_fallback_urls + (self.valid_urls if self.type_fallback_allow_self_urls else [])
+        if not self.valid and self.type_fallback_medium is None and fallback_urls and self.type_fallback_to:
+            self.type_fallback_medium = self.type_fallback_to(fallback_urls)
+            await self.type_fallback_medium.validate()
+            if self.type_fallback_medium.valid:
+                self.need_type_fallback = True
+                self.type_fallback_medium.type = self.type
+                self.type_fallback_medium.original_urls = self.original_urls
+
     async def fallback(self) -> bool:
+        if self.need_type_fallback:
+            if not await self.type_fallback_medium.fallback():
+                self.need_type_fallback = False
+                self.valid = False
+                return True
         urls_len = len(self.urls)
         formerly_valid = self.valid
-        if self.valid:
+        if formerly_valid:
             await self.validate(force=True)
-        return self.valid != formerly_valid or (self.valid and urls_len != len(self.urls))
+        fallback_flag = (self.valid != formerly_valid
+                         or (self.valid and urls_len != len(self.urls))
+                         or self.need_type_fallback)
+        return fallback_flag
 
     def __bool__(self):
         if self.valid is None:
@@ -126,6 +149,7 @@ class Medium:
 class Image(Medium):
     type = IMAGE
     max_size = IMAGE_MAX_SIZE
+    type_fallback_to = None
 
     def __init__(self, url: Union[str, list[str]]):
         super().__init__(url)
@@ -175,38 +199,16 @@ class Image(Medium):
 
 class Video(Medium):
     type = VIDEO
-
-    def __init__(self, url: Union[str, list[str]], poster: Optional[str] = None):
-        super().__init__(url)
-        self.poster: Optional[Union[str, Image]] = poster
-        self.fallback_to_poster: bool = False
-
-    async def validate(self, force: bool = False):
-        await super().validate(force=force)
-        if not self.valid and self.poster is not None and isinstance(self.poster, str):
-            self.poster = Image(self.poster)
-            await self.poster.validate()
-            if self.poster.valid:  # valid
-                self.fallback_to_poster = True
-                self.poster.type = VIDEO
-                self.poster.original_urls = self.original_urls
+    type_fallback_to = Image
 
     def telegramize(self):
         return InputMediaDocumentExternal(self.chosen_url)
 
-    async def fallback(self) -> bool:
-        if self.fallback_to_poster:
-            await self.poster.fallback()
-            self.fallback_to_poster = False
-            self.valid = False
-            return True
-        fallback_flag = await super().fallback()
-        fallback_flag = fallback_flag or self.fallback_to_poster
-        return fallback_flag
 
-
-class Animation(Medium):
+class Animation(Image):
     type = ANIMATION
+    type_fallback_to = Image
+    type_fallback_allow_self_urls = True
 
     def telegramize(self):
         return InputMediaDocumentExternal(self.chosen_url)
@@ -251,8 +253,8 @@ class Media:
             return
         new_media_list = []
         for medium in self._media:
-            if isinstance(medium, Video) and medium.fallback_to_poster:
-                new_media_list.append(medium.poster)
+            if medium.type_fallback_to and medium.need_type_fallback and medium.type_fallback_medium:
+                new_media_list.append(medium.type_fallback_medium)
                 continue
             new_media_list.append(medium)
         self._media = new_media_list

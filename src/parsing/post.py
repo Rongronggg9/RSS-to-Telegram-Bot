@@ -507,7 +507,6 @@ class Post:
             if width <= 30 or height <= 30 or isSmallIcon(style) \
                     or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')):
                 return Text(emojify(alt)) if alt else None
-            is_gif = src.endswith('.gif')
             _multi_src = []
             if srcset:
                 srcset_matches: list[dict[str, Union[int, str]]] = [{
@@ -537,11 +536,14 @@ class Post:
             else:
                 _multi_src.append(src) if src else None
             multi_src = []
+            is_gif = False
             for _src in _multi_src:
                 if not isinstance(_src, str):
                     continue
                 if not _src.startswith('http'):
                     _src = urljoin(self.feed_link, _src)
+                if urlparse(_src).path.endswith('.gif'):
+                    is_gif = True
                 multi_src.append(_src)
             if multi_src:
                 self.media.add(Image(multi_src) if not is_gif else Animation(multi_src))
@@ -561,7 +563,7 @@ class Post:
                     _src = urljoin(self.feed_link, _src)
                 multi_src.append(_src)
             if multi_src:
-                self.media.add(Video(multi_src, poster=poster))
+                self.media.add(Video(multi_src, type_fallback_urls=poster))
             return None
 
         if tag == 'b' or tag == 'strong':

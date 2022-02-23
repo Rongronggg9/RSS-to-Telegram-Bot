@@ -1,0 +1,156 @@
+from __future__ import annotations
+from typing import Union, Optional
+from collections.abc import Sequence
+
+from telethon.tl import types
+from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
+from telethon.extensions.html import unparse as html_unparse
+from asyncio import BoundedSemaphore, Lock
+from collections import defaultdict
+
+from src import log, env, locks
+from .medium import Media, TypeMessage, TypeMessageMedia, VIDEO, ANIMATION, MEDIA_GROUP
+from .splitter import html_to_telegram_split
+
+logger = log.getLogger('RSStT.message')
+
+
+class MessageDispatcher:
+    user_sending_lock = defaultdict(Lock)
+
+    def __init__(self,
+                 user_id: int,
+                 html: Optional[str] = None,
+                 media: Optional[Media] = None,
+                 link_preview: bool = False,
+                 silent: bool = False):
+        if not any((html, media)):
+            raise ValueError('At least one of html or media must be specified')
+        self.user_id = user_id
+        self.html = html
+        self.original_html = html
+        self.media = media
+        self.link_preview = link_preview
+        self.silent = silent
+
+        self.messages: list[Message] = []
+
+    async def generate_messages(self):
+        media_msg_count: int = 0
+        invalid_media_html: Optional[str] = None
+        media_and_types = None
+        if self.media:
+            media_and_types, invalid_media_html_node = await self.media.upload_all(self.user_id)
+            invalid_media_html = invalid_media_html_node.get_html() if invalid_media_html_node else None
+
+        if invalid_media_html:
+            self.html += '\n\n' + invalid_media_html
+
+        if self.html:
+            tel = html_to_telegram_split(html=self.html,
+                                         length_limit_head=1024 if media_msg_count else 4096,
+                                         head_count=media_msg_count or -1,
+                                         length_limit_tail=4096)
+        else:
+            tel = [(None, None)]
+
+        while tel:
+            plain_text, format_entities = tel.pop(0)
+            if media_and_types:
+                media, media_type = media_and_types.pop(0)
+            else:
+                media = media_type = None
+            message = Message(self.user_id, plain_text, format_entities, media, media_type, self.link_preview,
+                              self.silent)
+            self.messages.append(message)
+
+        while media_and_types:
+            media, media_type = media_and_types.pop(0)
+            message = Message(self.user_id, None, None, media, media_type, self.link_preview, self.silent)
+            self.messages.append(message)
+
+    async def send_messages(self):
+        if not self.messages:
+            await self.generate_messages()
+        last_msg: Optional[types.Message] = None
+        async with self.user_sending_lock[self.user_id]:
+            for message in self.messages:
+                last_msg = await message.send(reply_to=last_msg)
+
+
+class Message:
+    no_retry = False
+    __overall_concurrency = 30
+    __overall_semaphore = BoundedSemaphore(__overall_concurrency)
+
+    def __init__(self,
+                 user_id: int,
+                 plain_text: Optional[str] = None,
+                 format_entities: Optional[list[types.TypeMessageEntity]] = None,
+                 media: Optional[Union[Sequence[TypeMessageMedia], TypeMessageMedia]] = None,
+                 media_type: Optional[TypeMessage] = None,
+                 link_preview: bool = False,
+                 silent: bool = False):
+        self.user_id = user_id
+        self.plain_text = plain_text
+        self.format_entities = format_entities
+        self.media = media
+        self.media_type = media_type
+        self.link_preview = link_preview
+        self.silent = silent
+        self.retries = 0
+
+        self.attributes = (
+            (types.DocumentAttributeVideo(0, 0, 0),)
+            if media_type == VIDEO
+            else (
+                (types.DocumentAttributeAnimated(),)
+                if media_type == ANIMATION
+                else None
+            )
+        )
+
+    async def send(self, reply_to: Union[int, types.Message, None] = None) -> Optional[types.Message]:
+        msg_lock, flood_lock = locks.user_msg_locks(self.user_id)
+
+        while True:
+            try:
+                async with flood_lock:
+                    pass  # wait for flood wait
+
+                async with msg_lock:  # acquire a msg lock
+                    async with self.__overall_semaphore:  # only acquire overall semaphore when sending
+                        if self.media_type == MEDIA_GROUP:
+                            # telethon does not support formatting a media group using formatting entities, sad
+                            html = html_unparse(self.plain_text, self.format_entities)
+                            return await env.bot.send_message(entity=self.user_id,
+                                                              message=html,
+                                                              file=self.media,
+                                                              attributes=self.attributes,
+                                                              reply_to=reply_to,
+                                                              link_preview=self.link_preview,
+                                                              silent=self.silent,
+                                                              parse_mode='HTML')
+                        else:
+                            return await env.bot.send_message(entity=self.user_id,
+                                                              message=self.plain_text,
+                                                              formatting_entities=self.format_entities,
+                                                              file=self.media,
+                                                              attributes=self.attributes,
+                                                              reply_to=reply_to,
+                                                              link_preview=self.link_preview,
+                                                              silent=self.silent)
+            except (FloodWaitError, SlowModeWaitError) as e:
+                # telethon has retried for us, but we release locks and retry again here to see if it will be better
+                if self.retries >= 1:
+                    logger.error(f'Msg dropped due to too many flood control retries ({self.user_id})')
+                    return None
+
+                self.retries += 1
+                await locks.user_flood_wait(self.user_id, seconds=e.seconds)  # acquire a flood wait
+            except ServerError as e:
+                # telethon has retried for us, so we just retry once more
+                if self.retries >= 1:
+                    raise e
+
+                self.retries += 1

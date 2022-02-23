@@ -1,7 +1,12 @@
 from typing import Union
 
-from telethon.errors import UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError, \
-    InputUserDeactivatedError
+from telethon.errors import (
+    UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError, InputUserDeactivatedError,
+    PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, PhotoCropSizeSmallError,
+    PhotoContentUrlEmptyError, PhotoContentTypeInvalidError, GroupedMediaInvalidError, MediaGroupedInvalidError,
+    MediaInvalidError, VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError,
+    WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError
+)
 
 
 class EntityNotFoundError(ValueError):
@@ -12,3 +17,8 @@ class EntityNotFoundError(ValueError):
 
 UserBlockedErrors = (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
                      InputUserDeactivatedError, EntityNotFoundError)
+InvalidMediaErrors = (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
+                      PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
+                      GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
+                      VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError)
+ExternalMediaFetchFailedErrors = (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError)

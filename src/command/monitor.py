@@ -238,8 +238,8 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
         except ValueError:  # cannot get the input entity, the bot may be banned by the user
             raise EntityNotFoundError(user_id)
-        if __user_blocked_counter['user_id']:  # reset the counter if success
-            del __user_blocked_counter['user_id']
+        if __user_blocked_counter[user_id]:  # reset the counter if success
+            del __user_blocked_counter[user_id]
         if isinstance(post, str):
             await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
             return
@@ -250,11 +250,11 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             return  # no need to unsub twice!
         async with user_unsub_all_lock:
             # TODO: leave the group/channel if still in it
-            if __user_blocked_counter['user_id'] < 5:
-                __user_blocked_counter['user_id'] += 1
+            if __user_blocked_counter[user_id] < 5:
+                __user_blocked_counter[user_id] += 1
                 return  # skip once
             # fail for 5 times, consider been banned
-            del __user_blocked_counter['user_id']
+            del __user_blocked_counter[user_id]
             if await inner.utils.have_subs(user_id):
                 logger.error(f'User blocked ({e.__class__.__name__}): {user_id}')
                 await inner.sub.unsub_all(user_id)

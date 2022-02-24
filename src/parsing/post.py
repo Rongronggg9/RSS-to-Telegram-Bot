@@ -191,10 +191,13 @@ class Post:
                 return
             tries += 1
 
+            media_hash = None
             try:
-                for msg in self.messages:
-                    await msg.send(chat_id, reply_to_msg_id, silent)
-                return
+                async with self.media.modify_lock:
+                    media_hash = self.media.hash
+                    for msg in self.messages:
+                        await msg.send(chat_id, reply_to_msg_id, silent)
+                    return
 
             # errors caused by too much entity data
             except EntitiesTooLongError as e:
@@ -209,19 +212,22 @@ class Post:
                     GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
                     VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError) as e:
                 err_list.append(e)
-                if not last_try and await self.fallback_media():
-                    logger.debug(f'Media fall backed because some of them are invalid '
-                                 f'({e.__class__.__name__}): {self.link}')
-                    await self.generate_message()
-                    media_fallback_count += 1
-                else:
-                    if await self.fallback_media(force_invalidate_all=True):
-                        logger.debug(f'All media was set invalid because some of them are invalid '
+                async with self.media.modify_lock:
+                    if self.media.hash != media_hash:
+                        continue  # media changed by another send task, try again
+                    if not last_try and await self.fallback_media():
+                        logger.debug(f'Media fall backed because some of them are invalid '
                                      f'({e.__class__.__name__}): {self.link}')
                         await self.generate_message()
-                        invalidate_count += 1
+                        media_fallback_count += 1
                     else:
-                        useless_invalidate_count += 1
+                        if await self.fallback_media(force_invalidate_all=True):
+                            logger.debug(f'All media was set invalid because some of them are invalid '
+                                         f'({e.__class__.__name__}): {self.link}')
+                            await self.generate_message()
+                            invalidate_count += 1
+                        else:
+                            useless_invalidate_count += 1
                 continue
 
             except UserBlockedErrors as e:
@@ -231,25 +237,28 @@ class Post:
             # errors caused by server instability or network instability between img server and telegram server
             except (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError) as e:
                 err_list.append(e)
-                if not last_try and await self.media.change_all_server():
-                    logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
-                                 f'Changed img server and retrying: {self.link}')
-                    server_change_count += 1
-                elif not last_try and await self.fallback_media():
-                    logger.debug(f'Media fall backed '
-                                 f'because Telegram still cannot fetch some media after changing img server '
-                                 f'({e.__class__.__name__}): {self.link}')
-                    await self.generate_message()
-                    media_fallback_count += 1
-                else:
-                    if await self.fallback_media(force_invalidate_all=True):
-                        logger.debug(f'All media was set invalid '
+                async with self.media.modify_lock:
+                    if self.media.hash != media_hash:
+                        continue  # media changed by another send task, try again
+                    if not last_try and await self.media.change_all_server():
+                        logger.debug(f'Telegram cannot fetch some media ({e.__class__.__name__}). '
+                                     f'Changed img server and retrying: {self.link}')
+                        server_change_count += 1
+                    elif not last_try and await self.fallback_media():
+                        logger.debug(f'Media fall backed '
                                      f'because Telegram still cannot fetch some media after changing img server '
                                      f'({e.__class__.__name__}): {self.link}')
                         await self.generate_message()
-                        invalidate_count += 1
+                        media_fallback_count += 1
                     else:
-                        useless_invalidate_count += 1
+                        if await self.fallback_media(force_invalidate_all=True):
+                            logger.debug(f'All media was set invalid '
+                                         f'because Telegram still cannot fetch some media after changing img server '
+                                         f'({e.__class__.__name__}): {self.link}')
+                            await self.generate_message()
+                            invalidate_count += 1
+                        else:
+                            useless_invalidate_count += 1
                 continue
 
             except Exception as e:

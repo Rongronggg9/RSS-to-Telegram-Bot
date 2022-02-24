@@ -125,14 +125,6 @@ class Medium:
                          or self.need_type_fallback)
         return fallback_flag
 
-    def __bool__(self):
-        if self.valid is None:
-            raise RuntimeError('You must validate a medium before judging its validation')
-        return self.valid
-
-    def __eq__(self, other):
-        return type(self) == type(other) and self.original_urls == other.original_urls
-
     async def change_server(self):
         if self._server_change_count >= 1:
             return False
@@ -144,6 +136,23 @@ class Medium:
         except Exception:
             pass
         return True
+
+    def __bool__(self):
+        if self.valid is None:
+            raise RuntimeError('You must validate a medium before judging its validation')
+        return self.valid
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.original_urls == other.original_urls
+
+    @property
+    def hash(self):
+        return '|'.join(
+            str(s) for s in (self.valid,
+                             self.chosen_url,
+                             self.need_type_fallback,
+                             self.type_fallback_medium.hash if self.need_type_fallback else None)
+        )
 
 
 class Image(Medium):
@@ -217,6 +226,7 @@ class Animation(Image):
 class Media:
     def __init__(self):
         self._media: list[Medium] = []
+        self.modify_lock = asyncio.Lock()
 
     def add(self, medium: Medium):
         if medium in self._media:
@@ -231,7 +241,7 @@ class Media:
             if await medium.fallback():
                 fallback_flag = True
         if fallback_flag:
-            self.video_fallback_to_poster()
+            self.type_fallback()
         return fallback_flag
 
     def invalidate_all(self) -> bool:
@@ -246,9 +256,9 @@ class Media:
         if not self._media:
             return
         await asyncio.gather(*(medium.validate() for medium in self._media))
-        self.video_fallback_to_poster()
+        self.type_fallback()
 
-    def video_fallback_to_poster(self):
+    def type_fallback(self):
         if not self._media:
             return
         new_media_list = []
@@ -296,6 +306,10 @@ class Media:
 
     def __bool__(self):
         return bool(self._media)
+
+    @property
+    def hash(self):
+        return '|'.join(medium.hash for medium in self._media)
 
 
 async def get_medium_info(url: str, medium_type: Optional[TypeMedium]) -> Optional[tuple[int, int, int, bool]]:

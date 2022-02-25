@@ -238,12 +238,12 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
         except ValueError:  # cannot get the input entity, the bot may be banned by the user
             raise EntityNotFoundError(user_id)
-        if __user_blocked_counter[user_id]:  # reset the counter if success
-            del __user_blocked_counter[user_id]
         if isinstance(post, str):
             await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
             return
         await post.send_message(user_id, silent=not sub.notify)
+        if __user_blocked_counter[user_id]:  # reset the counter if success
+            del __user_blocked_counter[user_id]
     except UserBlockedErrors as e:
         user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
         if user_unsub_all_lock.locked():

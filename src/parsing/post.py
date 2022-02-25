@@ -46,8 +46,8 @@ from fuzzywuzzy import fuzz
 
 warnings.warn = warnings.original_warn
 
-stripNewline = re.compile(r'\n{3,}', )
-stripLineEnd = re.compile(r'[ \t\xa0]+\n')
+stripLineEnd = re.compile(r'[ 　\xa0\t\r\u200b\u2006\u2028\u2029]+\n')  # use firstly
+stripNewline = re.compile(r'[\f\n\u2028\u2029]{3,}')  # use secondly
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 srcsetParser = re.compile(r'(?:^|,\s*)'
                           r'(?P<url>\S+)'  # allow comma here because it is valid in URL

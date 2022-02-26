@@ -58,27 +58,28 @@ class WebError(Exception):
                  base_error: Exception = None, hide_base_error: bool = False, log_level: int = log.DEBUG):
         super().__init__(error_name)
         self.error_name = error_name
-        self.status_code = status
+        self.status = status
         self.url = url
         self.base_error = base_error
         self.hide_base_error = hide_base_error
-        if log_level < log.ERROR and base_error:
-            log_msg = f'Fetch failed ({error_name}'
-            log_msg += f', {base_error.__class__.__name__}' if not hide_base_error and base_error else ''
-            log_msg += f', {status}' if status else ''
-            log_msg += ')'
-            log_msg += f': {url}' if url else ''
-            logger.log(log_level, log_msg)
-        else:
-            logger.log(log_level, f'Fetch failed ({error_name})' + (f': {url}' if url else ''), exc_info=base_error)
+        log_msg = f'Fetch failed ({error_name}'
+        log_msg += (f', {base_error.__class__.__name__}'
+                    if not hide_base_error and base_error and log_level < log.ERROR
+                    else '')
+        log_msg += f', {status}' if status else ''
+        log_msg += ')'
+        log_msg += f': {url}' if url else ''
+        logger.log(log_level,
+                   log_msg,
+                   exc_info=base_error if not hide_base_error and base_error and log_level >= log.ERROR else None)
 
     def i18n_message(self, lang: str = None) -> str:
         error_key = self.error_name.lower().replace(' ', '_')
         msg = f'ERROR: {i18n[lang][error_key]}'
         if not self.hide_base_error and self.base_error:
             msg += f' ({self.base_error.__class__.__name__})'
-        if self.status_code:
-            msg += f' ({self.status_code})'
+        if self.status:
+            msg += f' ({self.status})'
         return msg
 
     def __str__(self) -> str:
@@ -191,7 +192,11 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                                 elif max_size > 0:
                                     max_size = min(int(response.headers.get('Content-Length', max_size)), max_size)
                                     content = await response.content.read(max_size)
-                            elif status in (403, 429, 451) and socket_family == AF_INET6 and tries == 1:
+                            elif socket_family == AF_INET6 and tries == 1 \
+                                    and status in (400,  # Bad Request (some feed providers return 400 for banned IPs)
+                                                   403,  # Forbidden
+                                                   429,  # Too Many Requests
+                                                   451):  # Unavailable For Legal Reasons
                                 retry_in_v4_flag = True
                                 continue
                             return WebResponse(url=url,
@@ -238,7 +243,7 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             return ret  # 304 Not Modified, feed not updated
 
         if rss_content is None:
-            status_caption = f'{resp.status}' + f' {resp.reason}' if resp.reason else ''
+            status_caption = f'{resp.status}' + (f' {resp.reason}' if resp.reason else '')
             ret.error = WebError(error_name='status code error', status=status_caption, url=url, log_level=log_level)
             return ret
 

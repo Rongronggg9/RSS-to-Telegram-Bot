@@ -121,8 +121,13 @@ class Post:
         :param feed_link: the url of the feed where the post from
         """
         self.retries = 0
-        self.xml = minify_html.minify(xml)
-        self.soup = BeautifulSoup(xml, 'lxml')
+        self.xml = minify_html.minify(xml,
+                                      do_not_minify_doctype=True,
+                                      keep_closing_tags=True,
+                                      keep_spaces_between_attributes=True,
+                                      ensure_spec_compliant_unquoted_attribute_values=True,
+                                      remove_processing_instructions=True)
+        self.soup = BeautifulSoup(self.xml, 'lxml')
         self.media: Media = Media()
         self.text = Text('')
         self.service_msg = service_msg

@@ -354,7 +354,7 @@ async def get_medium_info(url: str, medium_type: Optional[TypeMedium]) -> Option
     if not (0.05 < width / height < 20):  # always invalid
         valid = False
 
-    if size <= media_max_size and width + height < 10000:  # valid
+    if size <= media_max_size and width + height <= 10000:  # valid
         valid = True
 
     return size, width, height, valid

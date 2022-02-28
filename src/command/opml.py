@@ -51,6 +51,8 @@ async def opml_import(event: Union[events.NewMessage.Event, Message], *_, lang: 
         await reply.edit('ERROR: ' + i18n[lang]['opml_parse_error'])
         return
 
-    import_result = await inner.sub.subs(event.chat_id, tuple(feed.url for feed in opml_d.feeds), lang=lang)
+    import_result = await inner.sub.subs(event.chat_id,
+                                         tuple((feed.url, feed.title) for feed in opml_d.feeds),
+                                         lang=lang)
     logger.info(f'Imported feed(s) for {event.chat_id}')
     await send_success_and_failure_msg(reply, **import_result, lang=lang, edit=True)

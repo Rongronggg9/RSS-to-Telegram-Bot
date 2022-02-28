@@ -155,7 +155,7 @@ async def get_sub_choosing_buttons(user_id: int,
     if page_count == 0:
         return None
 
-    buttons_to_arrange = tuple(Button.inline(_sub.feed.title,
+    buttons_to_arrange = tuple(Button.inline(_sub.title or _sub.feed.title,
                                              data=f'{callback}={_sub.id}'
                                                   + (f'|{page_number}' if callback_contain_page_num else ''))
                                for _sub in page)

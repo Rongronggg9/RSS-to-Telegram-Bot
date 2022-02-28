@@ -1,9 +1,8 @@
 name: Publish Docker image
 on:
   push:
-    branches:
-      - master
-      - dev
+    branches-ignore:
+      - dependabot/**
     tags:
       - '**'
     paths-ignore:

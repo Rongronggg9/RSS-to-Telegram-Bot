@@ -22,9 +22,10 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
 async def get_sub_info(sub: db.Sub,
                        lang: Optional[str] = None) -> str:
     info = (
-        f"<b>{i18n[lang]['subscription_info']}</b>\n\n"
-        f"{i18n[lang]['subscription_title']}: {sub.title or sub.feed.title}\n"
-        f"{i18n[lang]['feed_url']}: {sub.feed.link}\n"
+            f"<b>{i18n[lang]['subscription_info']}</b>\n\n"
+            f"{i18n[lang]['feed_title']}: {sub.feed.title}\n"
+            + (f"{i18n[lang]['subscription_title']}: {sub.title}\n" if sub.title else '') +
+            f"{i18n[lang]['feed_url']}: {sub.feed.link}\n"
     )
     return info
 

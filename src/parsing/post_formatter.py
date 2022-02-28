@@ -83,7 +83,6 @@ class PostFormatter:
         self.plain_length: Optional[int] = None
         self.telegraph_link: Optional[Union[str, False]] = None  # if generating failed, will be False
 
-        self.__author_redundant: bool = self.author and self.feed_title and self.author in self.feed_title
         self.__title_similarity: Optional[int] = None
 
         self.__lock = asyncio.Lock()
@@ -182,7 +181,13 @@ class PostFormatter:
         # ---- determine need_author ----
         need_author = display_author != DISABLE and self.author and (
                 display_author == FORCE_DISPLAY
-                or (display_author == AUTO and (not self.__author_redundant or via_type != FEED_TITLE_VIA))
+                or (
+                        display_author == AUTO
+                        and (
+                                not (self.author and sub_title and self.author in sub_title)
+                                or via_type != FEED_TITLE_VIA
+                        )
+                )
         )
 
         # ---- determine message_style ----

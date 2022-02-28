@@ -15,11 +15,17 @@ with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
 
 
-async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[str, Union[int, str, db.Sub, None]]:
+async def sub(user_id: int,
+              feed_url: Union[str, tuple[str, str]],
+              lang: Optional[str] = None) -> dict[str, Union[int, str, db.Sub, None]]:
     ret = {'url': feed_url,
            'sub': None,
            'status': -1,
            'msg': None}
+
+    sub_title = None
+    if isinstance(feed_url, tuple):
+        feed_url, sub_title = feed_url
 
     try:
         feed = await db.Feed.get_or_none(link=feed_url)
@@ -59,14 +65,20 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[s
                 db.effective_utils.EffectiveTasks.update(feed.id)
 
         if not _sub:  # create a new sub if needed
-            _sub, created_new_sub = await db.Sub.get_or_create(user_id=user_id, feed=feed)
-            _sub.feed = feed  # thus we don't need to fetch_related
+            _sub, created_new_sub = await db.Sub.get_or_create(user_id=user_id, feed=feed,
+                                                               defaults={'title': sub_title})
 
         if not created_new_sub:
-            ret['sub'] = None
-            ret['msg'] = 'ERROR: ' + i18n[lang]['already_subscribed']
-            return ret
+            if _sub.title == sub_title:
+                ret['sub'] = None
+                ret['msg'] = 'ERROR: ' + i18n[lang]['already_subscribed']
+                return ret
+            else:
+                _sub.title = sub_title
+                await _sub.save()
+                logger.info(f'Sub {feed_url} for {user_id} updated title to {sub_title}')
 
+        _sub.feed = feed  # by doing this we don't need to fetch_related
         ret['sub'] = _sub
         logger.info(f'Subed {feed_url} for {user_id}')
         return ret
@@ -78,11 +90,10 @@ async def sub(user_id: int, feed_url: str, lang: Optional[str] = None) -> dict[s
 
 
 async def subs(user_id: int,
-               feed_urls: Sequence[str],
+               feed_urls: Sequence[Union[str, tuple[str, str]]],
                lang: Optional[str] = None,
                bypass_url_filter: bool = False) \
         -> Optional[dict[str, Union[dict[str, Union[int, str, db.Sub, None]], str]]]:
-    feed_urls = filter_urls(feed_urls) if not bypass_url_filter else feed_urls
     if not feed_urls:
         return None
 
@@ -93,7 +104,8 @@ async def subs(user_id: int,
 
     success_msg = (
             (f'<b>{i18n[lang]["sub_successful"]}</b>\n' if success else '')
-            + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">{escape_html(sub_d["sub"].feed.title)}</a>'
+            + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">'
+                        f'{escape_html(sub_d["sub"].title or sub_d["sub"].feed.title)}</a>'
                         for sub_d in success)
     )
     failure_msg = (
@@ -173,7 +185,8 @@ async def unsubs(user_id: int,
 
     success_msg = (
             (f'<b>{i18n[lang]["unsub_successful"]}</b>\n' if success else '')
-            + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">{escape_html(sub_d["sub"].feed.title)}</a>'
+            + '\n'.join(f'<a href="{sub_d["sub"].feed.link}">'
+                        f'{escape_html(sub_d["sub"].title or sub_d["sub"].feed.title)}</a>'
                         for sub_d in success)
     )
     failure_msg = (
@@ -209,7 +222,7 @@ async def export_opml(user_id: int) -> Optional[bytes]:
     empty_flags = True
     for _sub in sub_list:
         empty_flags = False
-        outline = Tag(name='outline', attrs={'text': _sub.feed.title, 'xmlUrl': _sub.feed.link})
+        outline = Tag(name='outline', attrs={'text': _sub.title or _sub.feed.title, 'xmlUrl': _sub.feed.link})
         opml.body.append(outline)
     if empty_flags:
         return None

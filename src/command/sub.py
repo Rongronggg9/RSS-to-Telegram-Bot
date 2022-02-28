@@ -114,7 +114,7 @@ async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Even
     list_result = (
             f'<b>{i18n[lang]["subscription_list"]}</b>'  # it occupies a parsing entity
             + '\n'
-            + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.feed.title)}</a>' for sub in page)
+            + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.title or sub.feed.title)}</a>' for sub in page)
     )
 
     page_buttons = inner.utils.get_page_buttons(page_number=page_number,
@@ -137,7 +137,9 @@ async def callback_unsub(event: events.CallbackQuery.Event, *_, lang: Optional[s
     msg = (
             f'<b>{i18n[lang]["unsub_successful" if unsub_d["sub"] else "unsub_failed"]}</b>\n'
             + (
-                f'<a href="{unsub_d["sub"].feed.link}">{escape_html(unsub_d["sub"].feed.title)}</a>' if unsub_d['sub']
+                f'<a href="{unsub_d["sub"].feed.link}">'
+                f'{escape_html(unsub_d["sub"].feed.title or unsub_d["sub"].title)}</a>'
+                if unsub_d['sub']
                 else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
             )
     )

@@ -4,7 +4,8 @@ from telethon.tl.patched import Message
 from telethon.errors import RPCError
 
 from src import env, db
-from .utils import command_gatekeeper, get_group_migration_help_msg, get_commands_list, set_bot_commands, logger
+from .utils import command_gatekeeper, get_group_migration_help_msg, get_commands_list, set_bot_commands, logger, \
+    parse_callback_data_with_page
 from src.i18n import i18n, ALL_LANGUAGES
 from . import inner
 
@@ -28,8 +29,8 @@ async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # callback data: set_lang_{lang_code}
-    lang = event.data.decode().strip().split('set_lang_')[-1]
+async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # callback data: set_lang={lang_code}
+    lang, _ = parse_callback_data_with_page(event.data)
     welcome_msg = i18n[lang]['welcome_prompt']
     await db.User.update_or_create(defaults={'lang': lang}, id=event.chat_id)
     await set_bot_commands(scope=types.BotCommandScopePeer(await event.get_input_chat()),
@@ -73,8 +74,8 @@ async def callback_cancel(event: events.CallbackQuery.Event,
 @command_gatekeeper(only_manager=False, allow_in_old_fashioned_groups=True)
 async def callback_get_group_migration_help(event: events.CallbackQuery.Event,
                                             *_,
-                                            **__):  # callback data: get_group_migration_help_{lang_code}
-    lang = event.data.decode().strip().split('get_group_migration_help_')[-1]
+                                            **__):  # callback data: get_group_migration_help={lang_code}
+    lang, _ = parse_callback_data_with_page(event.data)
     chat = await event.get_chat()
     if not isinstance(chat, types.Chat) or chat.migrated_to:  # already a supergroup
         try:

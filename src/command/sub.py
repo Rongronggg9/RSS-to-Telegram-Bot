@@ -94,10 +94,10 @@ async def cmd_or_callback_unsub_all(event: Union[events.NewMessage.Event, Messag
 async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
                                              *_,
                                              lang: Optional[str] = None,
-                                             **__):  # command = /list, callback data = get_list_page_{page_number}
+                                             **__):  # command = /list, callback data = get_list_page|{page_number}
     is_callback = isinstance(event, events.CallbackQuery.Event)
     if is_callback:
-        page_number, _ = parse_callback_data_with_page(event.data)
+        _, page_number = parse_callback_data_with_page(event.data)
     else:
         page_number = 1
 
@@ -129,8 +129,9 @@ async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Even
 
 @command_gatekeeper(only_manager=False)
 async def callback_unsub(event: events.CallbackQuery.Event, *_, lang: Optional[str] = None, **__):
-    # callback data = unsub_{sub_id}|{page}
+    # callback data = unsub={sub_id}|{page}
     sub_id, page = parse_callback_data_with_page(event.data)
+    sub_id = int(sub_id)
     unsub_d = await inner.sub.unsub(event.chat_id, sub_id=sub_id)
 
     msg = (
@@ -153,8 +154,9 @@ async def callback_get_unsub_page(event: events.CallbackQuery.Event,
                                   *_,
                                   page: Optional[int] = None,
                                   lang: Optional[str] = None,
-                                  **__):  # callback data = get_unsub_page_{page_number}
-    page = page or int(event.data.decode().strip().split('_')[-1])
+                                  **__):  # callback data = get_unsub_page|{page_number}
+    if not page:
+        _, page = parse_callback_data_with_page(event.data)
     buttons = await inner.utils.get_sub_choosing_buttons(event.chat_id, page, callback='unsub',
                                                          get_page_callback='get_unsub_page', lang=lang)
     await event.edit(None if buttons else i18n[lang]['no_subscription'], buttons=buttons)

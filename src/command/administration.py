@@ -12,7 +12,8 @@ from . import inner
 
 @command_gatekeeper(only_manager=True)
 async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.raw_text)
+    raw_text = event.raw_text.replace('=', ' ')
+    args = parse_command(raw_text)
     if len(args) < 3:  # return options info
         options = db.EffectiveOptions.options
         msg = (

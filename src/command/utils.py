@@ -28,24 +28,24 @@ def parse_command(command: str) -> list[AnyStr]:
     return re.split(r'\s+', command.strip())
 
 
-def parse_callback_data_with_page(callback_data: bytes) -> tuple[int, int]:
+def parse_callback_data_with_page(callback_data: bytes) -> tuple[str, int]:
     """
-    callback data = command_{id}[|{page}]
+    callback data = command={params}[|{page}]
 
     :param callback_data: callback data
-    :return: id, page
+    :return: params, page
     """
     callback_data = callback_data.decode().strip()
-    id_and_page = callback_data.split('|')
-    _id = int(id_and_page[0].split('_')[-1])
-    page = int(id_and_page[1]) if len(id_and_page) > 1 else 1
-    return _id, page
+    params_and_page = callback_data.split('|')
+    params = params_and_page[0].split('=')[-1]
+    page = int(params_and_page[1]) if len(params_and_page) > 1 else 1
+    return params, page
 
 
 def parse_sub_customization_callback_data(callback_data: bytes) \
         -> tuple[Optional[int], Optional[str], Optional[Union[int, str]], int]:
     """
-    callback data = command[_{id}[_{action}[_{param}]]][|{page_number}]
+    callback data = command[={id}[,{action}[,{param}]]][|{page_number}]
 
     :param callback_data: callback data
     :return: id, action, param
@@ -53,11 +53,11 @@ def parse_sub_customization_callback_data(callback_data: bytes) \
     callback_data = callback_data.decode().strip()
     args = callback_data.split('|')
     page = int(args[1]) if len(args) > 1 else 1
-    args = args[0].split('_')
+    args = args[0].split('=')[-1].split(',')
 
-    _id: Optional[int] = int(args[1]) if len(args) > 1 else None
-    action: Optional[str] = args[2] if len(args) > 2 else None
-    param: Optional[Union[int, str]] = args[3] if len(args) > 3 else None
+    _id: Optional[int] = int(args[0]) if len(args) >= 1 else None
+    action: Optional[str] = args[1] if len(args) >= 2 else None
+    param: Optional[Union[int, str]] = args[2] if len(args) >= 3 else None
     if param and param.lstrip('-').isdecimal():
         param = int(param)
 

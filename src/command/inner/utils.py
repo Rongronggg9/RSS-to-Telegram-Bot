@@ -108,7 +108,7 @@ def get_page_buttons(page_number: int,
     page_number = min(page_number, page_count)
     page_info = f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else '')
     page_buttons = [
-        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}')
+        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}|{page_number - 1}')
         if page_number > 1
         else Button.inline(' ', data='null'),
 
@@ -116,7 +116,7 @@ def get_page_buttons(page_number: int,
         if display_cancel
         else Button.inline(page_info, data='null'),
 
-        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}')
+        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}|{page_number + 1}')
         if page_number < page_count
         else Button.inline(' ', data='null'),
     ]
@@ -156,7 +156,7 @@ async def get_sub_choosing_buttons(user_id: int,
         return None
 
     buttons_to_arrange = tuple(Button.inline(_sub.feed.title,
-                                             data=f'{callback}_{_sub.id}'
+                                             data=f'{callback}={_sub.id}'
                                                   + (f'|{page_number}' if callback_contain_page_num else ''))
                                for _sub in page)
     buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)

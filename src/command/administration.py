@@ -81,13 +81,14 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
             await event.respond(wf.error.i18n_message(lang))
             return
 
-        if start >= len(rss_d.entries):
-            start = 0
-            end = 1
-        elif end is not None and start > 0 and start >= end:
-            end = start + 1
+        if start == -1 and end == 0:
+            end = len(rss_d.entries)
 
         entries_to_send = rss_d.entries[start:end]
+
+        if len(entries_to_send) == 0:
+            await event.respond(i18n[lang]['action_invalid'])
+            return
 
         await asyncio.gather(
             *(__send(uid, entry, rss_d.feed.title, url) for entry in entries_to_send)

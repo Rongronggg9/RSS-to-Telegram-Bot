@@ -107,7 +107,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
 
 async def __send(uid, entry, feed_title, link, in_all_format: bool = False):
     post = get_post_from_entry(entry, feed_title, link)
-    logger.debug(f"Sending {entry['title']} ({entry['link']})...")
+    logger.debug(f"Sending {entry.get('title', 'Untitled')} ({entry.get('link', 'No link')})...")
     if not in_all_format:
         await post.send_formatted_post(uid)
         return

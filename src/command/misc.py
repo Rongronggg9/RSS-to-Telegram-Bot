@@ -22,7 +22,7 @@ async def cmd_start(event: Union[events.NewMessage.Event, Message], *_, lang=Non
 async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
     msg = '\n'.join(f"{i18n[lang]['select_lang_prompt']}"
                     for lang in ALL_LANGUAGES)
-    buttons = inner.utils.arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'set_lang_{lang}')
+    buttons = inner.utils.arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'set_lang={lang}')
                                         for lang in ALL_LANGUAGES),
                                        columns=3)
     await event.respond(msg, buttons=buttons)

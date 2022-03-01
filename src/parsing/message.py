@@ -2,13 +2,14 @@ from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Sequence
 
+import asyncio
 from telethon.tl import types
 from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
 from telethon.extensions.html import unparse as html_unparse
 from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 
-from src import log, env, locks
+from src import log, env, locks, exceptions
 from .medium import Media, TypeMessage, TypeMessageMedia, VIDEO, ANIMATION, MEDIA_GROUP
 from .splitter import html_to_telegram_split
 
@@ -72,10 +73,20 @@ class MessageDispatcher:
     async def send_messages(self):
         if not self.messages:
             await self.generate_messages()
-        last_msg: Optional[types.Message] = None
-        async with self.user_sending_lock[self.user_id]:
-            for message in self.messages:
-                last_msg = await message.send(reply_to=last_msg)
+        sent_msgs: list[types.Message] = []
+        try:
+            async with self.user_sending_lock[self.user_id]:
+                for message in self.messages:
+                    msg = await message.send(reply_to=sent_msgs[-1] if sent_msgs else None)
+                    if msg:
+                        sent_msgs.append(msg)
+        except exceptions.MediaSendFailErrors as e:
+            if sent_msgs:
+                await asyncio.gather(
+                    *(env.bot.delete_messages(self.user_id, msg, revoke=True) for msg in sent_msgs),
+                    return_exceptions=True
+                )
+            raise e
 
 
 class Message:
@@ -126,7 +137,6 @@ class Message:
                             return await env.bot.send_message(entity=self.user_id,
                                                               message=html,
                                                               file=self.media,
-                                                              attributes=self.attributes,
                                                               reply_to=reply_to,
                                                               link_preview=self.link_preview,
                                                               silent=self.silent,

@@ -3,8 +3,8 @@ from typing import Optional
 
 from html import unescape
 
-from src import db, env
-from .utils import emojify, parse_entry
+from src import db, env, exceptions
+from .utils import emojify, parse_entry, stripAnySpace, logger
 from .post_formatter import PostFormatter
 from .message import MessageDispatcher
 
@@ -32,6 +32,7 @@ class Post:
         :param feed_link: the url of the feed where the post from
         """
         self.html = html
+        title = (stripAnySpace(title.strip()) if title.find('\n') != -1 else title) if title else None
         self.title = emojify(unescape(title.strip())) if title else None
         self.feed_title = feed_title
         self.link = link
@@ -86,26 +87,33 @@ class Post:
         :param style: 0=RSStT, 1=flowerss
         :param silent: whether to send with notification sound
         """
-        if not self.post_formatter.parsed:
-            await self.post_formatter.parse_html()
+        for _ in range(2):
+            if not self.post_formatter.parsed:
+                await self.post_formatter.parse_html()
 
-        formatted_post, need_media, need_link_preview = \
-            await self.post_formatter.get_formatted_post(sub_title=sub_title,
-                                                         tags=tags,
-                                                         send_mode=send_mode,
-                                                         length_limit=length_limit,
-                                                         link_preview=link_preview,
-                                                         display_author=display_author,
-                                                         display_via=display_via,
-                                                         display_title=display_title,
-                                                         style=style)
+            formatted_post, need_media, need_link_preview = \
+                await self.post_formatter.get_formatted_post(sub_title=sub_title,
+                                                             tags=tags,
+                                                             send_mode=send_mode,
+                                                             length_limit=length_limit,
+                                                             link_preview=link_preview,
+                                                             display_author=display_author,
+                                                             display_via=display_via,
+                                                             display_title=display_title,
+                                                             style=style)
 
-        message_dispatcher = MessageDispatcher(user_id=user_id,
-                                               html=formatted_post,
-                                               media=self.post_formatter.media if need_media else None,
-                                               link_preview=need_link_preview,
-                                               silent=silent)
-        await message_dispatcher.send_messages()
+            message_dispatcher = MessageDispatcher(user_id=user_id,
+                                                   html=formatted_post,
+                                                   media=self.post_formatter.media if need_media else None,
+                                                   link_preview=need_link_preview,
+                                                   silent=silent)
+            try:
+                return await message_dispatcher.send_messages()
+            except exceptions.MediaSendFailErrors as e:
+                logger.error(f'Failed to send post to user {user_id} (feed: {self.feed_link}, post: {self.link}), '
+                             'dropped all media and retrying...', exc_info=e)
+                self.post_formatter.media.invalidate_all()
+                continue
 
     async def test_all_format(self, user_id: int):
         if user_id != env.MANAGER:

@@ -15,10 +15,11 @@ class EntityNotFoundError(ValueError):
         super().__init__(f"Entity not found: {peer}")
 
 
-UserBlockedErrors = (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
-                     InputUserDeactivatedError, EntityNotFoundError)
-InvalidMediaErrors = (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
-                      PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
-                      GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
-                      VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError)
-ExternalMediaFetchFailedErrors = (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError)
+UserBlockedErrors: tuple = (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
+                            InputUserDeactivatedError, EntityNotFoundError)
+InvalidMediaErrors: tuple = (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
+                             PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
+                             GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,
+                             VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError)
+ExternalMediaFetchFailedErrors: tuple = (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError)
+MediaSendFailErrors = InvalidMediaErrors + ExternalMediaFetchFailedErrors

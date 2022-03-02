@@ -10,7 +10,7 @@ from urllib.parse import urlparse, urljoin
 from attr import define
 
 from src import web
-from .medium import Video, Image, Media, Animation
+from .medium import Video, Image, Media, Animation, Audio
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, is_absolute_link, emojify
 
@@ -164,20 +164,16 @@ class Parser:
             return None
 
         if tag == 'video':
-            src = soup.get('src')
             poster = soup.get('poster')
-            _multi_src = [t['src'] for t in soup.find_all(name='source') if t.get('src')]
-            if src:
-                _multi_src.append(src)
-            multi_src = []
-            for _src in _multi_src:
-                if not isinstance(_src, str):
-                    continue
-                if not is_absolute_link(_src) and self.feed_link:
-                    _src = urljoin(self.feed_link, _src)
-                multi_src.append(_src)
+            multi_src = self._get_multi_src(soup)
             if multi_src:
                 self.media.add(Video(multi_src, type_fallback_urls=poster))
+            return None
+
+        if tag == 'audio':
+            multi_src = self._get_multi_src(soup)
+            if multi_src:
+                self.media.add(Audio(multi_src))
             return None
 
         if tag == 'b' or tag == 'strong':
@@ -243,6 +239,20 @@ class Parser:
             return UnorderedList([Br(), *result, Br()])
         else:
             return result[0] if len(result) == 1 else Text(result)
+
+    def _get_multi_src(self, soup: Tag) -> list[str]:
+        src = soup.get('src')
+        _multi_src = [t['src'] for t in soup.find_all(name='source') if t.get('src')]
+        if src:
+            _multi_src.append(src)
+        multi_src = []
+        for _src in _multi_src:
+            if not isinstance(_src, str):
+                continue
+            if not is_absolute_link(_src) and self.feed_link:
+                _src = urljoin(self.feed_link, _src)
+            multi_src.append(_src)
+        return multi_src
 
     def __repr__(self):
         return repr(self.html_tree)

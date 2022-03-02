@@ -40,6 +40,7 @@ isTelegramCannotFetch = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
 IMAGE: Final = 'image'
 VIDEO: Final = 'video'
 ANIMATION: Final = 'animation'
+AUDIO: Final = 'audio'
 FILE: Final = 'file'
 MEDIUM_BASE_CLASS: Final = 'medium'
 TypeMedium = Union[IMAGE, VIDEO, ANIMATION, FILE]
@@ -61,7 +62,7 @@ MEDIA_MAX_SIZE: Final = 20971520
 # 4. Any other type of media except Image must be uploaded as MessageMediaDocument.
 # 5. Telegram will not take notice of attributes provided if it already decoded the necessary metadata of a media.
 # 6. Because of (5), we can't force send GIFs and videos as ordinary files.
-# 7. Musics can be sent in a media group, but can not be mixed with other types of media.
+# 7. Audios can be sent in a media group, but can not be mixed with other types of media.
 # 8. Other files (including images sent as files) should be able to be mixed in a media group.
 #
 # Type fallback notes:
@@ -279,7 +280,24 @@ class Medium:
                 return True
         elif self.need_type_fallback and self.type_fallback_medium is not None:
             return await self.type_fallback_medium.fallback()
-        logger.debug(f'Dropped medium {self.original_urls[0]}: invalid or fetch failed')
+        logger.debug(f'Dropped medium {self.original_urls[0]}'
+                     + (' ('
+                        if self.size not in {-1, None} or self.width not in {-1, None} or self.height not in {-1, None}
+                        else '')
+                     + (f'{self.size / 1024 / 1024:.2f}MB'
+                        if self.size not in {-1, None}
+                        else '')
+                     + (', '
+                        if (self.size not in {-1, None}
+                            and (self.width not in {-1, None} or self.height not in {-1, None}))
+                        else '')
+                     + (f'{self.width}x{self.height}'
+                        if self.width not in {-1, None} and self.height not in {-1, None}
+                        else '')
+                     + (')'
+                        if self.size not in {-1, None} or self.width not in {-1, None} or self.height not in {-1, None}
+                        else '')
+                     + ': invalid or fetch failed')
         return False
 
     async def fallback(self) -> bool:
@@ -394,6 +412,14 @@ class Video(Medium):
     inputMediaExternalType = InputMediaDocumentExternal
 
 
+class Audio(Medium):
+    type = AUDIO
+    maxSize = MEDIA_MAX_SIZE
+    typeFallbackTo = None
+    typeFallbackAllowSelfUrls = False
+    inputMediaExternalType = InputMediaDocumentExternal
+
+
 class Animation(Image):
     type = ANIMATION
     maxSize = MEDIA_MAX_SIZE
@@ -413,6 +439,9 @@ class Media:
         if medium in self._media:
             return
         self._media.append(medium)
+
+    def url_exists(self, url: str) -> bool:
+        return any(url in medium.original_urls for medium in self._media)
 
     async def fallback_all(self) -> bool:
         if not self._media:
@@ -495,6 +524,7 @@ class Media:
 
         media: list[tuple[Union[TypeMessageMedia, Image, Video], Union[IMAGE, VIDEO]]] = []
         gifs: list[tuple[Union[MessageMediaDocument, Animation], ANIMATION]] = []
+        audios: list[tuple[Union[MessageMediaDocument, Audio], AUDIO]] = []
         files: list[tuple[Union[MessageMediaDocument, File], FILE]] = []
 
         link_nodes: list[Link] = []
@@ -510,6 +540,8 @@ class Media:
                 media.append(medium_and_type)
             elif file_type == ANIMATION:
                 gifs.append(medium_and_type)
+            elif file_type == AUDIO:
+                audios.append(medium_and_type)
             elif file_type == FILE:
                 files.append(medium_and_type)
             else:
@@ -518,7 +550,7 @@ class Media:
                 link_nodes.append(medium.get_link_html_node())
 
         ret = []
-        for list_to_process in (media, files):
+        for list_to_process in (media, audios, files):
             while list_to_process:
                 _ = list_to_process[:10]
                 list_to_process = list_to_process[10:]
@@ -593,7 +625,7 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int]]:
         if r.status != 200:
             raise ValueError('status code not 200')
     except Exception as e:
-        logger.debug(f'Dropped medium {url}: can not be fetched: ' + str(e), exc_info=e)
+        logger.debug(f'Dropped medium {url}: can not be fetched: ', exc_info=e)
         return None
 
     size = int(r.headers.get('Content-Length') or -1)

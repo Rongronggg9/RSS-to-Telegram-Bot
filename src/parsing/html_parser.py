@@ -75,6 +75,9 @@ class Parser:
         if tag is None:
             return None
 
+        if tag == 'table':
+            return None  # drop table
+
         if tag == 'p' or tag == 'section':
             parent = soup.parent.name
             text = await self._parse_item(soup.children)
@@ -118,8 +121,10 @@ class Parser:
             style, width, height = soup.get('style', ''), soup.get('width', ''), soup.get('height', '')
             width = int(width) if width and width.isdigit() else float('inf')
             height = int(height) if height and height.isdigit() else float('inf')
+            # drop icons
             if width <= 30 or height <= 30 or isSmallIcon(style) \
-                    or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')):
+                    or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')) \
+                    or (src and src.startswith('data:')):
                 return Text(emojify(alt)) if alt else None
             _multi_src = []
             if srcset:
@@ -156,7 +161,7 @@ class Parser:
                     continue
                 if not is_absolute_link(_src) and self.feed_link:
                     _src = urljoin(self.feed_link, _src)
-                if urlparse(_src).path.endswith(('.gif', '.gifv', '.webm', '.mp4', '.m4v')):
+                if urlparse(_src).path.endswith(('.gif', '.gifv', '.webm', '.mp4', '.m4v', '.webp')):
                     is_gif = True
                 multi_src.append(_src)
             if multi_src:

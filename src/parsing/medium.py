@@ -97,6 +97,8 @@ class Medium:
             else []  # use for fallback if not type_fallback_allow_self_urls
         self.type_fallback_medium: Optional[Medium] = None
         self.need_type_fallback: bool = False
+        self.content_type: Optional[str] = None
+        self.drop_silently: bool = False  # if True, will not be included in invalid media
         self.uploaded_bucket: defaultdict[int, Optional[tuple[TypeMessageMedia, TypeMedium]]] \
             = defaultdict(lambda: None)
         self.uploading_lock = asyncio.Lock()
@@ -218,17 +220,25 @@ class Medium:
         if self.valid is not None and not flush:  # already validated
             return self.valid
 
+        if self.drop_silently:
+            return False
+
         async with self.validating_lock:
             while self.urls:
                 url = self.urls.pop(0)
                 medium_info = await get_medium_info(url)
                 if medium_info is None:
                     continue
-                self.size, self.width, self.height = medium_info
+                self.size, self.width, self.height, self.content_type = medium_info
 
                 if self.type == IMAGE:
+                    # drop SVG
+                    if self.content_type and self.content_type.lower().startswith('image/svg'):
+                        self.valid = False
+                        self.drop_silently = True
+                        return False
                     # always invalid
-                    if self.width + self.height > 10000 or self.size > self.maxSize:
+                    elif self.width + self.height > 10000 or self.size > self.maxSize:
                         self.valid = False
                     # Telegram accepts 0.05 < w/h < 20. But after downsized, it will be ugly. Narrow the range down
                     elif 0.4 <= self.width / self.height <= 2.5:
@@ -270,7 +280,9 @@ class Medium:
             # create type fallback medium
             self.type_fallback_medium = self.typeFallbackTo(fallback_urls)
             if await self.type_fallback_medium.validate():
-                logger.debug(f"Medium {self.original_urls[0]} type fallback to '{self.type_fallback_medium.type}'"
+                logger.debug(f"Medium {self.original_urls[0]}"
+                             + (f' ({self.info})' if self.info else '')
+                             + f" type fallback to '{self.type_fallback_medium.type}'"
                              + (f'({self.type_fallback_medium.original_urls[0]})'
                                 if not self.typeFallbackAllowSelfUrls
                                 else ''))
@@ -281,22 +293,7 @@ class Medium:
         elif self.need_type_fallback and self.type_fallback_medium is not None:
             return await self.type_fallback_medium.fallback()
         logger.debug(f'Dropped medium {self.original_urls[0]}'
-                     + (' ('
-                        if self.size not in {-1, None} or self.width not in {-1, None} or self.height not in {-1, None}
-                        else '')
-                     + (f'{self.size / 1024 / 1024:.2f}MB'
-                        if self.size not in {-1, None}
-                        else '')
-                     + (', '
-                        if (self.size not in {-1, None}
-                            and (self.width not in {-1, None} or self.height not in {-1, None}))
-                        else '')
-                     + (f'{self.width}x{self.height}'
-                        if self.width not in {-1, None} and self.height not in {-1, None}
-                        else '')
-                     + (')'
-                        if self.size not in {-1, None} or self.width not in {-1, None} or self.height not in {-1, None}
-                        else '')
+                     + (f' ({self.info})' if self.info else '')
                      + ': invalid or fetch failed')
         return False
 
@@ -338,11 +335,27 @@ class Medium:
 
     @property
     def hash(self):
+        if self.drop_silently:
+            return ''
         return '|'.join(
             str(s) for s in (self.valid,
                              self.chosen_url,
                              self.need_type_fallback,
                              self.type_fallback_medium.hash if self.need_type_fallback else None)
+        )
+
+    @property
+    def info(self):
+        return (
+                (f'{self.size / 1024 / 1024:.2f}MB'
+                 if self.size not in {-1, None}
+                 else '')
+                + (', '
+                   if (self.size not in {-1, None} and (self.width not in {-1, None} or self.height not in {-1, None}))
+                   else '')
+                + (f'{self.width}x{self.height}'
+                   if self.width not in {-1, None} and self.height not in {-1, None}
+                   else '')
         )
 
 
@@ -448,14 +461,14 @@ class Media:
             return False
         fallback_flag = False
         for medium in self._media:
-            if await medium.fallback():
+            if not medium.drop_silently and await medium.fallback():
                 fallback_flag = True
         return fallback_flag
 
     def invalidate_all(self) -> bool:
         invalidated_some_flag = False
         for medium in self._media:
-            if medium.valid or medium.need_type_fallback:
+            if not medium.drop_silently and medium.valid or medium.need_type_fallback:
                 medium.valid = False
                 medium.need_type_fallback = False
                 invalidated_some_flag = True
@@ -464,7 +477,7 @@ class Media:
     async def validate(self, flush: bool = False):
         if not self._media:
             return
-        await asyncio.gather(*(medium.validate(flush=flush) for medium in self._media))
+        await asyncio.gather(*(medium.validate(flush=flush) for medium in self._media if not medium.drop_silently))
 
     async def upload_all(self, chat_id: Optional[int]) \
             -> tuple[
@@ -496,14 +509,19 @@ class Media:
         async with self.modify_lock:
             # at least a file and an image
             if (
-                    sum(isinstance(medium.type_fallback_chain(), File) for medium in self._media) > 0
+                    sum(isinstance(medium.type_fallback_chain(), File)
+                        for medium in self._media
+                        if not medium.drop_silently) > 0
                     and
-                    sum(isinstance(medium.type_fallback_chain(), Image) for medium in self._media) > 0
+                    sum(isinstance(medium.type_fallback_chain(), Image)
+                        for medium in self._media
+                        if not medium.drop_silently) > 0
             ):
                 # fall back all image to files
                 await asyncio.gather(
                     *(medium.type_fallback()
-                      for medium in self._media if isinstance(medium.type_fallback_chain(), Image))
+                      for medium in self._media
+                      if isinstance(medium.type_fallback_chain(), Image) and not medium.drop_silently)
                 )
 
         media_and_types: tuple[
@@ -512,7 +530,7 @@ class Media:
         if chat_id:
             # tuple[Union[tuple[Optional[TypeMessageMedia], Optional[TypeMedium]], BaseException], ...]
             media_and_types = await asyncio.gather(
-                *(medium.upload(chat_id) for medium in self._media),
+                *(medium.upload(chat_id) for medium in self._media if not medium.drop_silently),
                 return_exceptions=True
             )
         else:
@@ -520,7 +538,7 @@ class Media:
             media_and_types = tuple((medium.type_fallback_chain(), medium.type_fallback_chain().type)
                                     if medium.type_fallback_chain() is not None
                                     else (None, None)
-                                    for medium in self._media)
+                                    for medium in self._media if not medium.drop_silently)
 
         media: list[tuple[Union[TypeMessageMedia, Image, Video], Union[IMAGE, VIDEO]]] = []
         gifs: list[tuple[Union[MessageMediaDocument, Animation], ANIMATION]] = []
@@ -586,19 +604,20 @@ class Media:
 
     @property
     def valid_count(self):
-        return sum(1 for medium in self._media if medium.valid)
+        return sum(1 for medium in self._media if medium.valid and not medium.drop_silently)
 
     @property
     def invalid_count(self):
-        return sum(1 for medium in self._media if medium.valid is False)
+        return sum(1 for medium in self._media if medium.valid is False and not medium.drop_silently)
 
     @property
     def pending_count(self):
-        return sum(1 for medium in self._media if medium.valid is None)
+        return sum(1 for medium in self._media if medium.valid is None and not medium.drop_silently)
 
     @property
     def need_type_fallback_count(self):
-        return sum(1 for medium in self._media if medium.need_type_fallback and medium.type_fallback_medium is not None)
+        return sum(1 for medium in self._media if medium.need_type_fallback and medium.type_fallback_medium is not None
+                   and not medium.drop_silently)
 
     def stat(self):
         class MediaStat:
@@ -619,7 +638,9 @@ class Media:
 
 
 @lru_cache(maxsize=1024)
-async def get_medium_info(url: str) -> Optional[tuple[int, int, int]]:
+async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
+    if url.startswith('data:'):
+        return None
     try:
         r = await web.get(url=url, max_size=256, intended_content_type='image')
         if r.status != 200:
@@ -635,7 +656,7 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int]]:
     width = height = -1
     file_header = r.content
     if not is_image or not file_header:
-        return size, width, height
+        return size, width, height, content_type
 
     # noinspection PyBroadException
     try:
@@ -653,4 +674,4 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int]]:
                 width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
                 height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
 
-    return size, width, height
+    return size, width, height, content_type

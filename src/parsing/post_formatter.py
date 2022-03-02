@@ -449,7 +449,7 @@ class PostFormatter:
         except (TimeoutError, asyncio.TimeoutError):
             logger.debug(f'Generate Telegraph post error (network timeout):  {self.link}')
         except (ClientError, ConnectionError) as e:
-            logger.debug(f'Generate Telegraph post error (network error, {e.__class__.__name__}): {self.link}')
+            logger.debug(f'Generate Telegraph post error (network error, {type(e).__name__}): {self.link}')
         except OverflowError:
             logger.debug(f'Generate Telegraph post error (retried for too many times): {self.link}')
         except Exception as e:

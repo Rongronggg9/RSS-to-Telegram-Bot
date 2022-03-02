@@ -63,7 +63,7 @@ class WebError(Exception):
         self.base_error = base_error
         self.hide_base_error = hide_base_error
         log_msg = f'Fetch failed ({error_name}'
-        log_msg += (f', {base_error.__class__.__name__}'
+        log_msg += (f', {type(base_error).__name__}'
                     if not hide_base_error and base_error and log_level < log.ERROR
                     else '')
         log_msg += f', {status}' if status else ''
@@ -77,7 +77,7 @@ class WebError(Exception):
         error_key = self.error_name.lower().replace(' ', '_')
         msg = f'ERROR: {i18n[lang][error_key]}'
         if not self.hide_base_error and self.base_error:
-            msg += f' ({self.base_error.__class__.__name__})'
+            msg += f' ({type(self.base_error).__name__})'
         if self.status:
             msg += f' ({self.status})'
         return msg
@@ -216,7 +216,7 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
             if socket_family != AF_INET6 or tries > 1:
                 raise e
             err_msg = str(e).strip()
-            logger.debug(f'Fetch failed ({e.__class__.__name__}' + (f': {err_msg}' if err_msg else '')
+            logger.debug(f'Fetch failed ({type(e).__name__}' + (f': {err_msg}' if err_msg else '')
                          + f') using IPv6, retrying using IPv4: {url}')
             retry_in_v4_flag = True
             continue

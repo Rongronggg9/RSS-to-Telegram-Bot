@@ -171,7 +171,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        if hasattr(event, 'raw_text') and event.raw_text else
                        f'(Callback){event.data.decode()}'
                        if is_callback else
-                       f'(ChatAction, {event.action_message and event.action_message.action.__class__.__name__})'
+                       f'(ChatAction, {event.action_message and type(event.action_message.action).__name__})'
                        if is_chat_action else
                        '(no command, other message)')
             command_header = parse_command(command)[0]

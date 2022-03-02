@@ -156,7 +156,7 @@ class Parser:
                     continue
                 if not is_absolute_link(_src) and self.feed_link:
                     _src = urljoin(self.feed_link, _src)
-                if urlparse(_src).path.endswith('.gif'):
+                if urlparse(_src).path.endswith(('.gif', '.gifv', '.webm', '.mp4', '.m4v')):
                     is_gif = True
                 multi_src.append(_src)
             if multi_src:
@@ -221,7 +221,7 @@ class Parser:
             if not text:
                 # noinspection PyBroadException
                 try:
-                    page = await web.get(src, decode=True, semaphore=False)
+                    page = await web.get(src, timeout=3, decode=True, semaphore=False)
                     if page.status != 200:
                         raise ValueError
                     text = BeautifulSoup(page.content, 'lxml').title.text

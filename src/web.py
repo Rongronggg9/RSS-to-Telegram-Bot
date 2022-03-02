@@ -127,7 +127,8 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
 
 
 async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False, max_size: Optional[int] = None) -> WebResponse:
+              headers: Optional[dict] = None, decode: bool = False,
+              max_size: Optional[int] = None, intended_content_type: Optional[str] = None) -> WebResponse:
     """
     :param url: URL to fetch
     :param timeout: timeout in seconds
@@ -135,16 +136,19 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     :param headers: headers to use
     :param decode: whether to decode the response body (cannot mix with max_size)
     :param max_size: maximum size of the response body (in bytes), None=unlimited, 0=ignore response body
+    :param intended_content_type: if specified, only return response if the content-type matches
     :return: {url, content, headers, status}
     """
     if not timeout:
         timeout = 12
     wait_for_timeout = (timeout * 2 + 5) * (2 if env.IPV6_PRIOR else 1)
-    return await asyncio.wait_for(_get(url, timeout, semaphore, headers, decode, max_size), wait_for_timeout)
+    return await asyncio.wait_for(_get(url, timeout, semaphore, headers, decode, max_size, intended_content_type),
+                                  wait_for_timeout)
 
 
 async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-               headers: Optional[dict] = None, decode: bool = False, max_size: Optional[int] = None) -> WebResponse:
+               headers: Optional[dict] = None, decode: bool = False,
+               max_size: Optional[int] = None, intended_content_type: Optional[str] = None) -> WebResponse:
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -185,13 +189,17 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                             status = response.status
                             content = None
                             if status == 200:
-                                if decode:
-                                    content = await response.text()
-                                elif max_size is None:
-                                    content = await response.read()
-                                elif max_size > 0:
-                                    max_size = min(int(response.headers.get('Content-Length', max_size)), max_size)
-                                    content = await response.content.read(max_size)
+                                content_type = response.headers.get('Content-Type')
+                                if not intended_content_type or not content_type or \
+                                        content_type.startswith(intended_content_type):
+                                    if decode:
+                                        content = await response.text()
+                                    elif max_size is None:
+                                        content = await response.read()
+                                    elif max_size > 0:
+                                        max_size = min(int(response.headers.get('Content-Length', str(max_size))),
+                                                       max_size)
+                                        content = await response.content.read(max_size)
                             elif socket_family == AF_INET6 and tries == 1 \
                                     and status in (400,  # Bad Request (some feed providers return 400 for banned IPs)
                                                    403,  # Forbidden

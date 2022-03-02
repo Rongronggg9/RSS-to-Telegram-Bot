@@ -1,7 +1,6 @@
 from __future__ import annotations
 from src.compat import Final
 from typing import Optional, Union
-from collections.abc import Generator
 
 import asyncio
 import re
@@ -12,6 +11,7 @@ from collections import defaultdict
 from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
     MessageMediaPhoto, MessageMediaDocument
+from asyncstdlib.functools import lru_cache
 
 from src import env, log, web
 from src.parsing.html_node import Link, Br, Text, HtmlTree
@@ -39,8 +39,9 @@ isTelegramCannotFetch = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
 IMAGE: Final = 'image'
 VIDEO: Final = 'video'
 ANIMATION: Final = 'animation'
+FILE: Final = 'file'
 MEDIUM_BASE_CLASS: Final = 'medium'
-TypeMedium = Union[IMAGE, VIDEO, ANIMATION]
+TypeMedium = Union[IMAGE, VIDEO, ANIMATION, FILE]
 
 MEDIA_GROUP: Final = 'media_group'
 TypeMessage = Union[MEDIA_GROUP, TypeMedium]
@@ -50,6 +51,24 @@ TypeMessageMedia = Union[MessageMediaPhoto, MessageMediaDocument]
 IMAGE_MAX_SIZE: Final = 5242880
 MEDIA_MAX_SIZE: Final = 20971520
 
+
+# Note:
+# One message can have 10 media at most, but there are some exceptions.
+# 1. A GIF (Animation) and webp (although as a file) must occupy a SINGLE message.
+# 2. Videos and Images can be mixed in a media group, but any other type of media cannot be in the same message.
+# 3. Images uploaded as MessageMediaPhoto will be considered as an image. While MessageMediaDocument not, it's a file.
+# 4. Any other type of media except Image must be uploaded as MessageMediaDocument.
+# 5. Telegram will not take notice of attributes provided if it already decoded the necessary metadata of a media.
+# 6. Because of (5), we can't force send GIFs and videos as ordinary files.
+# 7. Musics can be sent in a media group, but can not be mixed with other types of media.
+# 8. Other files (including images sent as files) should be able to be mixed in a media group.
+#
+# Type fallback notes:
+# 1. A video can fall back to an image if its poster is available.
+# 2. An image can fall back to a file if it is: 5MB < size <= 20MB, width + height >= 10000.
+# 3. A GIF need not any fallback, because of (5) above.
+# 4. The only possible fallback chain is: video -> image(poster) -> file.
+# 5. If an image fall back to a file, rest images must fall back to file too!
 
 class Medium:
     type = MEDIUM_BASE_CLASS
@@ -71,7 +90,6 @@ class Medium:
         self.valid: Optional[bool] = None
         self._server_change_count: int = 0
         self.size = self.width = self.height = None
-        self.valid_urls: list[str] = []  # use for fallback if type_fallback_allow_self_urls
         self.type_fallback_urls: list[str] = type_fallback_urls if isinstance(type_fallback_urls, list) \
             else [type_fallback_urls] if type_fallback_urls and isinstance(type_fallback_urls, str) \
             else []  # use for fallback if not type_fallback_allow_self_urls
@@ -80,21 +98,37 @@ class Medium:
         self.uploaded_bucket: defaultdict[int, Optional[tuple[TypeMessageMedia, TypeMedium]]] \
             = defaultdict(lambda: None)
         self.uploading_lock = asyncio.Lock()
+        self.validating_lock = asyncio.Lock()
 
     def telegramize(self):
         if self.inputMediaExternalType is None:
             raise NotImplementedError
         return self.inputMediaExternalType(self.chosen_url)
 
+    def type_fallback_chain(self) -> Optional[Medium]:
+        return (
+            self
+            if self.valid
+            else
+            (self.type_fallback_medium.type_fallback_chain()
+             if self.need_type_fallback and self.type_fallback_medium is not None
+             else None)
+        )
+
     async def upload(self, chat_id: int, force_upload: bool = False) \
             -> tuple[Optional[TypeMessageMedia], Optional[TypeMedium]]:
         """
         :return: tuple(MessageMedia, self)
         """
-        if self.valid is False and (not (self.need_type_fallback and self.type_fallback_medium)):
+        if self.valid is None:
+            await self.validate()
+        medium_to_upload = self.type_fallback_chain()
+        if medium_to_upload is None:
             return None, None
-        if self.uploaded_bucket[chat_id] and not force_upload:
-            return self.uploaded_bucket[chat_id]
+        if self.uploaded_bucket[chat_id]:
+            cached = self.uploaded_bucket[chat_id]
+            if not force_upload and cached[1] == medium_to_upload.type:
+                return cached
 
         tries = 0
         max_tries = 10
@@ -102,21 +136,23 @@ class Medium:
         media_fallback_count = 0
         err_list = []
         async with self.uploading_lock:
-            if self.uploaded_bucket[chat_id] and not force_upload:
-                return self.uploaded_bucket[chat_id]
-            if self.valid is None:
-                await self.validate()
-            if self.valid is False and (not (self.need_type_fallback and self.type_fallback_medium)):
+            medium_to_upload = self.type_fallback_chain()
+            if medium_to_upload is None:
                 return None, None
+            if self.uploaded_bucket[chat_id]:
+                cached = self.uploaded_bucket[chat_id]
+                if not force_upload and cached[1] == medium_to_upload.type:
+                    return cached
             peer = await env.bot.get_input_entity(chat_id)
             while True:
+                medium_to_upload = self.type_fallback_chain()
+                if medium_to_upload is None:
+                    return None, None
                 tries += 1
                 if tries > max_tries:
                     self.valid = False
                     return None, None
                 try:
-                    medium_to_upload = self if not self.need_type_fallback or self.type_fallback_medium is None \
-                        else self.type_fallback_medium
                     uploaded_media = await env.bot(
                         UploadMediaRequest(peer, medium_to_upload.telegramize())
                     )
@@ -152,52 +188,74 @@ class Medium:
     def get_link_html_node(self):
         return Link(self.type, param=self.original_urls[0])
 
-    def get_url(self):
-        return self.chosen_url
-
-    async def validate(self, flush: bool = False):
+    async def validate(self, flush: bool = False) -> bool:
         if self.valid is not None and not flush:  # already validated
-            return
+            return self.valid
 
-        while self.urls:
-            url = self.urls.pop(0)
-            medium_info = await get_medium_info(url, medium_type=self.type)
-            if medium_info is None:
-                continue
-            self.size, self.width, self.height, self.valid = medium_info
+        async with self.validating_lock:
+            while self.urls:
+                url = self.urls.pop(0)
+                medium_info = await get_medium_info(url)
+                if medium_info is None:
+                    continue
+                self.size, self.width, self.height = medium_info
 
-            if self.valid:
-                self.valid_urls.append(url)
-                self.chosen_url = url
-                self._server_change_count = 0
-                if isTelegramCannotFetch(self.chosen_url):
-                    await self.change_server()
-                return
+                if (
+                        self.type == IMAGE
+                        and
+                        (
+                                not (0.05 < self.width / self.height < 20)
+                                or
+                                self.width + self.height > 10000
+                        )
+                ):  # always invalid
+                    self.valid = False
+                elif self.size <= self.maxSize:  # valid
+                    self.valid = True
 
-            # TODO: reduce non-weibo pic size
+                if self.valid:
+                    self.chosen_url = url
+                    self._server_change_count = 0
+                    if isTelegramCannotFetch(self.chosen_url):
+                        await self.change_server()
+                    return True
 
-        logger.debug(f'Dropped medium {self.original_urls[0]}: invalid or fetch failed')
+                # TODO: reduce non-weibo pic size
+
+            self.valid = False
+            return await self.type_fallback()
+
+    async def type_fallback(self) -> bool:
+        fallback_urls = self.type_fallback_urls + (list(self.original_urls) if self.typeFallbackAllowSelfUrls else [])
         self.valid = False
-
-        fallback_urls = self.type_fallback_urls + (self.valid_urls if self.typeFallbackAllowSelfUrls else [])
-        if self.valid is False and self.type_fallback_medium is None and fallback_urls and self.typeFallbackTo:
+        if self.type_fallback_medium is None and fallback_urls and self.typeFallbackTo:
+            # create type fallback medium
             self.type_fallback_medium = self.typeFallbackTo(fallback_urls)
-            await self.type_fallback_medium.validate()
-            if self.type_fallback_medium.valid:
+            if await self.type_fallback_medium.validate():
+                logger.debug(f"Medium {self.original_urls[0]} type fallback to '{self.type_fallback_medium.type}'"
+                             + (f'({self.type_fallback_medium.original_urls[0]})'
+                                if not self.typeFallbackAllowSelfUrls
+                                else ''))
                 self.need_type_fallback = True
                 # self.type_fallback_medium.type = self.type
-                self.type_fallback_medium.original_urls = self.original_urls
+                # self.type_fallback_medium.original_urls = self.original_urls
+                return True
+        elif self.need_type_fallback and self.type_fallback_medium is not None:
+            return await self.type_fallback_medium.fallback()
+        logger.debug(f'Dropped medium {self.original_urls[0]}: invalid or fetch failed')
+        return False
 
     async def fallback(self) -> bool:
         if self.need_type_fallback:
             if not await self.type_fallback_medium.fallback():
                 self.need_type_fallback = False
                 self.valid = False
-                return True
-        urls_len = len(self.urls)
-        formerly_valid = self.valid
-        if formerly_valid:
-            await self.validate(flush=True)
+            return True
+        else:
+            urls_len = len(self.urls)
+            formerly_valid = self.valid
+            if formerly_valid:
+                await self.validate(flush=True)
         fallback_flag = (self.valid != formerly_valid
                          or (self.valid and urls_len != len(self.urls))
                          or self.need_type_fallback)
@@ -233,10 +291,19 @@ class Medium:
         )
 
 
+class File(Medium):
+    type = FILE
+    maxSize = MEDIA_MAX_SIZE
+    typeFallbackTo = None
+    typeFallbackAllowSelfUrls = False
+    inputMediaExternalType = InputMediaDocumentExternal
+
+
 class Image(Medium):
     type = IMAGE
     maxSize = IMAGE_MAX_SIZE
-    typeFallbackTo = None
+    typeFallbackTo = File
+    typeFallbackAllowSelfUrls = True
     inputMediaExternalType = InputMediaPhotoExternal
 
     def __init__(self, url: Union[str, list[str]]):
@@ -284,15 +351,19 @@ class Image(Medium):
 
 class Video(Medium):
     type = VIDEO
+    maxSize = MEDIA_MAX_SIZE
     typeFallbackTo = Image
+    typeFallbackAllowSelfUrls = False
     inputMediaExternalType = InputMediaDocumentExternal
 
 
 class Animation(Image):
     type = ANIMATION
     maxSize = MEDIA_MAX_SIZE
-    typeFallbackTo = Image
-    typeFallbackAllowSelfUrls = True
+    # typeFallbackTo = Image
+    # typeFallbackAllowSelfUrls = True
+    typeFallbackTo = None
+    typeFallbackAllowSelfUrls = False
     inputMediaExternalType = InputMediaDocumentExternal
 
 
@@ -318,8 +389,9 @@ class Media:
     def invalidate_all(self) -> bool:
         invalidated_some_flag = False
         for medium in self._media:
-            if medium.valid:
+            if medium.valid or medium.need_type_fallback:
                 medium.valid = False
+                medium.need_type_fallback = False
                 invalidated_some_flag = True
         return invalidated_some_flag
 
@@ -354,46 +426,67 @@ class Media:
         :param chat_id: chat_id to upload to. If None, the origin media will be returned.
         :return: ((uploaded/original medium, medium type)), invalid media html node)
         """
-        files: tuple[Union[tuple[Union[TypeMessageMedia, Medium, None], Optional[TypeMedium]], BaseException], ...]
-        if chat_id:
-            # await self.validate()  # no need
-            # files: tuple[Union[tuple[Optional[TypeMessageMedia], Optional[TypeMedium]], BaseException], ...]
-            files = await asyncio.gather(*(medium.upload(chat_id) for medium in self._media), return_exceptions=True)
-        else:
+        async with self.modify_lock:
             await self.validate()
-            # files: tuple[tuple[Optional[Medium], Optional[TypeMedium]], ...]
-            files = tuple((medium if medium.valid else None, medium.type if medium.valid else None)
-                          for medium in self._media)
+            # at least a file
+            if sum(isinstance(medium.type_fallback_chain(), File) for medium in self._media) > 0:
+                # fall back all image to files
+                await asyncio.gather(
+                    *(medium.type_fallback()
+                      for medium in self._media if isinstance(medium.type_fallback_chain(), Image))
+                )
+
+            media_and_types: tuple[
+                Union[tuple[Union[TypeMessageMedia, Medium, None], Optional[TypeMedium]], BaseException],
+                ...]
+            if chat_id:
+                # tuple[Union[tuple[Optional[TypeMessageMedia], Optional[TypeMedium]], BaseException], ...]
+                media_and_types = await asyncio.gather(
+                    *(medium.upload(chat_id) for medium in self._media),
+                    return_exceptions=True
+                )
+            else:
+                # tuple[tuple[Optional[Medium], Optional[TypeMedium]], ...]
+                media_and_types = tuple((medium.type_fallback_chain(), medium.type_fallback_chain().type)
+                                        if medium.type_fallback_chain() is not None
+                                        else (None, None)
+                                        for medium in self._media)
 
         media: list[tuple[Union[TypeMessageMedia, Image, Video], Union[IMAGE, VIDEO]]] = []
         gifs: list[tuple[Union[MessageMediaDocument, Animation], ANIMATION]] = []
+        files: list[tuple[Union[MessageMediaDocument, File], FILE]] = []
 
         link_nodes: list[Link] = []
-        for medium, file_and_type in zip(self._media, files):
-            if isinstance(file_and_type, Exception):
-                if type(file_and_type) in UserBlockedErrors:  # user blocked, let it go
-                    raise file_and_type
-                logger.debug('Upload media failed:', exc_info=file_and_type)
+        for medium, medium_and_type in zip(self._media, media_and_types):
+            if isinstance(medium_and_type, Exception):
+                if type(medium_and_type) in UserBlockedErrors:  # user blocked, let it go
+                    raise medium_and_type
+                logger.debug('Upload media failed:', exc_info=medium_and_type)
                 link_nodes.append(medium.get_link_html_node())
                 continue
-            file, file_type = file_and_type
+            file, file_type = medium_and_type
             if file_type in {IMAGE, VIDEO}:
-                media.append(file_and_type)
+                media.append(medium_and_type)
             elif file_type == ANIMATION:
-                gifs.append(file_and_type)
+                gifs.append(medium_and_type)
+            elif file_type == FILE:
+                files.append(medium_and_type)
             else:
+                link_nodes.append(medium.get_link_html_node())
+            if file_type in {IMAGE, FILE} and isinstance(medium, (Image, Video)) and file_type != medium.type:
                 link_nodes.append(medium.get_link_html_node())
 
         ret = []
-        while media:
-            _ = media[:10]
-            if len(_) == 1:
-                ret.append(_[0])
-            else:
-                # media group
-                media_group = tuple(medium_and_type[0] for medium_and_type in _)
-                ret.append((media_group, MEDIA_GROUP))
-            media = media[10:]
+        for list_to_process in (media, files):
+            while list_to_process:
+                _ = list_to_process[:10]
+                list_to_process = list_to_process[10:]
+                if len(_) == 1:
+                    ret.append(_[0])
+                else:
+                    # media group
+                    media_group = tuple(medium_and_type[0] for medium_and_type in _)
+                    ret.append((media_group, MEDIA_GROUP))
         ret.extend(gifs)
 
         html_nodes = []
@@ -408,40 +501,9 @@ class Media:
 
         return ret, invalid_html_node
 
-    def get_valid_media(self, include_pending: bool = False) \
-            -> Generator[dict[str, Union[TypeMessage, list[Medium]], Medium]]:
-        result = []
-        gifs = []
-        for medium in self._media:
-            if (
-                    (medium.valid is False and not (
-                            medium.need_type_fallback and medium.type_fallback_medium))  # invalid
-                    or
-                    (medium.valid is None and not include_pending)  # pending
-            ):
-                continue
-            if medium.need_type_fallback:
-                medium = medium.type_fallback_medium
-            if isinstance(medium, Animation):
-                # if len(result) > 0:
-                #     yield {'type': result[0].type, 'media': result[0]} if len(result) == 1 \
-                #         else {'type': MEDIA_GROUP, 'media': result}
-                #     result = []
-                # yield {'type': ANIMATION, 'media': medium}
-                gifs.append({'type': ANIMATION, 'media': medium})
-                continue
-            result.append(medium)
-            if len(result) == 10:
-                yield {'type': MEDIA_GROUP, 'media': result}
-                result = []
-        if result:
-            yield {'type': result[0].type, 'media': result[0]} if len(result) == 1 \
-                else {'type': MEDIA_GROUP, 'media': result}
-        for gif in gifs:
-            yield gif
-
-    def estimate_message_counts(self):
-        return sum(1 for _ in self.get_valid_media(include_pending=True))
+    async def estimate_message_counts(self):
+        media = await self.upload_all(chat_id=None)
+        return sum(1 for _ in media[0])
 
     def __len__(self):
         return len(self._media)
@@ -483,13 +545,10 @@ class Media:
         return '|'.join(medium.hash for medium in self._media)
 
 
-async def get_medium_info(url: str, medium_type: Optional[TypeMedium]) -> Optional[tuple[int, int, int, bool]]:
-    is_image = medium_type is None or medium_type == IMAGE
-    media_max_size = IMAGE_MAX_SIZE if is_image else MEDIA_MAX_SIZE
-    valid = False
-
+@lru_cache(maxsize=1024)
+async def get_medium_info(url: str) -> Optional[tuple[int, int, int]]:
     try:
-        r = await web.get(url=url, max_size=256 if is_image else 0)
+        r = await web.get(url=url, max_size=256, intended_content_type='image')
         if r.status != 200:
             raise ValueError('status code not 200')
     except Exception as e:
@@ -498,13 +557,12 @@ async def get_medium_info(url: str, medium_type: Optional[TypeMedium]) -> Option
 
     size = int(r.headers.get('Content-Length') or -1)
     content_type = r.headers.get('Content-Type')
+    is_image = content_type and content_type.startswith('image/')
 
     width = height = -1
-    if not is_image:
-        valid = size <= media_max_size
-        return size, width, height, valid
-
     file_header = r.content
+    if not is_image or not file_header:
+        return size, width, height
 
     # noinspection PyBroadException
     try:
@@ -522,10 +580,4 @@ async def get_medium_info(url: str, medium_type: Optional[TypeMedium]) -> Option
                 width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
                 height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
 
-    if not (0.05 < width / height < 20):  # always invalid
-        valid = False
-
-    if size <= media_max_size and width + height < 10000:  # valid
-        valid = True
-
-    return size, width, height, valid
+    return size, width, height

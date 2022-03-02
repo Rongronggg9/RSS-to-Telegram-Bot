@@ -254,7 +254,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             # fail for 5 times, consider been banned
             del __user_blocked_counter[user_id]
             if await inner.utils.have_subs(user_id):
-                logger.error(f'User blocked ({e.__class__.__name__}): {user_id}')
+                logger.error(f'User blocked ({type(e).__name__}): {user_id}')
                 await inner.sub.unsub_all(user_id)
 
 

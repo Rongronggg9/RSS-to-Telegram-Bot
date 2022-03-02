@@ -11,9 +11,10 @@ from collections import defaultdict
 from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
     MessageMediaPhoto, MessageMediaDocument
+from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
 from asyncstdlib.functools import lru_cache
 
-from src import env, log, web
+from src import env, log, web, locks
 from src.parsing.html_node import Link, Br, Text, HtmlTree
 from src.exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
 
@@ -131,59 +132,83 @@ class Medium:
                 return cached
 
         tries = 0
+        error_tries = 0
         max_tries = 10
         server_change_count = 0
         media_fallback_count = 0
         err_list = []
-        async with self.uploading_lock:
-            medium_to_upload = self.type_fallback_chain()
-            if medium_to_upload is None:
-                return None, None
-            if self.uploaded_bucket[chat_id]:
-                cached = self.uploaded_bucket[chat_id]
-                if not force_upload and cached[1] == medium_to_upload.type:
-                    return cached
+        flood_lock = locks.user_flood_lock(chat_id)
+        while True:
             peer = await env.bot.get_input_entity(chat_id)
-            while True:
-                medium_to_upload = self.type_fallback_chain()
-                if medium_to_upload is None:
-                    return None, None
-                tries += 1
-                if tries > max_tries:
-                    self.valid = False
-                    return None, None
-                try:
-                    uploaded_media = await env.bot(
-                        UploadMediaRequest(peer, medium_to_upload.telegramize())
-                    )
-                    self.uploaded_bucket[chat_id] = uploaded_media, medium_to_upload.type
-                    return uploaded_media, medium_to_upload.type
+            try:
+                async with flood_lock:
+                    pass  # wait for flood wait
 
-                # errors caused by invalid img/video(s)
-                except InvalidMediaErrors as e:
-                    err_list.append(e)
-                    if await self.fallback():
-                        media_fallback_count += 1
-                    else:
-                        self.valid = False
+                async with self.uploading_lock:
+                    medium_to_upload = self.type_fallback_chain()
+                    if medium_to_upload is None:
                         return None, None
-                    continue
+                    if self.uploaded_bucket[chat_id]:
+                        cached = self.uploaded_bucket[chat_id]
+                        if not force_upload and cached[1] == medium_to_upload.type:
+                            return cached
+                    while True:
+                        medium_to_upload = self.type_fallback_chain()
+                        if medium_to_upload is None:
+                            return None, None
+                        tries += 1
+                        if tries > max_tries:
+                            self.valid = False
+                            return None, None
+                        try:
+                            async with flood_lock:
+                                pass  # wait for flood wait
 
-                # errors caused by server instability or network instability between img server and telegram server
-                except ExternalMediaFetchFailedErrors as e:
-                    err_list.append(e)
-                    if await self.change_server():
-                        server_change_count += 1
-                    elif await self.fallback():
-                        media_fallback_count += 1
-                    else:
-                        self.valid = False
-                        return None, None
-                    continue
+                            uploaded_media = await env.bot(
+                                UploadMediaRequest(peer, medium_to_upload.telegramize())
+                            )
+                            self.uploaded_bucket[chat_id] = uploaded_media, medium_to_upload.type
+                            return uploaded_media, medium_to_upload.type
 
-                # make sure dealing with other errors outside
-                # except Exception as e:
-                #     raise e
+                        # errors caused by invalid img/video(s)
+                        except InvalidMediaErrors as e:
+                            err_list.append(e)
+                            if await self.fallback():
+                                media_fallback_count += 1
+                            else:
+                                self.valid = False
+                                return None, None
+                            continue
+
+                        # errors caused by server or network instability between img server and telegram server
+                        except ExternalMediaFetchFailedErrors as e:
+                            err_list.append(e)
+                            if await self.change_server():
+                                server_change_count += 1
+                            elif await self.fallback():
+                                media_fallback_count += 1
+                            else:
+                                self.valid = False
+                                return None, None
+                            continue
+
+            except (FloodWaitError, SlowModeWaitError) as e:
+                # telethon has retried for us, but we release locks and retry again here to see if it will be better
+                if error_tries >= 1:
+                    logger.error(f'Medium dropped due to too many flood control retries ({chat_id}): '
+                                 f'{self.original_urls[0]}')
+                    return None, None
+
+                error_tries += 1
+                await locks.user_flood_wait(chat_id, seconds=e.seconds)  # acquire a flood wait
+            except ServerError as e:
+                # telethon has retried for us, so we just retry once more
+                if error_tries >= 1:
+                    logger.error(f'Medium dropped due to Telegram internal server error '
+                                 f'({chat_id}, {type(e).__name__}): '
+                                 f'{self.original_urls[0]}')
+
+                error_tries += 1
 
     def get_link_html_node(self):
         return Link(self.type, param=self.original_urls[0])
@@ -438,31 +463,35 @@ class Media:
         :param chat_id: chat_id to upload to. If None, the origin media will be returned.
         :return: ((uploaded/original medium, medium type)), invalid media html node)
         """
+        await self.validate()
         async with self.modify_lock:
-            await self.validate()
-            # at least a file
-            if sum(isinstance(medium.type_fallback_chain(), File) for medium in self._media) > 0:
+            # at least a file and an image
+            if (
+                    sum(isinstance(medium.type_fallback_chain(), File) for medium in self._media) > 0
+                    and
+                    sum(isinstance(medium.type_fallback_chain(), Image) for medium in self._media) > 0
+            ):
                 # fall back all image to files
                 await asyncio.gather(
                     *(medium.type_fallback()
                       for medium in self._media if isinstance(medium.type_fallback_chain(), Image))
                 )
 
-            media_and_types: tuple[
-                Union[tuple[Union[TypeMessageMedia, Medium, None], Optional[TypeMedium]], BaseException],
-                ...]
-            if chat_id:
-                # tuple[Union[tuple[Optional[TypeMessageMedia], Optional[TypeMedium]], BaseException], ...]
-                media_and_types = await asyncio.gather(
-                    *(medium.upload(chat_id) for medium in self._media),
-                    return_exceptions=True
-                )
-            else:
-                # tuple[tuple[Optional[Medium], Optional[TypeMedium]], ...]
-                media_and_types = tuple((medium.type_fallback_chain(), medium.type_fallback_chain().type)
-                                        if medium.type_fallback_chain() is not None
-                                        else (None, None)
-                                        for medium in self._media)
+        media_and_types: tuple[
+            Union[tuple[Union[TypeMessageMedia, Medium, None], Optional[TypeMedium]], BaseException],
+            ...]
+        if chat_id:
+            # tuple[Union[tuple[Optional[TypeMessageMedia], Optional[TypeMedium]], BaseException], ...]
+            media_and_types = await asyncio.gather(
+                *(medium.upload(chat_id) for medium in self._media),
+                return_exceptions=True
+            )
+        else:
+            # tuple[tuple[Optional[Medium], Optional[TypeMedium]], ...]
+            media_and_types = tuple((medium.type_fallback_chain(), medium.type_fallback_chain().type)
+                                    if medium.type_fallback_chain() is not None
+                                    else (None, None)
+                                    for medium in self._media)
 
         media: list[tuple[Union[TypeMessageMedia, Image, Video], Union[IMAGE, VIDEO]]] = []
         gifs: list[tuple[Union[MessageMediaDocument, Animation], ANIMATION]] = []

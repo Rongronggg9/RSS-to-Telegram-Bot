@@ -3,9 +3,9 @@ from typing import Union, Optional
 from collections.abc import Sequence
 
 import asyncio
-from telethon.tl import types
+from telethon.tl import types, functions
 from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
-from telethon.extensions.html import unparse as html_unparse
+from telethon.utils import get_message_id
 from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 
@@ -79,7 +79,7 @@ class MessageDispatcher:
                 for message in self.messages:
                     msg = await message.send(reply_to=sent_msgs[-1] if sent_msgs else None)
                     if msg:
-                        sent_msgs.append(msg)
+                        sent_msgs.extend(msg) if isinstance(msg, list) else sent_msgs.append(msg)
         except exceptions.MediaSendFailErrors as e:
             if sent_msgs:
                 await asyncio.gather(
@@ -121,9 +121,9 @@ class Message:
             )
         )
 
-    async def send(self, reply_to: Union[int, types.Message, None] = None) -> Optional[types.Message]:
+    async def send(self, reply_to: Union[int, types.Message, None] = None) \
+            -> Optional[Union[types.Message, list[types.Message]]]:
         msg_lock, flood_lock = locks.user_msg_locks(self.user_id)
-
         while True:
             try:
                 async with flood_lock:
@@ -133,14 +133,31 @@ class Message:
                     async with self.__overall_semaphore:  # only acquire overall semaphore when sending
                         if self.media_type == MEDIA_GROUP:
                             # telethon does not support formatting a media group using formatting entities, sad
-                            html = html_unparse(self.plain_text, self.format_entities)
-                            return await env.bot.send_message(entity=self.user_id,
-                                                              message=html,
-                                                              file=self.media,
-                                                              reply_to=reply_to,
-                                                              link_preview=self.link_preview,
-                                                              silent=self.silent,
-                                                              parse_mode='HTML')
+                            # html = html_unparse(self.plain_text, self.format_entities)
+                            # return await env.bot.send_message(entity=self.user_id,
+                            #                                   message=html,
+                            #                                   file=self.media,
+                            #                                   reply_to=reply_to,
+                            #                                   link_preview=self.link_preview,
+                            #                                   silent=self.silent,
+                            #                                   parse_mode='HTML')
+
+                            media = []
+                            for medium in self.media:
+                                _, fm, _ = await env.bot._file_to_media(medium)
+                                media.append(types.InputSingleMedia(fm, message=''))
+                            media[-1].message = self.plain_text if self.plain_text else ''
+                            media[-1].entities = self.format_entities if self.format_entities else None
+                            entity = await env.bot.get_input_entity(self.user_id)
+                            reply_to = get_message_id(reply_to)
+                            request = functions.messages.SendMultiMediaRequest(entity,
+                                                                               reply_to_msg_id=reply_to,
+                                                                               multi_media=media,
+                                                                               silent=self.silent)
+                            result = await env.bot(request)
+                            random_ids = [m.random_id for m in media]
+                            ret = env.bot._get_response_message(random_ids, result, entity)
+                            return ret
                         else:
                             return await env.bot.send_message(entity=self.user_id,
                                                               message=self.plain_text,

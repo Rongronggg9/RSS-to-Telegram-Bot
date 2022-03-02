@@ -200,16 +200,28 @@ class Medium:
                     continue
                 self.size, self.width, self.height = medium_info
 
-                if (
-                        self.type == IMAGE
-                        and
-                        (
-                                not (0.05 < self.width / self.height < 20)
-                                or
-                                self.width + self.height > 10000
-                        )
-                ):  # always invalid
-                    self.valid = False
+                if self.type == IMAGE:
+                    # always invalid
+                    if self.width + self.height > 10000 or self.size > self.maxSize:
+                        self.valid = False
+                    # Telegram accepts 0.05 < w/h < 20. But after downsized, it will be ugly. Narrow the range down
+                    elif 0.4 <= self.width / self.height <= 2.5:
+                        self.valid = True
+                    elif (
+                            # if already fall backed, bypass rest checks
+                            url in self.original_urls and self.original_urls.index(url) == 0
+                            and
+                            # ensure the image is valid
+                            0.05 < self.width / self.height < 20
+                            and
+                            # Telegram downsizes images to fit 1280x1280. If not downsized a lot, passing
+                            max(self.width, self.height) <= 1280 * 1.5
+                    ):
+                        self.valid = True
+                    # let long images fall back to file
+                    else:
+                        self.valid = False
+                        self.urls = []  # clear the urls, force fall back to file
                 elif self.size <= self.maxSize:  # valid
                     self.valid = True
 
@@ -473,7 +485,7 @@ class Media:
                 files.append(medium_and_type)
             else:
                 link_nodes.append(medium.get_link_html_node())
-            if file_type in {IMAGE, FILE} and isinstance(medium, (Image, Video)) and file_type != medium.type:
+            if file_type in {IMAGE, FILE} and isinstance(medium, Video) and file_type != medium.type:
                 link_nodes.append(medium.get_link_html_node())
 
         ret = []

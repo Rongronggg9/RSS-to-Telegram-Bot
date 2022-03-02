@@ -224,7 +224,7 @@ class PostFormatter:
                     or
                     (self.media and normal_msg_len > 1024)
                     or
-                    self.media.estimate_message_counts() > 1
+                    await self.media.estimate_message_counts() > 1
             ):
                 message_type = TELEGRAPH_MESSAGE
             else:

@@ -4,7 +4,7 @@ from typing import Optional
 from html import unescape
 
 from src import db, env, exceptions
-from .utils import emojify, parse_entry, stripAnySpace, logger
+from .utils import emojify, parse_entry, stripAnySpace, logger, Enclosure
 from .post_formatter import PostFormatter
 from .message import MessageDispatcher
 
@@ -12,7 +12,7 @@ from .message import MessageDispatcher
 def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post':
     entry_parsed = parse_entry(entry)
     return Post(entry_parsed.content, entry_parsed.title, feed_title, entry_parsed.link, entry_parsed.author,
-                feed_link=feed_link)
+                feed_link=feed_link, enclosures=entry_parsed.enclosures)
 
 
 class Post:
@@ -22,7 +22,8 @@ class Post:
                  feed_title: Optional[str] = None,
                  link: Optional[str] = None,
                  author: Optional[str] = None,
-                 feed_link: Optional[str] = None):
+                 feed_link: Optional[str] = None,
+                 enclosures: list[Enclosure] = None):
         """
         :param html: HTML content
         :param title: post title
@@ -38,13 +39,15 @@ class Post:
         self.link = link
         self.author = author
         self.feed_link = feed_link
+        self.enclosures = enclosures
 
         self.post_formatter = PostFormatter(html=self.html,
                                             title=self.title,
                                             feed_title=self.feed_title,
                                             link=self.link,
                                             author=self.author,
-                                            feed_link=self.feed_link)
+                                            feed_link=self.feed_link,
+                                            enclosures=self.enclosures)
 
     async def send_formatted_post_according_to_sub(self, sub: db.Sub):
         await self.send_formatted_post(user_id=sub.user_id,

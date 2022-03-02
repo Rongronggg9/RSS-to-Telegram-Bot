@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 import re
 import json
@@ -15,6 +15,21 @@ logger = log.getLogger('RSStT.parsing')
 stripLineEnd = partial(re.compile(r'[ 　\xa0\t\r\u200b\u2006\u2028\u2029]+\n').sub, '\n')  # use firstly
 stripNewline = partial(re.compile(r'[\f\n\u2028\u2029]{3,}').sub, '\n\n')  # use secondly
 stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
+
+
+class Enclosure:
+    def __init__(self, url: str, length: Union[int, str], _type: str, duration: str = None):
+        self.url = url
+        self.length = (
+            int(length)
+            if isinstance(length, str) and length.isdigit()
+            else length
+            if isinstance(length, int)
+            else None
+        )
+        self.type = _type
+        self.duration = duration
+
 
 # load emoji dict
 with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
@@ -39,6 +54,7 @@ def parse_entry(entry):
         link: Optional[str] = None
         author: Optional[str] = None
         title: Optional[str] = None
+        enclosures: list[Enclosure] = None
 
     # entry.summary returns summary(Atom) or description(RSS)
     content = entry.get('content') or entry.get('summary', '')
@@ -61,6 +77,15 @@ def parse_entry(entry):
     EntryParsed.author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
     # hmm, some entries do have no title, should we really set up a feed hospital?
     EntryParsed.title = entry.get('title')
+    if isinstance(entry.get('links'), list):
+        EntryParsed.enclosures = []
+        for link in entry['links']:
+            if link.get('rel') == 'enclosure':
+                EntryParsed.enclosures.append(Enclosure(url=link.get('href'),
+                                                        length=link.get('length'),
+                                                        _type=link.get('type')))
+        if EntryParsed.enclosures and entry.get('itunes_duration'):
+            EntryParsed.enclosures[0].duration = entry['itunes_duration']
 
     return EntryParsed
 

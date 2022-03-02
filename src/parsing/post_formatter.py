@@ -19,7 +19,7 @@ from . import utils, tgraph
 from .splitter import get_plain_text_length
 from .html_parser import parse
 from .html_node import *
-from .medium import Media
+from .medium import Media, Image, Video, Audio, File
 
 AUTO: Final = 0
 DISABLE: Final = -1
@@ -60,7 +60,8 @@ class PostFormatter:
                  feed_title: Optional[str] = None,
                  link: Optional[str] = None,
                  author: Optional[str] = None,
-                 feed_link: str = None):
+                 feed_link: str = None,
+                 enclosures: list[utils.Enclosure] = None):
         """
         :param html: HTML content
         :param title: post title
@@ -75,6 +76,7 @@ class PostFormatter:
         self.link = link
         self.author = author
         self.feed_link = feed_link
+        self.enclosures = enclosures
 
         self.parsed: bool = False
         self.html_tree: Optional[HtmlTree] = None
@@ -429,6 +431,24 @@ class PostFormatter:
         self.parsed_html = parsed.html
         self.plain_length = get_plain_text_length(self.parsed_html)
         self.parsed = True
+        if self.enclosures:
+            for enclosure in self.enclosures:
+                # https://www.iana.org/assignments/media-types/media-types.xhtml
+                if not enclosure.url or self.media.url_exists(enclosure.url):
+                    continue
+                elif not enclosure.type:
+                    medium = File(enclosure.url)
+                elif enclosure.type.startswith('image/gif'):
+                    medium = Audio(enclosure.url)
+                elif enclosure.type.startswith('audio'):
+                    medium = Audio(enclosure.url)
+                elif enclosure.type.startswith('video'):
+                    medium = Video(enclosure.url)
+                elif enclosure.type.startswith('image'):
+                    medium = Image(enclosure.url)
+                else:
+                    medium = File(enclosure.url)
+                self.media.add(medium)
 
     async def telegraph_ify(self):
         if isinstance(self.telegraph_link, str) or self.telegraph_link is False:

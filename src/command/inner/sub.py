@@ -35,7 +35,7 @@ async def sub(user_id: int,
         if feed:
             _sub = await db.Sub.get_or_none(user=user_id, feed=feed)
         if not feed or feed.state == 0:
-            wf = await web.feed_get(feed_url)
+            wf = await web.feed_get(feed_url, verbose=False)
             rss_d = wf.rss_d
             ret['status'] = wf.status
             ret['msg'] = wf.error and wf.error.i18n_message(lang)
@@ -43,7 +43,7 @@ async def sub(user_id: int,
             ret['url'] = feed_url = wf.url  # get the redirected url
 
             if rss_d is None:
-                logger.warning(f'Sub {feed_url} for {user_id} failed')
+                logger.warning(f'Sub {feed_url} for {user_id} failed: ({wf.error})')
                 return ret
 
             if feed_url_original != feed_url:
@@ -64,23 +64,31 @@ async def sub(user_id: int,
                 await feed.save()  # now we get the id
                 db.effective_utils.EffectiveTasks.update(feed.id)
 
+        sub_title = sub_title if feed.title != sub_title else None
+
         if not _sub:  # create a new sub if needed
             _sub, created_new_sub = await db.Sub.get_or_create(user_id=user_id, feed=feed,
-                                                               defaults={'title': sub_title})
+                                                               defaults={'title': sub_title} if sub_title else None)
 
         if not created_new_sub:
-            if _sub.title == sub_title:
+            if _sub.title == sub_title and _sub.state == 1:
                 ret['sub'] = None
                 ret['msg'] = 'ERROR: ' + i18n[lang]['already_subscribed']
                 return ret
-            else:
+            elif _sub.title != sub_title:
+                _sub.state = 1
                 _sub.title = sub_title
                 await _sub.save()
                 logger.info(f'Sub {feed_url} for {user_id} updated title to {sub_title}')
+            else:
+                _sub.state = 1
+                await _sub.save()
+                logger.info(f'Sub {feed_url} for {user_id} activated')
 
         _sub.feed = feed  # by doing this we don't need to fetch_related
         ret['sub'] = _sub
-        logger.info(f'Subed {feed_url} for {user_id}')
+        if created_new_sub:
+           logger.info(f'Subed {feed_url} for {user_id}')
         return ret
 
     except Exception as e:

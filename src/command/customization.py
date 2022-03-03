@@ -3,8 +3,9 @@ from telethon import events, Button
 from telethon.tl.patched import Message
 
 from . import inner, misc
-from .utils import command_gatekeeper, parse_sub_customization_callback_data, parse_callback_data_with_page
-from src import db
+from .utils import command_gatekeeper, parse_sub_customization_callback_data, parse_callback_data_with_page, \
+    escape_html, parse_command_get_sub_and_param
+from src import db, env
 from src.i18n import i18n
 
 
@@ -186,3 +187,58 @@ async def callback_del_subs_title(event: events.CallbackQuery.Event,
         subs.extend(await db.Sub.filter(user_id=user_id, id__range=(id_start, id_end)).all())
     await inner.customization.del_subs_title(subs)
     await misc.callback_del_buttons.__wrapped__(event)
+
+
+@command_gatekeeper(only_manager=False)
+async def cmd_set_title(event: Union[events.NewMessage.Event, Message],
+                        *_,
+                        lang: Optional[str] = None,
+                        **__):
+    sub, title = await parse_command_get_sub_and_param(event.raw_text, event.chat_id, max_split=3)
+    title = title.strip() if title else None
+    if not sub:
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'])
+        return
+    if not title and not sub.title:
+        await event.respond(i18n[lang]['cmd_set_title_usage_prompt_html'], parse_mode='html')
+        return
+    await inner.customization.set_sub_title(sub, title)
+    await event.respond(
+        (
+                ((i18n[lang]['set_title_success'] + '\n' + f'<code>{escape_html(title)}</code>')
+                 if title
+                 else i18n[lang]['set_title_success_cleared'])
+                + '\n\n' +
+                await inner.customization.get_sub_info(sub, lang=lang)
+        ),
+        buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}'),),
+        parse_mode='html')
+
+
+@command_gatekeeper(only_manager=False)
+async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
+                           *_,
+                           lang: Optional[str] = None,
+                           **__):
+    sub, interval = await parse_command_get_sub_and_param(event.raw_text, event.chat_id)
+    interval = int(interval) if interval and interval.isdigit() and int(interval) >= 1 else None
+    minimal_interval = db.EffectiveOptions.minimal_interval
+    if not sub:
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'])
+        return
+    if not interval:
+        await event.respond(i18n[lang]['cmd_set_interval_usage_prompt_html'], parse_mode='html')
+        return
+    if interval < minimal_interval and event.chat_id != env.MANAGER:
+        await event.respond(i18n[lang]['set_interval_failure_too_small_html'] % minimal_interval,
+                            parse_mode='html')
+        return
+    await inner.customization.set_sub_interval(sub, interval)
+    await event.respond(
+        (
+                (i18n[lang]['set_interval_success_html'] % (interval,))
+                + '\n\n' +
+                await inner.customization.get_sub_info(sub, lang=lang)
+        ),
+        buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}'),),
+        parse_mode='html')

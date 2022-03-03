@@ -21,7 +21,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
                 + '\n'.join(f'<code>{key}</code> = <code>{value}</code> '
                             f'({i18n[lang]["option_value_type"]}: <code>{type(value).__name__}</code>)'
                             for key, value in options.items())
-                + '\n\n' + i18n[lang]['set_option_cmd_usage_prompt_html']
+                + '\n\n' + i18n[lang]['cmd_set_option_usage_prompt_html']
         )
         await event.respond(msg, parse_mode='html')
         return
@@ -55,7 +55,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
 async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     if len(args) < 2:
-        await event.respond(i18n[lang]['test_cmd_usage_prompt_html'], parse_mode='html')
+        await event.respond(i18n[lang]['cmd_test_usage_prompt_html'], parse_mode='html')
         return
     url = args[1]
 

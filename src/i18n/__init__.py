@@ -105,7 +105,7 @@ class _L10N:
     def key_exist(self, key: str):
         return key in self.__l10n_lang and (self.__l10n_lang[key] or key in NO_FALLBACK_KEYS)
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> str:
         if self.key_exist(key):
             return self.__l10n_lang[key]
         elif self.__lang_code != FALLBACK_LANGUAGE:

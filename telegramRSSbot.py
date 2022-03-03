@@ -112,7 +112,11 @@ async def pre():
     bot.add_event_handler(command.opml.cmd_export,
                           events.NewMessage(pattern='/export'))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
-                          events.NewMessage(pattern='/set([^_]|$)'))
+                          events.NewMessage(pattern=r'/set(\W|$)'))
+    bot.add_event_handler(command.customization.cmd_set_title,
+                          events.NewMessage(pattern='/set_title'))
+    bot.add_event_handler(command.customization.cmd_set_interval,
+                          events.NewMessage(pattern='/set_interval'))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.misc.cmd_start,
@@ -170,6 +174,9 @@ async def pre():
                           events.CallbackQuery(pattern=r'^get_set_page|\d+$'))
     bot.add_event_handler(command.customization.callback_del_subs_title,
                           events.CallbackQuery(pattern=r'^del_subs_title=(\d+-\d+\|)*(\d+-\d+)$'))
+    # inline query handler
+    bot.add_event_handler(command.misc.inline_command_constructor,
+                          events.InlineQuery())
     # being added to a group handler
     bot.add_event_handler(command.misc.cmd_start,
                           command.utils.AddedToGroupAction())

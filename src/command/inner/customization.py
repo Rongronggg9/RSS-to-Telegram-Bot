@@ -8,7 +8,7 @@ from telethon.tl.types import KeyboardButtonCallback
 
 from src import db, env
 from src.i18n import i18n
-from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time
+from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time, logger
 
 SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "notify": (0, 1),
@@ -24,6 +24,8 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
 
 async def get_sub_info(sub: db.Sub,
                        lang: Optional[str] = None) -> str:
+    if not isinstance(sub.feed, db.Feed):
+        await sub.fetch_related('feed')
     info = (
             f"<b>{i18n[lang]['subscription_info']}</b>\n\n"
             f"{i18n[lang]['feed_title']}: {sub.feed.title}\n"
@@ -65,6 +67,11 @@ async def get_sub_customization_buttons(sub: db.Sub,
             Button.inline(f"{i18n[lang]['display_title']}: "
                           + i18n[lang][f'display_title_{sub.display_title}'],
                           data=f'set={sub.id},display_title|{page}'),
+        ),
+        (
+            Button.switch_inline(f"{i18n[lang]['set_custom_title_button']}",
+                                 query=f'/set_title {sub.id} ',
+                                 same_peer=True),
         ),
         (
             Button.inline(f"{i18n[lang]['display_via']}: "
@@ -116,7 +123,6 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
             arrange_grid(
                 to_arrange=chain(
                     (
-
                         Button.inline(f'{interval}min', data=f'set={sub_id},interval,{interval}|{page}')
                         for interval in range(1, 5) if interval >= minimal_interval
                     ),
@@ -136,6 +142,10 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
                 ),
                 columns=columns
             )
+            +
+            ((Button.switch_inline(f"{i18n[lang]['set_custom_interval_button']}",
+                                   query=f'/set_interval {sub.id} ',
+                                   same_peer=True),),)
             +
             ((Button.inline(f'< {i18n[lang]["back"]}', data=f'set={sub_id}|{page}'),),)
     )
@@ -171,9 +181,11 @@ async def set_sub_interval(sub: db.Sub,
     minimal_interval = db.EffectiveOptions.minimal_interval
     if interval < minimal_interval and sub.user_id != env.MANAGER:
         interval = minimal_interval
-
     if interval == sub.interval:
         return sub
+
+    if not isinstance(sub.feed, db.Feed):
+        await sub.fetch_related('feed')
 
     sub.interval = interval
     await sub.save()
@@ -232,6 +244,15 @@ async def set_sub_exhaustive_option(sub: db.Sub, option: str) -> db.Sub:
             sub.style = 0
         sub.style = sub.style + 1 if sub.style < valid_values[-1] else valid_values[0]
     await sub.save()
+    return sub
+
+
+async def set_sub_title(sub: db.Sub, title: Optional[str]) -> db.Sub:
+    if sub.title == title:
+        return sub
+    sub.title = title
+    await sub.save()
+    logger.info(f'Subscription {sub.id} of {sub.user_id} title changed to {title}')
     return sub
 
 

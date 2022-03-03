@@ -97,8 +97,8 @@
         "all_subs_are_deactivated": "Tutti gli abbonamenti sono disattivati."
     },
     "l10n_administration": {
-        "test_cmd_usage_prompt_html": "Uso del comando: <code>/test RSS_URL numero_d'inizio_della_voce(opzionale) numero_finale_della_voce(opzionale)</code>",
-        "set_option_cmd_usage_prompt_html": "Uso del comando: <code>/set_option chiave valore</code>",
+        "cmd_test_usage_prompt_html": "Uso del comando: <code>/test RSS_URL numero_d'inizio_della_voce(opzionale) numero_finale_della_voce(opzionale)</code>",
+        "cmd_set_option_usage_prompt_html": "Uso del comando: <code>/set_option chiave valore</code>",
         "current_options": "Opzioni attuali",
         "option_value_type": "Tipo di valore",
         "option_key_invalid": "Il tasto opzione non è valido",

@@ -103,8 +103,8 @@
         "all_subs_are_deactivated": "所有訂閱均已停用。"
     },
     "l10n_administration": {
-        "test_cmd_usage_prompt_html": "命令用法: <code>/test RSS_URL 條目編號起點(可選) 條目編號終點(可選)</code>",
-        "set_option_cmd_usage_prompt_html": "命令用法: <code>/set_option 鍵 值</code>",
+        "cmd_test_usage_prompt_html": "命令用法: <code>/test RSS_URL 條目編號起點(可選) 條目編號終點(可選)</code>",
+        "cmd_set_option_usage_prompt_html": "命令用法: <code>/set_option 鍵 值</code>",
         "current_options": "當前選項",
         "option_value_type": "值類型",
         "option_key_invalid": "選項鍵無效",

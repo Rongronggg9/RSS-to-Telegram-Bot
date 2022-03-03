@@ -94,3 +94,22 @@ async def callback_del_buttons(event: events.CallbackQuery.Event,
     msg = await event.get_message()
     await event.answer(cache_time=3600)
     await msg.edit(buttons=None)
+
+@command_gatekeeper(only_manager=False, quiet=True)
+async def inline_command_constructor(event: events.InlineQuery.Event,
+                                     *_,
+                                     lang: Optional[str] = None,
+                                     **__):
+    query: types.UpdateBotInlineQuery = event.query
+    builder = event.builder
+    text = query.query.strip()
+    if not text:
+        await event.answer(switch_pm=i18n[lang]['permission_denied_input_command'],
+                           switch_pm_param=str(event.id),
+                           cache_time=3600,
+                           private=False)
+        return
+    await event.answer(results=[builder.article(title=text, text=text)],
+                       cache_time=3600,
+                       private=False)
+

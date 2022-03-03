@@ -24,8 +24,20 @@ logger = log.getLogger('RSStT.command')
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
 
-def parse_command(command: str) -> list[AnyStr]:
-    return re.split(r'\s+', command.strip())
+def parse_command(command: str, max_split: int = 0) -> list[AnyStr]:
+    return re.split(r'\s+', command.strip(), maxsplit=max_split)
+
+
+async def parse_command_get_sub_and_param(command: str, user_id: int, max_split: int = 0) \
+        -> tuple[Optional[db.Sub], Optional[str]]:
+    args = parse_command(command, max_split=max_split)
+    sub = param = None
+    if len(args) >= 2 and args[1].isdigit() and int(args[1]) >= 1:
+        sub_id = int(args[1])
+        sub = await db.Sub.get_or_none(id=sub_id, user_id=user_id)
+    if len(args) > 2:
+        param = args[2]
+    return sub, param
 
 
 def parse_callback_data_with_page(callback_data: bytes) -> tuple[str, int]:
@@ -64,8 +76,14 @@ def parse_sub_customization_callback_data(callback_data: bytes) \
     return _id, action, param, page
 
 
-async def respond_or_answer(event: Union[events.NewMessage.Event, events.CallbackQuery.Event, Message], msg: str,
-                            alert: bool = True, cache_time: int = 120, *args, **kwargs):
+async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
+                                         events.CallbackQuery.Event,
+                                         events.InlineQuery.Event],
+                            msg: str,
+                            alert: bool = True,
+                            cache_time: int = 120,
+                            *args,
+                            **kwargs):
     """
     Respond to a ``NewMessage`` event, or answer to an unanswered ``CallbackQuery`` event.
 
@@ -85,6 +103,12 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, events.Callbac
                 return  # return if answering successfully
             except QueryIdInvalidError:  # callback query expired
                 pass  # respond instead
+        elif isinstance(event, events.InlineQuery.Event):
+            # noinspection PyProtectedMember
+            if event._answered:
+                return
+            await event.answer(switch_pm=msg, switch_pm_param=str(event.id), private=True)
+            return  # return if answering successfully
 
         async with locks.user_flood_lock(event.chat_id):
             pass  # wait for flood wait
@@ -100,18 +124,21 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        only_in_private_chat: bool = False,
                        allow_in_old_fashioned_groups: bool = False,
                        ignore_tg_lang: bool = False,
-                       timeout: Optional[int] = 60):
+                       timeout: Optional[int] = 60,
+                       quiet: bool = False):
     if func is None:
         return partial(command_gatekeeper,
                        only_manager=only_manager,
                        only_in_private_chat=only_in_private_chat,
                        allow_in_old_fashioned_groups=allow_in_old_fashioned_groups,
                        ignore_tg_lang=ignore_tg_lang,
-                       timeout=timeout)
+                       timeout=timeout,
+                       quiet=quiet)
 
     @wraps(func)
     async def wrapper(event: Union[events.NewMessage.Event, Message,
                                    events.CallbackQuery.Event,
+                                   events.InlineQuery.Event,
                                    events.ChatAction.Event],
                       # Note: `events.ChatAction.Event` only have ChatGetter, do not have SenderGetter like others
                       *args, **kwargs):
@@ -128,6 +155,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
         flood_lock = locks.user_flood_lock(chat_id)
         pending_callbacks = locks.user_pending_callbacks(chat_id)
         is_callback = isinstance(event, events.CallbackQuery.Event)
+        is_inline = isinstance(event, events.InlineQuery.Event)
         is_chat_action = isinstance(event, events.ChatAction.Event)
 
         def describe_user():
@@ -136,14 +164,17 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 chat_info = f'{chat_title or chat_id}' + (f' ({chat_id})' if chat_title and chat_id else '')
             return f'{sender_fullname} ({sender_id}' \
                    + (f', {participant_type}' if participant_type and chat_info else '') \
+                   + (f', {type(event.query.peer_type).__name__}' if is_inline else '') \
                    + ')' \
                    + (f' in {chat_info}' if chat_info else '')
 
         async def execute():
             callback_msg_id = event.message_id if is_callback else None
+            log_level = log.DEBUG if quiet else log.INFO
             # skip if already executing a callback for this msg
             if callback_msg_id and callback_msg_id in pending_callbacks:
-                logger.info(f'Skipped {describe_user()} to use {command}: already executing a callback for this msg')
+                logger.log(log_level,
+                           f'Skipped {describe_user()} to use {command}: already executing a callback for this msg')
                 await respond_or_answer(event, i18n[lang]['callback_already_running_prompt'], cache_time=0)
                 raise events.StopPropagation
 
@@ -152,7 +183,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
             try:
                 if lang_in_db is None:
                     await db.User.get_or_create(id=chat_id, lang='null')  # create the user if it doesn't exist
-                logger.info(f'Allow {describe_user()} to use {command}')
+                logger.log(log_level, f'Allow {describe_user()} to use {command}')
                 async with flood_lock:
                     pass  # wait for flood wait
                 await asyncio.wait_for(func(event, *args, lang=lang, **kwargs), timeout=timeout)
@@ -171,6 +202,8 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        if hasattr(event, 'raw_text') and event.raw_text else
                        f'(Callback){event.data.decode()}'
                        if is_callback else
+                       f'(Inline){event.text}'
+                       if is_inline else
                        f'(ChatAction, {event.action_message and type(event.action_message.action).__name__})'
                        if is_chat_action else
                        '(no command, other message)')
@@ -205,6 +238,17 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 lang = sender.lang_code if hasattr(sender, 'lang_code') else None
                 if not lang and sender_id != chat_id:
                     lang = db.User.get_or_none(id=sender_id).values_list('lang', flat=True)
+
+            if is_inline:
+                query: types.UpdateBotInlineQuery = event.query
+                if not isinstance(query.peer_type, types.InlineQueryPeerTypeSameBotPM):
+                    # Redirect to the private chat with the bot
+                    await event.answer(switch_pm=i18n[lang]['permission_denied_switch_pm'],
+                                       switch_pm_param=str(event.id))
+                    logger.warning(f'Redirected {describe_user()} (using {command}) to the private chat with the bot')
+                    raise events.StopPropagation
+                await execute()
+                raise events.StopPropagation
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
                 if is_chat_action:  # chat action, bypassing

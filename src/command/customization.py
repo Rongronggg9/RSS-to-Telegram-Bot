@@ -2,7 +2,7 @@ from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl.patched import Message
 
-from . import inner
+from . import inner, misc
 from .utils import command_gatekeeper, parse_sub_customization_callback_data, parse_callback_data_with_page
 from src import db
 from src.i18n import i18n
@@ -171,3 +171,19 @@ async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
         await event.answer('ERROR: ' + i18n[lang]['subscription_not_exist'], alert=True)
         return
     await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, page=page)
+
+
+@command_gatekeeper(only_manager=False)
+async def callback_del_subs_title(event: events.CallbackQuery.Event,
+                                  *_,
+                                  **__):  # callback data: del_subs_title={id_start}-{id_end}|{id_start}-{id_end}|...
+    user_id = event.chat_id
+    id_ranges_str = event.data.decode().strip().split('=')[-1].split('|')
+    subs = []
+    for id_range_str in id_ranges_str:
+        id_range = id_range_str.split('-')
+        id_start = int(id_range[0])
+        id_end = int(id_range[1])
+        subs.extend(await db.Sub.filter(user_id=user_id, id__range=(id_start, id_end)).all())
+    await inner.customization.del_subs_title(subs)
+    await misc.callback_del_buttons.__wrapped__(event)

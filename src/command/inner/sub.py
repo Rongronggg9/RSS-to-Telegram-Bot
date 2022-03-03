@@ -101,7 +101,7 @@ async def subs(user_id: int,
                feed_urls: Sequence[Union[str, tuple[str, str]]],
                lang: Optional[str] = None,
                bypass_url_filter: bool = False) \
-        -> Optional[dict[str, Union[dict[str, Union[int, str, db.Sub, None]], str]]]:
+        -> Optional[dict[str, Union[tuple[dict[str, Union[int, str, db.Sub, None]], ...], str, int]]]:
     if not feed_urls:
         return None
 

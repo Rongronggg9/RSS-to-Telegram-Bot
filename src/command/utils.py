@@ -491,7 +491,7 @@ async def send_success_and_failure_msg(message: Union[Message, events.NewMessage
                                        *_,
                                        lang: Optional[str] = None,
                                        edit: bool = False,
-                                       **__):
+                                       **__) -> Union[Message, events.NewMessage.Event, events.CallbackQuery.Event]:
     for i in range(4):
         success_msg_short = (
                 success_msg.split('\n', 1)[0] + '\n'
@@ -531,8 +531,9 @@ async def send_success_and_failure_msg(message: Union[Message, events.NewMessage
             )
 
         try:
-            await (message.edit(msg_html, parse_mode='html') if edit else message.respond(msg_html, parse_mode='html'))
-            return
+            msg = await (message.edit(msg_html, parse_mode='html') if edit
+                         else message.respond(msg_html, parse_mode='html'))
+            return msg if msg is not None else message
         except (EntitiesTooLongError, MessageTooLongError) as e:
             if i < 3:
                 continue

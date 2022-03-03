@@ -132,6 +132,8 @@ async def pre():
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern='/set_option'))
     # callback query handler
+    bot.add_event_handler(command.misc.callback_del_buttons,  # delete buttons
+                          events.CallbackQuery(data='del_buttons'))
     bot.add_event_handler(command.misc.callback_null,  # null callback query
                           events.CallbackQuery(data='null'))
     bot.add_event_handler(command.misc.callback_cancel,
@@ -166,6 +168,8 @@ async def pre():
                           events.CallbackQuery(pattern=r'^set(=\d+(,\w+(,\w+)?)?)?(\|\d+)?$'))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
                           events.CallbackQuery(pattern=r'^get_set_page|\d+$'))
+    bot.add_event_handler(command.customization.callback_del_subs_title,
+                          events.CallbackQuery(pattern=r'^del_subs_title=(\d+-\d+\|)*(\d+-\d+)$'))
     # being added to a group handler
     bot.add_event_handler(command.misc.cmd_start,
                           command.utils.AddedToGroupAction())

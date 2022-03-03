@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Union, Optional
+from collections.abc import Iterable
 
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
@@ -194,3 +195,10 @@ async def set_sub_exhaustive_option(sub: db.Sub, option: str) -> db.Sub:
         sub.style = sub.style + 1 if sub.style < valid_values[-1] else valid_values[0]
     await sub.save()
     return sub
+
+async def del_subs_title(subs: Union[Iterable[db.Sub], db.Sub]) -> int:
+    if isinstance(subs, db.Sub):
+        subs = (subs,)
+    for sub in subs:
+        sub.title = None
+    return await db.Sub.bulk_update(subs, ['title'])

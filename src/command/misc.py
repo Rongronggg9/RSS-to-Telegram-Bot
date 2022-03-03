@@ -57,12 +57,6 @@ async def cmd_version(event: Union[events.NewMessage.Event, Message], *_, **__):
     await event.respond(env.VERSION)
 
 
-# bypassing command gatekeeper
-async def callback_null(event: events.CallbackQuery.Event):  # callback data = null
-    await event.answer(cache_time=3600)
-    raise events.StopPropagation
-
-
 @command_gatekeeper(only_manager=False)
 async def callback_cancel(event: events.CallbackQuery.Event,
                           *_,
@@ -85,3 +79,18 @@ async def callback_get_group_migration_help(event: events.CallbackQuery.Event,
         return
     msg, buttons = get_group_migration_help_msg(lang)
     await event.edit(msg, buttons=buttons, parse_mode='html')
+
+
+# bypassing command gatekeeper
+async def callback_null(event: events.CallbackQuery.Event):  # callback data = null
+    await event.answer(cache_time=3600)
+    raise events.StopPropagation
+
+
+@command_gatekeeper(only_manager=False)
+async def callback_del_buttons(event: events.CallbackQuery.Event,
+                               *_,
+                               **__):  # callback data = del_buttons
+    msg = await event.get_message()
+    await event.answer(cache_time=3600)
+    await msg.edit(buttons=None)

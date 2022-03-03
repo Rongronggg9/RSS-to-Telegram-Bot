@@ -48,7 +48,6 @@ async def callback_set(event: events.CallbackQuery.Event,
     display_title: -1=disable, 0=auto, 1=force display
     style: 0=RSStT, 1=flowerss
     """
-
     sub_id, action, param, page = parse_sub_customization_callback_data(event.data)
 
     if sub_id is None:

@@ -71,7 +71,9 @@
         "send_opml_reply_placeholder": "The OPML file to be imported (extension name must be .opml)",
         "fetch_file_failed": "Failed fetching the file",
         "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
-        "opml_parse_error": "OPML parsing error"
+        "opml_parse_error": "OPML parsing error",
+        "keep_subs_title_button": "Keep custom titles of imported subscriptions",
+        "delete_subs_title_button": "Delete custom titles of imported subscriptions"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Please choose a subscription you'd like to customize.",
@@ -82,11 +84,39 @@
         "notification_normal": "Normal",
         "notification_muted": "Muted",
         "monitor_interval": "Monitor interval",
-        "set_interval_prompt": "Please select a monitor interval."
+        "send_mode": "Send mode",
+        "send_mode_-1": "Only title and link",
+        "send_mode_0": "Auto",
+        "send_mode_1": "Force Telegraph",
+        "send_mode_2": "Force Telegram messages",
+        "length_limit": "Length limit (auto mode only)",
+        "length_limit_unlimited": "Unlimited",
+        "link_preview": "Link preview",
+        "link_preview_0": "Auto",
+        "link_preview_1": "Force enable",
+        "display_author": "Display author",
+        "display_author_-1": "Disable",
+        "display_author_0": "Auto",
+        "display_author_1": "Force enable",
+        "display_via": "Display source",
+        "display_via_-2": "Completely disable",
+        "display_via_-1": "Only link (hide feed title)",
+        "display_via_0": "Auto (link displayed as feed title)",
+        "display_title": "Display title",
+        "display_title_-1": "Disable",
+        "display_title_0": "Auto",
+        "display_title_1": "Force enable",
+        "style": "Style",
+        "style_0": "RSStT",
+        "style_1": "flowerss",
+        "set_interval_prompt": "Please select a monitor interval.",
+        "set_length_limit_prompt": "Please select a length limit.\n\nIf a post is longer than the limit OR cannot be sent in a single message, it will be send via Telegraph.\nIf sending via Telegraph fails, its title and link will be sent.",
+        "length_limit_only_effective_if_send_mode_auto": "Length limit is effective only when send mode is auto."
     },
     "l10n_sub_info": {
         "subscription_info": "Subscription info",
-        "subscription_title": "Subscription title",
+        "feed_title": "Feed title",
+        "subscription_title": "Custom title",
         "feed_url": "Feed URL"
     },
     "l10n_monitor_warn": {

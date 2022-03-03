@@ -122,6 +122,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        *,
                        only_manager: bool = False,
                        only_in_private_chat: bool = False,
+                       allow_in_others_private_chat: bool = False,
                        allow_in_old_fashioned_groups: bool = False,
                        ignore_tg_lang: bool = False,
                        timeout: Optional[int] = 60,
@@ -241,14 +242,21 @@ def command_gatekeeper(func: Optional[Callable] = None,
 
             if is_inline:
                 query: types.UpdateBotInlineQuery = event.query
-                if not isinstance(query.peer_type, types.InlineQueryPeerTypeSameBotPM):
+                if (
+                        (not allow_in_others_private_chat
+                         and isinstance(query.peer_type, types.InlineQueryPeerTypePM))
+                        or
+                        (only_in_private_chat
+                         and not isinstance(query.peer_type, (types.InlineQueryPeerTypeSameBotPM,
+                                                              types.InlineQueryPeerTypePM)))
+                        or
+                        (not allow_in_old_fashioned_groups
+                         and isinstance(query.peer_type, types.InlineQueryPeerTypeChat))
+                ):
                     # Redirect to the private chat with the bot
-                    await event.answer(switch_pm=i18n[lang]['permission_denied_switch_pm'],
-                                       switch_pm_param=str(event.id))
+                    await respond_or_answer(event, i18n[lang]['permission_denied_switch_pm'])
                     logger.warning(f'Redirected {describe_user()} (using {command}) to the private chat with the bot')
                     raise events.StopPropagation
-                await execute()
-                raise events.StopPropagation
 
             if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
                 if is_chat_action:  # chat action, bypassing
@@ -259,6 +267,10 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
                 logger.warning(f'Refused {describe_user()} to use {command} '
                                f'because the command can only be used by a bot manager')
+                raise events.StopPropagation
+
+            if is_inline:
+                await execute()
                 raise events.StopPropagation
 
             if (

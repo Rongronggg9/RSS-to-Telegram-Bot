@@ -2,12 +2,13 @@ from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Iterable
 
+from itertools import chain
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
 from src import db, env
 from src.i18n import i18n
-from .utils import arrange_grid, update_interval, activate_or_deactivate_sub
+from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time
 
 SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "notify": (0, 1),
@@ -46,7 +47,8 @@ async def get_sub_customization_buttons(sub: db.Sub,
             Button.inline(f"{i18n[lang]['notification']}: "
                           + i18n[lang]['notification_normal' if sub.notify else 'notification_muted'],
                           data=f'set={sub.id},notify|{page}'),
-            Button.inline(f"{i18n[lang]['monitor_interval']}: {sub.interval or db.EffectiveOptions.default_interval}",
+            Button.inline(f"{i18n[lang]['monitor_interval']}: "
+                          + formatting_time(minutes=sub.interval or db.EffectiveOptions.default_interval),
                           data=f'set={sub.id},interval|{page}'),
         ),
         (
@@ -96,24 +98,47 @@ async def get_set_interval_buttons(sub: Union[db.Sub, int],
     page = page or 1
 
     minimal_interval: int = db.EffectiveOptions.minimal_interval
-    default_interval: int = db.EffectiveOptions.default_interval
 
     if sub.user_id == env.MANAGER:
-        minimal_interval = min(minimal_interval, 5)
+        minimal_interval = min(minimal_interval, 1)
 
-    interval_range = list(range(minimal_interval, minimal_interval + 125, 5))
-    try:
-        interval_range.remove(sub.interval or default_interval)
-    except ValueError:
-        pass
+    columns = 4
+    buttons_in_minute_and_hour_count = sum(
+        1 for interval in chain(
+            range(1, 5),
+            range(5, 61, 5),
+            range(2 * 60, 24 * 60, 60)
+        ) if interval >= minimal_interval
+    )
+    buttons_in_day_count = columns - buttons_in_minute_and_hour_count % columns
 
-    buttons = arrange_grid(
-        to_arrange=(
-            Button.inline(str(interval), data=f'set={sub_id},interval,{interval}|{page}')
-            for interval in interval_range[:24]
-        ),
-        columns=4
-    ) + ((Button.inline(f'< {i18n[lang]["back"]}', data=f'set={sub_id}|{page}'),),)
+    buttons = (
+            arrange_grid(
+                to_arrange=chain(
+                    (
+
+                        Button.inline(f'{interval}min', data=f'set={sub_id},interval,{interval}|{page}')
+                        for interval in range(1, 5) if interval >= minimal_interval
+                    ),
+                    (
+                        Button.inline('1h' if interval == 60 else f'{interval}min',
+                                      data=f'set={sub_id},interval,{interval}|{page}')
+                        for interval in range(5, 61, 5) if interval >= minimal_interval
+                    ),
+                    (
+                        Button.inline(f'{interval}h', data=f'set={sub_id},interval,{interval * 60}|{page}')
+                        for interval in range(2, 24) if interval * 60 >= minimal_interval
+                    ),
+                    (
+                        Button.inline(f'{interval}d', data=f'set={sub_id},interval,{interval * 60 * 24}|{page}')
+                        for interval in range(1, buttons_in_day_count + 1) if interval * 60 * 24 >= minimal_interval
+                    )
+                ),
+                columns=columns
+            )
+            +
+            ((Button.inline(f'< {i18n[lang]["back"]}', data=f'set={sub_id}|{page}'),),)
+    )
     return buttons
 
 

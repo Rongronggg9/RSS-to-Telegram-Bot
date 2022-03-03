@@ -257,7 +257,7 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
     :return: the updated sub, `None` if the sub does not exist
     """
     if isinstance(sub, int):
-        sub = await db.Sub.get_or_none(id=sub, user_id=user_id).prefetch_related('feed')
+        sub = await db.Sub.get_or_none(id=sub, user_id=user_id)
         if not sub:
             return None
     elif sub.user_id != user_id:
@@ -267,12 +267,13 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
     await sub.save()
     await sub.fetch_related('feed')
 
-    if activate:
-        await activate_feed(sub.feed)
-
-    interval = sub.interval or db.EffectiveOptions.default_interval
-    if _update_interval:
-        await update_interval(sub.feed, new_interval=interval if activate else None)
+    feed = sub.feed
+    if activate and feed.state != 1:
+        await activate_feed(feed)  #
+    else:
+        interval = sub.interval or db.EffectiveOptions.default_interval
+        if _update_interval:
+            await update_interval(feed, new_interval=interval if activate else None)
 
     return sub
 
@@ -284,4 +285,20 @@ async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> tuple
     :return: the updated sub, `None` if the sub does not exist
     """
     subs = await list_sub(user_id, state=0 if activate else 1)
-    return await asyncio.gather(*(activate_or_deactivate_sub(user_id, sub, activate=activate) for sub in subs))
+    tasks = []
+    feeds_to_update = []
+    for sub in subs:
+        sub.state = 1 if activate else 0
+        feed = sub.feed
+        if activate and sub.feed.state != 1:
+            feed.state = 1
+            feed.error_count = 0
+            feed.next_check_time = None
+            feeds_to_update.append(feed)
+        interval = sub.interval or db.EffectiveOptions.default_interval
+        tasks.append(update_interval(feed, new_interval=interval if activate else None))
+    await db.Sub.bulk_update(subs, ['state'])
+    if feeds_to_update:
+        await db.Feed.bulk_update(feeds_to_update, ['state', 'error_count', 'next_check_time'])
+    await asyncio.gather(*tasks)
+    return tuple(subs)

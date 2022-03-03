@@ -103,8 +103,8 @@
         "all_subs_are_deactivated": "Totes les subscripcions estan desactivades."
     },
     "l10n_administration": {
-        "test_cmd_usage_prompt_html": "Ús de l'ordre: <code>/test RSS_URL número_inicial_entrada(opcional) número_final_entrada(opcional)</code>",
-        "set_option_cmd_usage_prompt_html": "Ús de l'ordre: <code>/set_option clau opció</code>",
+        "cmd_test_usage_prompt_html": "Ús de l'ordre: <code>/test RSS_URL número_inicial_entrada(opcional) número_final_entrada(opcional)</code>",
+        "cmd_set_option_usage_prompt_html": "Ús de l'ordre: <code>/set_option clau opció</code>",
         "current_options": "Opcions actuals",
         "option_value_type": "Tipus de valor",
         "option_key_invalid": "La clau d'opció no és vàlida",

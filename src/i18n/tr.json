@@ -103,8 +103,8 @@
         "all_subs_are_deactivated": "Tüm abonelikler devre dışı bırakıldı."
     },
     "l10n_administration": {
-        "test_cmd_usage_prompt_html": "Komut kullanımı: <code>/test RSS_URL entry_start_number(isteğe bağlı) entry_end_number(isteğe bağlı)</code>",
-        "set_option_cmd_usage_prompt_html": "Komut kullanımı: <code>/set_option anahtar değeri</code>",
+        "cmd_test_usage_prompt_html": "Komut kullanımı: <code>/test RSS_URL entry_start_number(isteğe bağlı) entry_end_number(isteğe bağlı)</code>",
+        "cmd_set_option_usage_prompt_html": "Komut kullanımı: <code>/set_option anahtar değeri</code>",
         "current_options": "Mevcut seçenekler",
         "option_value_type": "Değer türü",
         "option_key_invalid": "Seçenek anahtarı geçersiz",

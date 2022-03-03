@@ -94,10 +94,10 @@ async def cmd_or_callback_unsub_all(event: Union[events.NewMessage.Event, Messag
 async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
                                              *_,
                                              lang: Optional[str] = None,
-                                             **__):  # command = /list, callback data = get_list_page_{page_number}
+                                             **__):  # command = /list, callback data = get_list_page|{page_number}
     is_callback = isinstance(event, events.CallbackQuery.Event)
     if is_callback:
-        page_number, _ = parse_callback_data_with_page(event.data)
+        _, page_number = parse_callback_data_with_page(event.data)
     else:
         page_number = 1
 
@@ -114,7 +114,7 @@ async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Even
     list_result = (
             f'<b>{i18n[lang]["subscription_list"]}</b>'  # it occupies a parsing entity
             + '\n'
-            + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.feed.title)}</a>' for sub in page)
+            + '\n'.join(f'<a href="{sub.feed.link}">{escape_html(sub.title or sub.feed.title)}</a>' for sub in page)
     )
 
     page_buttons = inner.utils.get_page_buttons(page_number=page_number,
@@ -129,14 +129,17 @@ async def cmd_list_or_callback_get_list_page(event: Union[events.NewMessage.Even
 
 @command_gatekeeper(only_manager=False)
 async def callback_unsub(event: events.CallbackQuery.Event, *_, lang: Optional[str] = None, **__):
-    # callback data = unsub_{sub_id}|{page}
+    # callback data = unsub={sub_id}|{page}
     sub_id, page = parse_callback_data_with_page(event.data)
+    sub_id = int(sub_id)
     unsub_d = await inner.sub.unsub(event.chat_id, sub_id=sub_id)
 
     msg = (
             f'<b>{i18n[lang]["unsub_successful" if unsub_d["sub"] else "unsub_failed"]}</b>\n'
             + (
-                f'<a href="{unsub_d["sub"].feed.link}">{escape_html(unsub_d["sub"].feed.title)}</a>' if unsub_d['sub']
+                f'<a href="{unsub_d["sub"].feed.link}">'
+                f'{escape_html(unsub_d["sub"].feed.title or unsub_d["sub"].title)}</a>'
+                if unsub_d['sub']
                 else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
             )
     )
@@ -153,8 +156,9 @@ async def callback_get_unsub_page(event: events.CallbackQuery.Event,
                                   *_,
                                   page: Optional[int] = None,
                                   lang: Optional[str] = None,
-                                  **__):  # callback data = get_unsub_page_{page_number}
-    page = page or int(event.data.decode().strip().split('_')[-1])
+                                  **__):  # callback data = get_unsub_page|{page_number}
+    if not page:
+        _, page = parse_callback_data_with_page(event.data)
     buttons = await inner.utils.get_sub_choosing_buttons(event.chat_id, page, callback='unsub',
                                                          get_page_callback='get_unsub_page', lang=lang)
     await event.edit(None if buttons else i18n[lang]['no_subscription'], buttons=buttons)

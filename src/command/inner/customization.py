@@ -14,7 +14,8 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "send_mode": (-1, 0, 1, 2),
     "link_preview": (0, 1),
     "display_author": (-1, 0, 1),
-    "display_via": (-2, -1, 0, 1),
+    # "display_via": (-2, -1, 0, 1),  # currently 1 will be treated as 0
+    "display_via": (-2, -1, 0),
     "display_title": (-1, 0, 1),
     "style": (0, 1)
 }
@@ -37,42 +38,48 @@ async def get_sub_customization_buttons(sub: db.Sub,
     page = page or 1
     buttons = (
         (
-            Button.inline(i18n[lang]['status'] + ': ' +
-                          i18n[lang]['status_activated' if sub.state == 1 else 'status_deactivated'],
+            Button.inline(f"{i18n[lang]['status']}: "
+                          + i18n[lang]['status_activated' if sub.state == 1 else 'status_deactivated'],
                           data=f'set={sub.id},activate|{page}'),
         ),
         (
-            Button.inline(i18n[lang]['notification'] + ': ' +
-                          i18n[lang]['notification_normal' if sub.notify else 'notification_muted'],
+            Button.inline(f"{i18n[lang]['notification']}: "
+                          + i18n[lang]['notification_normal' if sub.notify else 'notification_muted'],
                           data=f'set={sub.id},notify|{page}'),
-            Button.inline(i18n[lang]['monitor_interval'] + ': ' +
-                          str(sub.interval or db.EffectiveOptions.default_interval),
+            Button.inline(f"{i18n[lang]['monitor_interval']}: {sub.interval or db.EffectiveOptions.default_interval}",
                           data=f'set={sub.id},interval|{page}'),
         ),
         (
-            Button.inline(f"{i18n[lang]['send_mode']}: {sub.send_mode}",
+            Button.inline(f"{i18n[lang]['send_mode']}: "
+                          + i18n[lang][f'send_mode_{sub.send_mode}'],
                           data=f'set={sub.id},send_mode|{page}'),
         ),
         (
-            Button.inline(f"{i18n[lang]['length_limit']}: {sub.length_limit}",
+            Button.inline(f"{i18n[lang]['length_limit']}: "
+                          + (str(sub.length_limit) if sub.length_limit else i18n[lang]['length_limit_unlimited']),
                           data=f'set={sub.id},length_limit|{page}'),
         ),
         (
-            Button.inline(f"{i18n[lang]['display_title']}: {sub.display_title}",
+            Button.inline(f"{i18n[lang]['display_title']}: "
+                          + i18n[lang][f'display_title_{sub.display_title}'],
                           data=f'set={sub.id},display_title|{page}'),
         ),
         (
-            Button.inline(f"{i18n[lang]['display_via']}: {sub.display_via}",
+            Button.inline(f"{i18n[lang]['display_via']}: "
+                          + i18n[lang][f'display_via_{sub.display_via}'],
                           data=f'set={sub.id},display_via|{page}'),
         ),
         (
-            Button.inline(f"{i18n[lang]['display_author']}: {sub.display_author}",
+            Button.inline(f"{i18n[lang]['display_author']}: "
+                          + i18n[lang][f'display_author_{sub.display_author}'],
                           data=f'set={sub.id},display_author|{page}'),
         ),
         (
-            Button.inline(f"{i18n[lang]['link_preview']}: {sub.link_preview}",
+            Button.inline(f"{i18n[lang]['link_preview']}: "
+                          + i18n[lang][f'link_preview_{sub.link_preview}'],
                           data=f'set={sub.id},link_preview|{page}'),
-            Button.inline(f"{i18n[lang]['style']}: {sub.style}",
+            Button.inline(f"{i18n[lang]['style']}: "
+                          + i18n[lang][f'style_{sub.style}'],
                           data=f'set={sub.id},style|{page}'),
         ),
         (
@@ -118,13 +125,19 @@ async def get_set_length_limit_buttons(sub: Union[db.Sub, int],
 
     length_limit_range = list(range(256, 4096 + 1, 256))
 
-    buttons = arrange_grid(
-        to_arrange=(
-            Button.inline(str(interval), data=f'set={sub_id},length_limit,{interval}|{page}')
-            for interval in length_limit_range
-        ),
-        columns=4
-    ) + ((Button.inline(f'< {i18n[lang]["back"]}', data=f'set={sub_id}|{page}'),),)
+    buttons = (
+            ((Button.inline(i18n[lang]['length_limit_unlimited'], data=f'set={sub_id},length_limit,0|{page}'),),)
+            +
+            arrange_grid(
+                to_arrange=(
+                    Button.inline(str(length_limit), data=f'set={sub_id},length_limit,{length_limit}|{page}')
+                    for length_limit in length_limit_range
+                ),
+                columns=4
+            )
+            +
+            ((Button.inline(f'< {i18n[lang]["back"]}', data=f'set={sub_id}|{page}'),),)
+    )
     return buttons
 
 
@@ -146,7 +159,7 @@ async def set_sub_interval(sub: db.Sub,
 
 async def set_sub_length_limit(sub: db.Sub,
                                length_limit: int) -> db.Sub:
-    if length_limit == sub.length_limit or not 256 <= length_limit <= 4096:
+    if length_limit == sub.length_limit or not 0 <= length_limit <= 4096:
         return sub
 
     sub.length_limit = length_limit
@@ -195,6 +208,7 @@ async def set_sub_exhaustive_option(sub: db.Sub, option: str) -> db.Sub:
         sub.style = sub.style + 1 if sub.style < valid_values[-1] else valid_values[0]
     await sub.save()
     return sub
+
 
 async def del_subs_title(subs: Union[Iterable[db.Sub], db.Sub]) -> int:
     if isinstance(subs, db.Sub):

@@ -194,6 +194,7 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
             return
         if not intervals:  # no active sub subs the feed, deactivate the feed
             await deactivate_feed(feed)
+            db.effective_utils.EffectiveTasks.delete(feed.id)
             return
         new_interval = min(intervals, key=lambda _: default_interval if _ is None else _) or default_interval
         default_flag = new_interval == default_interval and new_interval not in intervals
@@ -204,10 +205,8 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
     if new_interval < curr_interval or force_update:  # if not force_update, will only reduce the interval
         feed.interval = new_interval if not default_flag else None
         await feed.save()
-        return
-
-    if db.effective_utils.EffectiveTasks.get_interval(feed.id) != new_interval:
-        db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
+        if db.effective_utils.EffectiveTasks.get_interval(feed.id) != new_interval:
+            db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
 
 
 async def list_sub(user_id: int, *args, **kwargs) -> list[db.Sub]:

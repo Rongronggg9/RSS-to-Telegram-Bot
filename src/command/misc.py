@@ -4,7 +4,8 @@ from telethon.tl.patched import Message
 from telethon.errors import RPCError
 
 from src import env, db
-from .utils import command_gatekeeper, get_group_migration_help_msg, get_commands_list, set_bot_commands, logger
+from .utils import command_gatekeeper, get_group_migration_help_msg, get_commands_list, set_bot_commands, logger, \
+    parse_callback_data_with_page
 from src.i18n import i18n, ALL_LANGUAGES
 from . import inner
 
@@ -21,15 +22,15 @@ async def cmd_start(event: Union[events.NewMessage.Event, Message], *_, lang=Non
 async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
     msg = '\n'.join(f"{i18n[lang]['select_lang_prompt']}"
                     for lang in ALL_LANGUAGES)
-    buttons = inner.utils.arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'set_lang_{lang}')
+    buttons = inner.utils.arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'set_lang={lang}')
                                         for lang in ALL_LANGUAGES),
                                        columns=3)
     await event.respond(msg, buttons=buttons)
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # callback data: set_lang_{lang_code}
-    lang = event.data.decode().strip().split('set_lang_')[-1]
+async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # callback data: set_lang={lang_code}
+    lang, _ = parse_callback_data_with_page(event.data)
     welcome_msg = i18n[lang]['welcome_prompt']
     await db.User.update_or_create(defaults={'lang': lang}, id=event.chat_id)
     await set_bot_commands(scope=types.BotCommandScopePeer(await event.get_input_chat()),
@@ -56,12 +57,6 @@ async def cmd_version(event: Union[events.NewMessage.Event, Message], *_, **__):
     await event.respond(env.VERSION)
 
 
-# bypassing command gatekeeper
-async def callback_null(event: events.CallbackQuery.Event):  # callback data = null
-    await event.answer(cache_time=3600)
-    raise events.StopPropagation
-
-
 @command_gatekeeper(only_manager=False)
 async def callback_cancel(event: events.CallbackQuery.Event,
                           *_,
@@ -73,8 +68,8 @@ async def callback_cancel(event: events.CallbackQuery.Event,
 @command_gatekeeper(only_manager=False, allow_in_old_fashioned_groups=True)
 async def callback_get_group_migration_help(event: events.CallbackQuery.Event,
                                             *_,
-                                            **__):  # callback data: get_group_migration_help_{lang_code}
-    lang = event.data.decode().strip().split('get_group_migration_help_')[-1]
+                                            **__):  # callback data: get_group_migration_help={lang_code}
+    lang, _ = parse_callback_data_with_page(event.data)
     chat = await event.get_chat()
     if not isinstance(chat, types.Chat) or chat.migrated_to:  # already a supergroup
         try:
@@ -84,3 +79,37 @@ async def callback_get_group_migration_help(event: events.CallbackQuery.Event,
         return
     msg, buttons = get_group_migration_help_msg(lang)
     await event.edit(msg, buttons=buttons, parse_mode='html')
+
+
+# bypassing command gatekeeper
+async def callback_null(event: events.CallbackQuery.Event):  # callback data = null
+    await event.answer(cache_time=3600)
+    raise events.StopPropagation
+
+
+@command_gatekeeper(only_manager=False)
+async def callback_del_buttons(event: events.CallbackQuery.Event,
+                               *_,
+                               **__):  # callback data = del_buttons
+    msg = await event.get_message()
+    await event.answer(cache_time=3600)
+    await msg.edit(buttons=None)
+
+@command_gatekeeper(only_manager=False, quiet=True)
+async def inline_command_constructor(event: events.InlineQuery.Event,
+                                     *_,
+                                     lang: Optional[str] = None,
+                                     **__):
+    query: types.UpdateBotInlineQuery = event.query
+    builder = event.builder
+    text = query.query.strip()
+    if not text:
+        await event.answer(switch_pm=i18n[lang]['permission_denied_input_command'],
+                           switch_pm_param=str(event.id),
+                           cache_time=3600,
+                           private=False)
+        return
+    await event.answer(results=[builder.article(title=text, text=text)],
+                       cache_time=3600,
+                       private=False)
+

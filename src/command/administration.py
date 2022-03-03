@@ -12,7 +12,8 @@ from . import inner
 
 @command_gatekeeper(only_manager=True)
 async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    args = parse_command(event.raw_text)
+    raw_text = event.raw_text.replace('=', ' ')
+    args = parse_command(raw_text)
     if len(args) < 3:  # return options info
         options = db.EffectiveOptions.options
         msg = (
@@ -20,7 +21,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
                 + '\n'.join(f'<code>{key}</code> = <code>{value}</code> '
                             f'({i18n[lang]["option_value_type"]}: <code>{type(value).__name__}</code>)'
                             for key, value in options.items())
-                + '\n\n' + i18n[lang]['set_option_cmd_usage_prompt_html']
+                + '\n\n' + i18n[lang]['cmd_set_option_usage_prompt_html']
         )
         await event.respond(msg, parse_mode='html')
         return
@@ -54,9 +55,14 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
 async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
     args = parse_command(event.raw_text)
     if len(args) < 2:
-        await event.respond(i18n[lang]['test_cmd_usage_prompt_html'], parse_mode='html')
+        await event.respond(i18n[lang]['cmd_test_usage_prompt_html'], parse_mode='html')
         return
     url = args[1]
+
+    all_format = False
+    if args[-1] == 'all_format':
+        args.pop()
+        all_format = True
 
     if len(args) > 2 and args[2] == 'all':
         start = 0
@@ -91,7 +97,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
             return
 
         await asyncio.gather(
-            *(__send(uid, entry, rss_d.feed.title, url) for entry in entries_to_send)
+            *(__send(uid, entry, rss_d.feed.title, url, in_all_format=all_format) for entry in entries_to_send)
         )
 
     except Exception as e:
@@ -100,8 +106,10 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         return
 
 
-async def __send(uid, entry, feed_title, link):
+async def __send(uid, entry, feed_title, link, in_all_format: bool = False):
     post = get_post_from_entry(entry, feed_title, link)
-    await post.generate_message()
-    logger.debug(f"Sending {entry['title']} ({entry['link']})...")
-    await post.send_message(uid)
+    logger.debug(f"Sending {entry.get('title', 'Untitled')} ({entry.get('link', 'No link')})...")
+    if not in_all_format:
+        await post.send_formatted_post(uid)
+        return
+    await post.test_all_format(uid)

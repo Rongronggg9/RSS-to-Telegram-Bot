@@ -184,6 +184,6 @@ class TelegraphIfy:
         except (ClientError, ConnectionError) as e:
             if self.retries < 3:
                 logger.debug(
-                    f'Network error ({e.__class__.__name__}) occurred when creating telegraph page, will retry')
+                    f'Network error ({type(e).__name__}) occurred when creating telegraph page, will retry')
                 return await self.telegraph_ify()
             raise e

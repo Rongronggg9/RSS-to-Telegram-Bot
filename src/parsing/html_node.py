@@ -1,6 +1,9 @@
 from typing import Optional, Union
 from url_normalize import url_normalize
 
+__all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Code", "Pre", "Br", "Hr",
+           "ListItem", "OrderedList", "UnorderedList"]
+
 
 class Text:
     tag: Optional[str] = None
@@ -51,7 +54,7 @@ class Text:
     def rstrip(self, deeper: bool = False):
         self.strip(deeper=deeper, strip_l=False)
 
-    def get_html(self, plain: bool = False):
+    def get_html(self, plain: bool = False) -> str:
         if self.is_listed():
             result = ''
             for subText in self.content:
@@ -72,15 +75,14 @@ class Text:
 
     def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096) -> list:
         split_list = []
-        # TODO: when result to be yield < length_limit*0.5, add subSubText to it
         if type(self.content) == list:
             curr_length = 0
-            subText = None
+            sub_text = None
             split_count = 0
             result = ''
             length = 0
-            for subText in self.content:
-                curr_length = len(subText)
+            for sub_text in self.content:
+                curr_length = len(sub_text)
                 curr_length_limit = length_limit_head if head_count == -1 or split_count < head_count \
                     else length_limit_tail
                 if length + curr_length >= curr_length_limit and result:
@@ -93,12 +95,12 @@ class Text:
                             else length_limit_tail
                         split_list.append(stripped)  # split
                 if curr_length >= curr_length_limit:
-                    for subSubText in subText.split_html(curr_length_limit):
+                    for subSubText in sub_text.split_html(curr_length_limit):
                         split_count += 1
                         split_list.append(subSubText)  # split
                     continue
                 length += curr_length
-                result += subText.get_html()
+                result += sub_text.get_html()
 
             curr_length_limit = length_limit_head if head_count == -1 or split_count < head_count \
                 else length_limit_tail
@@ -106,8 +108,8 @@ class Text:
                 stripped = result.strip()
                 if stripped:
                     split_list.append(stripped)  # split
-            elif curr_length >= curr_length_limit and subText:
-                for subSubText in subText.split_html(curr_length_limit):
+            elif curr_length >= curr_length_limit and sub_text:
+                for subSubText in sub_text.split_html(curr_length_limit):
                     split_list.append(subSubText)  # split
 
             return split_list
@@ -162,6 +164,10 @@ class Text:
 
     def __str__(self):
         return self.get_html()
+
+
+class HtmlTree(Text):
+    pass
 
 
 # ---- HTML tags super class ----

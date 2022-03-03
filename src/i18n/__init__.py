@@ -8,6 +8,7 @@ from multidict import CIMultiDict, istr
 I18N_PATH = path.split(path.realpath(__file__))[0]
 ALL_LANGUAGES = tuple(lang[:-5] for lang in listdir(I18N_PATH) if lang.endswith('.json'))
 FALLBACK_LANGUAGE = istr('en')
+NO_FALLBACK_KEYS = {istr('iso_639_code')}
 
 
 class _I18N:
@@ -102,9 +103,9 @@ class _L10N:
         self.__l10n_lang = CIMultiDict(l10n_d_flatten)
 
     def key_exist(self, key: str):
-        return key in self.__l10n_lang
+        return key in self.__l10n_lang and (self.__l10n_lang[key] or key in NO_FALLBACK_KEYS)
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> str:
         if self.key_exist(key):
             return self.__l10n_lang[key]
         elif self.__lang_code != FALLBACK_LANGUAGE:

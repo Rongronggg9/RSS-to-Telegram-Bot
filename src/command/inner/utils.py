@@ -34,6 +34,19 @@ def escape_html(raw: Any) -> str:
     return raw.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
+def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0, long: bool = False) -> str:
+    days = days + hours // 24 + minutes // (24 * 60) + seconds // (24 * 60 * 60)
+    hours = (hours + minutes // 60 + seconds // (60 * 60)) % 24
+    minutes = (minutes + seconds // 60) % 60
+    seconds = seconds % 60
+    return (
+            (f'{days}d' if days > 0 or long else '')
+            + (f'{hours}h' if hours > 0 or long else '')
+            + (f'{minutes}min' if minutes > 0 or long else '')
+            + (f'{seconds}s' if seconds > 0 or long else '')
+    )
+
+
 def get_http_caching_headers(headers: Optional[Mapping]) -> dict[str, Optional[Union[str, datetime]]]:
     """
     :param headers: dict of headers
@@ -108,7 +121,7 @@ def get_page_buttons(page_number: int,
     page_number = min(page_number, page_count)
     page_info = f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else '')
     page_buttons = [
-        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}_{page_number - 1}')
+        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}|{page_number - 1}')
         if page_number > 1
         else Button.inline(' ', data='null'),
 
@@ -116,7 +129,7 @@ def get_page_buttons(page_number: int,
         if display_cancel
         else Button.inline(page_info, data='null'),
 
-        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}_{page_number + 1}')
+        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}|{page_number + 1}')
         if page_number < page_count
         else Button.inline(' ', data='null'),
     ]
@@ -155,8 +168,8 @@ async def get_sub_choosing_buttons(user_id: int,
     if page_count == 0:
         return None
 
-    buttons_to_arrange = tuple(Button.inline(_sub.feed.title,
-                                             data=f'{callback}_{_sub.id}'
+    buttons_to_arrange = tuple(Button.inline(_sub.title or _sub.feed.title,
+                                             data=f'{callback}={_sub.id}'
                                                   + (f'|{page_number}' if callback_contain_page_num else ''))
                                for _sub in page)
     buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)
@@ -194,6 +207,7 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
             return
         if not intervals:  # no active sub subs the feed, deactivate the feed
             await deactivate_feed(feed)
+            db.effective_utils.EffectiveTasks.delete(feed.id)
             return
         new_interval = min(intervals, key=lambda _: default_interval if _ is None else _) or default_interval
         default_flag = new_interval == default_interval and new_interval not in intervals
@@ -204,10 +218,8 @@ async def update_interval(feed: Union[db.Feed, int], new_interval: Optional[int]
     if new_interval < curr_interval or force_update:  # if not force_update, will only reduce the interval
         feed.interval = new_interval if not default_flag else None
         await feed.save()
-        return
-
-    if db.effective_utils.EffectiveTasks.get_interval(feed.id) != new_interval:
-        db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
+        if db.effective_utils.EffectiveTasks.get_interval(feed.id) != new_interval:
+            db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
 
 
 async def list_sub(user_id: int, *args, **kwargs) -> list[db.Sub]:
@@ -258,7 +270,7 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
     :return: the updated sub, `None` if the sub does not exist
     """
     if isinstance(sub, int):
-        sub = await db.Sub.get_or_none(id=sub, user_id=user_id).prefetch_related('feed')
+        sub = await db.Sub.get_or_none(id=sub, user_id=user_id)
         if not sub:
             return None
     elif sub.user_id != user_id:
@@ -266,14 +278,16 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
 
     sub.state = 1 if activate else 0
     await sub.save()
-    await sub.fetch_related('feed')
+    if not isinstance(sub.feed, db.Feed):
+        await sub.fetch_related('feed')
 
-    if activate:
-        await activate_feed(sub.feed)
-
-    interval = sub.interval or db.EffectiveOptions.default_interval
-    if _update_interval:
-        await update_interval(sub.feed, new_interval=interval if activate else None)
+    feed = sub.feed
+    if activate and feed.state != 1:
+        await activate_feed(feed)
+    else:
+        interval = sub.interval or db.EffectiveOptions.default_interval
+        if _update_interval:
+            await update_interval(feed, new_interval=interval if activate else None)
 
     return sub
 
@@ -285,4 +299,20 @@ async def activate_or_deactivate_all_subs(user_id: int, activate: bool) -> tuple
     :return: the updated sub, `None` if the sub does not exist
     """
     subs = await list_sub(user_id, state=0 if activate else 1)
-    return await asyncio.gather(*(activate_or_deactivate_sub(user_id, sub, activate=activate) for sub in subs))
+    tasks = []
+    feeds_to_update = []
+    for sub in subs:
+        sub.state = 1 if activate else 0
+        feed = sub.feed
+        if activate and sub.feed.state != 1:
+            feed.state = 1
+            feed.error_count = 0
+            feed.next_check_time = None
+            feeds_to_update.append(feed)
+        interval = sub.interval or db.EffectiveOptions.default_interval
+        tasks.append(update_interval(feed, new_interval=interval if activate else None))
+    await db.Sub.bulk_update(subs, ['state'])
+    if feeds_to_update:
+        await db.Feed.bulk_update(feeds_to_update, ['state', 'error_count', 'next_check_time'])
+    await asyncio.gather(*tasks)
+    return tuple(subs)

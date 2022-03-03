@@ -34,6 +34,19 @@ def escape_html(raw: Any) -> str:
     return raw.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
+def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0, long: bool = False) -> str:
+    days = days + hours // 24 + minutes // (24 * 60) + seconds // (24 * 60 * 60)
+    hours = (hours + minutes // 60 + seconds // (60 * 60)) % 24
+    minutes = (minutes + seconds // 60) % 60
+    seconds = seconds % 60
+    return (
+            (f'{days}d' if days > 0 or long else '')
+            + (f'{hours}h' if hours > 0 or long else '')
+            + (f'{minutes}min' if minutes > 0 or long else '')
+            + (f'{seconds}s' if seconds > 0 or long else '')
+    )
+
+
 def get_http_caching_headers(headers: Optional[Mapping]) -> dict[str, Optional[Union[str, datetime]]]:
     """
     :param headers: dict of headers

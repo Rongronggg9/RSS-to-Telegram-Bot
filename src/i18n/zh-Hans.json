@@ -98,6 +98,7 @@
         "send_mode_1": "强制 Telegragh",
         "send_mode_2": "强制 Telegram 消息",
         "set_custom_title_button": "自定义标题…",
+        "set_custom_hashtags_button": "自定义 hashtag…",
         "display_author_-1": "禁用",
         "display_author_1": "强制启用",
         "display_via": "显示来源",
@@ -117,7 +118,8 @@
         "subscription_info": "订阅信息",
         "subscription_title": "自定义标题",
         "feed_url": "源 URL",
-        "feed_title": "源标题"
+        "feed_title": "源标题",
+        "hashtags": "Hashtag"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "检查任务已经连续失败 100 次，对该 RSS 源的订阅已被停用。\n若要重新启用，请使用 /activate_subs 命令。"
@@ -173,5 +175,11 @@
         "set_title_success": "订阅的自定义标题已更改为: ",
         "set_title_success_cleared": "订阅的自定义标题已清除。",
         "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 订阅编号 标题</code>\n\n注: 省略 <code>标题</code> 以清除自定义标题 (只有以前设置过才可以清除，否则会收到此提示) 。"
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 订阅编号 #hashtag1 #hashtag2 …</code>\n\n注: 如果不提供 hashtag, 已有的 hashtag 就会被清除 (只有以前设置过才可以清除，否则会收到此提示) 。",
+        "set_hashtags_success_html": "订阅的自定义 hashtag 已更改为: ",
+        "set_hashtags_success_cleared": "订阅的自定义 hashtag 已清除。",
+        "set_hashtags_failure_too_many": "Hashtag 太多，请移除一些后重试。"
     }
 }

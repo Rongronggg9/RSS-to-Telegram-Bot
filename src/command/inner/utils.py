@@ -3,6 +3,7 @@ from typing import AnyStr, Any, Union, Optional
 from collections.abc import Iterable, Mapping
 
 import asyncio
+import re
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from zlib import crc32
@@ -13,6 +14,18 @@ from src import db, log
 from src.i18n import i18n
 
 logger = log.getLogger('RSStT.command')
+
+
+def parse_hashtags(text: str) -> list[str]:
+    if text.find('#') != -1:
+        return re.findall(r'(?<=#)[^\s#]+', text)
+    return re.findall(r'\S+', text)
+
+
+def construct_hashtags(tags: Union[Iterable[str], str]) -> str:
+    if isinstance(tags, str):
+        tags = parse_hashtags(tags)
+    return ' '.join('#' + tag for tag in tags)
 
 
 def get_hash(string: AnyStr) -> str:

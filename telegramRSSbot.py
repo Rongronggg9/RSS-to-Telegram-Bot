@@ -117,6 +117,8 @@ async def pre():
                           events.NewMessage(pattern='/set_title'))
     bot.add_event_handler(command.customization.cmd_set_interval,
                           events.NewMessage(pattern='/set_interval'))
+    bot.add_event_handler(command.customization.cmd_set_hashtags,
+                          events.NewMessage(pattern='/set_hashtags'))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.misc.cmd_start,

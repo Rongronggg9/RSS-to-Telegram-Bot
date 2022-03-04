@@ -34,7 +34,10 @@
         "permission_denied_not_member": "您不在此群組/頻道中，因此無法使用該機器人。",
         "permission_denied_bot_not_member": "該機器人不再在此群組/頻道中，因此不會在這里工作。",
         "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升為管理員 (無需權限)，以授權機器人驗證您的身份。",
-        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級為超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改為「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改為「隱藏」\n6. 現在您應該能夠使用機器人了"
+        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級為超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改為「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改為「隱藏」\n6. 現在您應該能夠使用機器人了",
+        "permission_denied_switch_pm": "在與機器人的私人聊天中繼續…",
+        "permission_denied_input_command": "請輸入命令以繼續…",
+        "permission_denied_no_direct_use": "不應直接使用此命令。請改用 /set。"
     },
     "l10n_misc": {
         "choose_sub_prompt": "請選擇訂閱",
@@ -47,10 +50,11 @@
         "subscription_list": "訂閱清單",
         "processing": "正在處理中，請稍等片刻…",
         "canceled_by_user": "由用戶取消。",
-        "n_subscriptions_in_total": "共有 %d 個訂閲"
+        "n_subscriptions_in_total": "共有 %d 個訂閲",
+        "other_settings_button": "其他設定…"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "請回復 RSS 源的網址。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批量訂閱。",
+        "sub_reply_feed_url_prompt_html": "請以 RSS 源的 URL 回復這條消息。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批量訂閱。",
         "sub_usage_in_channel_html": "請使用 <code>/sub url1 url2 url3 …</code> 以訂閱。",
         "sub_successful": "訂閱成功",
         "sub_failed": "訂閱失敗"
@@ -71,7 +75,9 @@
         "send_opml_reply_placeholder": "OPML 檔 (擴展名必須為 .opml)",
         "fetch_file_failed": "提取文件失敗",
         "opml_import_processing": "如果訂閲數目很大或訂閲所在之伺服器速度較慢，則可能需要等待較長時間，坐下來放鬆一下。",
-        "opml_parse_error": "OPML 解析錯誤"
+        "opml_parse_error": "OPML 解析錯誤",
+        "keep_subs_title_button": "保留匯入訂閱的自定義標題",
+        "delete_subs_title_button": "刪除匯入訂閱的自定義標題"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "請選擇您要定制的訂閱。",
@@ -82,12 +88,40 @@
         "notification_normal": "常規",
         "notification_muted": "靜音",
         "monitor_interval": "監視間隔",
-        "set_interval_prompt": "請選擇監視間隔。"
+        "set_interval_prompt": "請選擇監視間隔。",
+        "send_mode_-1": "僅標題和來源",
+        "send_mode": "發送方式",
+        "send_mode_0": "自動",
+        "send_mode_1": "强制 Telegraph",
+        "length_limit": "長度限制 (僅限自動模式)",
+        "link_preview": "鏈接預覽",
+        "link_preview_0": "自動",
+        "display_via": "顯示來源",
+        "display_via_-2": "完全禁用",
+        "display_author": "顯示作者",
+        "display_author_-1": "禁用",
+        "display_author_0": "自動",
+        "set_custom_interval_button": "自定義間隔 (以分鐘為單位)…",
+        "length_limit_unlimited": "無限",
+        "link_preview_1": "強制啟用",
+        "send_mode_2": "强制 Telegram 消息",
+        "display_author_1": "強制啟用",
+        "display_via_-1": "僅鏈接 (隱藏源標題)",
+        "display_via_0": "自動 (鏈接顯示為源標題)",
+        "display_title_0": "自動",
+        "display_title_1": "強制啟用",
+        "style": "樣式",
+        "display_title": "顯示標題",
+        "display_title_-1": "禁用",
+        "set_custom_title_button": "自定義標題…",
+        "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中發送，則將通過 Telegraph 發送。\n如果通過 Telegraph 發送失敗，則只會發送其標題和來源。",
+        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式為自動時有效。"
     },
     "l10n_sub_info": {
         "subscription_info": "訂閱資訊",
-        "subscription_title": "訂閱標題",
-        "feed_url": "源網址"
+        "subscription_title": "自定義標題",
+        "feed_url": "源 URL",
+        "feed_title": "源標題"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "監視任務連續 100 次失敗。您對該 RSS 源的訂閱已停用。\n要重新啟動它，請使用 /activate_subs 命令。"
@@ -127,5 +161,15 @@
         "cmd_description_help": "查看幫助",
         "cmd_description_test": "測試 (僅限機器人管理員)",
         "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)"
+    },
+    "l10n_cmd_set_title": {
+        "set_title_success_cleared": "訂閱的自定義標題已清除。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設定過才能清楚，否則就會收到此提示) 。",
+        "set_title_success": "訂閱的自定義標題已修改為: "
+    },
+    "l10n_cmd_set_interval": {
+        "set_interval_failure_too_small_html": "監視間隔必須大於 <b>%d 分鐘</b>。",
+        "set_interval_success_html": "訂閱的監視間隔已修改為 <b>%d 分鐘</b>。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位為分鐘 (無需包含單位) 。"
     }
 }

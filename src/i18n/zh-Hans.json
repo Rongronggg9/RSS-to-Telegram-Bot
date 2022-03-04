@@ -34,7 +34,10 @@
         "permission_denied_not_member": "你不在本群/频道里，不可以使用这个 bot。",
         "permission_denied_bot_not_member": "本 bot 已经不在本群/频道里，不会在此工作。",
         "promote_to_admin_prompt": "如果你是本群组的匿名管理员，请将 bot 提升为管理员 (不需要任何权限)，这样 bot 才能验证你的身份。",
-        "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作：\n1. 转到群组信息，点击「管理群组」\n2. 将「历史记录对新成员」设置为「可见」\n3. 保存历史记录可见性设置\n4. 保存所有设置\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」\n6. 现在你应该可以使用这个 bot 了"
+        "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作: \n1. 转到群组信息，点击「管理群组」\n2. 将「历史记录对新成员」设置为「可见」\n3. 保存历史记录可见性设置\n4. 保存所有设置\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」\n6. 现在你应该可以使用这个 bot 了",
+        "permission_denied_no_direct_use": "不应直接使用此命令。请改用 /set 。",
+        "permission_denied_input_command": "请输入命令以继续…",
+        "permission_denied_switch_pm": "在和 bot 的私聊中继续…"
     },
     "l10n_misc": {
         "choose_sub_prompt": "请选择订阅",
@@ -47,10 +50,11 @@
         "processing": "正在处理中，请稍候…",
         "cancel": "取消",
         "canceled_by_user": "被用户取消。",
-        "n_subscriptions_in_total": "总共 %d 个订阅"
+        "n_subscriptions_in_total": "总共 %d 个订阅",
+        "other_settings_button": "其他设置…"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "请回复订阅链接。\n或者，你也可以使用 <code>/sub url1 url2 url3 …</code> 来批量订阅。",
+        "sub_reply_feed_url_prompt_html": "请用订阅 URL 回复这条消息。\n或者，你也可以使用 <code>/sub url1 url2 url3 …</code> 来批量订阅。",
         "sub_usage_in_channel_html": "请使用 <code>/sub url1 url2 url3 …</code> 来订阅。",
         "sub_successful": "订阅成功",
         "sub_failed": "订阅失败"
@@ -65,7 +69,9 @@
         "send_opml_reply_placeholder": "OPML 文件 (扩展名必须为 .opml)",
         "fetch_file_failed": "获取文件失败",
         "opml_import_processing": "如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待。",
-        "opml_parse_error": "OPML 解析错误"
+        "opml_parse_error": "OPML 解析错误",
+        "keep_subs_title_button": "保留导入订阅的自定义标题",
+        "delete_subs_title_button": "删除导入订阅的自定义标题"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "请选择你要设置的订阅。",
@@ -76,12 +82,42 @@
         "notification_normal": "正常",
         "notification_muted": "静音",
         "monitor_interval": "检查间隔",
-        "set_interval_prompt": "请选择检查间隔。"
+        "set_interval_prompt": "请选择检查间隔。",
+        "link_preview_0": "自动",
+        "link_preview_1": "强制启用",
+        "display_title": "显示标题",
+        "display_title_-1": "禁用",
+        "display_title_0": "自动",
+        "send_mode_-1": "仅标题和来源",
+        "display_author": "显示作者",
+        "send_mode": "发送方式",
+        "length_limit": "长度限制 (仅限自动模式)",
+        "send_mode_0": "自动",
+        "length_limit_unlimited": "无限制",
+        "link_preview": "链接预览",
+        "send_mode_1": "强制 Telegragh",
+        "send_mode_2": "强制 Telegram 消息",
+        "set_custom_title_button": "自定义标题…",
+        "display_author_-1": "禁用",
+        "display_author_1": "强制启用",
+        "display_via": "显示来源",
+        "display_author_0": "自动",
+        "display_via_-2": "完全禁用",
+        "display_title_1": "强制启用",
+        "style": "风格",
+        "length_limit_only_effective_if_send_mode_auto": "长度限制仅在发送方式为自动时有效。",
+        "set_length_limit_prompt": "请选择长度限制。\n\n如果文章的长度超过限制或无法以单条信息发送，则将经由 Telegraph 发送。\n如果经由 Telegraph 发送失败，则将只发送其标题和来源。",
+        "display_via_-1": "仅链接 (隐藏源标题)",
+        "display_via_0": "自动 (链接显示为源标题)",
+        "style_0": "",
+        "style_1": "",
+        "set_custom_interval_button": "自定义间隔 (以分钟为单位)…"
     },
     "l10n_sub_info": {
         "subscription_info": "订阅信息",
-        "subscription_title": "订阅标题",
-        "feed_url": "源 URL"
+        "subscription_title": "自定义标题",
+        "feed_url": "源 URL",
+        "feed_title": "源标题"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "检查任务已经连续失败 100 次，对该 RSS 源的订阅已被停用。\n若要重新启用，请使用 /activate_subs 命令。"
@@ -123,9 +159,19 @@
         "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)"
     },
     "l10n_cmd_unsub_all": {
-        "unsub_all_successful": "成功退订所有订阅",
+        "unsub_all_successful": "已成功退订所有订阅",
         "unsub_all_confirm_prompt": "你确定要退订所有订阅吗？",
         "unsub_all_confirm": "是的，退订所有订阅",
         "unsub_all_cancel": "不，取消"
+    },
+    "l10n_cmd_set_interval": {
+        "set_interval_failure_too_small_html": "监视间隔必须大于 <b>%d 分钟</b>。",
+        "set_interval_success_html": "订阅的监视间隔已更改为 <b>%d 分钟</b>。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 订阅编号 监视间隔</code>\n\n注: <code>监视间隔</code> 必须是以分钟为单位的正整数 (不包含单位) 。"
+    },
+    "l10n_cmd_set_title": {
+        "set_title_success": "订阅的自定义标题已更改为: ",
+        "set_title_success_cleared": "订阅的自定义标题已清除。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 订阅编号 标题</code>\n\n注: 省略 <code>标题</code> 以清除自定义标题 (只有以前设置过才可以清除，否则会收到此提示) 。"
     }
 }

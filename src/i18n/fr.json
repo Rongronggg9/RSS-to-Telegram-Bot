@@ -103,7 +103,6 @@
         "all_subs_are_deactivated": ""
     },
     "l10n_administration": {
-        "test_cmd_usage_prompt_html": "",
         "set_option_cmd_usage_prompt_html": "",
         "current_options": "",
         "option_value_type": "",

@@ -19,6 +19,7 @@ class _UserLockBucket:
     def __init__(self):
         self.msg_lock = Lock()
         self.flood_lock = Lock()
+        self.media_upload_semaphore = BoundedSemaphore(3)
         self.pending_callbacks = set()
 
 
@@ -31,6 +32,10 @@ def user_msg_lock(user: _USER_LIKE) -> Lock:
 
 def user_flood_lock(user: _USER_LIKE) -> Lock:
     return _user_bucket[user].flood_lock
+
+
+def user_media_upload_semaphore(user: _USER_LIKE) -> BoundedSemaphore:
+    return _user_bucket[user].media_upload_semaphore
 
 
 def user_msg_locks(user: _USER_LIKE) -> tuple[Lock, Lock]:

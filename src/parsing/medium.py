@@ -148,53 +148,54 @@ class Medium:
                 async with flood_lock:
                     pass  # wait for flood wait
 
-                async with self.uploading_lock:
-                    medium_to_upload = self.type_fallback_chain()
-                    if medium_to_upload is None:
-                        return None, None
-                    if self.uploaded_bucket[chat_id]:
-                        cached = self.uploaded_bucket[chat_id]
-                        if not force_upload and cached[1] == medium_to_upload.type:
-                            return cached
-                    while True:
+                async with locks.user_media_upload_semaphore(chat_id):
+                    async with self.uploading_lock:
                         medium_to_upload = self.type_fallback_chain()
                         if medium_to_upload is None:
                             return None, None
-                        tries += 1
-                        if tries > max_tries:
-                            self.valid = False
-                            return None, None
-                        try:
-                            async with flood_lock:
-                                pass  # wait for flood wait
-
-                            uploaded_media = await env.bot(
-                                UploadMediaRequest(peer, medium_to_upload.telegramize())
-                            )
-                            self.uploaded_bucket[chat_id] = uploaded_media, medium_to_upload.type
-                            return uploaded_media, medium_to_upload.type
-
-                        # errors caused by invalid img/video(s)
-                        except InvalidMediaErrors as e:
-                            err_list.append(e)
-                            if await self.fallback():
-                                media_fallback_count += 1
-                            else:
+                        if self.uploaded_bucket[chat_id]:
+                            cached = self.uploaded_bucket[chat_id]
+                            if not force_upload and cached[1] == medium_to_upload.type:
+                                return cached
+                        while True:
+                            medium_to_upload = self.type_fallback_chain()
+                            if medium_to_upload is None:
+                                return None, None
+                            tries += 1
+                            if tries > max_tries:
                                 self.valid = False
                                 return None, None
-                            continue
+                            try:
+                                async with flood_lock:
+                                    pass  # wait for flood wait
 
-                        # errors caused by server or network instability between img server and telegram server
-                        except ExternalMediaFetchFailedErrors as e:
-                            err_list.append(e)
-                            if await self.change_server():
-                                server_change_count += 1
-                            elif await self.fallback():
-                                media_fallback_count += 1
-                            else:
-                                self.valid = False
-                                return None, None
-                            continue
+                                uploaded_media = await env.bot(
+                                    UploadMediaRequest(peer, medium_to_upload.telegramize())
+                                )
+                                self.uploaded_bucket[chat_id] = uploaded_media, medium_to_upload.type
+                                return uploaded_media, medium_to_upload.type
+
+                            # errors caused by invalid img/video(s)
+                            except InvalidMediaErrors as e:
+                                err_list.append(e)
+                                if await self.fallback():
+                                    media_fallback_count += 1
+                                else:
+                                    self.valid = False
+                                    return None, None
+                                continue
+
+                            # errors caused by server or network instability between img server and telegram server
+                            except ExternalMediaFetchFailedErrors as e:
+                                err_list.append(e)
+                                if await self.change_server():
+                                    server_change_count += 1
+                                elif await self.fallback():
+                                    media_fallback_count += 1
+                                else:
+                                    self.valid = False
+                                    return None, None
+                                continue
 
             except (FloodWaitError, SlowModeWaitError) as e:
                 # telethon has retried for us, but we release locks and retry again here to see if it will be better

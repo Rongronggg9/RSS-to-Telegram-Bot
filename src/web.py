@@ -154,8 +154,8 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
         else (semaphore or nullcontext())
     v6_address = None
     try:
-        v6_address = await _resolver.query(host, 'AAAA') if env.IPV6_PRIOR else None
-    except aiodns.error.DNSError:
+        v6_address = await asyncio.wait_for(_resolver.query(host, 'AAAA'), timeout=1) if env.IPV6_PRIOR else None
+    except (aiodns.error.DNSError, asyncio.TimeoutError):
         pass
     except Exception as e:
         logger.debug(f'Error occurred when querying {url} AAAA:', exc_info=e)

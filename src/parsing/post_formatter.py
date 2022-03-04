@@ -19,7 +19,7 @@ from . import utils, tgraph
 from .splitter import get_plain_text_length
 from .html_parser import parse
 from .html_node import *
-from .medium import Media, Image, Video, Audio, File
+from .medium import Media, Image, Video, Audio, File, construct_images_weserv_nl_url
 
 AUTO: Final = 0
 DISABLE: Final = -1
@@ -438,6 +438,9 @@ class PostFormatter:
                     continue
                 elif not enclosure.type:
                     medium = File(enclosure.url)
+                elif enclosure.type.find('webp') != -1 or enclosure.type.find('svg') != -1:
+                    medium = Image(enclosure.url)
+                    medium.url = construct_images_weserv_nl_url(enclosure.url)
                 elif enclosure.type.startswith('image/gif'):
                     medium = Audio(enclosure.url)
                 elif enclosure.type.startswith('audio'):

@@ -96,7 +96,7 @@ async def run_monitor_task():
     skipped = 0
     timeout = 0
 
-    for r in result:
+    for f, r in zip(feeds, result):
         if r is NOT_UPDATED:
             not_updated += 1
         elif r is CACHED:
@@ -113,7 +113,7 @@ async def run_monitor_task():
             skipped += 1
         elif isinstance(r, asyncio.TimeoutError):
             timeout += 1
-            timeout_errors.append(r)
+            timeout_errors.append((f, r))
         elif isinstance(r, BaseException):
             raise r
         else:
@@ -123,8 +123,8 @@ async def run_monitor_task():
     if timeout_errors:
         logger.error(f'Timeout detected during a feeds monitoring task, '
                      f'totally {timeout} feed(s) timed out after {wait_for}s:')
-        for index, error in enumerate(timeout_errors):
-            logger.error(f'The TimeoutError of the {index}th feed in the task:', exc_info=error)
+        for feed, error in timeout_errors:
+            logger.error(f'The TimeoutError of the feed ({feed.link}) in the task:', exc_info=error)
 
 
 async def __monitor(feed: db.Feed) -> str:
@@ -224,10 +224,10 @@ async def __notify_all(feed: db.Feed, entry: MutableMapping):
     subs = await db.Sub.filter(feed=feed, state=1)
     if not subs:  # nobody has subbed it
         await update_interval(feed)
+    link = entry.get('link')
     try:
         post = get_post_from_entry(entry, feed.title, feed.link)
     except Exception as e:
-        link = entry.get('link')
         logger.error(f'Failed to parse the post {link} (feed: {feed.link}) from entry:', exc_info=e)
         try:
             error_message = Post(f'Something went wrong while parsing the post {link} '

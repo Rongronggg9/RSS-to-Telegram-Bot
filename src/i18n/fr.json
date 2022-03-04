@@ -1,0 +1,131 @@
+{
+    "l10n_info": {
+        "lang_code": "",
+        "iso_639_code": "",
+        "language_name": "",
+        "lang_native_name": "",
+        "select_lang_prompt": "",
+        "welcome_prompt": "",
+        "rsstt_slogan": ""
+    },
+    "l10n_sub_status": {
+        "no_subscription": "",
+        "already_subscribed": "",
+        "subscription_not_exist": ""
+    },
+    "l10n_error_reasons": {
+        "feed_invalid": "",
+        "url_invalid": "",
+        "network_error": "",
+        "internal_error": "",
+        "status_code_error": "",
+        "uncaught_internal_error": "",
+        "operation_timeout_error": "",
+        "action_invalid": "",
+        "flood_wait_prompt": "",
+        "edit_conflict_prompt": "",
+        "callback_already_running_prompt": "",
+        "message_too_long_prompt": ""
+    },
+    "l10n_permission_denied_reasons": {
+        "permission_denied_not_bot_manager": "",
+        "permission_denied_not_chat_admin": "",
+        "permission_denied_not_in_private_chat": "",
+        "permission_denied_not_member": "",
+        "permission_denied_bot_not_member": "",
+        "promote_to_admin_prompt": "",
+        "group_upgrade_needed_prompt": ""
+    },
+    "l10n_misc": {
+        "choose_sub_prompt": "",
+        "previous_page": "",
+        "next_page": "",
+        "back": "",
+        "cancel": "",
+        "subscribe": "",
+        "unsubscribe": "",
+        "subscription_list": "",
+        "processing": "",
+        "canceled_by_user": "",
+        "n_subscriptions_in_total": ""
+    },
+    "l10n_cmd_sub": {
+        "sub_reply_feed_url_prompt_html": "",
+        "sub_usage_in_channel_html": "",
+        "sub_successful": "",
+        "sub_failed": ""
+    },
+    "l10n_cmd_unsub": {
+        "unsub_choose_sub_prompt_html": "",
+        "unsub_successful": "",
+        "unsub_failed": ""
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "",
+        "unsub_all_confirm": "",
+        "unsub_all_cancel": "",
+        "unsub_all_successful": ""
+    },
+    "l10n_cmd_import": {
+        "send_opml_prompt": "",
+        "send_opml_reply_placeholder": "",
+        "fetch_file_failed": "",
+        "opml_import_processing": "",
+        "opml_parse_error": ""
+    },
+    "l10n_cmd_set": {
+        "set_choose_sub_prompt": "",
+        "status": "",
+        "status_activated": "",
+        "status_deactivated": "",
+        "notification": "",
+        "notification_normal": "",
+        "notification_muted": "",
+        "monitor_interval": "",
+        "set_interval_prompt": ""
+    },
+    "l10n_sub_info": {
+        "subscription_info": "",
+        "subscription_title": "",
+        "feed_url": ""
+    },
+    "l10n_monitor_warn": {
+        "feed_deactivated_warn": ""
+    },
+    "l10n_cmd_activate": {
+        "choose_sub_to_be_activated": "",
+        "activate_all_subs": "",
+        "all_subs_are_activated": ""
+    },
+    "l10n_cmd_deactivate": {
+        "choose_sub_to_be_deactivated": "",
+        "deactivate_all_subs": "",
+        "all_subs_are_deactivated": ""
+    },
+    "l10n_administration": {
+        "test_cmd_usage_prompt_html": "",
+        "set_option_cmd_usage_prompt_html": "",
+        "current_options": "",
+        "option_value_type": "",
+        "option_key_invalid": "",
+        "option_value_invalid": "",
+        "option_updated": ""
+    },
+    "l10n_cmd_descriptions": {
+        "commands": "",
+        "cmd_description_sub": "",
+        "cmd_description_unsub": "",
+        "cmd_description_unsub_all": "",
+        "cmd_description_list": "",
+        "cmd_description_set": "",
+        "cmd_description_import": "",
+        "cmd_description_export": "",
+        "cmd_description_activate_subs": "",
+        "cmd_description_deactivate_subs": "",
+        "cmd_description_version": "",
+        "cmd_description_lang": "",
+        "cmd_description_help": "",
+        "cmd_description_test": "",
+        "cmd_description_set_option": ""
+    }
+}

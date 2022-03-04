@@ -8,7 +8,8 @@ from telethon.tl.types import KeyboardButtonCallback
 
 from src import db, env
 from src.i18n import i18n
-from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time, logger
+from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time, logger, \
+    construct_hashtags
 
 SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "notify": (0, 1),
@@ -29,8 +30,9 @@ async def get_sub_info(sub: db.Sub,
     info = (
             f"<b>{i18n[lang]['subscription_info']}</b>\n\n"
             f"{i18n[lang]['feed_title']}: {sub.feed.title}\n"
-            + (f"{i18n[lang]['subscription_title']}: {sub.title}\n" if sub.title else '') +
             f"{i18n[lang]['feed_url']}: {sub.feed.link}\n"
+            + (f"\n{i18n[lang]['subscription_title']}: {sub.title}" if sub.title else '')
+            + (f"\n{i18n[lang]['hashtags']}: {construct_hashtags(sub.tags)}" if sub.tags else '')
     )
     return info
 
@@ -69,11 +71,6 @@ async def get_sub_customization_buttons(sub: db.Sub,
                           data=f'set={sub.id},display_title|{page}'),
         ),
         (
-            Button.switch_inline(f"{i18n[lang]['set_custom_title_button']}",
-                                 query=f'/set_title {sub.id} ',
-                                 same_peer=True),
-        ),
-        (
             Button.inline(f"{i18n[lang]['display_via']}: "
                           + i18n[lang][f'display_via_{sub.display_via}'],
                           data=f'set={sub.id},display_via|{page}'),
@@ -90,6 +87,16 @@ async def get_sub_customization_buttons(sub: db.Sub,
             Button.inline(f"{i18n[lang]['style']}: "
                           + i18n[lang][f'style_{sub.style}'],
                           data=f'set={sub.id},style|{page}'),
+        ),
+        (
+            Button.switch_inline(f"{i18n[lang]['set_custom_title_button']}",
+                                 query=f'/set_title {sub.id} ',
+                                 same_peer=True),
+        ),
+        (
+            Button.switch_inline(f"{i18n[lang]['set_custom_hashtags_button']}",
+                                 query=f'/set_hashtags {sub.id} ',
+                                 same_peer=True),
         ),
         (
             Button.inline(f'< {i18n[lang]["back"]}', data=f'get_set_page|{page}'),
@@ -262,3 +269,19 @@ async def del_subs_title(subs: Union[Iterable[db.Sub], db.Sub]) -> int:
     for sub in subs:
         sub.title = None
     return await db.Sub.bulk_update(subs, ['title'])
+
+
+async def set_sub_hashtags(sub: db.Sub, hashtags: Union[Iterable[str], str, None]) -> db.Sub:
+    if hashtags is None or isinstance(hashtags, str):
+        hashtags_str = hashtags
+    else:
+        filtered_hashtags = []
+        for hashtag in hashtags:
+            hashtag = hashtag.strip(' \n\r\t#')
+            if hashtag:
+                filtered_hashtags.append(hashtag)
+        hashtags_str = ' '.join(filtered_hashtags) if filtered_hashtags else None
+    if sub.tags == hashtags_str:
+        return sub
+    sub.tags = hashtags_str
+    await sub.save()

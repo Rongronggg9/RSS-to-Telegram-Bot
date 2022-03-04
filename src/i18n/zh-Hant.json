@@ -114,6 +114,7 @@
         "display_title": "顯示標題",
         "display_title_-1": "禁用",
         "set_custom_title_button": "自定義標題…",
+        "set_custom_hashtags_button": "自定義 hashtag…",
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中發送，則將通過 Telegraph 發送。\n如果通過 Telegraph 發送失敗，則只會發送其標題和來源。",
         "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式為自動時有效。"
     },
@@ -121,7 +122,8 @@
         "subscription_info": "訂閱資訊",
         "subscription_title": "自定義標題",
         "feed_url": "源 URL",
-        "feed_title": "源標題"
+        "feed_title": "源標題",
+        "hashtags": "Hashtag"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "監視任務連續 100 次失敗。您對該 RSS 源的訂閱已停用。\n要重新啟動它，請使用 /activate_subs 命令。"
@@ -164,12 +166,18 @@
     },
     "l10n_cmd_set_title": {
         "set_title_success_cleared": "訂閱的自定義標題已清除。",
-        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設定過才能清楚，否則就會收到此提示) 。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設定過才能清除，否則就會收到此提示) 。",
         "set_title_success": "訂閱的自定義標題已修改為: "
     },
     "l10n_cmd_set_interval": {
         "set_interval_failure_too_small_html": "監視間隔必須大於 <b>%d 分鐘</b>。",
         "set_interval_success_html": "訂閱的監視間隔已修改為 <b>%d 分鐘</b>。",
         "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位為分鐘 (無需包含單位) 。"
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果沒有 hashtag 提供，已存在的 hashtag 就會被清除 (僅當先前設定過才能清除，否則就會收到此提示) 。",
+        "set_hashtags_success_html": "訂閱的自定義 hashtag 已修改為: ",
+        "set_hashtags_success_cleared": "訂閱的自定義 hashtag 已清除。",
+        "set_hashtags_failure_too_many": "Hashtag 太多，請刪除一些后重試。"
     }
 }

@@ -194,7 +194,7 @@ async def cmd_set_title(event: Union[events.NewMessage.Event, Message],
                         *_,
                         lang: Optional[str] = None,
                         **__):
-    sub, title = await parse_command_get_sub_and_param(event.raw_text, event.chat_id, max_split=3)
+    sub, title = await parse_command_get_sub_and_param(event.raw_text, event.chat_id, max_split=2)
     title = title.strip() if title else None
     if not sub:
         await event.respond(i18n[lang]['permission_denied_no_direct_use'])
@@ -237,6 +237,37 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
     await event.respond(
         (
                 (i18n[lang]['set_interval_success_html'] % (interval,))
+                + '\n\n' +
+                await inner.customization.get_sub_info(sub, lang=lang)
+        ),
+        buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}'),),
+        parse_mode='html')
+
+
+@command_gatekeeper(only_manager=False)
+async def cmd_set_hashtags(event: Union[events.NewMessage.Event, Message],
+                           *_,
+                           lang: Optional[str] = None,
+                           **__):
+    sub, hashtags = await parse_command_get_sub_and_param(event.raw_text, event.chat_id, max_split=2)
+    hashtags = inner.utils.parse_hashtags(hashtags) if hashtags else None
+    if not sub:
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'])
+        return
+    if not hashtags and not sub.tags:
+        await event.respond(i18n[lang]['cmd_set_hashtags_usage_prompt_html'], parse_mode='html')
+        return
+    hashtags_str = ' '.join(hashtags) if hashtags else None
+    if hashtags_str and len(hashtags_str) > 255:
+        await event.respond(i18n[lang]['set_hashtags_failure_too_many'])
+        return
+    await inner.customization.set_sub_hashtags(sub, hashtags_str)
+    await event.respond(
+        (
+                ((i18n[lang]['set_hashtags_success_html'] + '\n'
+                  + f'<b>{inner.utils.construct_hashtags(hashtags)}</b>')
+                 if hashtags
+                 else i18n[lang]['set_hashtags_success_cleared'])
                 + '\n\n' +
                 await inner.customization.get_sub_info(sub, lang=lang)
         ),

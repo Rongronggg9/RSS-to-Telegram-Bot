@@ -95,7 +95,7 @@ async def callback_del_buttons(event: events.CallbackQuery.Event,
     await event.answer(cache_time=3600)
     await msg.edit(buttons=None)
 
-@command_gatekeeper(only_manager=True, allow_in_others_private_chat=False, quiet=True)
+@command_gatekeeper(only_manager=False, allow_in_others_private_chat=False, quiet=True)
 async def inline_command_constructor(event: events.InlineQuery.Event,
                                      *_,
                                      lang: Optional[str] = None,

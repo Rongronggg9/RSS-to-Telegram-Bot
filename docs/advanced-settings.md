@@ -43,6 +43,7 @@
 | `MULTIUSER`        | Enable multi-user feature or not?                                      | `0`                                           | `1`                                             |
 | `CRON_SECOND`      | Run the feed monitoring task at the n-th second of each minute? (0-59) | `30`                                          | `0`                                             |
 | `IMG_RELAY_SERVER` | Media relay server URL                                                 | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/` |
+| `IMAGES_WESERV_NL` | images.weserv.nl URL                                                   | `https://images.weserv.nl/`                   | `https://images.weserv.nl/`                     |
 | `DATABASE_URL`     | Database URL [^5]                                                      | `postgres://user:pass@example.com:5432/table` | `sqlite://config/db.sqlite3?journal_mode=OFF`   |
 | `DEBUG`            | Enable debug logging or not?                                           | `1`                                           | `0`                                             |
 

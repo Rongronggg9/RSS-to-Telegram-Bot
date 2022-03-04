@@ -13,6 +13,7 @@ from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExterna
     MessageMediaPhoto, MessageMediaDocument
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
 from asyncstdlib.functools import lru_cache
+from urllib.parse import urlencode
 
 from src import env, log, web, locks
 from src.parsing.html_node import Link, Br, Text, HtmlTree
@@ -226,17 +227,23 @@ class Medium:
         async with self.validating_lock:
             while self.urls:
                 url = self.urls.pop(0)
+                if url.startswith(env.IMAGES_WESERV_NL):
+                    self.valid = True
+                    self.chosen_url = url
+                    self._server_change_count = 0
+                    return True
                 medium_info = await get_medium_info(url)
                 if medium_info is None:
                     continue
                 self.size, self.width, self.height, self.content_type = medium_info
 
                 if self.type == IMAGE:
-                    # drop SVG
-                    if self.content_type and self.content_type.lower().startswith('image/svg'):
-                        self.valid = False
-                        self.drop_silently = True
-                        return False
+                    # force convert WEBP/SVG to PNG
+                    if self.content_type and self.content_type.find('webp') != -1 \
+                            or self.content_type.startswith('application') or self.content_type.find('svg') != -1:
+                        self.valid = True
+                        url = construct_images_weserv_nl_url(self.original_urls[0])
+                        self.urls = [url]
                     # always invalid
                     elif self.width + self.height > 10000 or self.size > self.maxSize:
                         self.valid = False
@@ -267,8 +274,6 @@ class Medium:
                     if isTelegramCannotFetch(self.chosen_url):
                         await self.change_server()
                     return True
-
-                # TODO: reduce non-weibo pic size
 
             self.valid = False
             return await self.type_fallback()
@@ -377,9 +382,12 @@ class Image(Medium):
     def __init__(self, url: Union[str, list[str]]):
         super().__init__(url)
         new_urls = []
+        already_images_weserv_nl = False
         for url in self.urls:
             sinaimg_match = sinaimg_size_parser(url)
             pixiv_match = pixiv_size_parser(url)
+            if url.startswith(env.IMAGES_WESERV_NL):
+                already_images_weserv_nl = True
             if not any([sinaimg_match, pixiv_match]):
                 new_urls.append(url)
                 continue
@@ -400,6 +408,8 @@ class Image(Medium):
             if url not in new_urls:
                 new_urls.append(url)
         self.urls = new_urls
+        if not already_images_weserv_nl:
+            self.urls.append(construct_images_weserv_nl_url(self.urls[0]))  # use for final fallback
 
     async def change_server(self):
         sinaimg_server_match = sinaimg_server_parser(self.chosen_url)
@@ -637,6 +647,21 @@ class Media:
         return '|'.join(medium.hash for medium in self._media)
 
 
+def construct_images_weserv_nl_url(url: str,
+                                   width: int = 1280,
+                                   height: int = 1280,
+                                   fit: str = 'inside',
+                                   output_format: str = 'png') -> str:
+    query_string = urlencode({
+        'url': url,
+        'w': width,
+        'h': height,
+        'fit': fit,
+        'output': output_format,
+    })
+    return env.IMAGES_WESERV_NL + '?' + query_string
+
+
 @lru_cache(maxsize=1024)
 async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
     if url.startswith('data:'):
@@ -651,6 +676,7 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[st
 
     size = int(r.headers.get('Content-Length') or -1)
     content_type = r.headers.get('Content-Type')
+    content_type = content_type.lower() if content_type else None
     is_image = content_type and content_type.startswith('image/')
 
     width = height = -1

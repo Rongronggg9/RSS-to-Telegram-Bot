@@ -10,7 +10,7 @@ from urllib.parse import urlparse, urljoin
 from attr import define
 
 from src import web
-from .medium import Video, Image, Media, Animation, Audio
+from .medium import Video, Image, Media, Animation, Audio, construct_images_weserv_nl_url
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, is_absolute_link, emojify
 
@@ -156,16 +156,27 @@ class Parser:
                 _multi_src.append(src) if src else None
             multi_src = []
             is_gif = False
+            is_webp = False
             for _src in _multi_src:
                 if not isinstance(_src, str):
                     continue
                 if not is_absolute_link(_src) and self.feed_link:
                     _src = urljoin(self.feed_link, _src)
-                if urlparse(_src).path.endswith(('.gif', '.gifv', '.webm', '.mp4', '.m4v', '.webp')):
+                path = urlparse(_src).path
+                if path.endswith(('.gif', '.gifv', '.webm', '.mp4', '.m4v')):
                     is_gif = True
+                if path.endswith('.webp'):
+                    is_webp = True
                 multi_src.append(_src)
             if multi_src:
-                self.media.add(Image(multi_src) if not is_gif else Animation(multi_src))
+                if is_webp:
+                    media = Image(multi_src)
+                    media.urls = [construct_images_weserv_nl_url(multi_src[0])]
+                    self.media.add(media)
+                elif is_gif:
+                    self.media.add(Animation(multi_src))
+                else:
+                    self.media.add(Image(multi_src))
             return None
 
         if tag == 'video':
@@ -223,7 +234,7 @@ class Parser:
                 # noinspection PyBroadException
                 try:
                     page = await web.get(src, timeout=3, decode=True, semaphore=False)
-                    if page.status != 200:
+                    if page.status != 200 or not page.content:
                         raise ValueError
                     text = BeautifulSoup(page.content, 'lxml').title.text
                 except Exception:

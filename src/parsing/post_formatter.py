@@ -430,6 +430,7 @@ class PostFormatter:
         self.media = parsed.media
         self.parsed_html = parsed.html
         self.plain_length = get_plain_text_length(self.parsed_html)
+        self.html = parsed.parser.html  # use a validated HTML
         self.parsed = True
         if self.enclosures:
             for enclosure in self.enclosures:

@@ -31,6 +31,8 @@ class Parser:
         :param html: HTML content
         :param feed_link: feed link (use for resolve relative urls)
         """
+        # validate invalid HTML first, since minify_html is not so robust
+        html = BeautifulSoup(html, 'lxml').decode()
         self.html = minify_html.minify(html,
                                        do_not_minify_doctype=True,
                                        keep_closing_tags=True,
@@ -282,6 +284,7 @@ class Parsed:
     html_tree: HtmlTree
     media: Media
     html: str
+    parser: Parser
 
 
 async def parse(html: str, feed_link: Optional[str] = None):
@@ -291,4 +294,4 @@ async def parse(html: str, feed_link: Optional[str] = None):
     """
     parser = Parser(html=html, feed_link=feed_link)
     await parser.parse()
-    return Parsed(html_tree=parser.html_tree, media=parser.media, html=parser.get_parsed_html())
+    return Parsed(html_tree=parser.html_tree, media=parser.media, html=parser.get_parsed_html(), parser=parser)

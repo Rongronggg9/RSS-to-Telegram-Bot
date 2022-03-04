@@ -11,11 +11,11 @@
     "l10n_sub_status": {
         "no_subscription": "You have no subscriptions",
         "already_subscribed": "Already subscribed",
-        "subscription_not_exist": "Subscription does not exist"
+        "subscription_not_exist": "Subscription not exist"
     },
     "l10n_error_reasons": {
-        "feed_invalid": "The RSS feed is invalid",
-        "url_invalid": "The URL is invalid",
+        "feed_invalid": "RSS feed invalid",
+        "url_invalid": "URL invalid",
         "network_error": "Network error",
         "internal_error": "Internal error",
         "status_code_error": "HTTP status code error",
@@ -25,7 +25,7 @@
         "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
         "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
         "callback_already_running_prompt": "You have requested another command. Please retry after it finishes.",
-        "message_too_long_prompt": "The command should have been executed successfully, but the return message is too long and cannot be sent."
+        "message_too_long_prompt": "The command should have been executed successfully, but the return message is too long to send."
     },
     "l10n_permission_denied_reasons": {
         "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
@@ -33,8 +33,8 @@
         "permission_denied_not_in_private_chat": "This command can only be used in a private chat.",
         "permission_denied_not_member": "You are not in this group/channel, thus cannot use the bot.",
         "permission_denied_bot_not_member": "The bot is no longer in this group/channel, thus won't work here.",
-        "permission_denied_switch_pm": "Continue using the bot in private chat...",
-        "permission_denied_input_command": "Please input a command to continue...",
+        "permission_denied_switch_pm": "Continue in the private chat with the bot…",
+        "permission_denied_input_command": "Please input a command to continue…",
         "permission_denied_no_direct_use": "This command should not be used directly. Use /set instead.",
         "promote_to_admin_prompt": "If you are an anonymous admin of this group, please promote the bot to an admin (no permission needed) to empower the bot to verify your identity.",
         "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\"\n2. Change \"Chat history for new members\" to \"Visible\"\n3. Save chat history visibility setting\n4. Save all settings\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again\n6. Now you should be able to use the bot"
@@ -49,35 +49,35 @@
         "unsubscribe": "Unsubscribe",
         "subscription_list": "Subscription list",
         "processing": "Processing, please wait for a moment…",
-        "canceled_by_user": "Canceled by user.",
+        "canceled_by_user": "Canceled by the user.",
         "n_subscriptions_in_total": "%d subscriptions in total",
         "other_settings_button": "Other settings…"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "Please reply the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
+        "sub_reply_feed_url_prompt_html": "Please reply to this message with the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
         "sub_usage_in_channel_html": "Please use <code>/sub url1 url2 url3 …</code> to subscribe.",
         "sub_successful": "Subscribed successfully",
-        "sub_failed": "Subscribed failed"
+        "sub_failed": "Failed to subscribe"
     },
     "l10n_cmd_unsub": {
-        "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe. \nOr, you may use <code>/unsub url1 url2 url3 …</code> to unsubscribe in bulk.",
+        "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe from. \nOr, you may use <code>/unsub url1 url2 url3 …</code> to unsubscribe in bulk.",
         "unsub_successful": "Unsubscribed successfully",
-        "unsub_failed": "Unsubscribed failed"
+        "unsub_failed": "Failed to unsubscribe"
     },
     "l10n_cmd_unsub_all": {
-        "unsub_all_confirm_prompt": "Are you sure you want to unsubscribe all subscriptions?",
-        "unsub_all_confirm": "Yes, unsubscribe all subscriptions",
+        "unsub_all_confirm_prompt": "Are you sure you want to unsubscribe from all subscriptions?",
+        "unsub_all_confirm": "Yes, unsubscribe from all subscriptions",
         "unsub_all_cancel": "No, cancel",
-        "unsub_all_successful": "Unsubscribed all subscriptions successfully"
+        "unsub_all_successful": "Unsubscribed from all subscriptions successfully"
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Please send me the OPML file to be imported (extension name must be .opml).",
         "send_opml_reply_placeholder": "The OPML file to be imported (extension name must be .opml)",
-        "fetch_file_failed": "Failed fetching the file",
+        "fetch_file_failed": "Failed to fetch the file",
         "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
         "opml_parse_error": "OPML parsing error",
-        "keep_subs_title_button": "Keep custom titles of imported subscriptions",
-        "delete_subs_title_button": "Delete custom titles of imported subscriptions"
+        "keep_subs_title_button": "Keep the custom titles of imported subscriptions",
+        "delete_subs_title_button": "Delete the custom titles of imported subscriptions"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Please choose a subscription you'd like to customize.",
@@ -89,7 +89,7 @@
         "notification_muted": "Muted",
         "monitor_interval": "Monitor interval",
         "send_mode": "Send mode",
-        "send_mode_-1": "Only title and link",
+        "send_mode_-1": "Only title and source",
         "send_mode_0": "Auto",
         "send_mode_1": "Force Telegraph",
         "send_mode_2": "Force Telegram messages",
@@ -113,11 +113,11 @@
         "style": "Style",
         "style_0": "RSStT",
         "style_1": "flowerss",
-        "set_custom_title_button": "Set custom title…",
+        "set_custom_title_button": "Set the custom title…",
         "set_custom_interval_button": "Set custom interval (in minutes)…",
         "set_interval_prompt": "Please select a monitor interval.",
-        "set_length_limit_prompt": "Please select a length limit.\n\nIf a post is longer than the limit OR cannot be sent in a single message, it will be send via Telegraph.\nIf sending via Telegraph fails, its title and link will be sent.",
-        "length_limit_only_effective_if_send_mode_auto": "Length limit is effective only when send mode is auto."
+        "set_length_limit_prompt": "Please select a length limit.\n\nIf a post is longer than the limit OR cannot be sent in a single message, it will be sent via Telegraph.\nIf sending via Telegraph fails, only its title and source will be sent.",
+        "length_limit_only_effective_if_send_mode_auto": "The length limit is effective only when send mode is auto."
     },
     "l10n_sub_info": {
         "subscription_info": "Subscription info",
@@ -126,25 +126,25 @@
         "feed_url": "Feed URL"
     },
     "l10n_monitor_warn": {
-        "feed_deactivated_warn": "The monitoring task had failed for 100 consecutive times. Your subscription to the RSS feed has been deactivated.\nTo reactivate it, please use the /activate_subs command."
+        "feed_deactivated_warn": "The monitoring task had failed 100 consecutive times. Your subscription to the RSS feed has been deactivated.\nTo reactivate it, please use the /activate_subs command."
     },
     "l10n_cmd_activate": {
-        "choose_sub_to_be_activated": "The subscriptions below are deactivated, choose one to activate.\nAfter activated, their updates will be monitored.",
+        "choose_sub_to_be_activated": "The subscriptions below are deactivated, choose one to activate.\nAfter being activated, their updates will be monitored.",
         "activate_all_subs": "Activate all my subscriptions",
         "all_subs_are_activated": "All subscriptions are activated."
     },
     "l10n_cmd_deactivate": {
-        "choose_sub_to_be_deactivated": "The subscriptions below are activated, choose one to deactivate.\nAfter deactivated, their updates will be suspended from monitoring. If you don't need the subscription any more, please consider unsubscribing it instead of deactivating it.",
+        "choose_sub_to_be_deactivated": "The subscriptions below are activated, choose one to deactivate.\nAfter being deactivated, their updates will be suspended from monitoring. If you don't need the subscription anymore, please consider unsubscribing it instead of deactivating it.",
         "deactivate_all_subs": "Deactivate all my subscriptions",
         "all_subs_are_deactivated": "All subscriptions are deactivated."
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "Command usage: <code>/set_title sub_id title</code>\n\nNote: omit <code>title</code> to clear custom title (if previously set, otherwise get this prompt).",
+        "cmd_set_title_usage_prompt_html": "Command usage: <code>/set_title sub_id title</code>\n\nNote: omit <code>title</code> to clear custom title (only if previously set, otherwise get this prompt).",
         "set_title_success": "The custom title of the subscription has been changed to: ",
         "set_title_success_cleared": "The custom title of the subscription has been cleared."
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "Command usage: <code>/set_interval sub_id interval</code>\n\nNote: <code>interval</code> must be a positive integer in minutes (no need to include the unit).",
+        "cmd_set_interval_usage_prompt_html": "Command usage: <code>/set_interval sub_id monitor_interval</code>\n\nNote: <code>monitor_interval</code> must be a positive integer in minutes (no need to include the unit).",
         "set_interval_success_html": "The monitor interval of the subscription has been changed to <b>%d minutes</b>.",
         "set_interval_failure_too_small_html": "The monitor interval must be greater than <b>%d minutes</b>."
     },
@@ -161,7 +161,7 @@
         "commands": "Commands",
         "cmd_description_sub": "Subscribe",
         "cmd_description_unsub": "Unsubscribe",
-        "cmd_description_unsub_all": "Unsubscribe all subscriptions",
+        "cmd_description_unsub_all": "Unsubscribe from all subscriptions",
         "cmd_description_list": "Check the subscription list",
         "cmd_description_set": "Customize subscriptions",
         "cmd_description_import": "Import subscriptions from an OPML file",

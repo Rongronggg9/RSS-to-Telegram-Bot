@@ -15,7 +15,7 @@
     },
     "l10n_error_reasons": {
         "feed_invalid": "RSS 無效",
-        "url_invalid": "連結唔啱",
+        "url_invalid": "URL 唔啱",
         "network_error": "網絡錯誤",
         "internal_error": "內部錯誤",
         "status_code_error": "HTTP 狀態碼錯誤",
@@ -34,7 +34,10 @@
         "permission_denied_not_member": "你唔喺呢個谷/台入面，用唔到呢個機械人。",
         "permission_denied_bot_not_member": "呢個機械人已經唔喺呢個谷/台入面，唔會喺度運轉。",
         "promote_to_admin_prompt": "如果你係呢個谷嘅匿名管理員，唔該將機械人升做管理員 (乜權限都唔洗)，咁機械人先可以驗證你嘅身份。",
-        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇"
+        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇",
+        "permission_denied_switch_pm": "喺同機械人嘅私人傾偈度繼續…",
+        "permission_denied_input_command": "唔該輸入命令來繼續…",
+        "permission_denied_no_direct_use": "呢個命令唔應該直接使用。唔該改用 /set 。"
     },
     "l10n_misc": {
         "choose_sub_prompt": "唔該選個訂閲",
@@ -47,10 +50,11 @@
         "processing": "處理緊，唔該等陣…",
         "cancel": "取消",
         "canceled_by_user": "畀用戶取消咗。",
-        "n_subscriptions_in_total": "總共 %d 個訂閲"
+        "n_subscriptions_in_total": "總共 %d 個訂閲",
+        "other_settings_button": "其他設定…"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "唔該回復訂閲連結。\n或者，用 <code>/sub url1 url2 url3 …</code> 嚟批量訂閲都得。",
+        "sub_reply_feed_url_prompt_html": "唔該用 RSS 嘅 URL 回復呢條訊息。\n或者，用 <code>/sub url1 url2 url3 …</code> 嚟批量訂閲都得。",
         "sub_usage_in_channel_html": "唔該用 <code>/sub url1 url2 url3 …</code> 嚟訂閲。",
         "sub_successful": "訂閲成功",
         "sub_failed": "訂閲失敗"
@@ -64,8 +68,10 @@
         "send_opml_prompt": "唔該送出要匯入嘅 OPML 檔案 (副檔名一定要係 .opml)。",
         "send_opml_reply_placeholder": "OPML 檔案 (副檔名一定要係 .opml)",
         "fetch_file_failed": "攞唔到檔案",
-        "opml_import_processing": "如果訂閲太多或者訂閲喺嘅伺服器太慢，可能會處理好耐，唔該多等陣。",
-        "opml_parse_error": "解讀唔到 OPML"
+        "opml_import_processing": "如果 RSS 太多或者 RSS 喺嘅伺服器太慢，可能會處理好耐，唔該多等陣。",
+        "opml_parse_error": "解讀唔到 OPML",
+        "keep_subs_title_button": "留返匯入嘅訂閲嘅自定標題",
+        "delete_subs_title_button": "刪晒匯入嘅訂閲嘅自定標題"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "唔該選個你想設定嘅訂閲。",
@@ -76,12 +82,40 @@
         "notification_normal": "正常",
         "notification_muted": "靜音",
         "monitor_interval": "監視間隔",
-        "set_interval_prompt": "唔該選個監視間隔。"
+        "set_interval_prompt": "唔該選個監視間隔。",
+        "send_mode_0": "自動",
+        "send_mode_-1": "只有標題同來源",
+        "set_custom_interval_button": "自訂間隔 (以分鐘為單位)…",
+        "send_mode_1": "强制 Telegraph",
+        "send_mode_2": "强制 Telegram 訊息",
+        "display_author_1": "強制開",
+        "display_title_1": "強制開",
+        "length_limit": "長度限制 (僅限自動模式)",
+        "length_limit_unlimited": "無限",
+        "link_preview": "連結預覽",
+        "link_preview_1": "強制開",
+        "display_author": "展示作者",
+        "display_via_-2": "閂晒",
+        "send_mode": "傳送方式",
+        "link_preview_0": "自動",
+        "display_author_-1": "閂",
+        "display_author_0": "自動",
+        "display_via": "展示來源",
+        "display_via_0": "自動 (連結展示為 RSS 標題)",
+        "set_custom_title_button": "自訂標題…",
+        "display_via_-1": "僅連結 (收埋 RSS 標題)",
+        "display_title": "展示標題",
+        "display_title_-1": "閂",
+        "display_title_0": "自動",
+        "style": "格式",
+        "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章嘅長度超過限制或者無法喺單條訊息入邊傳送，就會透過 Telegraph 傳送。\n如果透過 Telegraph 傳送都失敗，就只會傳送佢嘅標題同來源。",
+        "length_limit_only_effective_if_send_mode_auto": "只有傳送方式係自動嘅時候，長度限制先有用。"
     },
     "l10n_sub_info": {
         "subscription_info": "訂閲資訊",
-        "subscription_title": "訂閲標題",
-        "feed_url": "RSS URL"
+        "subscription_title": "自訂標題",
+        "feed_url": "RSS URL",
+        "feed_title": "RSS 標題"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "監視任務已經連續失敗咗 100 次，對呢個 RSS 嘅訂閲已經畀閂咗。\n如果要開返佢，唔該用 /activate_subs 命令。"
@@ -127,5 +161,15 @@
         "unsub_all_confirm_prompt": "你真係要退訂晒所有訂閲？",
         "unsub_all_cancel": "唔洗，取消",
         "unsub_all_confirm": "冇錯，退訂晒所有訂閲"
+    },
+    "l10n_cmd_set_interval": {
+        "set_interval_failure_too_small_html": "監視間隔一定要大過 <b>%d 分鐘</b>。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 一定要係用分鐘做單位嘅正整數 (唔洗加埋單位) 。",
+        "set_interval_success_html": "訂閱嘅監視間隔已經改做 <b>%d 分鐘</b>。"
+    },
+    "l10n_cmd_set_title": {
+        "set_title_success_cleared": "訂閱的自訂標題已經刪咗。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 忽略 <code>標題</code> 來删除自訂標題 (只有之前設定過先可以清除，唔係就會收到呢條提示) 。",
+        "set_title_success": "訂閱的自訂標題已經改做: "
     }
 }

@@ -1,7 +1,7 @@
 {
     "l10n_info": {
         "lang_code": "fr",
-        "iso_639_code": "",
+        "iso_639_code": "fr",
         "language_name": "French",
         "lang_native_name": "français",
         "select_lang_prompt": "Veuillez sélectionner une langue.",

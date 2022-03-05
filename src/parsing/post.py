@@ -90,7 +90,7 @@ class Post:
         :param style: 0=RSStT, 1=flowerss
         :param silent: whether to send with notification sound
         """
-        for _ in range(2):
+        for tries in range(3):
             if not self.post_formatter.parsed:
                 await self.post_formatter.parse_html()
 
@@ -113,8 +113,30 @@ class Post:
             try:
                 return await message_dispatcher.send_messages()
             except exceptions.MediaSendFailErrors as e:
-                logger.error(f'Failed to send post to user {user_id} (feed: {self.feed_link}, post: {self.link}), '
-                             'dropped all media and retrying...', exc_info=e)
+                media = self.post_formatter.media
+                log_header = f'Failed to send post to user {user_id} (feed: {self.feed_link}, post: {self.link}) ' \
+                             f'due to {type(e).__name__}'
+                msg_count_prev = await media.estimate_message_counts()
+                if media.allow_mixing_images_and_videos:
+                    media.allow_mixing_images_and_videos = False
+                    msg_count_new = await media.estimate_message_counts()
+                    if msg_count_new != msg_count_prev:
+                        # the videos may not be able to mixed with images split them and try again
+                        logger.debug(log_header + ', disallowed mixing images and videos and retrying')
+                        continue
+                if not media.consider_videos_as_gifs:
+                    media.consider_videos_as_gifs = True
+                    msg_count_new = await media.estimate_message_counts()
+                    if msg_count_new != msg_count_prev:
+                        logger.debug(log_header + ', let each video occupy a single message and retrying')
+                        continue
+                if media.allow_files_sent_as_album:
+                    media.allow_files_sent_as_album = False
+                    msg_count_new = await media.estimate_message_counts()
+                    if msg_count_new != msg_count_prev:
+                        logger.debug(log_header + ', disallowed files sent as album and retrying')
+                        continue
+                logger.error(log_header + f', dropped all media and retrying...')
                 self.post_formatter.media.invalidate_all()
                 continue
 

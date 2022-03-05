@@ -72,6 +72,9 @@ async def callback_set(event: events.CallbackQuery.Event,
             await inner.customization.set_sub_length_limit(sub, param)
         elif action == 'activate':
             await inner.customization.set_sub_activate(sub)
+        elif action == 'display_media' and sub.send_mode in {1, -1}:
+            await event.answer(i18n[lang]['display_media_only_effective_if_send_mode_auto_and_telegram'], alert=True)
+            return
         elif action is not None and action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES:
             await inner.customization.set_sub_exhaustive_option(sub, action)
 

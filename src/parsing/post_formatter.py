@@ -110,7 +110,8 @@ class PostFormatter:
                                  display_author: int = 0,
                                  display_via: int = 0,
                                  display_title: int = 0,
-                                 style: int = 0) -> tuple[str, bool, bool]:
+                                 style: int = 0,
+                                 display_media: int = 0) -> tuple[str, bool, bool]:
         """
         Get formatted post.
 
@@ -124,6 +125,7 @@ class PostFormatter:
         :param display_via: -2=completely disable, -1=disable but display link, 0=auto, 1=force display
         :param display_title: -1=disable, 0=auto, 1=force display
         :param style: 0=RSStT, 1=flowerss
+        :param display_media: -1=disable, 0=enable
         :return: A formatted post str, and the media of the post
         """
         assert send_mode in {FORCE_LINK, AUTO, FORCE_TELEGRAPH, FORCE_MESSAGE}
@@ -241,7 +243,7 @@ class PostFormatter:
             message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
 
         # ---- determine need_media ----
-        need_media = message_type == NORMAL_MESSAGE and self.media
+        need_media = display_media != DISABLE and message_type == NORMAL_MESSAGE and self.media
 
         # ---- determine need_link_preview ----
         need_link_preview = not need_media and (link_preview == FORCE_ENABLE or message_type != NORMAL_MESSAGE)

@@ -31,13 +31,16 @@ class User(Model, Base):
     subs: fields.ReverseRelation['Sub']
 
     # default options of a user's feeds
-    # interval = fields.SmallIntField(null=True)
-    # notify = fields.SmallIntField(null=True)
-    # send_mode = fields.SmallIntField(null=True)
-    # length_limit = fields.SmallIntField(null=True)
-    # display_author = fields.SmallIntField(null=True)
-    # display_via = fields.SmallIntField(null=True)
-    # display_title = fields.SmallIntField(null=True)
+    interval = fields.SmallIntField(null=True)
+    notify = fields.SmallIntField(default=1)
+    send_mode = fields.SmallIntField(default=0)
+    length_limit = fields.SmallIntField(default=0)
+    link_preview = fields.SmallIntField(default=0)
+    display_author = fields.SmallIntField(default=0)
+    display_via = fields.SmallIntField(default=0)
+    display_title = fields.SmallIntField(default=0)
+    style = fields.SmallIntField(default=0)
+    display_media = fields.SmallIntField(default=0)
 
     class Meta:
         table = 'user'
@@ -118,6 +121,8 @@ class Sub(Model, Base):
                                                                 '-1=disable, 0=auto, 1=force display')
     style = fields.SmallIntField(default=0, description='Style of posts: '
                                                         '0=RSStT, 1=flowerss')
+    display_media = fields.SmallIntField(default=0, description='Display media or not?'
+                                                                '-1=disable, 0=enable')
 
     class Meta:
         table = 'sub'

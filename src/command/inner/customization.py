@@ -15,6 +15,7 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "notify": (0, 1),
     "send_mode": (-1, 0, 1, 2),
     "link_preview": (0, 1),
+    "display_media": (-1, 0),
     "display_author": (-1, 0, 1),
     # "display_via": (-2, -1, 0, 1),  # currently 1 will be treated as 0
     "display_via": (-2, -1, 0),
@@ -64,6 +65,11 @@ async def get_sub_customization_buttons(sub: db.Sub,
             Button.inline(f"{i18n[lang]['length_limit']}: "
                           + (str(sub.length_limit) if sub.length_limit else i18n[lang]['length_limit_unlimited']),
                           data=f'set={sub.id},length_limit|{page}'),
+        ),
+        (
+            Button.inline(f"{i18n[lang]['display_media']}: "
+                          + i18n[lang][f'display_media_{sub.display_media}'],
+                          data=f'set={sub.id},display_media|{page}'),
         ),
         (
             Button.inline(f"{i18n[lang]['display_title']}: "
@@ -222,34 +228,13 @@ async def set_sub_exhaustive_option(sub: db.Sub, option: str) -> db.Sub:
     if option not in SUB_OPTIONS_EXHAUSTIVE_VALUES:
         raise KeyError(f'Invalid option: {option}')
     valid_values = SUB_OPTIONS_EXHAUSTIVE_VALUES[option]
-    if option == 'notify':
-        if sub.notify not in valid_values:
-            sub.notify = 1
-        sub.notify = sub.notify + 1 if sub.notify < valid_values[-1] else valid_values[0]
-    elif option == 'send_mode':
-        if sub.send_mode not in valid_values:
-            sub.send_mode = 0
-        sub.send_mode = sub.send_mode + 1 if sub.send_mode < valid_values[-1] else valid_values[0]
-    elif option == 'link_preview':
-        if sub.link_preview not in valid_values:
-            sub.link_preview = 0
-        sub.link_preview = sub.link_preview + 1 if sub.link_preview < valid_values[-1] else valid_values[0]
-    elif option == 'display_author':
-        if sub.display_author not in valid_values:
-            sub.display_author = 0
-        sub.display_author = sub.display_author + 1 if sub.display_author < valid_values[-1] else valid_values[0]
-    elif option == 'display_via':
-        if sub.display_via not in valid_values:
-            sub.display_via = 0
-        sub.display_via = sub.display_via + 1 if sub.display_via < valid_values[-1] else valid_values[0]
-    elif option == 'display_title':
-        if sub.display_title not in valid_values:
-            sub.display_title = 0
-        sub.display_title = sub.display_title + 1 if sub.display_title < valid_values[-1] else valid_values[0]
-    elif option == 'style':
-        if sub.style not in valid_values:
-            sub.style = 0
-        sub.style = sub.style + 1 if sub.style < valid_values[-1] else valid_values[0]
+
+    old_value = sub.__getattribute__(option)
+    if old_value not in valid_values:
+        old_value = 0 if option != 'notify' else 1
+    new_value = old_value + 1 if old_value < valid_values[-1] else valid_values[0]
+    sub.__setattr__(option, new_value)
+
     await sub.save()
     return sub
 

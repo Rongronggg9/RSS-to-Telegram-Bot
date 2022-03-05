@@ -116,7 +116,11 @@
         "set_custom_title_button": "自定義標題…",
         "set_custom_hashtags_button": "自定義 hashtag…",
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中發送，則將通過 Telegraph 發送。\n如果通過 Telegraph 發送失敗，則只會發送其標題和來源。",
-        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式為自動時有效。"
+        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式為自動時有效。",
+        "display_media": "顯示媒體",
+        "display_media_-1": "禁用",
+        "display_media_0": "啟用",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "現在的發送方式永遠不會在 Telegram 消息中顯示媒體。"
     },
     "l10n_sub_info": {
         "subscription_info": "訂閱資訊",

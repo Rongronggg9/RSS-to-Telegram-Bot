@@ -60,6 +60,7 @@ class Post:
                                        display_via=sub.display_via,
                                        display_title=sub.display_title,
                                        style=sub.style,
+                                       display_media=sub.display_media,
                                        silent=not sub.notify)
 
     async def send_formatted_post(self,
@@ -73,6 +74,7 @@ class Post:
                                   display_via: int = 0,
                                   display_title: int = 0,
                                   style: int = 0,
+                                  display_media: int = 0,
                                   silent: bool = False):
         """
         Send formatted post.
@@ -88,6 +90,7 @@ class Post:
         :param display_via: -2=completely disable, -1=disable but display link, 0=auto, 1=force display
         :param display_title: -1=disable, 0=auto, 1=force display
         :param style: 0=RSStT, 1=flowerss
+        :param display_media: -1=disable, 0=enable
         :param silent: whether to send with notification sound
         """
         for tries in range(3):
@@ -103,7 +106,8 @@ class Post:
                                                              display_author=display_author,
                                                              display_via=display_via,
                                                              display_title=display_title,
-                                                             style=style)
+                                                             style=style,
+                                                             display_media=display_media)
 
             message_dispatcher = MessageDispatcher(user_id=user_id,
                                                    html=formatted_post,

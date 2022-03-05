@@ -112,7 +112,11 @@
         "display_via_0": "自动 (链接显示为源标题)",
         "style_0": "",
         "style_1": "",
-        "set_custom_interval_button": "自定义间隔 (以分钟为单位)…"
+        "set_custom_interval_button": "自定义间隔 (以分钟为单位)…",
+        "display_media": "显示媒体",
+        "display_media_-1": "禁用",
+        "display_media_0": "启用",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "目前的发送方式永远不在 Telegram 消息里显示媒体。"
     },
     "l10n_sub_info": {
         "subscription_info": "订阅信息",

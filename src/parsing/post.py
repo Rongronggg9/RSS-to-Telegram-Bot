@@ -140,35 +140,10 @@ class Post:
                 self.post_formatter.media.invalidate_all()
                 continue
 
-    async def test_all_format(self, user_id: int):
+    async def test_format(self, user_id: int):
         if user_id != env.MANAGER:
             return
-
-        dedup_cache = set()
-
-        for sub_title in ('Test Subscription Title', None):
-            for tags in (['tag1', 'tag2', 'tag3'], None):
-                for send_mode in (-1, 0, 1, 2):
-                    for link_preview in (0, 1):
-                        for display_author in (-1, 0, 1):
-                            for display_via in (-2, -1, 0, 1):
-                                for display_title in (-1, 0, 1):
-                                    for style in (0, 1):
-                                        formatted_post, need_media, need_link_preview = \
-                                            await self.post_formatter.get_formatted_post(sub_title=sub_title,
-                                                                                         tags=tags,
-                                                                                         send_mode=send_mode,
-                                                                                         link_preview=link_preview,
-                                                                                         display_author=display_author,
-                                                                                         display_via=display_via,
-                                                                                         display_title=display_title,
-                                                                                         style=style)
-                                        if (formatted_post, need_media, need_link_preview) in dedup_cache:
-                                            continue
-                                        dedup_cache.add((formatted_post, need_media, need_link_preview))
-                                        message_dispatcher = MessageDispatcher(user_id=user_id,
-                                                                               html=formatted_post,
-                                                                               media=self.post_formatter.media
-                                                                               if need_media else None,
-                                                                               link_preview=need_link_preview)
-                                        await message_dispatcher.send_messages()
+        sub = await db.Sub.filter(feed__link=self.feed_link, user_id=user_id).get_or_none()
+        if sub is None:
+            return await self.send_formatted_post(user_id=user_id)
+        return await self.send_formatted_post_according_to_sub(sub=sub)

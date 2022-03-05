@@ -98,6 +98,9 @@
         "link_preview": "Link preview",
         "link_preview_0": "Auto",
         "link_preview_1": "Force enable",
+        "display_media": "Display media",
+        "display_media_-1": "Disable",
+        "display_media_0": "Enable",
         "display_author": "Display author",
         "display_author_-1": "Disable",
         "display_author_0": "Auto",
@@ -118,7 +121,8 @@
         "set_custom_hashtags_button": "Set custom hashtags…",
         "set_interval_prompt": "Please select a monitor interval.",
         "set_length_limit_prompt": "Please select a length limit.\n\nIf a post is longer than the limit OR cannot be sent in a single message, it will be sent via Telegraph.\nIf sending via Telegraph fails, only its title and source will be sent.",
-        "length_limit_only_effective_if_send_mode_auto": "The length limit is effective only when send mode is auto."
+        "length_limit_only_effective_if_send_mode_auto": "The length limit is effective only when send mode is auto.",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "The current send mode will never display media in Telegram messages."
     },
     "l10n_sub_info": {
         "subscription_info": "Subscription info",

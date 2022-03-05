@@ -108,6 +108,10 @@
         "display_title_-1": "閂",
         "display_title_0": "自動",
         "style": "格式",
+        "display_media": "展示媒體",
+        "display_media_-1": "閂",
+        "display_media_0": "開",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "而家嘅傳送方式點都唔會喺 Telegram 訊息度展示媒體。",
         "set_custom_hashtags_button": "自訂 hashtag…",
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章嘅長度超過限制或者無法喺單條訊息入邊傳送，就會透過 Telegraph 傳送。\n如果透過 Telegraph 傳送都失敗，就只會傳送佢嘅標題同來源。",
         "length_limit_only_effective_if_send_mode_auto": "只有傳送方式係自動嘅時候，長度限制先有用。"

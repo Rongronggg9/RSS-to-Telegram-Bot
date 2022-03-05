@@ -237,7 +237,7 @@ async def __notify_all(feed: db.Feed, entry: MutableMapping):
                                  feed_title=feed.title, link=link)
             await error_message.send_formatted_post(env.MANAGER, send_mode=2)
         except Exception as e:
-            logger.warning(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
+            logger.error(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
             await env.bot.send_message(env.MANAGER, f'A parsing error message cannot be sent, please check the logs.')
         return
     await asyncio.gather(
@@ -274,7 +274,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
                     logger.error(f'User blocked ({type(e).__name__}): {user_id}')
                     await inner.sub.unsub_all(user_id)
     except Exception as e:
-        logger.warning(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}):', exc_info=e)
+        logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}):', exc_info=e)
         try:
             error_message = Post(f'Something went wrong while sending this post '
                                  f'(feed: {post.feed_link}, user: {sub.user_id}). '
@@ -284,9 +284,9 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
                                  feed_link=post.feed_link)
             await error_message.send_formatted_post(env.MANAGER, send_mode=2)
         except Exception as e:
-            logger.warning(f'Failed to send sending error message for {post.link} '
-                           f'(feed: {post.feed_link}, user: {sub.user_id}):',
-                           exc_info=e)
+            logger.error(f'Failed to send sending error message for {post.link} '
+                         f'(feed: {post.feed_link}, user: {sub.user_id}):',
+                         exc_info=e)
             await env.bot.send_message(env.MANAGER, f'An sending error message cannot be sent, please check the logs.')
 
 

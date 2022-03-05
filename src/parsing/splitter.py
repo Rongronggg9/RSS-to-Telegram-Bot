@@ -71,7 +71,7 @@ def text_and_format_entities_split(plain_text: str,
     pending_entities = format_entities[:]
     surrogate_len_sum = 0
     while pending_text:
-        curr_length_limit = length_limit_head if head_count <= -1 or len(chunks) > head_count else length_limit_tail
+        curr_length_limit = length_limit_head if head_count <= -1 or len(chunks) < head_count else length_limit_tail
         if len(pending_text) <= curr_length_limit:
             if surrogate_len_sum > 0:
                 for entity in pending_entities:

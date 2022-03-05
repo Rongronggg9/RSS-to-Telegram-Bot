@@ -96,12 +96,13 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Opti
     ) if counts > 0 else None
 
 
-async def get_sub_list_by_page(user_id: int, page_number: int, size: int, *args, **kwargs) \
+async def get_sub_list_by_page(user_id: int, page_number: int, size: int, desc: bool = True, *args, **kwargs) \
         -> tuple[int, int, list[db.Sub], int]:
     """
     :param user_id: user id
     :param page_number: page number (1-based)
     :param size: page size
+    :param desc: descending order
     :param args: args for `Sub.filter`
     :param kwargs: kwargs for `Sub.filter`
     :return: (page_count, page_number, subs_page, total_count)
@@ -120,7 +121,10 @@ async def get_sub_list_by_page(user_id: int, page_number: int, size: int, *args,
         page_number = page_count
 
     offset = (page_number - 1) * size
-    page = await db.Sub.filter(user=user_id, *args, **kwargs).order_by('id').limit(size).offset(offset) \
+    page = await db.Sub.filter(user=user_id, *args, **kwargs) \
+        .order_by('-id' if desc else 'id') \
+        .limit(size) \
+        .offset(offset) \
         .prefetch_related('feed')
     return page_number, page_count, page, sub_count
 

@@ -43,6 +43,7 @@ class MessageDispatcher:
         if self.media:
             media_and_types, invalid_media_html_node = await self.media.upload_all(self.user_id)
             invalid_media_html = invalid_media_html_node.get_html() if invalid_media_html_node else None
+            media_msg_count = len(media_and_types)
 
         if invalid_media_html:
             self.html += '\n\n' + invalid_media_html

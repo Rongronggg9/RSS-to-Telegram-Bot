@@ -458,6 +458,9 @@ class Media:
     def __init__(self):
         self._media: list[Medium] = []
         self.modify_lock = asyncio.Lock()
+        self.allow_mixing_images_and_videos: bool = True
+        self.consider_videos_as_gifs: bool = False
+        self.allow_files_sent_as_album: bool = True
 
     def add(self, medium: Medium):
         if medium in self._media:
@@ -552,6 +555,8 @@ class Media:
                                     for medium in self._media if not medium.drop_silently)
 
         media: list[tuple[Union[TypeMessageMedia, Image, Video], Union[IMAGE, VIDEO]]] = []
+        images: list[tuple[Union[MessageMediaPhoto, Image], Union[IMAGE]]] = []
+        videos: list[tuple[Union[MessageMediaDocument, Video], Union[VIDEO]]] = []
         gifs: list[tuple[Union[MessageMediaDocument, Animation], ANIMATION]] = []
         audios: list[tuple[Union[MessageMediaDocument, Audio], AUDIO]] = []
         files: list[tuple[Union[MessageMediaDocument, File], FILE]] = []
@@ -565,8 +570,12 @@ class Media:
                 link_nodes.append(medium.get_link_html_node())
                 continue
             file, file_type = medium_and_type
-            if file_type in {IMAGE, VIDEO}:
+            if file_type == IMAGE:
                 media.append(medium_and_type)
+                images.append(medium_and_type)
+            elif file_type == VIDEO:
+                media.append(medium_and_type)
+                videos.append(medium_and_type)
             elif file_type == ANIMATION:
                 gifs.append(medium_and_type)
             elif file_type == AUDIO:
@@ -579,7 +588,18 @@ class Media:
                 link_nodes.append(medium.get_link_html_node())
 
         ret = []
-        for list_to_process in (media, audios, files):
+        allow_in_group = (
+                ((media,) if self.allow_mixing_images_and_videos and not self.consider_videos_as_gifs else (images,))
+                + (tuple() if self.consider_videos_as_gifs or self.allow_mixing_images_and_videos else (videos,))
+                + (audios,)
+                + ((files,) if self.allow_files_sent_as_album else tuple())
+        )
+        disallow_in_group = (
+                (tuple() if not self.consider_videos_as_gifs else (videos,))
+                + (gifs,)
+                + (tuple() if self.allow_files_sent_as_album else (files,))
+        )
+        for list_to_process in allow_in_group:
             while list_to_process:
                 _ = list_to_process[:10]
                 list_to_process = list_to_process[10:]
@@ -589,7 +609,8 @@ class Media:
                     # media group
                     media_group = tuple(medium_and_type[0] for medium_and_type in _)
                     ret.append((media_group, MEDIA_GROUP))
-        ret.extend(gifs)
+        for list_to_process in disallow_in_group:
+            ret.extend(list_to_process)
 
         html_nodes = []
         invalid_html_node: Optional[HtmlTree] = None

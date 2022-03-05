@@ -12,7 +12,7 @@ from attr import define
 from src import web
 from .medium import Video, Image, Media, Animation, Audio, construct_images_weserv_nl_url
 from .html_node import *
-from .utils import stripNewline, stripLineEnd, is_absolute_link, emojify
+from .utils import stripNewline, stripLineEnd, stripBr, is_absolute_link, emojify
 
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 srcsetParser = re.compile(r'(?:^|,\s*)'
@@ -31,6 +31,7 @@ class Parser:
         :param html: HTML content
         :param feed_link: feed link (use for resolve relative urls)
         """
+        html = stripBr(html)
         # validate invalid HTML first, since minify_html is not so robust
         html = BeautifulSoup(html, 'lxml').decode()
         self.html = minify_html.minify(html,

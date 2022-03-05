@@ -12,6 +12,7 @@ from src import log
 
 logger = log.getLogger('RSStT.parsing')
 
+stripBr = partial(re.compile(r'\n*<br\s*/?>\n*').sub, '<br/>')
 stripLineEnd = partial(re.compile(r'[ 　\xa0\t\r\u200b\u2006\u2028\u2029]+\n').sub, '\n')  # use firstly
 stripNewline = partial(re.compile(r'[\f\n\u2028\u2029]{3,}').sub, '\n\n')  # use secondly
 stripAnySpace = partial(re.compile(r'\s+').sub, ' ')

@@ -76,6 +76,7 @@ class _I18N:
                 f"<b>/unsub_all</b>: {l10n.html_escaped('cmd_description_unsub_all')}\n"
                 f"<b>/list</b>: {l10n.html_escaped('cmd_description_list')}\n"
                 f"<b>/set</b>: {l10n.html_escaped('cmd_description_set')}\n"
+                f"<b>/set_default</b>: {l10n.html_escaped('cmd_description_set_default')}\n"
                 f"<b>/import</b>: {l10n.html_escaped('cmd_description_import')}\n"
                 f"<b>/export</b>: {l10n.html_escaped('cmd_description_export')}\n"
                 f"<b>/activate_subs</b>: {l10n.html_escaped('cmd_description_activate_subs')}\n"

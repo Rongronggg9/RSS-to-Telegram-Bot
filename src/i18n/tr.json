@@ -33,6 +33,9 @@
         "permission_denied_not_in_private_chat": "Bu komut yalnızca özel bir sohbette kullanılabilir.",
         "permission_denied_not_member": "Bu grupta/kanalda değilsiniz, bu nedenle botu kullanamazsınız.",
         "permission_denied_bot_not_member": "Bot artık bu grupta/kanalda değil, dolayısıyla burada çalışmayacak.",
+        "permission_denied_switch_pm": "",
+        "permission_denied_input_command": "",
+        "permission_denied_no_direct_use": "",
         "promote_to_admin_prompt": "Bu grubun anonim bir yöneticisiyseniz, botu kimliğinizi doğrulamasını sağlamak için lütfen botu bir yöneticiye (izne gerek yok) yükseltin.",
         "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız"
     },
@@ -47,7 +50,8 @@
         "subscription_list": "Abonelik listesi",
         "processing": "İşleniyor, lütfen biraz bekleyin…",
         "canceled_by_user": "Kullanıcı tarafından iptal edildi.",
-        "n_subscriptions_in_total": "Toplamda %d abonelik"
+        "n_subscriptions_in_total": "Toplamda %d abonelik",
+        "other_settings_button": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Lütfen bir RSS beslemesi URL'si ile yanıtlayın.\nVeya toplu abone olmak için <code>/sub url1 url2 url3 …</code> kullanabilirsiniz.",
@@ -71,7 +75,9 @@
         "send_opml_reply_placeholder": "İçe aktarılacak OPML dosyası (uzantı adı .opml olmalıdır)",
         "fetch_file_failed": "Dosya getirilemedi",
         "opml_import_processing": "Besleme sayısı fazlaysa veya besleme sunucuları yavaşsa, uzun bir bekleme olabilir. Arkana yaslan ve rahatla.",
-        "opml_parse_error": "OPML ayrıştırma hatası"
+        "opml_parse_error": "OPML ayrıştırma hatası",
+        "keep_subs_title_button": "",
+        "delete_subs_title_button": ""
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Lütfen özelleştirmek istediğiniz bir abonelik seçin.",
@@ -82,12 +88,58 @@
         "notification_normal": "Normal",
         "notification_muted": "Sessiz",
         "monitor_interval": "İzleme aralığı",
-        "set_interval_prompt": "Lütfen bir izleme aralığı seçin."
+        "send_mode": "",
+        "send_mode_-1": "",
+        "send_mode_0": "",
+        "send_mode_1": "",
+        "send_mode_2": "",
+        "length_limit": "",
+        "length_limit_unlimited": "",
+        "link_preview": "",
+        "link_preview_0": "",
+        "link_preview_1": "",
+        "display_media": "",
+        "display_media_-1": "",
+        "display_media_0": "",
+        "display_author": "",
+        "display_author_-1": "",
+        "display_author_0": "",
+        "display_author_1": "",
+        "display_via": "",
+        "display_via_-2": "",
+        "display_via_-1": "",
+        "display_via_0": "",
+        "display_title": "",
+        "display_title_-1": "",
+        "display_title_0": "",
+        "display_title_1": "",
+        "style": "",
+        "style_0": "",
+        "style_1": "",
+        "set_custom_title_button": "",
+        "set_custom_interval_button": "",
+        "set_custom_hashtags_button": "",
+        "set_interval_prompt": "Lütfen bir izleme aralığı seçin.",
+        "set_length_limit_prompt": "",
+        "length_limit_only_effective_if_send_mode_auto": "",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "",
+        "use_user_default_button": ""
+    },
+    "l10n_cmd_set_default": {
+        "set_user_default_description": "",
+        "reset_all_button": "",
+        "reset_all_confirm_prompt": "",
+        "reset_all_confirm": "",
+        "reset_all_cancel": "",
+        "reset_all_successful": ""
     },
     "l10n_sub_info": {
         "subscription_info": "Abonelik bilgileri",
+        "feed_title": "",
         "subscription_title": "Abonelik başlığı",
-        "feed_url": "Besleme URL'si"
+        "feed_url": "Besleme URL'si",
+        "hashtags": "",
+        "default_emoji_header_description": ""
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "İzleme görevi arka arkaya 100 kez başarısız olmuştu. RSS beslemesine aboneliğiniz devre dışı bırakıldı.\nYeniden etkinleştirmek için lütfen /activate_subs komutunu kullanın."
@@ -101,6 +153,23 @@
         "choose_sub_to_be_deactivated": "Aşağıdaki abonelikler etkinleştirildi, devre dışı bırakmak için birini seçin.\nDevre dışı bırakıldıktan sonra, güncelleştirmeleri izlemeden askıya alınır. Aboneliğe artık ihtiyacınız yoksa, lütfen devre dışı bırakmak yerine aboneliği iptal etmeyi düşünün.",
         "deactivate_all_subs": "Tüm aboneliklerimi devre dışı bırak",
         "all_subs_are_deactivated": "Tüm abonelikler devre dışı bırakıldı."
+    },
+    "l10n_cmd_set_title": {
+        "cmd_set_title_usage_prompt_html": "",
+        "set_title_success": "",
+        "set_title_success_cleared": ""
+    },
+    "l10n_cmd_set_interval": {
+        "cmd_set_interval_usage_prompt_html": "",
+        "set_interval_success_html": "",
+        "set_default_interval_success_html": "",
+        "set_interval_failure_too_small_html": ""
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "",
+        "set_hashtags_success_html": "",
+        "set_hashtags_success_cleared": "",
+        "set_hashtags_failure_too_many": ""
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "Komut kullanımı: <code>/test RSS_URL entry_start_number(isteğe bağlı) entry_end_number(isteğe bağlı)</code>",
@@ -118,6 +187,7 @@
         "cmd_description_unsub_all": "Tüm aboneliklerin aboneliğini iptal et",
         "cmd_description_list": "Abonelik listesini denetle",
         "cmd_description_set": "Abonelikleri özelleştir",
+        "cmd_description_set_default": "",
         "cmd_description_import": "Bir OPML dosyasından abonelikleri içe aktarın",
         "cmd_description_export": "Abonelikleri bir OPML dosyasına aktarın",
         "cmd_description_activate_subs": "Abonelikleri etkinleştir",

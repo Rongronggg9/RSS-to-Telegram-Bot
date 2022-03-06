@@ -33,6 +33,9 @@
         "permission_denied_not_in_private_chat": "Cette commande peut être utilisée seulement dans une disussion privée.",
         "permission_denied_not_member": "",
         "permission_denied_bot_not_member": "",
+        "permission_denied_switch_pm": "",
+        "permission_denied_input_command": "",
+        "permission_denied_no_direct_use": "",
         "promote_to_admin_prompt": "",
         "group_upgrade_needed_prompt": "Oups, votre groupe n’a pas été mis à niveau vers un supergroupe. En général, le serveur Telegram devrait effectuer cette mise à niveau automatiquement à un moment donné, mais si ce n'est pas le cas, vous devez la faire manuellement avant de pouvoir utiliser le robot.\nVeuillez suivre les étapes suivantes :\n1. Allez dans l'info du groupe, puis cliquez sur « Gérer le groupe » ;\n2. Changez l'option « Historique des discussions pour les nouveaux membres » en « Visible » ;\n3. Enregistrez le paramètre de visibilité de l'historique des discussions\n4. Sauvegarder tous les paramètres\n5. (Facultatif) Si nécessaire, vous pouvez changer l'option « Historique des chats pour les nouveaux membres » en « Caché ».\n6. Vous devriez maintenant être en mesure d'utiliser le robot"
     },
@@ -47,7 +50,8 @@
         "subscription_list": "Liste des abonnements",
         "processing": "Traitement en cours, veuillez patienter un instant…",
         "canceled_by_user": "Annulé par l'utilisateur.",
-        "n_subscriptions_in_total": "%d abonnements au total"
+        "n_subscriptions_in_total": "%d abonnements au total",
+        "other_settings_button": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "",
@@ -71,7 +75,9 @@
         "send_opml_reply_placeholder": "",
         "fetch_file_failed": "",
         "opml_import_processing": "",
-        "opml_parse_error": ""
+        "opml_parse_error": "",
+        "keep_subs_title_button": "",
+        "delete_subs_title_button": ""
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "",
@@ -82,12 +88,58 @@
         "notification_normal": "",
         "notification_muted": "",
         "monitor_interval": "",
-        "set_interval_prompt": ""
+        "send_mode": "",
+        "send_mode_-1": "",
+        "send_mode_0": "",
+        "send_mode_1": "",
+        "send_mode_2": "",
+        "length_limit": "",
+        "length_limit_unlimited": "",
+        "link_preview": "",
+        "link_preview_0": "",
+        "link_preview_1": "",
+        "display_media": "",
+        "display_media_-1": "",
+        "display_media_0": "",
+        "display_author": "",
+        "display_author_-1": "",
+        "display_author_0": "",
+        "display_author_1": "",
+        "display_via": "",
+        "display_via_-2": "",
+        "display_via_-1": "",
+        "display_via_0": "",
+        "display_title": "",
+        "display_title_-1": "",
+        "display_title_0": "",
+        "display_title_1": "",
+        "style": "",
+        "style_0": "",
+        "style_1": "",
+        "set_custom_title_button": "",
+        "set_custom_interval_button": "",
+        "set_custom_hashtags_button": "",
+        "set_interval_prompt": "",
+        "set_length_limit_prompt": "",
+        "length_limit_only_effective_if_send_mode_auto": "",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "",
+        "use_user_default_button": ""
+    },
+    "l10n_cmd_set_default": {
+        "set_user_default_description": "",
+        "reset_all_button": "",
+        "reset_all_confirm_prompt": "",
+        "reset_all_confirm": "",
+        "reset_all_cancel": "",
+        "reset_all_successful": ""
     },
     "l10n_sub_info": {
         "subscription_info": "",
+        "feed_title": "",
         "subscription_title": "",
-        "feed_url": ""
+        "feed_url": "",
+        "hashtags": "",
+        "default_emoji_header_description": ""
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": ""
@@ -102,8 +154,26 @@
         "deactivate_all_subs": "",
         "all_subs_are_deactivated": ""
     },
+    "l10n_cmd_set_title": {
+        "cmd_set_title_usage_prompt_html": "",
+        "set_title_success": "",
+        "set_title_success_cleared": ""
+    },
+    "l10n_cmd_set_interval": {
+        "cmd_set_interval_usage_prompt_html": "",
+        "set_interval_success_html": "",
+        "set_default_interval_success_html": "",
+        "set_interval_failure_too_small_html": ""
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "",
+        "set_hashtags_success_html": "",
+        "set_hashtags_success_cleared": "",
+        "set_hashtags_failure_too_many": ""
+    },
     "l10n_administration": {
-        "set_option_cmd_usage_prompt_html": "",
+        "cmd_test_usage_prompt_html": "",
+        "cmd_set_option_usage_prompt_html": "",
         "current_options": "",
         "option_value_type": "",
         "option_key_invalid": "",
@@ -117,6 +187,7 @@
         "cmd_description_unsub_all": "",
         "cmd_description_list": "",
         "cmd_description_set": "",
+        "cmd_description_set_default": "",
         "cmd_description_import": "",
         "cmd_description_export": "",
         "cmd_description_activate_subs": "",

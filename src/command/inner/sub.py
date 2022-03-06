@@ -68,7 +68,17 @@ async def sub(user_id: int,
 
         if not _sub:  # create a new sub if needed
             _sub, created_new_sub = await db.Sub.get_or_create(user_id=user_id, feed=feed,
-                                                               defaults={'title': sub_title} if sub_title else None)
+                                                               defaults={'title': sub_title if sub_title else None,
+                                                                         'interval': None,
+                                                                         'notify': -100,
+                                                                         'send_mode': -100,
+                                                                         'length_limit': -100,
+                                                                         'link_preview': -100,
+                                                                         'display_author': -100,
+                                                                         'display_via': -100,
+                                                                         'display_title': -100,
+                                                                         'style': -100,
+                                                                         'display_media': -100})
 
         if not created_new_sub:
             if _sub.title == sub_title and _sub.state == 1:
@@ -88,7 +98,7 @@ async def sub(user_id: int,
         _sub.feed = feed  # by doing this we don't need to fetch_related
         ret['sub'] = _sub
         if created_new_sub:
-           logger.info(f'Subed {feed_url} for {user_id}')
+            logger.info(f'Subed {feed_url} for {user_id}')
         return ret
 
     except Exception as e:
@@ -99,8 +109,7 @@ async def sub(user_id: int,
 
 async def subs(user_id: int,
                feed_urls: Sequence[Union[str, tuple[str, str]]],
-               lang: Optional[str] = None,
-               bypass_url_filter: bool = False) \
+               lang: Optional[str] = None) \
         -> Optional[dict[str, Union[tuple[dict[str, Union[int, str, db.Sub, None]], ...], str, int]]]:
     if not feed_urls:
         return None

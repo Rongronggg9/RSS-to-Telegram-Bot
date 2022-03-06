@@ -3,8 +3,8 @@ from telethon import events, Button
 from telethon.tl.patched import Message
 
 from . import inner, misc
-from .utils import command_gatekeeper, parse_sub_customization_callback_data, parse_callback_data_with_page, \
-    escape_html, parse_command_get_sub_and_param
+from .utils import command_gatekeeper, parse_customization_callback_data, parse_callback_data_with_page, \
+    escape_html, parse_command_get_sub_or_user_and_param
 from src import db, env
 from src.i18n import i18n
 
@@ -36,9 +36,12 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
 
 @command_gatekeeper(only_manager=False)
 async def callback_set(event: events.CallbackQuery.Event,
+                       set_user_default: bool,
                        *_,
                        lang: Optional[str] = None,
-                       **__):  # callback data = set={sub_id}[,{action}[,{param}]][|{page_number}]
+                       **__):
+    # callback data = set={sub_id}[,{action}[,{param}]][|{page_number}]
+    # or set_default[={action}[,{param}]]
     """
     send_mode: -1=force link, 0=auto, 1=force Telegraph, 2=force message
     length_limit: Telegraph length limit, valid when send_mode==0. If exceeded, send via Telegraph; If is 0,
@@ -49,56 +52,139 @@ async def callback_set(event: events.CallbackQuery.Event,
     display_title: -1=disable, 0=auto, 1=force display
     style: 0=RSStT, 1=flowerss
     """
-    sub_id, action, param, page = parse_sub_customization_callback_data(event.data)
+    sub_id, action, param, page = parse_customization_callback_data(event.data)
 
-    if sub_id is None:
+    if sub_id is None and not set_user_default:
         await cmd_set_or_callback_get_set_page.__wrapped__(event, lang=lang, page=page)
         return
 
-    sub = await db.Sub.get_or_none(id=sub_id, user=event.chat_id).prefetch_related('feed')
-    if sub is None:
+    sub_or_user: Union[db.Sub, db.User] = (
+        await db.Sub.get_or_none(id=sub_id, user=event.chat_id).prefetch_related('feed')
+        if not set_user_default
+        else await db.User.get_or_none(id=event.chat_id)
+    )
+    if sub_or_user is None:
         await event.edit(i18n[lang]['subscription_not_exist'])
         return
 
     if (
             action is None
             or (action in {'interval', 'length_limit'} and isinstance(param, int))
-            or action == 'activate'
+            or action == 'activate' and not set_user_default
             or action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES
     ):
         if action == 'interval' and isinstance(param, int):
-            await inner.customization.set_sub_interval(sub, param)
+            await inner.customization.set_interval(sub_or_user, param)
         elif action == 'length_limit' and isinstance(param, int):
-            await inner.customization.set_sub_length_limit(sub, param)
-        elif action == 'activate':
-            await inner.customization.set_sub_activate(sub)
-        elif action == 'display_media' and sub.send_mode in {1, -1}:
+            await inner.customization.set_length_limit(sub_or_user, param)
+        elif action == 'activate' and not set_user_default:
+            await inner.customization.set_sub_activate(sub_or_user)
+        elif action == 'display_media' and not set_user_default and sub_or_user.send_mode in {1, -1}:
             await event.answer(i18n[lang]['display_media_only_effective_if_send_mode_auto_and_telegram'], alert=True)
             return
         elif action is not None and action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES:
-            await inner.customization.set_sub_exhaustive_option(sub, action)
+            await inner.customization.set_exhaustive_option(sub_or_user, action)
 
-        info = await inner.customization.get_sub_info(sub, lang)
-        buttons = await inner.customization.get_sub_customization_buttons(sub, lang=lang, page=page)
+        info = await inner.customization.get_sub_info(sub_or_user, lang, including_default_prompt=True) \
+            if not set_user_default else \
+            i18n[lang]['set_user_default_description']
+        buttons = await inner.customization.get_customization_buttons(sub_or_user, lang=lang, page=page)
         await event.edit(info, buttons=buttons, parse_mode='html')
         return
 
     if action == 'interval':
         msg = i18n[lang]['set_interval_prompt']
-        buttons = await inner.customization.get_set_interval_buttons(sub, lang=lang, page=page)
+        buttons = await inner.customization.get_set_interval_buttons(sub_or_user, lang=lang, page=page)
         await event.edit(msg, buttons=buttons)
         return
     if action == 'length_limit':
-        if sub.send_mode != 0:
+        if not set_user_default and sub_or_user.send_mode != 0:
             await event.answer(i18n[lang]['length_limit_only_effective_if_send_mode_auto'], alert=True)
             return
         msg = i18n[lang]['set_length_limit_prompt']
-        buttons = await inner.customization.get_set_length_limit_buttons(sub, lang=lang, page=page)
+        buttons = await inner.customization.get_set_length_limit_buttons(sub_or_user, lang=lang, page=page)
         await event.edit(msg, buttons=buttons)
         return
 
     await event.edit(i18n[lang]['action_invalid'])
     return
+
+
+@command_gatekeeper(only_manager=False)
+async def cmd_set_default(event: Union[events.NewMessage.Event, Message],
+                          *_,
+                          lang: Optional[str] = None,
+                          **__):  # cmd: set_default
+    user = await db.User.get_or_none(id=event.chat_id)
+    msg = i18n[lang]['set_user_default_description']
+    buttons = await inner.customization.get_customization_buttons(user, lang=lang)
+    await event.respond(msg, buttons=buttons, parse_mode='html')
+    return
+
+
+@command_gatekeeper(only_manager=False)
+async def callback_reset(event: events.CallbackQuery.Event,
+                         *_,
+                         lang: Optional[str] = None,
+                         **__):  # callback data = reset={sub_id}
+    sub_id, _, _, page = parse_customization_callback_data(event.data)
+    sub = await db.Sub.get_or_none(id=sub_id, user=event.chat_id)
+    if sub is None:
+        await event.answer(i18n[lang]['subscription_not_exist'])
+        return
+
+    update_interval_flag = False
+    if sub.interval is not None:
+        sub.interval = None
+        update_interval_flag = True
+    sub.length_limit = sub.notify = sub.send_mode = sub.link_preview = sub.display_author = sub.display_media = \
+        sub.display_title = sub.display_via = sub.style = -100
+    await sub.save()
+    if update_interval_flag:
+        await inner.utils.update_interval(sub)
+    info = await inner.customization.get_sub_info(sub, lang, including_default_prompt=True)
+    buttons = await inner.customization.get_customization_buttons(sub, lang=lang, page=page)
+    await event.edit(info, buttons=buttons, parse_mode='html')
+
+
+@command_gatekeeper(only_manager=False)
+async def callback_reset_all_confirm(event: events.CallbackQuery.Event,
+                                     *_,
+                                     lang: Optional[str] = None,
+                                     **__):  # callback data = reset_all_confirm
+    user_id = event.chat_id
+    if await inner.utils.have_subs(user_id):
+        await event.edit(
+            i18n[lang]['reset_all_confirm_prompt'],
+            buttons=[
+                [Button.inline(i18n[lang]['reset_all_confirm'], data='reset_all')],
+                [Button.inline(i18n[lang]['reset_all_cancel'], data='set_default')]
+            ]
+        )
+        return
+    await event.edit(i18n[lang]['no_subscription'])
+
+
+@command_gatekeeper(only_manager=False)
+async def callback_reset_all(event: events.CallbackQuery.Event,
+                             *_,
+                             lang: Optional[str] = None,
+                             **__):  # callback data = reset_all
+    user_id = event.chat_id
+    subs = await db.Sub.filter(user=user_id)
+    tasks = []
+    for sub in subs:
+        if sub.interval is not None:
+            sub.interval = None
+            tasks.append(inner.utils.update_interval(sub))
+        sub.interval = None
+        sub.length_limit = sub.notify = sub.send_mode = sub.link_preview = sub.display_author = sub.display_media = \
+            sub.display_title = sub.display_via = sub.style = -100
+    await db.Sub.bulk_update(subs, ('interval', 'length_limit', 'notify', 'send_mode', 'link_preview', 'display_author',
+                                    'display_media', 'display_title', 'display_via', 'style'))
+    for task in tasks:
+        env.loop.create_task(task)
+    await event.edit(i18n[lang]['reset_all_successful'])
 
 
 @command_gatekeeper(only_manager=False)
@@ -197,7 +283,7 @@ async def cmd_set_title(event: Union[events.NewMessage.Event, Message],
                         *_,
                         lang: Optional[str] = None,
                         **__):
-    sub, title = await parse_command_get_sub_and_param(event.raw_text, event.chat_id, max_split=2)
+    sub, title = await parse_command_get_sub_or_user_and_param(event.raw_text, event.chat_id, max_split=2)
     title = title.strip() if title else None
     if not sub:
         await event.respond(i18n[lang]['permission_denied_no_direct_use'])
@@ -223,10 +309,11 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
                            *_,
                            lang: Optional[str] = None,
                            **__):
-    sub, interval = await parse_command_get_sub_and_param(event.raw_text, event.chat_id)
+    sub_or_user, interval = await parse_command_get_sub_or_user_and_param(event.raw_text, event.chat_id,
+                                                                          allow_setting_user_default=True)
     interval = int(interval) if interval and interval.isdigit() and int(interval) >= 1 else None
     minimal_interval = db.EffectiveOptions.minimal_interval
-    if not sub:
+    if not sub_or_user:
         await event.respond(i18n[lang]['permission_denied_no_direct_use'])
         return
     if not interval:
@@ -236,14 +323,17 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
         await event.respond(i18n[lang]['set_interval_failure_too_small_html'] % minimal_interval,
                             parse_mode='html')
         return
-    await inner.customization.set_sub_interval(sub, interval)
+    await inner.customization.set_interval(sub_or_user, interval)
     await event.respond(
         (
-                (i18n[lang]['set_interval_success_html'] % (interval,))
-                + '\n\n' +
-                await inner.customization.get_sub_info(sub, lang=lang)
+            ((i18n[lang]['set_interval_success_html'] % (interval,))
+             + '\n\n' +
+             await inner.customization.get_sub_info(sub_or_user, lang=lang))
+            if isinstance(sub_or_user, db.Sub)
+            else i18n[lang]['set_default_interval_success_html'] % (interval,)
         ),
-        buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}'),),
+        buttons=(Button.inline(i18n[lang]['other_settings_button'],
+                               data=f'set={sub_or_user.id}' if isinstance(sub_or_user, db.Sub) else f'set_default'),),
         parse_mode='html')
 
 
@@ -252,7 +342,7 @@ async def cmd_set_hashtags(event: Union[events.NewMessage.Event, Message],
                            *_,
                            lang: Optional[str] = None,
                            **__):
-    sub, hashtags = await parse_command_get_sub_and_param(event.raw_text, event.chat_id, max_split=2)
+    sub, hashtags = await parse_command_get_sub_or_user_and_param(event.raw_text, event.chat_id, max_split=2)
     hashtags = inner.utils.parse_hashtags(hashtags) if hashtags else None
     if not sub:
         await event.respond(i18n[lang]['permission_denied_no_direct_use'])

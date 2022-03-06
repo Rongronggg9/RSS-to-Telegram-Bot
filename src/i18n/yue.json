@@ -33,22 +33,22 @@
         "permission_denied_not_in_private_chat": "只有喺私人傾偈入面先畀用呢條命令。",
         "permission_denied_not_member": "你唔喺呢個谷/台入面，用唔到呢個機械人。",
         "permission_denied_bot_not_member": "呢個機械人已經唔喺呢個谷/台入面，唔會喺度運轉。",
-        "promote_to_admin_prompt": "如果你係呢個谷嘅匿名管理員，唔該將機械人升做管理員 (乜權限都唔洗)，咁機械人先可以驗證你嘅身份。",
-        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇",
         "permission_denied_switch_pm": "喺同機械人嘅私人傾偈度繼續…",
         "permission_denied_input_command": "唔該輸入命令來繼續…",
-        "permission_denied_no_direct_use": "呢個命令唔應該直接使用。唔該改用 /set 。"
+        "permission_denied_no_direct_use": "呢個命令唔應該直接使用。唔該改用 /set 。",
+        "promote_to_admin_prompt": "如果你係呢個谷嘅匿名管理員，唔該將機械人升做管理員 (乜權限都唔洗)，咁機械人先可以驗證你嘅身份。",
+        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇"
     },
     "l10n_misc": {
         "choose_sub_prompt": "唔該選個訂閲",
         "previous_page": "上一頁",
         "next_page": "下一頁",
         "back": "返回",
+        "cancel": "取消",
         "subscribe": "加訂閲",
         "unsubscribe": "退訂",
         "subscription_list": "訂閲清單",
         "processing": "處理緊，唔該等陣…",
-        "cancel": "取消",
         "canceled_by_user": "畀用戶取消咗。",
         "n_subscriptions_in_total": "總共 %d 個訂閲",
         "other_settings_button": "其他設定…"
@@ -63,6 +63,12 @@
         "unsub_choose_sub_prompt_html": "唔該選個你想退訂嘅訂閲。\n或者，用 <code>/unsub url1 url2 url3 …</code> 嚟批量退訂都得。",
         "unsub_successful": "退訂成功",
         "unsub_failed": "退訂失敗"
+    },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "你真係要退訂晒所有訂閲？",
+        "unsub_all_confirm": "冇錯，退訂晒所有訂閲",
+        "unsub_all_cancel": "唔洗，取消",
+        "unsub_all_successful": "成功噉退訂晒所有訂閲"
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "唔該送出要匯入嘅 OPML 檔案 (副檔名一定要係 .opml)。",
@@ -82,46 +88,58 @@
         "notification_normal": "正常",
         "notification_muted": "靜音",
         "monitor_interval": "監視間隔",
-        "set_interval_prompt": "唔該選個監視間隔。",
-        "send_mode_0": "自動",
+        "send_mode": "傳送方式",
         "send_mode_-1": "只有標題同來源",
-        "set_custom_interval_button": "自訂間隔 (以分鐘為單位)…",
+        "send_mode_0": "自動",
         "send_mode_1": "强制 Telegraph",
         "send_mode_2": "强制 Telegram 訊息",
-        "display_author_1": "強制開",
-        "display_title_1": "強制開",
         "length_limit": "長度限制 (僅限自動模式)",
         "length_limit_unlimited": "無限",
         "link_preview": "連結預覽",
-        "link_preview_1": "強制開",
-        "display_author": "展示作者",
-        "display_via_-2": "閂晒",
-        "send_mode": "傳送方式",
         "link_preview_0": "自動",
-        "display_author_-1": "閂",
-        "display_author_0": "自動",
-        "display_via": "展示來源",
-        "display_via_0": "自動 (連結展示為 RSS 標題)",
-        "set_custom_title_button": "自訂標題…",
-        "display_via_-1": "僅連結 (收埋 RSS 標題)",
-        "display_title": "展示標題",
-        "display_title_-1": "閂",
-        "display_title_0": "自動",
-        "style": "格式",
+        "link_preview_1": "強制開",
         "display_media": "展示媒體",
         "display_media_-1": "閂",
         "display_media_0": "開",
-        "display_media_only_effective_if_send_mode_auto_and_telegram": "而家嘅傳送方式點都唔會喺 Telegram 訊息度展示媒體。",
+        "display_author": "展示作者",
+        "display_author_-1": "閂",
+        "display_author_0": "自動",
+        "display_author_1": "強制開",
+        "display_via": "展示來源",
+        "display_via_-2": "閂晒",
+        "display_via_-1": "僅連結 (收埋 RSS 標題)",
+        "display_via_0": "自動 (連結展示為 RSS 標題)",
+        "display_title": "展示標題",
+        "display_title_-1": "閂",
+        "display_title_0": "自動",
+        "display_title_1": "強制開",
+        "style": "格式",
+        "style_0": "",
+        "style_1": "",
+        "set_custom_title_button": "自訂標題…",
+        "set_custom_interval_button": "自訂間隔 (以分鐘為單位)…",
         "set_custom_hashtags_button": "自訂 hashtag…",
+        "set_interval_prompt": "唔該選個監視間隔。",
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章嘅長度超過限制或者無法喺單條訊息入邊傳送，就會透過 Telegraph 傳送。\n如果透過 Telegraph 傳送都失敗，就只會傳送佢嘅標題同來源。",
-        "length_limit_only_effective_if_send_mode_auto": "只有傳送方式係自動嘅時候，長度限制先有用。"
+        "length_limit_only_effective_if_send_mode_auto": "只有傳送方式係自動嘅時候，長度限制先有用。",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "而家嘅傳送方式點都唔會喺 Telegram 訊息度展示媒體。",
+        "use_user_default_button": "用我嘅預設值"
+    },
+    "l10n_cmd_set_default": {
+        "set_user_default_description": "自訂訂閲嘅預設設定。\n\n訂閲入邊未畀自訂過嘅設定就會用返呢頁上面嘅設定。如果你想將你嘅大部分訂閲設成同樣嘅設定，噉就好有用。",
+        "reset_all_button": "重設晒所有訂閲去預設值",
+        "reset_all_confirm_prompt": "你真係要重設晒所有訂閲去預設值？",
+        "reset_all_confirm": "冇錯，重設晒所有訂閲去預設值",
+        "reset_all_cancel": "唔洗，取消",
+        "reset_all_successful": "成功噉重設晒所有訂閲去預設值"
     },
     "l10n_sub_info": {
         "subscription_info": "訂閲資訊",
+        "feed_title": "RSS 標題",
         "subscription_title": "自訂標題",
         "feed_url": "RSS URL",
-        "feed_title": "RSS 標題",
-        "hashtags": "Hashtag"
+        "hashtags": "Hashtag",
+        "default_emoji_header_description": "%s 表示訂閲用緊你嘅預設。你可以用 /set_default 來改咗佢哋。"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "監視任務已經連續失敗咗 100 次，對呢個 RSS 嘅訂閲已經畀閂咗。\n如果要開返佢，唔該用 /activate_subs 命令。"
@@ -135,6 +153,23 @@
         "choose_sub_to_be_deactivated": "呢啲訂閲而家開咗，唔該選個你想閂嘅訂閲。\n閂咗之後，會暫停監視訂閲更新；如果你晤再需要呢個訂閲，唔該考慮吓退訂而唔係閂咗佢。",
         "deactivate_all_subs": "閂晒我啲訂閲",
         "all_subs_are_deactivated": "所有訂閲都閂晒。"
+    },
+    "l10n_cmd_set_title": {
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 忽略 <code>標題</code> 來刪除自訂標題 (只有之前設定過先可以刪除，唔係就會收到呢條提示) 。",
+        "set_title_success": "訂閱嘅自訂標題已經改做: ",
+        "set_title_success_cleared": "訂閱嘅自訂標題已經刪咗。"
+    },
+    "l10n_cmd_set_interval": {
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 一定要係用分鐘做單位嘅正整數 (唔洗加埋單位) 。",
+        "set_interval_success_html": "訂閱嘅監視間隔已經改做 <b>%d 分鐘</b>。",
+        "set_default_interval_success_html": "預設嘅監視間隔已經改做 <b>%d 分鐘</b>。",
+        "set_interval_failure_too_small_html": "監視間隔一定要大過 <b>%d 分鐘</b>。"
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果唔畀 hashtag，已經喺度嘅 hashtag 會畀刪除 (只有之前設定過先可以刪除，唔係就會收到呢條提示) 。",
+        "set_hashtags_success_html": "訂閱嘅自訂 hashtag 已經改做: ",
+        "set_hashtags_success_cleared": "訂閱嘅自訂 hashtag 已經刪咗。",
+        "set_hashtags_failure_too_many": "Hashtag 太多喇，唔該刪緊啲再來過。"
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "命令用法: <code>/test RSS_URL 條目編號起點(選填) 條目編號終點(選填)</code>",
@@ -152,6 +187,7 @@
         "cmd_description_unsub_all": "退訂晒所有訂閲",
         "cmd_description_list": "列出訂閲清單",
         "cmd_description_set": "自訂訂閲設定",
+        "cmd_description_set_default": "自訂預設設定",
         "cmd_description_import": "從 OPML 匯入訂閲",
         "cmd_description_export": "匯出訂閲到 OPML",
         "cmd_description_activate_subs": "開訂閲",
@@ -161,27 +197,5 @@
         "cmd_description_help": "睇幫助",
         "cmd_description_test": "測試 (僅機械人管理員)",
         "cmd_description_set_option": "改機械人選項 (僅機械人管理員)"
-    },
-    "l10n_cmd_unsub_all": {
-        "unsub_all_successful": "成功噉退訂晒所有訂閲",
-        "unsub_all_confirm_prompt": "你真係要退訂晒所有訂閲？",
-        "unsub_all_cancel": "唔洗，取消",
-        "unsub_all_confirm": "冇錯，退訂晒所有訂閲"
-    },
-    "l10n_cmd_set_interval": {
-        "set_interval_failure_too_small_html": "監視間隔一定要大過 <b>%d 分鐘</b>。",
-        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 一定要係用分鐘做單位嘅正整數 (唔洗加埋單位) 。",
-        "set_interval_success_html": "訂閱嘅監視間隔已經改做 <b>%d 分鐘</b>。"
-    },
-    "l10n_cmd_set_title": {
-        "set_title_success_cleared": "訂閱嘅自訂標題已經刪咗。",
-        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 忽略 <code>標題</code> 來刪除自訂標題 (只有之前設定過先可以刪除，唔係就會收到呢條提示) 。",
-        "set_title_success": "訂閱嘅自訂標題已經改做: "
-    },
-    "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果唔畀 hashtag，已經喺度嘅 hashtag 會畀刪除 (只有之前設定過先可以刪除，唔係就會收到呢條提示) 。",
-        "set_hashtags_success_html": "訂閱嘅自訂 hashtag 已經改做: ",
-        "set_hashtags_success_cleared": "訂閱嘅自訂 hashtag 已經刪咗。",
-        "set_hashtags_failure_too_many": "Hashtag 太多喇，唔該刪緊啲再來過。"
     }
 }

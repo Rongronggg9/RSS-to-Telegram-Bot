@@ -28,7 +28,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message], *_, lang: Opti
 
     msg: Message = await event.respond(i18n[lang]['processing'])
 
-    sub_result = await inner.sub.subs(event.chat_id, filtered_urls, lang=lang, bypass_url_filter=True)
+    sub_result = await inner.sub.subs(event.chat_id, filtered_urls, lang=lang)
 
     if sub_result is None:
         await msg.edit(prompt, parse_mode='html')

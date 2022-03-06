@@ -113,6 +113,8 @@ async def pre():
                           events.NewMessage(pattern='/export'))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
                           events.NewMessage(pattern=r'/set(\W|$)'))
+    bot.add_event_handler(command.customization.cmd_set_default,
+                          events.NewMessage(pattern=r'/set_default(\W|$)'))
     bot.add_event_handler(command.customization.cmd_set_title,
                           events.NewMessage(pattern='/set_title'))
     bot.add_event_handler(command.customization.cmd_set_interval,
@@ -170,10 +172,18 @@ async def pre():
                           events.CallbackQuery(pattern=r'^get_activate_page|\d+$'))
     bot.add_event_handler(partial(command.customization.callback_get_activate_or_deactivate_page, activate=False),
                           events.CallbackQuery(pattern=r'^get_deactivate_page|\d+$'))
-    bot.add_event_handler(command.customization.callback_set,
+    bot.add_event_handler(partial(command.customization.callback_set, set_user_default=False),
                           events.CallbackQuery(pattern=r'^set(=\d+(,\w+(,\w+)?)?)?(\|\d+)?$'))
+    bot.add_event_handler(partial(command.customization.callback_set, set_user_default=True),
+                          events.CallbackQuery(pattern=r'^set_default(=\w+(,\w+)?)?$'))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
                           events.CallbackQuery(pattern=r'^get_set_page|\d+$'))
+    bot.add_event_handler(command.customization.callback_reset,
+                          events.CallbackQuery(pattern=r'^reset=\d+(\|\d+)?$'))
+    bot.add_event_handler(command.customization.callback_reset_all,
+                          events.CallbackQuery(pattern=r'^reset_all$'))
+    bot.add_event_handler(command.customization.callback_reset_all_confirm,
+                          events.CallbackQuery(pattern=r'^reset_all_confirm$'))
     bot.add_event_handler(command.customization.callback_del_subs_title,
                           events.CallbackQuery(pattern=r'^del_subs_title=(\d+-\d+\|)*(\d+-\d+)$'))
     # inline query handler

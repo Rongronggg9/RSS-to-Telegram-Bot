@@ -28,16 +28,21 @@ def parse_command(command: str, max_split: int = 0) -> list[AnyStr]:
     return re.split(r'\s+', command.strip(), maxsplit=max_split)
 
 
-async def parse_command_get_sub_and_param(command: str, user_id: int, max_split: int = 0) \
+async def parse_command_get_sub_or_user_and_param(command: str,
+                                                  user_id: int,
+                                                  max_split: int = 0,
+                                                  allow_setting_user_default: bool = False) \
         -> tuple[Optional[db.Sub], Optional[str]]:
     args = parse_command(command, max_split=max_split)
-    sub = param = None
-    if len(args) >= 2 and args[1].isdigit() and int(args[1]) >= 1:
+    sub_or_user = param = None
+    if len(args) >= 1 and args[1] == 'default' and allow_setting_user_default:
+        sub_or_user = await db.User.get_or_none(id=user_id)
+    if len(args) >= 2 and args[1].isdecimal() and int(args[1]) >= 1:
         sub_id = int(args[1])
-        sub = await db.Sub.get_or_none(id=sub_id, user_id=user_id)
+        sub_or_user = await db.Sub.get_or_none(id=sub_id, user_id=user_id)
     if len(args) > 2:
         param = args[2]
-    return sub, param
+    return sub_or_user, param
 
 
 def parse_callback_data_with_page(callback_data: bytes) -> tuple[str, int]:
@@ -54,10 +59,10 @@ def parse_callback_data_with_page(callback_data: bytes) -> tuple[str, int]:
     return params, page
 
 
-def parse_sub_customization_callback_data(callback_data: bytes) \
+def parse_customization_callback_data(callback_data: bytes) \
         -> tuple[Optional[int], Optional[str], Optional[Union[int, str]], int]:
     """
-    callback data = command[={id}[,{action}[,{param}]]][|{page_number}]
+    callback data = command[={id}[,{action}[,{param}]]][|{page_number}] or command[={action}[,{param}]]
 
     :param callback_data: callback data
     :return: id, action, param
@@ -65,11 +70,19 @@ def parse_sub_customization_callback_data(callback_data: bytes) \
     callback_data = callback_data.decode().strip()
     args = callback_data.split('|')
     page = int(args[1]) if len(args) > 1 else 1
-    args = args[0].split('=')[-1].split(',')
+    args = args[0].split('=', 1)
+    if len(args) == 1:
+        return None, None, None, page
+    args = args[-1].split(',', 2)
 
-    _id: Optional[int] = int(args[0]) if len(args) >= 1 else None
-    action: Optional[str] = args[1] if len(args) >= 2 else None
-    param: Optional[Union[int, str]] = args[2] if len(args) >= 3 else None
+    _id: Optional[int] = None
+    if args[0].lstrip('-').isdecimal():
+        _id = int(args[0])
+        args = args[1:]
+    elif len(args) >= 3:
+        args = args[1:]
+    action: Optional[str] = args[0] if len(args) >= 1 else None
+    param: Optional[Union[int, str]] = args[1] if len(args) >= 2 else None
     if param and param.lstrip('-').isdecimal():
         param = int(param)
 
@@ -505,6 +518,7 @@ def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> list
         types.BotCommand(command="unsub_all", description=i18n[lang]['cmd_description_unsub_all']),
         types.BotCommand(command="list", description=i18n[lang]['cmd_description_list']),
         types.BotCommand(command="set", description=i18n[lang]['cmd_description_set']),
+        types.BotCommand(command="set_default", description=i18n[lang]['cmd_description_set_default']),
         types.BotCommand(command="import", description=i18n[lang]['cmd_description_import']),
         types.BotCommand(command="export", description=i18n[lang]['cmd_description_export']),
         types.BotCommand(command="activate_subs", description=i18n[lang]['cmd_description_activate_subs']),

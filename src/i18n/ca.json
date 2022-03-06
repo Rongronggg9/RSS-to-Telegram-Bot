@@ -33,6 +33,9 @@
         "permission_denied_not_in_private_chat": "Aquesta ordre només es pot utilitzar en un xat privat.",
         "permission_denied_not_member": "No estàs en aquest grup/canal, per tant no pots utilitzar el bot.",
         "permission_denied_bot_not_member": "El bot ja no és en aquest grup/canal, per tant, no funcionarà aquí.",
+        "permission_denied_switch_pm": "",
+        "permission_denied_input_command": "",
+        "permission_denied_no_direct_use": "",
         "promote_to_admin_prompt": "Si ets un administrador anònim d'aquest grup, promociona el bot a un administrador (no cal permís) per a donar poder al bot per a verificar la teva identitat.",
         "group_upgrade_needed_prompt": "Oops, el teu grup no s'ha actualitzat a un supergrup. En general, el servidor de Telegram hauria de realitzar automàticament aquesta actualització en algun moment, però si no, has d'actualitzar-la manualment abans de poder utilitzar el bot.\nSi us plau, segueix aquests passos:\n1. Ves a la informació del grup i, a continuació, fes clic a «Gestionar el grup»\n2. Canvia «Historial de xat per a nous membres» a «Visible»\n3. Desa la configuració de visibilitat de l'historial de xat\n4. Desa tots els paràmetres\n5. (Opcional) Si cal, pots canviar «Historial de xat per a membres nous» a «Ocult» de nou\n6. Ara hauries de poder utilitzar el bot"
     },
@@ -47,7 +50,8 @@
         "subscription_list": "Llista de subscripcions",
         "processing": "Processant, espera un moment…",
         "canceled_by_user": "Cancel·lat per l'usuari.",
-        "n_subscriptions_in_total": "%d subscripcions en total"
+        "n_subscriptions_in_total": "%d subscripcions en total",
+        "other_settings_button": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Respon l'adreça URL d'un canal RSS. \nO bé, pots utilitzar-lo <code>/sub url1 url2 url3 …</code> per a subscriure't de manera massiva.",
@@ -71,7 +75,9 @@
         "send_opml_reply_placeholder": "El fitxer OPML que s'ha d'importar (el nom de l'extensió ha de ser .opml)",
         "fetch_file_failed": "No s'ha pogut obtenir el fitxer",
         "opml_import_processing": "Si el nombre de canals de continguts és gran o els servidors d'alimentació són lents, pot ser una llarga espera. Asseu-te i relaxa't.",
-        "opml_parse_error": "Error d'anàlisi OPML"
+        "opml_parse_error": "Error d'anàlisi OPML",
+        "keep_subs_title_button": "",
+        "delete_subs_title_button": ""
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Tria la subscripció que vulguis personalitzar.",
@@ -82,12 +88,58 @@
         "notification_normal": "Normal",
         "notification_muted": "Silenciat",
         "monitor_interval": "Interval del monitor",
-        "set_interval_prompt": "Seleccionar un interval de monitor."
+        "send_mode": "",
+        "send_mode_-1": "",
+        "send_mode_0": "",
+        "send_mode_1": "",
+        "send_mode_2": "",
+        "length_limit": "",
+        "length_limit_unlimited": "",
+        "link_preview": "",
+        "link_preview_0": "",
+        "link_preview_1": "",
+        "display_media": "",
+        "display_media_-1": "",
+        "display_media_0": "",
+        "display_author": "",
+        "display_author_-1": "",
+        "display_author_0": "",
+        "display_author_1": "",
+        "display_via": "",
+        "display_via_-2": "",
+        "display_via_-1": "",
+        "display_via_0": "",
+        "display_title": "",
+        "display_title_-1": "",
+        "display_title_0": "",
+        "display_title_1": "",
+        "style": "",
+        "style_0": "",
+        "style_1": "",
+        "set_custom_title_button": "",
+        "set_custom_interval_button": "",
+        "set_custom_hashtags_button": "",
+        "set_interval_prompt": "Seleccionar un interval de monitor.",
+        "set_length_limit_prompt": "",
+        "length_limit_only_effective_if_send_mode_auto": "",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "",
+        "use_user_default_button": ""
+    },
+    "l10n_cmd_set_default": {
+        "set_user_default_description": "",
+        "reset_all_button": "",
+        "reset_all_confirm_prompt": "",
+        "reset_all_confirm": "",
+        "reset_all_cancel": "",
+        "reset_all_successful": ""
     },
     "l10n_sub_info": {
         "subscription_info": "Informació de la subscripció",
+        "feed_title": "",
         "subscription_title": "Títol de la subscripció",
-        "feed_url": "URL del canal"
+        "feed_url": "URL del canal",
+        "hashtags": "",
+        "default_emoji_header_description": ""
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "La tasca de supervisió ha fallat durant 100 cops. S'ha desactivat la teva subscripció al canal RSS.\nPer reactivar-la, utilitza l'ordre /activate_subs."
@@ -101,6 +153,23 @@
         "choose_sub_to_be_deactivated": "Les subscripcions següents estan activades, tria una per desactivar-la.\nDesprés de desactivar-la, les actualitzacions se suspendran de la supervisió. Si ja no necessites la subscripció, considera donar-te de baixa en lloc de desactivar-la.",
         "deactivate_all_subs": "Desactivar totes les subscripcions meves",
         "all_subs_are_deactivated": "Totes les subscripcions estan desactivades."
+    },
+    "l10n_cmd_set_title": {
+        "cmd_set_title_usage_prompt_html": "",
+        "set_title_success": "",
+        "set_title_success_cleared": ""
+    },
+    "l10n_cmd_set_interval": {
+        "cmd_set_interval_usage_prompt_html": "",
+        "set_interval_success_html": "",
+        "set_default_interval_success_html": "",
+        "set_interval_failure_too_small_html": ""
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "",
+        "set_hashtags_success_html": "",
+        "set_hashtags_success_cleared": "",
+        "set_hashtags_failure_too_many": ""
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "Ús de l'ordre: <code>/test RSS_URL número_inicial_entrada(opcional) número_final_entrada(opcional)</code>",
@@ -118,6 +187,7 @@
         "cmd_description_unsub_all": "Cancel·lar totes les subscripcions",
         "cmd_description_list": "Consultar la llista de subscripcions",
         "cmd_description_set": "Personalitzar les subscripcions",
+        "cmd_description_set_default": "",
         "cmd_description_import": "Importar subscripcions des d'un fitxer OPML",
         "cmd_description_export": "Exportar les subscripcions a un fitxer OPML",
         "cmd_description_activate_subs": "Activar les subscripcions",

@@ -33,6 +33,9 @@
         "permission_denied_not_in_private_chat": "Questo comando può essere usato solo in una chat privata.",
         "permission_denied_not_member": "Non sei in questo gruppo/canale, quindi non puoi usare il bot.",
         "permission_denied_bot_not_member": "Il bot non è più in questo gruppo/canale, quindi non funzionerà qui.",
+        "permission_denied_switch_pm": "",
+        "permission_denied_input_command": "",
+        "permission_denied_no_direct_use": "",
         "promote_to_admin_prompt": "Se sei un amministratore anonimo di questo gruppo, per favore promuovi il bot a un amministratore (non è necessario un permesso) per permettere al bot di verificare la tua identità.",
         "group_upgrade_needed_prompt": "Ops, il tuo gruppo non è stato aggiornato a un supergruppo. Generalmente, il server Telegram dovrebbe eseguire automaticamente questo aggiornamento in un certo momento, ma se non lo fa, devi aggiornarlo manualmente prima di poter utilizzare il bot.\nPer favore segui questi passi:\n1. Vai alle informazioni sul gruppo, poi clicca su \"Gestisci gruppo\".\n2. Cambia \"Cronologia chat per i nuovi membri\" in \"Visibile\".\n3. Salva l'impostazione della visibilità della cronologia della chat\n4. Salva tutte le impostazioni\n5. (Opzionale) Se necessario, puoi cambiare \"Storia della chat per i nuovi membri\" di nuovo in \"Nascosto\n6. Ora dovresti essere in grado di usare il bot"
     },
@@ -41,13 +44,14 @@
         "previous_page": "Pagina precedente",
         "next_page": "Pagina successiva",
         "back": "Indietro",
+        "cancel": "Cancella",
         "subscribe": "Iscriviti",
         "unsubscribe": "Cancella l'iscrizione",
         "subscription_list": "Elenco degli abbonamenti",
         "processing": "Elaborazione, si prega di attendere un momento…",
-        "cancel": "Cancella",
         "canceled_by_user": "Annullato dall'utente.",
-        "n_subscriptions_in_total": "%d abbonamenti in totale"
+        "n_subscriptions_in_total": "%d abbonamenti in totale",
+        "other_settings_button": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Si prega di inserire l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
@@ -60,12 +64,20 @@
         "unsub_successful": "Disabbonati con successo",
         "unsub_failed": "Disabbonato fallito"
     },
+    "l10n_cmd_unsub_all": {
+        "unsub_all_confirm_prompt": "Sei sicuro di voler annullare l'iscrizione a tutti gli abbonamenti?",
+        "unsub_all_confirm": "Sì, annulla l'iscrizione a tutti gli abbonamenti",
+        "unsub_all_cancel": "No, cancella",
+        "unsub_all_successful": "Annullate le iscrizione di tutti gli abbonamenti con successo"
+    },
     "l10n_cmd_import": {
         "send_opml_prompt": "Per favore inviatemi il file OPML da importare (il nome dell'estensione deve essere .opml).",
         "send_opml_reply_placeholder": "Il file OPML da importare (l'estensione deve essere .opml)",
         "fetch_file_failed": "Fallito il recupero del file",
         "opml_import_processing": "Se il numero di feed è grande o i server dei feed sono lenti, l'attesa può essere lunga. Siediti e rilassati.",
-        "opml_parse_error": "Errore di analisi OPML"
+        "opml_parse_error": "Errore di analisi OPML",
+        "keep_subs_title_button": "",
+        "delete_subs_title_button": ""
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Per favore, scegli un abbonamento che vuoi personalizzare.",
@@ -76,12 +88,58 @@
         "notification_normal": "Normale",
         "notification_muted": "Muto",
         "monitor_interval": "Monitorare l'intervallo",
-        "set_interval_prompt": "Si prega di selezionare un intervallo del monitor."
+        "send_mode": "",
+        "send_mode_-1": "",
+        "send_mode_0": "",
+        "send_mode_1": "",
+        "send_mode_2": "",
+        "length_limit": "",
+        "length_limit_unlimited": "",
+        "link_preview": "",
+        "link_preview_0": "",
+        "link_preview_1": "",
+        "display_media": "",
+        "display_media_-1": "",
+        "display_media_0": "",
+        "display_author": "",
+        "display_author_-1": "",
+        "display_author_0": "",
+        "display_author_1": "",
+        "display_via": "",
+        "display_via_-2": "",
+        "display_via_-1": "",
+        "display_via_0": "",
+        "display_title": "",
+        "display_title_-1": "",
+        "display_title_0": "",
+        "display_title_1": "",
+        "style": "",
+        "style_0": "",
+        "style_1": "",
+        "set_custom_title_button": "",
+        "set_custom_interval_button": "",
+        "set_custom_hashtags_button": "",
+        "set_interval_prompt": "Si prega di selezionare un intervallo del monitor.",
+        "set_length_limit_prompt": "",
+        "length_limit_only_effective_if_send_mode_auto": "",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "",
+        "use_user_default_button": ""
+    },
+    "l10n_cmd_set_default": {
+        "set_user_default_description": "",
+        "reset_all_button": "",
+        "reset_all_confirm_prompt": "",
+        "reset_all_confirm": "",
+        "reset_all_cancel": "",
+        "reset_all_successful": ""
     },
     "l10n_sub_info": {
         "subscription_info": "Informazioni sull'abbonamento",
+        "feed_title": "",
         "subscription_title": "Titolo dell'abbonamento",
-        "feed_url": "URL del feed"
+        "feed_url": "URL del feed",
+        "hashtags": "",
+        "default_emoji_header_description": ""
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "Il compito di monitoraggio è fallito per 100 volte consecutive. Il tuo abbonamento al feed RSS è stato disattivato.\nPer riattivarlo, usa il comando /activate_subs."
@@ -95,6 +153,23 @@
         "choose_sub_to_be_deactivated": "Gli abbonamenti qui sotto sono attivati, scegline uno da disattivare.\nDopo la disattivazione, i loro aggiornamenti saranno sospesi dal monitoraggio. Se l'abbonamento non ti serve più, prendi in considerazione la possibilità di cancellarlo invece di disattivarlo.",
         "deactivate_all_subs": "Disattivare tutti i miei abbonamenti",
         "all_subs_are_deactivated": "Tutti gli abbonamenti sono disattivati."
+    },
+    "l10n_cmd_set_title": {
+        "cmd_set_title_usage_prompt_html": "",
+        "set_title_success": "",
+        "set_title_success_cleared": ""
+    },
+    "l10n_cmd_set_interval": {
+        "cmd_set_interval_usage_prompt_html": "",
+        "set_interval_success_html": "",
+        "set_default_interval_success_html": "",
+        "set_interval_failure_too_small_html": ""
+    },
+    "l10n_cmd_set_hashtags": {
+        "cmd_set_hashtags_usage_prompt_html": "",
+        "set_hashtags_success_html": "",
+        "set_hashtags_success_cleared": "",
+        "set_hashtags_failure_too_many": ""
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "Uso del comando: <code>/test RSS_URL numero_d'inizio_della_voce(opzionale) numero_finale_della_voce(opzionale)</code>",
@@ -112,6 +187,7 @@
         "cmd_description_unsub_all": "Disdire tutte le sottoscrizioni",
         "cmd_description_list": "Controlla la lista degli abbonamenti",
         "cmd_description_set": "Personalizzare gli abbonamenti",
+        "cmd_description_set_default": "",
         "cmd_description_import": "Importare abbonamenti da un file OPML",
         "cmd_description_export": "Esportare le sottoscrizioni in un file OPML",
         "cmd_description_activate_subs": "Attivare gli abbonamenti",
@@ -121,11 +197,5 @@
         "cmd_description_help": "Visualizza l'aiuto",
         "cmd_description_test": "Test (solo manager di bot)",
         "cmd_description_set_option": "Imposta le opzioni del bot (solo per il bot manager)"
-    },
-    "l10n_cmd_unsub_all": {
-        "unsub_all_confirm_prompt": "Sei sicuro di voler annullare l'iscrizione a tutti gli abbonamenti?",
-        "unsub_all_confirm": "Sì, annulla l'iscrizione a tutti gli abbonamenti",
-        "unsub_all_cancel": "No, cancella",
-        "unsub_all_successful": "Annullate le iscrizione di tutti gli abbonamenti con successo"
     }
 }

@@ -50,18 +50,23 @@ class Post:
                                             enclosures=self.enclosures)
 
     async def send_formatted_post_according_to_sub(self, sub: db.Sub):
-        await self.send_formatted_post(user_id=sub.user_id,
-                                       sub_title=sub.title,
-                                       tags=sub.tags.split(' ') if sub.tags else [],
-                                       send_mode=sub.send_mode,
-                                       length_limit=sub.length_limit,
-                                       link_preview=sub.link_preview,
-                                       display_author=sub.display_author,
-                                       display_via=sub.display_via,
-                                       display_title=sub.display_title,
-                                       style=sub.style,
-                                       display_media=sub.display_media,
-                                       silent=not sub.notify)
+        if not isinstance(sub.feed, db.User):
+            await sub.fetch_related('user')
+        user: db.User = sub.user
+        await self.send_formatted_post(
+            user_id=sub.user_id,
+            sub_title=sub.title,
+            tags=sub.tags.split(' ') if sub.tags else [],
+            send_mode=sub.send_mode if sub.send_mode != -100 else user.send_mode,
+            length_limit=sub.length_limit if sub.length_limit != -100 else user.length_limit,
+            link_preview=sub.link_preview if sub.link_preview != -100 else user.link_preview,
+            display_author=sub.display_author if sub.display_author != -100 else user.display_author,
+            display_via=sub.display_via if sub.display_via != -100 else user.display_via,
+            display_title=sub.display_title if sub.display_title != -100 else user.display_title,
+            style=sub.style if sub.style != -100 else user.style,
+            display_media=sub.display_media if sub.display_media != -100 else user.display_media,
+            silent=not (sub.notify if sub.notify != -100 else user.notify)
+        )
 
     async def send_formatted_post(self,
                                   user_id: int,
@@ -149,5 +154,19 @@ class Post:
             return
         sub = await db.Sub.filter(feed__link=self.feed_link, user_id=user_id).get_or_none()
         if sub is None:
-            return await self.send_formatted_post(user_id=user_id)
+            user = await db.User.get_or_none(id=user_id)
+            if user is None:
+                return await self.send_formatted_post(user_id=user_id)
+            return await self.send_formatted_post(
+                user_id=user_id,
+                send_mode=user.send_mode,
+                length_limit=user.length_limit,
+                link_preview=user.link_preview,
+                display_author=user.display_author,
+                display_via=user.display_via,
+                display_title=user.display_title,
+                style=user.style,
+                display_media=user.display_media,
+                silent=not user.notify
+            )
         return await self.send_formatted_post_according_to_sub(sub=sub)

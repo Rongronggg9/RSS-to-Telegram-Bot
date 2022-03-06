@@ -41,9 +41,8 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
 
     if key == 'default_interval':
         all_feeds = await db.Feed.all()
-        await asyncio.gather(
-            *(inner.utils.update_interval(feed) for feed in all_feeds)
-        )
+        for feed in all_feeds:
+            env.loop.create_task(inner.utils.update_interval(feed))
         logger.info(f"Flushed the interval of all feeds")
 
     await event.respond(f'<b>{i18n[lang]["option_updated"]}</b>\n'
@@ -105,4 +104,3 @@ async def __send(uid, entry, feed_title, link):
     post = get_post_from_entry(entry, feed_title, link)
     logger.debug(f"Sending {entry.get('title', 'Untitled')} ({entry.get('link', 'No link')})...")
     await post.test_format(uid)
-

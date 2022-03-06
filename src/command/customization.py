@@ -59,7 +59,7 @@ async def callback_set(event: events.CallbackQuery.Event,
         return
 
     sub_or_user: Union[db.Sub, db.User] = (
-        await db.Sub.get_or_none(id=sub_id, user=event.chat_id).prefetch_related('feed')
+        await db.Sub.get_or_none(id=sub_id, user=event.chat_id).prefetch_related('feed', 'user')
         if not set_user_default
         else await db.User.get_or_none(id=event.chat_id)
     )
@@ -79,8 +79,10 @@ async def callback_set(event: events.CallbackQuery.Event,
             await inner.customization.set_length_limit(sub_or_user, param)
         elif action == 'activate' and not set_user_default:
             await inner.customization.set_sub_activate(sub_or_user)
-        elif action == 'display_media' and not set_user_default and sub_or_user.send_mode in {1, -1}:
-            await event.answer(i18n[lang]['display_media_only_effective_if_send_mode_auto_and_telegram'], alert=True)
+        elif action == 'display_media' and not set_user_default and \
+                (sub_or_user.send_mode if sub_or_user.send_mode != -100 else sub_or_user.user.send_mode) in {1, -1}:
+            await event.answer(i18n[lang]['display_media_only_effective_if_send_mode_auto_and_telegram'],
+                               alert=True)
             return
         elif action is not None and action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES:
             await inner.customization.set_exhaustive_option(sub_or_user, action)
@@ -98,7 +100,8 @@ async def callback_set(event: events.CallbackQuery.Event,
         await event.edit(msg, buttons=buttons)
         return
     if action == 'length_limit':
-        if not set_user_default and sub_or_user.send_mode != 0:
+        if not set_user_default and \
+                (sub_or_user.send_mode if sub_or_user.send_mode != -100 else sub_or_user.user.send_mode) != 0:
             await event.answer(i18n[lang]['length_limit_only_effective_if_send_mode_auto'], alert=True)
             return
         msg = i18n[lang]['set_length_limit_prompt']

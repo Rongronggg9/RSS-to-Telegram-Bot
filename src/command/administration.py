@@ -40,7 +40,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
     logger.info(f"Set option {key} to {value}")
 
     if key == 'default_interval':
-        all_feeds = await db.Feed.all()
+        all_feeds = await db.Feed.filter(state=1)
         for feed in all_feeds:
             env.loop.create_task(inner.utils.update_interval(feed))
         logger.info(f"Flushed the interval of all feeds")

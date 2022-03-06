@@ -227,16 +227,28 @@ async def update_interval(feed: Union[db.Feed, db.Sub, int]):
         db.effective_utils.EffectiveTasks.delete(feed.id)
         return
     if not intervals and not some_using_default:  # no active sub subs the feed, deactivate the feed
-        await deactivate_feed(feed)
+        if feed.state == 1:
+            feed.state = 0
+            feed.error_count = 0
+            feed.next_check_time = None
+            await feed.save()
         db.effective_utils.EffectiveTasks.delete(feed.id)
         return
-    new_interval = min(intervals)
-    if default_interval < new_interval and some_using_default:
+    new_interval = min(intervals) if intervals else None
+    if (new_interval is None or default_interval < new_interval) and some_using_default:
         new_interval = default_interval
         set_to_default = True
 
+    feed_update_flag = False
     if new_interval != curr_interval or (set_to_default and feed.interval is not None):
         feed.interval = new_interval if not set_to_default else None
+        feed_update_flag = True
+    if feed.state != 1:
+        feed.state = 1
+        feed.error_count = 0
+        feed.next_check_time = None
+        feed_update_flag = True
+    if feed_update_flag:
         await feed.save()
     if db.effective_utils.EffectiveTasks.get_interval(feed.id) != new_interval:
         db.effective_utils.EffectiveTasks.update(feed.id, new_interval)
@@ -271,6 +283,7 @@ async def deactivate_feed(feed: db.Feed) -> db.Feed:
         return feed
 
     feed.state = 0
+    feed.error_count = 0
     feed.next_check_time = None
     await feed.save()
     await asyncio.gather(

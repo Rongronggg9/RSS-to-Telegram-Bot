@@ -240,8 +240,12 @@ class Medium:
 
                 if self.type == IMAGE:
                     # force convert WEBP/SVG to PNG
-                    if self.content_type and self.content_type.find('webp') != -1 \
-                            or self.content_type.startswith('application') or self.content_type.find('svg') != -1:
+                    if (
+                            self.content_type
+                            and (self.content_type.find('webp') != -1
+                                 or self.content_type.startswith('application')
+                                 or self.content_type.find('svg') != -1)
+                    ):
                         self.valid = True
                         url = construct_images_weserv_nl_url(self.original_urls[0])
                         self.urls = [url]

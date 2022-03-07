@@ -208,25 +208,14 @@ class Parser:
             return ListItem(text) if text else None
 
         if tag == 'iframe':
-            text = await self._parse_item(soup.children)
+            # text = await self._parse_item(soup.children)
             src = soup.get('src')
             if not src:
                 return None
             if not is_absolute_link(src) and self.feed_link:
                 src = urljoin(self.feed_link, src)
-            if not text:
-                # noinspection PyBroadException
-                try:
-                    page = await web.get(src, timeout=3, decode=True, semaphore=False)
-                    if page.status != 200 or not page.content:
-                        raise ValueError
-                    text = BeautifulSoup(page.content, 'lxml').title.text
-                except Exception:
-                    pass
-                finally:
-                    if not text:
-                        text = urlparse(src).netloc
-            return Text([Br(2), Link(f'iframe ({text})', param=src), Br(2)])
+            title = await web.get_page_title(src)
+            return Text([Br(2), Link(f'iframe ({title})', param=src), Br(2)])
 
         in_list = tag == 'ol' or tag == 'ul'
         for child in soup.children:

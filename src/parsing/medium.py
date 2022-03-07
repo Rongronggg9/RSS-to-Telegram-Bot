@@ -87,6 +87,7 @@ class Medium:
         self.valid: Optional[bool] = None
         self._server_change_count: int = 0
         self.size = self.width = self.height = None
+        self.max_width = self.max_height = -1  # use for long pic judgment
         self.type_fallback_urls: list[str] = type_fallback_urls if isinstance(type_fallback_urls, list) \
             else [type_fallback_urls] if type_fallback_urls and isinstance(type_fallback_urls, str) \
             else []  # use for fallback if not type_fallback_allow_self_urls
@@ -226,6 +227,8 @@ class Medium:
                 if medium_info is None:
                     continue
                 self.size, self.width, self.height, self.content_type = medium_info
+                self.max_width = max(self.max_width, self.width)
+                self.max_height = max(self.max_height, self.height)
 
                 if self.type == IMAGE:
                     # drop icons and emoticons
@@ -249,14 +252,11 @@ class Medium:
                     elif 0.4 <= self.width / self.height <= 2.5:
                         self.valid = True
                     elif (
-                            # if already fall backed, bypass rest checks
-                            url in self.original_urls and self.original_urls.index(url) == 0
-                            and
                             # ensure the image is valid
                             0.05 < self.width / self.height < 20
                             and
                             # Telegram downsizes images to fit 1280x1280. If not downsized a lot, passing
-                            max(self.width, self.height) <= 1280 * 1.5
+                            max(self.max_width, self.max_height) <= 1280 * 1.5
                     ):
                         self.valid = True
                     # let long images fall back to file

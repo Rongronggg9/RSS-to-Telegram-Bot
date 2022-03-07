@@ -33,12 +33,12 @@ class Post:
         :param feed_link: the url of the feed where the post from
         """
         self.html = html
-        title = emojify(unescape(title.strip())).strip() if title else None
-        title = (stripAnySpace(title) if title.find('\n') != -1 else title) if title else None
+        title = emojify(stripAnySpace(unescape(title))).strip() if title else None
         self.title = title if title else None  # reject empty string
         self.feed_title = feed_title
         self.link = link
-        self.author = author
+        author = stripAnySpace(unescape(author)).strip() if author else None
+        self.author = author if author else None  # reject empty string
         self.feed_link = feed_link
         self.enclosures = enclosures
 

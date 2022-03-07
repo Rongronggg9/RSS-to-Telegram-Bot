@@ -1,10 +1,8 @@
 from __future__ import annotations
 from typing import Optional
 
-from html import unescape
-
 from src import db, env, exceptions
-from .utils import emojify, parse_entry, stripAnySpace, logger, Enclosure
+from .utils import parse_entry, logger, Enclosure
 from .post_formatter import PostFormatter
 from .message import MessageDispatcher
 
@@ -33,12 +31,10 @@ class Post:
         :param feed_link: the url of the feed where the post from
         """
         self.html = html
-        title = emojify(stripAnySpace(unescape(title))).strip() if title else None
-        self.title = title if title else None  # reject empty string
+        self.title = title
         self.feed_title = feed_title
         self.link = link
-        author = stripAnySpace(unescape(author)).strip() if author else None
-        self.author = author if author else None  # reject empty string
+        self.author = author
         self.feed_link = feed_link
         self.enclosures = enclosures
 

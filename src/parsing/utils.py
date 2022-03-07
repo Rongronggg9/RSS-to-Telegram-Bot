@@ -3,6 +3,9 @@ from typing import Optional, Sequence, Union
 
 import re
 import json
+from bs4 import BeautifulSoup
+from minify_html import minify
+from html import unescape
 from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
 from telethon.helpers import add_surrogate
@@ -49,6 +52,26 @@ def emojify(xml):
     return xml
 
 
+def html_validator(html: str) -> str:
+    html = stripBr(html)
+    # validate invalid HTML first, since minify_html is not so robust
+    html = BeautifulSoup(html, 'lxml').decode()
+    html = minify(html,
+                  do_not_minify_doctype=True,
+                  keep_closing_tags=True,
+                  keep_spaces_between_attributes=True,
+                  ensure_spec_compliant_unquoted_attribute_values=True,
+                  remove_processing_instructions=True)
+    return html
+
+
+def html_space_stripper(s: str, enable_emojify: bool = False) -> str:
+    if not s:
+        return s
+    s = stripAnySpace(unescape(s)).strip()
+    return emojify(s) if enable_emojify else s
+
+
 def parse_entry(entry):
     class EntryParsed:
         content: str = ''
@@ -73,11 +96,15 @@ def parse_entry(entry):
                 content = content[0]
         content = content.get('value', '')
 
-    EntryParsed.content = content
+    EntryParsed.content = html_validator(content)
     EntryParsed.link = entry.get('link') or entry.get('guid')
-    EntryParsed.author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
+    author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
+    author = html_space_stripper(author) if author else None
+    EntryParsed.author = author if author else None  # reject empty string
     # hmm, some entries do have no title, should we really set up a feed hospital?
-    EntryParsed.title = entry.get('title')
+    title = entry.get('title')
+    title = html_space_stripper(title, enable_emojify=True) if title else None
+    EntryParsed.title = title if title else None  # reject empty string
     if isinstance(entry.get('links'), list):
         EntryParsed.enclosures = []
         for link in entry['links']:

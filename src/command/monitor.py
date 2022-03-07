@@ -17,7 +17,7 @@ from src import log, db, env, web
 from src.exceptions import EntityNotFoundError, UserBlockedErrors
 from src.i18n import i18n
 from src.parsing.post import get_post_from_entry, Post
-from src.parsing.utils import stripAnySpace
+from src.parsing.utils import html_space_stripper
 
 logger = log.getLogger('RSStT.monitor')
 
@@ -181,7 +181,7 @@ async def __monitor(feed: db.Feed) -> str:
         return EMPTY
 
     title = rss_d.feed.title
-    title = stripAnySpace(unescape(rss_d.feed.title.strip())).strip() if title else ''
+    title = html_space_stripper(title) if title else ''
     if title != feed.title:
         logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
         feed.title = title

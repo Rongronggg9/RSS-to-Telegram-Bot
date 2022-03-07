@@ -69,14 +69,14 @@ async def callback_set(event: events.CallbackQuery.Event,
 
     if (
             action is None
-            or (action in {'interval', 'length_limit'} and isinstance(param, int))
+            or (action in {'interval', 'length_limit'} and (isinstance(param, int) or param == 'default'))
             or action == 'activate' and not set_user_default
             or action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES
     ):
-        if action == 'interval' and isinstance(param, int):
-            await inner.customization.set_interval(sub_or_user, param)
-        elif action == 'length_limit' and isinstance(param, int):
-            await inner.customization.set_length_limit(sub_or_user, param)
+        if action == 'interval' and (isinstance(param, int) or param == 'default'):
+            await inner.customization.set_interval(sub_or_user, param if param != 'default' else -100)
+        elif action == 'length_limit' and (isinstance(param, int) or param == 'default'):
+            await inner.customization.set_length_limit(sub_or_user, param if param != 'default' else -100)
         elif action == 'activate' and not set_user_default:
             await inner.customization.set_sub_activate(sub_or_user)
         elif action == 'display_media' and not set_user_default and \

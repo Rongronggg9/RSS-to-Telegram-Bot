@@ -211,7 +211,7 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
     buttons = (
             ((
                  Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang][f'use_user_default_button'],
-                               data=f'set={sub_or_user.id},interval,0|{page}'),
+                               data=f'set={sub_or_user.id},interval,default|{page}'),
              ) if not is_user else None,)
             +
             arrange_grid(
@@ -270,7 +270,7 @@ async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
     buttons = (
             ((
                  Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang][f'use_user_default_button'],
-                               data=f'set={sub_or_user.id},length_limit,0|{page}'),
+                               data=f'set={sub_or_user.id},length_limit,default|{page}'),
              ) if not is_user else None,)
             +
             ((
@@ -305,7 +305,7 @@ async def set_interval(sub_or_user: Union[db.Sub, db.User], interval: int) -> Un
     is_user = isinstance(sub_or_user, db.User)
 
     minimal_interval = db.EffectiveOptions.minimal_interval
-    if not interval:
+    if not isinstance(interval, int) or interval <= 0:
         interval = None
     if interval and interval < minimal_interval and (sub_or_user.id if is_user else sub_or_user.user_id) != env.MANAGER:
         interval = minimal_interval
@@ -326,8 +326,11 @@ async def set_interval(sub_or_user: Union[db.Sub, db.User], interval: int) -> Un
 
 
 async def set_length_limit(sub_or_user: Union[db.Sub, db.User], length_limit: int) -> Union[db.Sub, db.User]:
-    if length_limit == sub_or_user.length_limit or not 0 <= length_limit <= 4096:
+    if length_limit == sub_or_user.length_limit:
         return sub_or_user
+
+    if not 0 <= length_limit <= 4096:
+        length_limit = -100 if isinstance(sub_or_user, db.Sub) else 0
 
     sub_or_user.length_limit = length_limit
     await sub_or_user.save()

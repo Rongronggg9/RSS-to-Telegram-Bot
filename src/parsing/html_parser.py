@@ -3,7 +3,6 @@ from collections.abc import Iterator, Iterable
 from typing import Union, Optional
 
 import re
-import minify_html
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
 from urllib.parse import urlparse, urljoin
@@ -31,15 +30,7 @@ class Parser:
         :param html: HTML content
         :param feed_link: feed link (use for resolve relative urls)
         """
-        html = stripBr(html)
-        # validate invalid HTML first, since minify_html is not so robust
-        html = BeautifulSoup(html, 'lxml').decode()
-        self.html = minify_html.minify(html,
-                                       do_not_minify_doctype=True,
-                                       keep_closing_tags=True,
-                                       keep_spaces_between_attributes=True,
-                                       ensure_spec_compliant_unquoted_attribute_values=True,
-                                       remove_processing_instructions=True)
+        self.html = html
         self.soup = BeautifulSoup(self.html, 'lxml')
         self.media: Media = Media()
         self.html_tree = HtmlTree('')

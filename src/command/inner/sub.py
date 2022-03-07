@@ -12,7 +12,7 @@ from bs4.element import Tag
 from src import db, web
 from src.i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html
-from src.parsing.utils import stripAnySpace
+from src.parsing.utils import html_space_stripper
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
@@ -56,7 +56,7 @@ async def sub(user_id: int,
 
             # need to use get_or_create because we've changed feed_url to the redirected one
             title = rss_d.feed.title
-            title = stripAnySpace(unescape(rss_d.feed.title.strip())).strip() if title else ''
+            title = html_space_stripper(title) if title else ''
             feed, created_new_feed = await db.Feed.get_or_create(defaults={'title': title}, link=feed_url)
             if created_new_feed or feed.state == 0:
                 feed.state = 1

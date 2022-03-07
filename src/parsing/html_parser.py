@@ -150,7 +150,6 @@ class Parser:
                 _multi_src.append(src) if src else None
             multi_src = []
             is_gif = False
-            is_webp = False
             for _src in _multi_src:
                 if not isinstance(_src, str):
                     continue
@@ -159,18 +158,9 @@ class Parser:
                 path = urlparse(_src).path
                 if path.endswith(('.gif', '.gifv', '.webm', '.mp4', '.m4v')):
                     is_gif = True
-                if path.endswith('.webp'):
-                    is_webp = True
                 multi_src.append(_src)
             if multi_src:
-                if is_webp:
-                    media = Image(multi_src)
-                    media.urls = [construct_images_weserv_nl_url(multi_src[0])]
-                    self.media.add(media)
-                elif is_gif:
-                    self.media.add(Animation(multi_src))
-                else:
-                    self.media.add(Image(multi_src))
+                self.media.add(Animation(multi_src) if is_gif else Image(multi_src))
             return None
 
         if tag == 'video':

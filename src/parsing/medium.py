@@ -222,27 +222,26 @@ class Medium:
         async with self.validating_lock:
             while self.urls:
                 url = self.urls.pop(0)
-                if url.startswith(env.IMAGES_WESERV_NL):
-                    self.valid = True
-                    self.chosen_url = url
-                    self._server_change_count = 0
-                    return True
                 medium_info = await web.get_medium_info(url)
                 if medium_info is None:
                     continue
                 self.size, self.width, self.height, self.content_type = medium_info
 
                 if self.type == IMAGE:
+                    # drop icons and emoticons
+                    if 0 < self.width <= 30 or 0 < self.height < 30:
+                        self.valid = False
+                        self.drop_silently = True
                     # force convert WEBP/SVG to PNG
-                    if (
+                    elif (
                             self.content_type
                             and (self.content_type.find('webp') != -1
                                  or self.content_type.startswith('application')
                                  or self.content_type.find('svg') != -1)
                     ):
-                        self.valid = True
-                        url = construct_images_weserv_nl_url(self.original_urls[0])
-                        self.urls = [url]
+                        # immediately fall back to 'images.weserv.nl'
+                        self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
+                        continue
                     # always invalid
                     elif self.width + self.height > 10000 or self.size > self.maxSize:
                         self.valid = False
@@ -381,12 +380,9 @@ class Image(Medium):
     def __init__(self, url: Union[str, list[str]]):
         super().__init__(url)
         new_urls = []
-        already_images_weserv_nl = False
         for url in self.urls:
             sinaimg_match = sinaimg_size_parser(url)
             pixiv_match = pixiv_size_parser(url)
-            if url.startswith(env.IMAGES_WESERV_NL):
-                already_images_weserv_nl = True
             if not any([sinaimg_match, pixiv_match]):
                 new_urls.append(url)
                 continue
@@ -407,8 +403,9 @@ class Image(Medium):
             if url not in new_urls:
                 new_urls.append(url)
         self.urls = new_urls
-        if not already_images_weserv_nl:
-            self.urls.append(construct_images_weserv_nl_url(self.urls[0]))  # use for final fallback
+        urls_not_images_weserv_nl = [url for url in self.urls if not url.startswith(env.IMAGES_WESERV_NL)]
+        self.urls.extend(construct_images_weserv_nl_url(urls_not_images_weserv_nl[i])
+                         for i in range(min(len(urls_not_images_weserv_nl), 3)))  # use for final fallback
 
     async def change_server(self):
         sinaimg_server_match = sinaimg_server_parser(self.chosen_url)

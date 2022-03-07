@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import Union, Optional, AnyStr, Any
 from src.compat import nullcontext, ssl_create_default_context
 
+import re
 import asyncio
 import functools
 import aiodns
@@ -11,6 +12,7 @@ import feedparser
 import PIL.Image
 import PIL.ImageFile
 from PIL import UnidentifiedImageError
+from bs4 import BeautifulSoup
 from io import BytesIO, SEEK_END
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
@@ -26,11 +28,6 @@ from asyncstdlib.functools import lru_cache
 
 from src import env, log, locks
 from src.i18n import i18n
-
-logger = log.getLogger('RSStT.web')
-
-_feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
-_resolver = aiodns.DNSResolver(timeout=3, loop=env.loop)
 
 PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
 PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
@@ -60,6 +57,13 @@ EXCEPTIONS_SHOULD_RETRY = (asyncio.TimeoutError,
 RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+logger = log.getLogger('RSStT.web')
+
+_feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
+_resolver = aiodns.DNSResolver(timeout=3, loop=env.loop)
+
+contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=").+?(?=")').search, flags=re.I)
 
 
 class WebError(Exception):
@@ -368,3 +372,29 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[st
         width, height = r.content
 
     return size, width, height, content_type
+
+
+@lru_cache(maxsize=256)
+async def get_page_title(url: str, allow_hostname=True, allow_path: bool = False, allow_filename: bool = True) \
+        -> Optional[str]:
+    r = None
+    # noinspection PyBroadException
+    try:
+        r = await get(url=url, timeout=2, decode=True, intended_content_type='text/html')
+        if r.status != 200 or not r.content:
+            raise ValueError('not an HTML page')
+        if len(r.content) <= 27:  # len of `<html><head><title></title>`
+            raise ValueError('invalid HTML')
+        title = BeautifulSoup(r.content, 'lxml').title.text
+        return title.strip()
+    except Exception:
+        content_disposition = r.headers.get('Content-Disposition') if r else None
+        filename_match = contentDispositionFilenameParser(content_disposition) if content_disposition else None
+        if filename_match and allow_filename:
+            return filename_match.group()
+        url_parsed = urlparse(url)
+        if allow_path:
+            path = url_parsed.path
+            return path.rsplit('/', 1)[-1] if path else None
+        if allow_hostname:
+            return url_parsed.hostname

@@ -4,22 +4,16 @@ from typing import Optional, Union
 
 import asyncio
 import re
-import PIL.Image
-import PIL.ImageFile
-from io import BytesIO
 from collections import defaultdict
 from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
     MessageMediaPhoto, MessageMediaDocument
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
-from asyncstdlib.functools import lru_cache
 from urllib.parse import urlencode
 
 from src import env, log, web, locks
 from src.parsing.html_node import Link, Br, Text, HtmlTree
 from src.exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
-
-PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 logger = log.getLogger('RSStT.medium')
 
@@ -233,7 +227,7 @@ class Medium:
                     self.chosen_url = url
                     self._server_change_count = 0
                     return True
-                medium_info = await get_medium_info(url)
+                medium_info = await web.get_medium_info(url)
                 if medium_info is None:
                     continue
                 self.size, self.width, self.height, self.content_type = medium_info
@@ -686,44 +680,3 @@ def construct_images_weserv_nl_url(url: str,
         'output': output_format,
     })
     return env.IMAGES_WESERV_NL + '?' + query_string
-
-
-@lru_cache(maxsize=1024)
-async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
-    if url.startswith('data:'):
-        return None
-    try:
-        r = await web.get(url=url, max_size=256, intended_content_type='image')
-        if r.status != 200:
-            raise ValueError('status code not 200')
-    except Exception as e:
-        logger.debug(f'Dropped medium {url}: can not be fetched: ', exc_info=e)
-        return None
-
-    size = int(r.headers.get('Content-Length') or -1)
-    content_type = r.headers.get('Content-Type')
-    content_type = content_type.lower() if content_type else None
-    is_image = content_type and content_type.startswith('image/')
-
-    width = height = -1
-    file_header = r.content
-    if not is_image or not file_header:
-        return size, width, height, content_type
-
-    # noinspection PyBroadException
-    try:
-        image = PIL.Image.open(BytesIO(file_header))
-        width, height = image.size
-    except Exception:
-        if content_type == 'image/jpeg' or url.find('jpg') != -1 or url.find('jpeg') != -1:  # if jpg
-            pointer = -1
-            for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
-                p = file_header.find(marker)
-                if p != -1:
-                    pointer = p
-                    break
-            if pointer != -1 and pointer + 9 <= len(file_header):
-                width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
-                height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
-
-    return size, width, height, content_type

@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Union, Optional, AnyStr
+from collections.abc import Callable
+from typing import Union, Optional, AnyStr, Any
 from src.compat import nullcontext, ssl_create_default_context
 
 import asyncio
@@ -7,6 +8,10 @@ import functools
 import aiodns
 import aiohttp
 import feedparser
+import PIL.Image
+import PIL.ImageFile
+from PIL import UnidentifiedImageError
+from io import BytesIO, SEEK_END
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
 from aiohttp_retry import RetryClient, ExponentialRetry
@@ -16,6 +21,8 @@ from urllib.parse import urlparse
 from socket import AF_INET, AF_INET6
 from multidict import CIMultiDictProxy
 from attr import define
+from functools import partial
+from asyncstdlib.functools import lru_cache
 
 from src import env, log, locks
 from src.i18n import i18n
@@ -51,6 +58,8 @@ EXCEPTIONS_SHOULD_RETRY = (asyncio.TimeoutError,
                            TimeoutError)
 
 RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
+
+PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class WebError(Exception):
@@ -89,7 +98,7 @@ class WebError(Exception):
 @define
 class WebResponse:
     url: str  # redirected url
-    content: Optional[AnyStr]
+    content: Any
     headers: CIMultiDictProxy[str]
     status: int
     reason: Optional[str]
@@ -126,6 +135,21 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
     return True
 
 
+async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False, max_size: Optional[int] = None,
+                          intended_content_type: Optional[str] = None) -> Optional[AnyStr]:
+    content_type = response.headers.get('Content-Type')
+    if not intended_content_type or not content_type or content_type.startswith(intended_content_type):
+        if decode:
+            return await response.text()
+        elif max_size is None:
+            return await response.read()
+        elif max_size > 0:
+            max_size = min(int(response.headers.get('Content-Length', str(max_size))),
+                           max_size)
+            return await response.content.read(max_size)
+    return None
+
+
 async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
               headers: Optional[dict] = None, decode: bool = False,
               max_size: Optional[int] = None, intended_content_type: Optional[str] = None) -> WebResponse:
@@ -142,13 +166,17 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     if not timeout:
         timeout = 12
     wait_for_timeout = (timeout * 2 + 5) * (2 if env.IPV6_PRIOR else 1)
-    return await asyncio.wait_for(_get(url, timeout, semaphore, headers, decode, max_size, intended_content_type),
-                                  wait_for_timeout)
+    return await asyncio.wait_for(
+        _get(
+            url=url, timeout=timeout, semaphore=semaphore, headers=headers,
+            resp_callback=partial(__norm_callback, decode=decode, max_size=max_size,
+                                  intended_content_type=intended_content_type)
+        ),
+        wait_for_timeout)
 
 
-async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
-               headers: Optional[dict] = None, decode: bool = False,
-               max_size: Optional[int] = None, intended_content_type: Optional[str] = None) -> WebResponse:
+async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = None,
+               semaphore: Union[bool, asyncio.Semaphore] = None, headers: Optional[dict] = None) -> WebResponse:
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -189,17 +217,7 @@ async def _get(url: str, timeout: Optional[float] = None, semaphore: Union[bool,
                             status = response.status
                             content = None
                             if status == 200:
-                                content_type = response.headers.get('Content-Type')
-                                if not intended_content_type or not content_type or \
-                                        content_type.startswith(intended_content_type):
-                                    if decode:
-                                        content = await response.text()
-                                    elif max_size is None:
-                                        content = await response.read()
-                                    elif max_size > 0:
-                                        max_size = min(int(response.headers.get('Content-Length', str(max_size))),
-                                                       max_size)
-                                        content = await response.content.read(max_size)
+                                content = await resp_callback(response)
                             elif socket_family == AF_INET6 and tries == 1 \
                                     and status in (400,  # Bad Request (some feed providers return 400 for banned IPs)
                                                    403,  # Forbidden
@@ -281,3 +299,72 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
         ret.error = WebError(error_name='internal error', url=url, base_error=e, log_level=log.ERROR)
 
     return ret
+
+
+async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int, int]:
+    content_type = response.headers.get('Content-Type', '').lower()
+    content_length = int(response.headers.get('Content-Length', '1024'))
+    max_read_length = min(content_length, 5 * 1024)
+    if not (
+            # a non-webp image
+            (content_type.startswith('image') and content_type.find('webp') == -1)
+            or (
+                    # a webp image
+                    (content_type.find('webp') != -1 or content_type == 'application/octet-stream')
+                    and content_length <= max_read_length  # PIL cannot handle a truncated webp image
+            )
+    ):
+        return -1, -1
+    is_jpeg = content_type.startswith('image/jpeg')
+    already_read = 0
+    iter_length = 128
+    buffer = BytesIO()
+    async for chunk in response.content.iter_chunked(iter_length):
+        already_read += len(chunk)
+        buffer.seek(0, SEEK_END)
+        buffer.write(chunk)
+        # noinspection PyBroadException
+        try:
+            image = PIL.Image.open(buffer)
+            width, height = image.size
+            return width, height
+        except UnidentifiedImageError:
+            return -1, -1  # not a format that PIL can handle
+        except Exception:
+            if is_jpeg:
+                file_header = buffer.getvalue()
+                pointer = -1
+                for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
+                    p = file_header.find(marker)
+                    if p != -1:
+                        pointer = p
+                        break
+                if pointer != -1 and pointer + 9 <= len(file_header):
+                    width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
+                    height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
+                    return width, height
+
+        if already_read >= max_read_length:
+            return -1, -1
+    return -1, -1
+
+
+@lru_cache(maxsize=512)
+async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
+    if url.startswith('data:'):
+        return None
+    try:
+        r = await _get(url, resp_callback=__medium_info_callback)
+        if r.status != 200:
+            raise ValueError('status code not 200')
+    except Exception as e:
+        logger.debug(f'Medium fetch failed: {url}', exc_info=e)
+        return None
+
+    width, height = -1, -1
+    size = int(r.headers.get('Content-Length') or -1)
+    content_type = r.headers.get('Content-Type')
+    if isinstance(r.content, tuple):
+        width, height = r.content
+
+    return size, width, height, content_type

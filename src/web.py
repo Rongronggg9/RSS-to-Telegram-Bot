@@ -111,6 +111,7 @@ class WebResponse:
 @define
 class WebFeed:
     url: str  # redirected url
+    content: Optional[str] = None
     headers: Optional[CIMultiDictProxy[str]] = None
     status: int = -1
     reason: Optional[str] = None
@@ -256,8 +257,9 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
         _headers['Accept'] = FEED_ACCEPT
 
     try:
-        resp = await get(url, timeout, web_semaphore, headers=_headers)
+        resp = await get(url, timeout, web_semaphore, decode=True, headers=_headers)
         rss_content = resp.content
+        ret.content = rss_content
         ret.url = resp.url
         ret.headers = resp.headers
         ret.status = resp.status

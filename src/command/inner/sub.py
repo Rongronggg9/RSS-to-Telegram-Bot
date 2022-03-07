@@ -2,17 +2,22 @@ from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Sequence
 
+import re
 import asyncio
-from html import unescape
-
 from datetime import datetime
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+from urllib.parse import urljoin
+from pylru import lrucache
 
 from src import db, web
 from src.i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html
 from src.parsing.utils import html_space_stripper
+
+FeedLinkTypeMatcher = re.compile(r'application/(rss|rdf|atom)(\+xml)?', re.I)
+FeedLinkHrefMatcher = re.compile(r'(rss|rdf|atom)', re.I)
+FeedSnifferCache = lrucache(size=256)
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()
@@ -20,7 +25,11 @@ with open('src/opml_template.opml', 'r') as __template:
 
 async def sub(user_id: int,
               feed_url: Union[str, tuple[str, str]],
-              lang: Optional[str] = None) -> dict[str, Union[int, str, db.Sub, None]]:
+              lang: Optional[str] = None,
+              bypass_feed_sniff: bool = False) -> dict[str, Union[int, str, db.Sub, None]]:
+    if not bypass_feed_sniff and feed_url in FeedSnifferCache:
+        return await sub(user_id, FeedSnifferCache[feed_url], lang=lang, bypass_feed_sniff=True)
+
     ret = {'url': feed_url,
            'sub': None,
            'status': -1,
@@ -46,6 +55,11 @@ async def sub(user_id: int,
             ret['url'] = feed_url = wf.url  # get the redirected url
 
             if rss_d is None:
+                # try sniffing a feed for the web page
+                if not bypass_feed_sniff and wf.status == 200 and wf.content:
+                    sniffed_feed_url = feed_sniffer(wf.url, wf.content)
+                    if sniffed_feed_url:
+                        return await sub(user_id, sniffed_feed_url, lang=lang, bypass_feed_sniff=True)
                 logger.warning(f'Sub {feed_url} for {user_id} failed: ({wf.error})')
                 return ret
 
@@ -284,3 +298,20 @@ async def migrate_to_new_url(feed: db.Feed, new_url: str) -> Union[bool, db.Feed
     await update_interval(new_url_feed)
     await feed.delete()  # delete the old feed
     return new_url_feed
+
+
+def feed_sniffer(url: str, html: str) -> Optional[str]:
+    if url in FeedSnifferCache:
+        return FeedSnifferCache[url]
+    if len(html) < 69:  # len of `<html><head></head><body></body></html>` + `<link rel="alternate" href="">`
+        return None  # too short to sniff
+
+    soup = BeautifulSoup(html, 'lxml')
+    links = soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher, 'href': True})
+    if not links:
+        links = soup.find_all(name='link', attrs={'rel': 'alternate', 'href': FeedLinkHrefMatcher})
+    if links:
+        feed_url = urljoin(url, links[0]['href'])
+        FeedSnifferCache[url] = feed_url
+        return feed_url
+    return None

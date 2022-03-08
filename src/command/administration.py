@@ -66,7 +66,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         end = int(args[2]) + 1
     elif len(args) == 4:
         start = int(args[2])
-        end = int(args[3]) + 1
+        end = int(args[3])
     else:
         start = 0
         end = 1

@@ -126,7 +126,7 @@ class PostFormatter:
         :param display_title: -1=disable, 0=auto, 1=force display
         :param style: 0=RSStT, 1=flowerss
         :param display_media: -1=disable, 0=enable
-        :return: A formatted post str, and the media of the post
+        :return: (formatted post, need media, need linkpreview)
         """
         assert send_mode in {FORCE_LINK, AUTO, FORCE_TELEGRAPH, FORCE_MESSAGE}
         assert isinstance(length_limit, int) and length_limit >= 0
@@ -211,8 +211,10 @@ class PostFormatter:
         elif send_mode == FORCE_TELEGRAPH and self.telegraph_link is False:
             message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
         else:  # AUTO
-            if self.media:
+            if display_media != DISABLE and self.media:
                 await self.media.validate()  # check media validity
+            media_msg_count = await self.media.estimate_message_counts() \
+                if (display_media != DISABLE and self.media) else 0
             normal_msg_post = self.generate_formatted_post(sub_title=sub_title,
                                                            tags=tags,
                                                            need_title=need_title,
@@ -222,13 +224,11 @@ class PostFormatter:
                                                            message_style=message_style)
             normal_msg_len = get_plain_text_length(normal_msg_post)
             if (
-                    (0 < length_limit < self.plain_length)  # length_limit == 0 means no limit
+                    (0 < length_limit <= self.plain_length)  # length_limit == 0 means no limit
                     or
-                    (not self.media and normal_msg_len > 4096)
+                    normal_msg_len > (4096 if not media_msg_count else 1024)
                     or
-                    (self.media and normal_msg_len > 1024)
-                    or
-                    await self.media.estimate_message_counts() > 1
+                    media_msg_count > 1
             ):
                 message_type = TELEGRAPH_MESSAGE
             else:

@@ -623,11 +623,11 @@ class Media:
         media = await self.upload_all(chat_id=None)
         return sum(1 for _ in media[0])
 
-    def __len__(self):
-        return len(self._media)
+    def __len__(self) -> int:
+        return sum(1 for medium in self._media if not medium.drop_silently)
 
-    def __bool__(self):
-        return bool(self._media)
+    def __bool__(self) -> bool:
+        return any(not medium.drop_silently for medium in self._media)
 
     @property
     def valid_count(self):

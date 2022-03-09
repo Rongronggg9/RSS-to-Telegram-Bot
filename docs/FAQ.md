@@ -2,7 +2,7 @@
 
 ### **Q**: Why some posts were missing? / Why did the bot respond to me so slowly?
 
-**A**: Due to Telegram's restrictions, if too many messages are sent in a short period, the bot will get flood-controlled and have to wait for a certain time. Though the bot will retry, if still gets flood controlled, the message will be dropped. **Avoid subscribing to too many feeds, <u>especially in channels and groups</u> (they have a much stricter flood control threshold).**
+**A**: Due to Telegram's restrictions, if too many messages are sent in a short period, the bot will get flood-controlled and have to wait for a certain time. Though the bot will retry, if still gets flood controlled, the message will be dropped. **Avoid subscribing to too many feeds, <ins>especially in channels and groups</ins> (they have a much stricter flood control threshold).**
 
 ### **Q**: How to use the bot in my channel or group?
 

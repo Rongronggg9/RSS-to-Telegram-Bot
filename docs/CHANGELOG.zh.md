@@ -76,7 +76,7 @@
 #### 亮点
 
 - **多用户**: 任何用户都可以使用 bot，也可以在频道和群组中使用（除非环境变量 `MULTIUSER` 设置为 `0`）。
-- **国际化**: Bot 现在支持多语言。目前，<u>英语 (English, en)</u>, <u>简体中文 (zh-Hans)</u> 和 <u>粤语 (廣東話, yue)</u> 已被支持。你可以参考 [翻译指南](translation-guide.md)，通过将 bot 翻译为你的语言，为项目作出贡献。
+- **国际化**: Bot 现在支持多语言。目前，<ins>英语 (English, en)</ins>, <ins>简体中文 (zh-Hans)</ins> 和 <ins>粤语 (廣東話, yue)</ins> 已被支持。你可以参考 [翻译指南](translation-guide.md)，通过将 bot 翻译为你的语言，为项目作出贡献。
 - **用户友好**: 你可以交互式地使用大部分命令，而不需要记住他们的语法。
 - **HTTP 缓存**: Bot 已经实现了 [RFC7234](https://datatracker.ietf.org/doc/html/rfc7234) 中的必要部分，以“缓存”订阅源。这可以帮助 bot 所在的服务器和订阅源所在的服务器降低负载。
 

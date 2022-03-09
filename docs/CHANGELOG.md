@@ -78,7 +78,7 @@ Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)
 #### Highlights
 
 - **Multi-user**: The bot can be used by any users, or in channels and groups (unless env variable `MULTIUSER` is set to `0`).
-- **I18n**: The bot now supports multiple languages. Currently, <u>English (en)</u>, <u>Simplified Chinese (简体中文, zh-Hans)</u> and <u>Cantonese (廣東話, yue)</u> are supported. You can contribute by translating the bot to your language following the [translation guide](translation-guide.md).
+- **I18n**: The bot now supports multiple languages. Currently, <ins>English (en)</ins>, <ins>Simplified Chinese (简体中文, zh-Hans)</ins> and <ins>Cantonese (廣東話, yue)</ins> are supported. You can contribute by translating the bot to your language following the [translation guide](translation-guide.md).
 - **User-friendly**: You can use most commands interactively, no need to remember their syntax.
 - **HTTP Caching**: The bot has implemented the necessary parts of [RFC7234](https://datatracker.ietf.org/doc/html/rfc7234) to "cache" feeds. It can reduce the servers loads of both the bot and the feed provider.
 

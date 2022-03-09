@@ -17,20 +17,27 @@ from src.exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, U
 
 logger = log.getLogger('RSStT.medium')
 
-sinaimg_sizes = ['large', 'mw2048', 'mw1024', 'mw720', 'middle']
-sinaimg_size_parser = re.compile(r'(?P<domain>^https?://wx\d\.sinaimg\.\w+/)'
-                                 r'(?P<size>\w+)'
-                                 r'(?P<filename>/\w+\.\w+$)').match
-pixiv_sizes = ['original', 'master']
-pixiv_size_parser = re.compile(r'(?P<url_prefix>^https?://i\.pixiv\.(cat|re)/img-)'
-                               r'(?P<size>\w+)'
-                               r'(?P<url_infix>/img/\d{4}/(\d{2}/){5})'
-                               r'(?P<filename>\d+_p\d+)'
-                               r'(?P<file_ext>\.\w+$)').match
-sinaimg_server_parser = re.compile(r'(?P<url_prefix>^https?://wx)'
-                                   r'(?P<server_id>\d)'
-                                   r'(?P<url_suffix>\.sinaimg\.\S+$)').match
-isTelegramCannotFetch = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
+sinaimg_sizes: Final = ('large', 'mw2048', 'mw1024', 'mw720', 'middle')
+sinaimg_size_parser: Final = re.compile(r'(?P<domain>^https?://wx\d\.sinaimg\.\w+/)'
+                                        r'(?P<size>\w+)'
+                                        r'(?P<filename>/\w+\.\w+$)').match
+pixiv_sizes: Final = ('original', 'master')
+pixiv_size_parser: Final = re.compile(r'(?P<url_prefix>^https?://i\.pixiv\.(cat|re)/img-)'
+                                      r'(?P<size>\w+)'
+                                      r'(?P<url_infix>/img/\d{4}/(\d{2}/){5})'
+                                      r'(?P<filename>\d+_p\d+)'
+                                      r'(?P<file_ext>\.\w+$)').match
+sinaimg_server_parser: Final = re.compile(r'(?P<url_prefix>^https?://wx)'
+                                          r'(?P<server_id>\d)'
+                                          r'(?P<url_suffix>\.sinaimg\.\S+$)').match
+# lizhi_sizes: Final = ('ud.mp3', 'hd.mp3', 'sd.m4a')  # ud.mp3 is rare
+lizhi_sizes: Final = ('hd.mp3', 'sd.m4a')
+lizhi_server_id: Final = ('1', '2', '5', '')
+lizhi_parser: Final = re.compile(r'(?P<url_prefix>^https?://cdn)'
+                                 r'(?P<server_id>[125]?)'
+                                 r'(?P<url_infix>\.lizhi\.fm/[\w/]+)'
+                                 r'(?P<size_suffix>([uh]d\.mp3|sd\.m4a)$)').match
+isTelegramCannotFetch: Final = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
 
 IMAGE: Final = 'image'
 VIDEO: Final = 'video'
@@ -412,9 +419,9 @@ class Image(Medium):
         if not sinaimg_server_match:  # is not a sinaimg img
             return await super().change_server()
 
-        self._server_change_count += 1
         if self._server_change_count >= 1:
             return False
+        self._server_change_count += 1
         parsed = sinaimg_server_match.groupdict()
         new_server_id = int(parsed['server_id']) + 1
         if new_server_id > 4:
@@ -437,6 +444,39 @@ class Audio(Medium):
     typeFallbackTo = None
     typeFallbackAllowSelfUrls = False
     inputMediaExternalType = InputMediaDocumentExternal
+
+    def __init__(self, url: Union[str, list[str]]):
+        super().__init__(url)
+        new_urls = []
+        for url in self.urls:
+            lizhi_match = lizhi_parser(url)
+            if not lizhi_match:
+                new_urls.append(url)
+                continue
+            parsed_lizhi = lizhi_match.groupdict()  # is a pixiv img
+            for size_suffix in lizhi_sizes:
+                new_url = parsed_lizhi['url_prefix'] + parsed_lizhi['server_id'] + parsed_lizhi['url_infix'] \
+                          + size_suffix
+                if new_url not in new_urls:
+                    new_urls.append(new_url)
+            if url not in new_urls:
+                new_urls.append(url)
+        self.urls = new_urls
+
+    async def change_server(self):
+        lizhi_match = lizhi_parser(self.chosen_url)
+        if not lizhi_match:  # is not a lizhi audio
+            return await super().change_server()
+
+        if self._server_change_count >= 1:
+            return False
+        self._server_change_count += 1
+        parsed = lizhi_match.groupdict()
+        server_id = parsed['server_id']
+        new_server_id = lizhi_server_id[lizhi_server_id.index(server_id) - 1] \
+            if server_id in lizhi_server_id else lizhi_server_id[0]
+        self.chosen_url = f"{parsed['url_prefix']}{new_server_id}{parsed['url_infix']}{parsed['size_suffix']}"
+        return True
 
 
 class Animation(Image):

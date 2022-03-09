@@ -312,10 +312,10 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
     content_length = int(response.headers.get('Content-Length', '1024'))
     max_read_length = min(content_length, 5 * 1024)
     if not (
-            # a non-webp image
-            (content_type.startswith('image') and content_type.find('webp') == -1)
+            # a non-webp-or-svg image
+            (content_type.startswith('image') and content_type.find('webp') == -1 and content_type.find('svg') == -1)
             or (
-                    # a webp image
+                    # an un-truncated webp image
                     (content_type.find('webp') != -1 or content_type == 'application/octet-stream')
                     and content_length <= max_read_length  # PIL cannot handle a truncated webp image
             )

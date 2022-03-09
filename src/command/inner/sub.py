@@ -15,8 +15,6 @@ from src.i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html
 from src.parsing.utils import html_space_stripper
 
-FeedLinkTypeMatcher = re.compile(r'application/(rss|rdf|atom)(\+xml)?', re.I)
-FeedLinkHrefMatcher = re.compile(r'(rss|rdf|atom)', re.I)
 FeedSnifferCache = lrucache(size=256)
 
 with open('src/opml_template.opml', 'r') as __template:
@@ -27,7 +25,7 @@ async def sub(user_id: int,
               feed_url: Union[str, tuple[str, str]],
               lang: Optional[str] = None,
               bypass_feed_sniff: bool = False) -> dict[str, Union[int, str, db.Sub, None]]:
-    if not bypass_feed_sniff and feed_url in FeedSnifferCache:
+    if not bypass_feed_sniff and feed_url in FeedSnifferCache and FeedSnifferCache[feed_url]:
         return await sub(user_id, FeedSnifferCache[feed_url], lang=lang, bypass_feed_sniff=True)
 
     ret = {'url': feed_url,
@@ -57,9 +55,14 @@ async def sub(user_id: int,
             if rss_d is None:
                 # try sniffing a feed for the web page
                 if not bypass_feed_sniff and wf.status == 200 and wf.content:
-                    sniffed_feed_url = feed_sniffer(wf.url, wf.content)
+                    sniffed_feed_url = feed_sniffer(feed_url, wf.content)
                     if sniffed_feed_url:
-                        return await sub(user_id, sniffed_feed_url, lang=lang, bypass_feed_sniff=True)
+                        sniff_ret = await sub(user_id, sniffed_feed_url, lang=lang, bypass_feed_sniff=True)
+                        if sniff_ret['sub']:
+                            return sniff_ret
+                        else:
+                            FeedSnifferCache[feed_url] = None
+                            FeedSnifferCache[feed_url_original] = None
                 logger.warning(f'Sub {feed_url} for {user_id} failed: ({wf.error})')
                 return ret
 
@@ -300,6 +303,12 @@ async def migrate_to_new_url(feed: db.Feed, new_url: str) -> Union[bool, db.Feed
     return new_url_feed
 
 
+FeedLinkTypeMatcher = re.compile(r'(application|text)/(rss|rdf|atom)(\+xml)?', re.I)
+FeedLinkHrefMatcher = re.compile(r'(rss|rdf|atom)', re.I)
+FeedAHrefMatcher = re.compile(r'/(feed|rss|atom)(\.(xml|rss|atom))?$', re.I)
+FeedATextMatcher = re.compile(r'([^a-zA-Z]|^)(rss|atom)([^a-zA-Z]|$)', re.I)
+
+
 def feed_sniffer(url: str, html: str) -> Optional[str]:
     if url in FeedSnifferCache:
         return FeedSnifferCache[url]
@@ -310,6 +319,14 @@ def feed_sniffer(url: str, html: str) -> Optional[str]:
     links = soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher, 'href': True})
     if not links:
         links = soup.find_all(name='link', attrs={'rel': 'alternate', 'href': FeedLinkHrefMatcher})
+    if not links:
+        links = soup.find_all(name='a', attrs={'class': FeedATextMatcher})
+    if not links:
+        links = soup.find_all(name='a', attrs={'title': FeedATextMatcher})
+    if not links:
+        links = soup.find_all(name='a', attrs={'href': FeedAHrefMatcher})
+    if not links:
+        links = soup.find_all(name='a', text=FeedATextMatcher)
     if links:
         feed_url = urljoin(url, links[0]['href'])
         FeedSnifferCache[url] = feed_url

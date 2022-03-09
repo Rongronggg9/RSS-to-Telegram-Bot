@@ -45,7 +45,7 @@ def is_absolute_link(link: str) -> bool:
 
 
 def emojify(xml):
-    xml = emojize(xml, use_aliases=True)
+    xml = emojize(xml, language='alias', variant='emoji_type')
     for emoticon, emoji in emoji_dict.items():
         # emojify weibo emoticons, get all here: https://api.weibo.com/2/emotions.json?source=1362404091
         xml = xml.replace(f'[{emoticon}]', emoji)

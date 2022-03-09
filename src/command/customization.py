@@ -87,7 +87,7 @@ async def callback_set(event: events.CallbackQuery.Event,
         elif action is not None and action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES:
             await inner.customization.set_exhaustive_option(sub_or_user, action)
 
-        info = await inner.customization.get_sub_info(sub_or_user, lang, including_default_prompt=True) \
+        info = await inner.customization.get_sub_info(sub_or_user, lang, additional_guide=True) \
             if not set_user_default else \
             i18n[lang]['set_user_default_description']
         buttons = await inner.customization.get_customization_buttons(sub_or_user, lang=lang, page=page)
@@ -119,7 +119,7 @@ async def cmd_set_default(event: Union[events.NewMessage.Event, Message],
                           lang: Optional[str] = None,
                           **__):  # cmd: set_default
     user = await db.User.get_or_none(id=event.chat_id)
-    msg = i18n[lang]['set_user_default_description']
+    msg = i18n[lang]['set_user_default_description'] + '\n\n' + i18n[lang]['read_formatting_settings_guidebook_html']
     buttons = await inner.customization.get_customization_buttons(user, lang=lang)
     await event.respond(msg, buttons=buttons, parse_mode='html')
     return
@@ -145,7 +145,7 @@ async def callback_reset(event: events.CallbackQuery.Event,
     await sub.save()
     if update_interval_flag:
         await inner.utils.update_interval(sub)
-    info = await inner.customization.get_sub_info(sub, lang, including_default_prompt=True)
+    info = await inner.customization.get_sub_info(sub, lang, additional_guide=True)
     buttons = await inner.customization.get_customization_buttons(sub, lang=lang, page=page)
     await event.edit(info, buttons=buttons, parse_mode='html')
 

@@ -1,5 +1,65 @@
 # Changelog
 
+## Custom format, new l10n, improved media fallback, and more (v2.1.0)
+
+Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `dev` branch. If you are using it, you may have noticed the new features. Since new commands are added, please use `/lang` command once again and select your language to let the bot update your command list.
+
+### BREAKING CHANGES
+
+- Inline mode is now required to be enabled due to new custom settings. Go to [@BotFather](https://t.me/BotFather), send `/setinline`, select your bot, and reply with an inline placeholder you like. For example, [@RSStT_Bot](https://t.me/RSStT_Bot) is using `Please input a command to continue...`.
+
+### Additions
+
+#### Highlights
+
+- **More custom formatting options**: `/set` command now gains its full power. You can control media or any metadata to be displayed or not. Adding your custom hashtags and setting your custom subscription title are all possible, but the inline mode is required to be enabled. Read the detailed description of formatting settings in the [Formatting Settings Guidebook](formatting-settings.md).
+- **User's default formatting settings**: Use `/set_default` to set your default formatting settings. It applies to all your new subscriptions and if you like, you can make existing subscriptions use them. It is useful if you want to set similar settings for most of your subscriptions.
+
+![img.png](resources/formatting.png)
+
+- **New l10n**: Italian (Italiano), Turkish (Türkçe), Catalan (Català), and French (français). Feel like adding your language? Please read the translation guide [here](translation-guide.md).
+- **Feed sniffer**: If you try to subscribe to a webpage instead of a feed, the bot will try to sniff the feed from the webpage. (Note: this only works if the webpage contains a feed link.)
+- **Enclosure support**: The bot can now extract enclosures from posts. Enjoy listening to podcasts or downloading attachments!
+- **`<audio>` support**: The bot can now extract audio from post content. Enjoy listening to podcasts!
+- **Send long images as files**: The bot can now send long images as files. This can prevent Telegram from compressing the image and making it unreadable.
+- **OPML importing w/ custom title**: You can now import subscriptions from OPML files, without losing your custom title. The bot will ask you if the bot should use the custom titles from the OPML file or not.
+- **OPML exporting w/ custom title**: You can now export your subscriptions to an OPML, without losing your custom title.
+
+#### Other additions
+
+- **Image validation for more formats**: The bot can now judge the validity of non-JPEG images and fall back automatically to alternative images (if any) when the image is invalid.
+- **Image fallback (`srcset`)**: The bot can now fall back an image to its alternative images (`<img srcset="...">`, if any) when the image is invalid.
+- **Image fallback for pixiv**: The bot can now fall back an image from pixiv to its other sizes when the image is invalid. (#41)
+- **Image fallback for all images**: The bot can now use images.weserv.nl to fall back an invalid image to an image valid for Telegram API.
+- **Video fallback**: The bot can now fall back a video to its alternative videos (`<video><source>...</video>`, if any) or its poster (`<video poster="...">`, if any) when the video is invalid.
+- **WEBP and SVG support**: The bot can now use images.weserv.nl to convert WEBP and SVG to PNG, to make them compatible with Telegram API.
+- **Media uploader**: The bot now uploads media by using bare MTProto API calls, instead of using the effective method of telethon. This is to avoid unnecessary media fallback and to improve performance.
+
+### Enhancements
+
+- **Page number**: When a command needs to be paginated, the bot will show the current page number.
+- **`/unsub_all` confirmation and backup**: When you unsubscribe from all feeds, the bot will ask you to confirm and send you a backup.
+- **Cancel**: Some commands can be canceled by tapping on the `Cancel` button.
+- **Custom monitor interval**: You have now more choice of monitor interval, and if you want, you can set any interval you like (need the inline mode to be enabled, note that the bot manager can prevent ordinary users from setting a too-small value).
+- **Deactivating reason**: When a subscription is deactivated due to too many errors, the bot will tell you the reason.
+- **Drop more icons**: Some posts have annoying icons. The bot can now detect and drop more.
+- **Monitor tasks order randomization**: The order of the monitor tasks is randomized.
+- **Retry when Telegram internal error occurs**: When Telegram internal error occurs, the bot will retry to send the message.
+- **Rewritten post parser**: The post parser is rewritten to be more flexible and gain the ability to support custom formatting.
+- **Rewritten rich-text splitter**: The rich-text splitter is rewritten to be more stable, flexible and gain the ability to support custom formatting. This also prevents it from prematurely splitting the text.
+- **Command speedup**: Some commands are now faster.
+- **`/test` formatting**: The `/test` command now uses the user's default formatting settings or the formatting settings of the feed (if subscribed). (Note: only the bot manager can use this command.)
+- **Minor enhancements**
+
+### Bug fixes
+
+- **Feed title not updated**: When a feed updates its title, the bot will now update the title in the DB and send messages with the new title.
+- **Content too long**: Those commands that may contain long content now will be either shortened or paginated. If still too long, the bot will prompt you.
+- **Too many entities**: The bot now ensures that the number of formatting entities in a message is not greater than 100 (Telegram API limit), otherwise a split is made. This is to prevent messages from losing their formatting.
+- **Potential deadlock**: A potential deadlock issue has been fixed.
+- **Improper white-space and linebreak policy**: The bot can now avoid unintended white spaces and linebreaks in messages, especially for weird feeds. This also applies to the feed/post title and post author.
+- **Minor bug fixes**
+
 ## Multi-user, i18n, improved user-friendliness, and more (v2.0.0)
 
 Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)

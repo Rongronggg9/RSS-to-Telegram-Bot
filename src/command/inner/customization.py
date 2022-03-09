@@ -28,17 +28,21 @@ FALLBACK_TO_USER_DEFAULT_EMOJI = "↩️"
 
 async def get_sub_info(sub: db.Sub,
                        lang: Optional[str] = None,
-                       including_default_prompt: bool = False) -> str:
+                       additional_guide: bool = False) -> str:
     if not isinstance(sub.feed, db.Feed):
         await sub.fetch_related('feed')
     info = (
             f"<b>{i18n[lang]['subscription_info']}</b>\n\n"
             f"{i18n[lang]['feed_title']}: {sub.feed.title}\n"
-            f"{i18n[lang]['feed_url']}: {sub.feed.link}\n"
-            + (f"\n{i18n[lang]['subscription_title']}: {sub.title}" if sub.title else '')
-            + (f"\n{i18n[lang]['hashtags']}: {construct_hashtags(sub.tags)}" if sub.tags else '')
+            f"{i18n[lang]['feed_url']}: {sub.feed.link}"
+            + ('\n\n' if sub.title or sub.tags else '')
+            + (f"{i18n[lang]['subscription_title']}: {sub.title}" if sub.title else '')
+            + ('\n' if sub.title and sub.tags else '')
+            + (f"{i18n[lang]['hashtags']}: {construct_hashtags(sub.tags)}" if sub.tags else '')
             + (f"\n\n{i18n[lang]['default_emoji_header_description'] % (FALLBACK_TO_USER_DEFAULT_EMOJI,)}"
-               if including_default_prompt else '')
+               if additional_guide else '')
+            + (f"\n\n{i18n[lang]['read_formatting_settings_guidebook_html']}"
+               if additional_guide else '')
     )
     return info
 
@@ -82,7 +86,7 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
         (
             Button.inline(f"{i18n[lang]['status']}: "
                           + i18n[lang]['status_activated' if sub_or_user.state == 1 else 'status_deactivated'],
-                          data=f'set={sub_or_user.id},activate|{page}') 
+                          data=f'set={sub_or_user.id},activate|{page}')
             if not is_user else
             Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['reset_all_button'],
                           data=f'reset_all_confirm'),

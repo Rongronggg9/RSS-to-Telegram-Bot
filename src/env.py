@@ -152,7 +152,7 @@ else:
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
-USER_AGENT: Final = os.environ.get('USER_AGENT') or 'RSStT/2.0 RSS Reader'
+USER_AGENT: Final = os.environ.get('USER_AGENT') or 'RSStT/2.1 RSS Reader'
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 # ----- img relay server config -----

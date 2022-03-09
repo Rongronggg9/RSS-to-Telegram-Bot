@@ -10,6 +10,13 @@ ALL_LANGUAGES = tuple(lang[:-5] for lang in listdir(I18N_PATH) if lang.endswith(
 FALLBACK_LANGUAGE = istr('en')
 NO_FALLBACK_KEYS = {istr('iso_639_code')}
 
+NEED_PRE_FILL = {
+    # istr('default_emoji_header_description'):
+    #     ('↩',),
+    istr('read_formatting_settings_guidebook_html'):
+        ('https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/dev/docs/formatting-settings.md',),
+}
+
 
 class _I18N:
     __instance: Optional["_I18N"] = None
@@ -100,6 +107,11 @@ class _L10N:
             assert isinstance(value, dict)
             for k, v in value.items():
                 assert isinstance(v, str) and k not in l10n_d_flatten
+                if v and k in NEED_PRE_FILL:
+                    try:
+                        v = v % NEED_PRE_FILL[k]
+                    except TypeError:
+                        v = ""
                 l10n_d_flatten[k] = v
         self.__l10n_lang = CIMultiDict(l10n_d_flatten)
 

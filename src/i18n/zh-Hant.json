@@ -123,7 +123,8 @@
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中發送，則將通過 Telegraph 發送。\n如果通過 Telegraph 發送失敗，則只會發送其標題和來源。",
         "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式為自動時有效。",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "現在的發送方式永遠不會在 Telegram 消息中顯示媒體。",
-        "use_user_default_button": "使用我的預設值"
+        "use_user_default_button": "使用我的預設值",
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">在這裏閱讀格式設置手冊。</a>"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "定制訂閲的預設設置。\n\n訂閲中尚未修改過的設置會退回到本頁上的設置。如果您想對許多訂閲使用同樣的設置，這就很有用。",

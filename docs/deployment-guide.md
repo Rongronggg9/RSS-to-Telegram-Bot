@@ -46,6 +46,10 @@ docker-compose up -d
 
 [dev]: https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fdev&plugins=postgresql&envs=TOKEN%2CMANAGER%2CMULTIUSER%2CTELEGRAPH_TOKEN&optionalEnvs=MULTIUSER%2CTELEGRAPH_TOKEN&TOKENDesc=Your+bot+token&MANAGERDesc=Your+Telegram+user+ID&MULTIUSERDesc=If+set+to+0%2C+only+the+manager+can+use+the+bot&TELEGRAPH_TOKENDesc=To+enable+sending+via+Telegraph%2C+you+need+to+set+this&referralCode=PEOFMi
 
+After deployed, check the bot log to see if it is using PostgreSQL (`postgre`), otherwise, all the data will be lost when updating.
+
+_Please note that if you deploy RSStT without using the above buttons, you must manually add the PostgreSQL plug-in._
+
 ### Update
 
 Turn to your GitHub repository and switch to the branch you've deployed, then click `Fetch upstream` and `Fetch and merge`.

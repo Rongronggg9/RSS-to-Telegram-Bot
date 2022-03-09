@@ -39,18 +39,23 @@
 
 - 多用户
 - 国际化
-    - 英语、简体中文、粤语、意大利语还有[更多](docs/translation-guide.md)！
+    - 英语、中文、粤语、意大利语还有[更多](docs/translation-guide.md)！
 - RSS 源的文章内容可被发送至 Telegram
     - 保持富文本格式
-    - 保持媒体文件
-    - 自动判断 RSS 源的标题是否为自动填充，并自动选择是否略去标题
-    - 自动显示作者名
+    - 保持媒体文件 (可自定义)
+        - 在文章内容或者 enclosure 里的图片、视频、音频；和在文章 enclosure 里的文档
+        - 长图会作为文件发送，防止 Telegram 将它压缩得不可读
+        - 丢弃烦人的图标，它们破坏了阅读体验
     - 自动替换 emoji shortcodes 为 emoji
     - 自动替换满足某些特征的表情图片为 emoji 或其描述文本
+    - 自动判断 RSS 源的标题是否为自动填充，并自动选择是否略去标题 (可自定义)
+    - 自动显示作者名 (可自定义)
     - 自动切分超长消息
-        - 如果配置了 Telegraph，消息会通过 Telegraph 发出
+        - 如果配置了 Telegraph，消息会通过 Telegraph 发出 (可自定义)
+- [丰富的自定义格式设定V](docs/formatting-settings.md)
+    - Hashtag、自定义标题，等等
 - 为 Telegram 和 RSS 源配置独立的代理设置
-- OPML 导入和导出
+- OPML 导入和导出 (保持自定义标题)
 - 自定义订阅
 - 优化的性能 (参见 [FAQ](docs/FAQ.zh.md#q-bot-的性能怎么样它看起来有轻微的内存泄漏问题))
 - 用户友好

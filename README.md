@@ -39,19 +39,23 @@
 
 - Multi-user
 - I18n
-    - English, Simplified Chinese, Cantonese, Italian, and [more](docs/translation-guide.md)!
+    - English, Chinese, Cantonese, Italian, and [more](docs/translation-guide.md)!
 - The content of the posts of an RSS feed will be sent to Telegram
     - Keep rich-text format
-    - Keep media
-    - Automatically determine whether the title of the RSS feed is auto-filled, if so, omit the title
-    - Automatically show the author-name
+    - Keep media (customizable)
+        - Images, Videos, and Audio both in the post content and enclosure; Documents in the post enclosure 
+        - Long images will be sent as files to prevent Telegram from compressing the image and making it unreadable
+        - Drop annoying icons, they break the reading experience
     - Automatically replace emoji shortcodes with emoji
     - Automatically replace emoji images with emoji or its description text
+    - Automatically determine whether the title of the RSS feed is auto-filled, if so, omit the title (customizable)
+    - Automatically show the author-name (customizable)
     - Automatically split too-long messages
-        - If configured Telegraph, the message will be sent via Telegraph
+        - If configured Telegraph, the message will be sent via Telegraph (customizable)
+- [Various customizable formatting settings](docs/formatting-settings.md)
+    - Hashtags, custom title, etc.
 - Individual proxy settings for Telegram and RSS feeds
-- OPML importing and exporting
-- Subscription customization
+- OPML importing and exporting (keep custom title)
 - Optimized performance (see also the [FAQ](docs/FAQ.md#q-how-is-the-performance-of-the-bot-it-appears-to-have-a-slight-memory-leak-problem))
 - User-friendly
 - HTTP Caching

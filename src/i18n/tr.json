@@ -28,6 +28,7 @@
         "message_too_long_prompt": "Komut başarıyla yürütülmüş olmalı, ancak dönüş mesajı çok uzun ve gönderilemiyor."
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "Bu komut yalnızca bot yöneticisi tarafından kullanılabilir.",
         "permission_denied_not_chat_admin": "Bu komut yalnızca bu grubun/kanalın yöneticileri tarafından kullanılabilir.",
         "permission_denied_not_in_private_chat": "Bu komut yalnızca özel bir sohbette kullanılabilir.",

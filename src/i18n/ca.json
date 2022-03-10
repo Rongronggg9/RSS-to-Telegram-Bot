@@ -28,6 +28,7 @@
         "message_too_long_prompt": "L'ordre s'hauria d'haver executat correctament, però el missatge de retorn és massa llarg i no es pot enviar."
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "Aquesta ordre només la pot utilitzar el gestor de bots.",
         "permission_denied_not_chat_admin": "Aquesta ordre només la poden utilitzar els administradors d'aquest grup/canal.",
         "permission_denied_not_in_private_chat": "Aquesta ordre només es pot utilitzar en un xat privat.",

@@ -28,6 +28,7 @@
         "message_too_long_prompt": "命令應該執行成功咗，但係返回嘅訊息太長，傳送唔到。"
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "你冇用呢條命令嘅許可。",
         "permission_denied_not_bot_manager": "只有機械人嘅管理員先畀用呢條命令。",
         "permission_denied_not_chat_admin": "只有谷/台嘅管理員先畀用呢條命令。",
         "permission_denied_not_in_private_chat": "只有喺私人傾偈入面先畀用呢條命令。",

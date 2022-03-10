@@ -28,6 +28,7 @@
         "message_too_long_prompt": "命令应已成功执行，但返回消息太长了，无法发送。"
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "你没有使用此命令的权限。",
         "permission_denied_not_bot_manager": "此命令只可由机器人的管理员使用。",
         "permission_denied_not_chat_admin": "此命令只可由群/频道管理员使用。",
         "permission_denied_not_in_private_chat": "此命令只可在私聊中使用。",

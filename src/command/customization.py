@@ -89,7 +89,7 @@ async def callback_set(event: events.CallbackQuery.Event,
 
         info = await inner.customization.get_sub_info(sub_or_user, lang, additional_guide=True) \
             if not set_user_default else \
-            i18n[lang]['set_user_default_description']
+            i18n[lang]['set_user_default_description'] + '\n\n' + i18n[lang]['read_formatting_settings_guidebook_html']
         buttons = await inner.customization.get_customization_buttons(sub_or_user, lang=lang, page=page)
         await event.edit(info, buttons=buttons, parse_mode='html')
         return

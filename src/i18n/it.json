@@ -28,6 +28,7 @@
         "message_too_long_prompt": "Il comando avrebbe dovuto essere eseguito correttamente, ma il messaggio di ritorno è troppo lungo e non può essere inviato."
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "Questo comando può essere usato solo dal bot manager.",
         "permission_denied_not_chat_admin": "Questo comando può essere usato solo dagli amministratori di questo gruppo/canale.",
         "permission_denied_not_in_private_chat": "Questo comando può essere usato solo in una chat privata.",

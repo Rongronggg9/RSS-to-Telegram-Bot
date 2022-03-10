@@ -9,9 +9,9 @@ from urllib.parse import urlparse, urljoin
 from attr import define
 
 from src import web
-from .medium import Video, Image, Media, Animation, Audio, construct_images_weserv_nl_url
+from .medium import Video, Image, Media, Animation, Audio
 from .html_node import *
-from .utils import stripNewline, stripLineEnd, stripBr, is_absolute_link, emojify
+from .utils import stripNewline, stripLineEnd, is_absolute_link, emojify
 
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 srcsetParser = re.compile(r'(?:^|,\s*)'
@@ -105,7 +105,7 @@ class Parser:
                 return None
             if not is_absolute_link(href) and self.feed_link:
                 href = urljoin(self.feed_link, href)
-            return Link(await self._parse_item(soup.children), href)
+            return Link(text, href)
 
         if tag == 'img':
             src, srcset = soup.get('src'), soup.get('srcset')

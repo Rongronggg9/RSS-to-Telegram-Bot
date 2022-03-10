@@ -28,6 +28,7 @@
         "message_too_long_prompt": ""
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "",
         "permission_denied_not_chat_admin": "",
         "permission_denied_not_in_private_chat": "Cette commande peut être utilisée seulement dans une disussion privée.",

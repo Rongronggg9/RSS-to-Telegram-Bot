@@ -245,6 +245,10 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 '__chat_action__'
             )
 
+            sender_state = sender_id and await db.User.get_or_none(id=sender_id).values_list('state', flat=True)
+            if not sender_state:
+                sender_state = 0  # default state
+
             # get the user's lang
             lang_in_db = await db.User.get_or_none(id=chat_id).values_list('lang', flat=True)
             lang = lang_in_db if lang_in_db != 'null' else None
@@ -271,15 +275,24 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     logger.warning(f'Redirected {describe_user()} (using {command}) to the private chat with the bot')
                     raise events.StopPropagation
 
-            if (only_manager or not env.MULTIUSER) and sender_id != env.MANAGER:
+            permission_denied_not_manager = only_manager and sender_id != env.MANAGER
+            permission_denied_no_permission = (
+                    sender_id != env.MANAGER
+                    and ((not env.MULTIUSER and sender_state < 1) or sender_state < 0)
+            )
+            if permission_denied_not_manager or permission_denied_no_permission:
                 if is_chat_action:  # chat action, bypassing
                     raise events.StopPropagation
-                if not env.MULTIUSER and not only_manager and sender_id is None:  # anonymous admin
-                    await respond_or_answer(event, i18n[lang]['promote_to_admin_prompt'])
-                else:
-                    await respond_or_answer(event, i18n[lang]['permission_denied_not_bot_manager'])
+                await respond_or_answer(event,
+                                        i18n[lang]['permission_denied_not_bot_manager']
+                                        if permission_denied_not_manager
+                                        else i18n[lang]['permission_denied_no_permission'])
                 logger.warning(f'Refused {describe_user()} to use {command} '
-                               f'because the command can only be used by a bot manager')
+                               f'because ' + (
+                                   'the command can only be used by the bot manager'
+                                   if permission_denied_not_manager else
+                                   'the user has no permission to use the command'
+                               ))
                 raise events.StopPropagation
 
             if is_inline:
@@ -494,8 +507,8 @@ class GroupMigratedAction(events.ChatAction):
 
     After a group migration, below updates will be sent:
     UpdateChannel(*),
-    UpdateNewChannelMessage(message=MessageService(action=MessageActionChannelMigrateFrom(*)),
-    UpdateNewChannelMessage(message=MessageService(action=MessageActionChatMigrateTo(*))
+    UpdateNewChannelMessage(message=MessageService(action=MessageActionChatMigrateTo(*)))
+    UpdateNewChannelMessage(message=MessageService(action=MessageActionChannelMigrateFrom(*))),
 
     This class only listens to the latest one.
     """

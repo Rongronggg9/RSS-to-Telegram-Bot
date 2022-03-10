@@ -28,6 +28,7 @@
         "message_too_long_prompt": "The command should have been executed successfully, but the return message is too long to send."
     },
     "l10n_permission_denied_reasons": {
+        "permission_denied_no_permission": "You don't have permission to use this command.",
         "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
         "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",
         "permission_denied_not_in_private_chat": "This command can only be used in a private chat.",

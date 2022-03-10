@@ -211,8 +211,8 @@ class PostFormatter:
         elif send_mode == FORCE_TELEGRAPH and self.telegraph_link is False:
             message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
         else:  # AUTO
-            if display_media != DISABLE and self.media:
-                await self.media.validate()  # check media validity
+            # if display_media != DISABLE and self.media:
+            #     await self.media.validate()  # check media validity
             media_msg_count = await self.media.estimate_message_counts() \
                 if (display_media != DISABLE and self.media) else 0
             normal_msg_post = self.generate_formatted_post(sub_title=sub_title,

@@ -33,9 +33,10 @@
     - **Force enable**: always display title _(the post must have a title)_
     - **Disable**: never display title
 - **Display source**:
-    - **<ins>Auto (link displayed as feed title)</ins>**: display a link to the post and the feed title. If **style** is **RSStT**, they will be displayed together as a text link. _(note that if link does not exist, only the feed title will be displayed)_
-    - **No feed title (only link on the bottom)**: display a link to the post on the bottom of the message _(note that if link does not exist, fall back to **completely disable**)_
-    - **No feed title (link displayed as post title)**: display the link and post title together as a text link _(note that if link does not exist, fall back to **completely disable**)_
+    - **<ins>Feed title and link</ins>**: display a link to the post and the feed title. If **style** is **RSStT**, they will be displayed together as a text link at the end of the message. _(note that if link does not exist, only the feed title will be displayed)_
+    - **Feed title and link displayed as post title**: display the link and post title together as a text link at the beginning of the message, but not to omit the feed title. _(note that if link does not exist, only the post title will be displayed)_
+    - **No feed title, link at the end**: display a link to the post at the end of the message _(note that if link does not exist, fall back to **completely disable**)_
+    - **No feed title, link displayed as post title**: display the link and post title together as a text link at the beginning of the message _(note that if link does not exist, fall back to **completely disable**)_
     - **Completely disable**: do not display anything about the source
 - **Display author**:
     - **<ins>Auto</ins>**: display author name if it is not fully contained in the feed title

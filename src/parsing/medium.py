@@ -120,7 +120,7 @@ class Medium:
             (self.type_fallback_medium.type_fallback_chain()
              if self.need_type_fallback and self.type_fallback_medium is not None
              else None)
-        )
+        ) if not self.drop_silently else None
 
     async def upload(self, chat_id: int, force_upload: bool = False) \
             -> tuple[Optional[TypeMessageMedia], Optional[TypeMedium]]:
@@ -242,6 +242,7 @@ class Medium:
                     if 0 < self.width <= 30 or 0 < self.height < 30:
                         self.valid = False
                         self.drop_silently = True
+                        return False
                     # force convert WEBP/SVG to PNG
                     elif (
                             self.content_type

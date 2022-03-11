@@ -30,6 +30,7 @@ FORCE_TELEGRAPH: Final = 1
 FORCE_MESSAGE: Final = 2
 DISABLE_BUT_DISPLAY_LINK: Final = -1
 COMPLETELY_DISABLE: Final = -2
+DISABLE_BUT_DISPLAY_LINK_AS_POST_TITLE: Final = -3
 RSSTT: Final = 0
 FLOWERSS: Final = 1
 
@@ -37,6 +38,7 @@ FLOWERSS: Final = 1
 NO_VIA: Final = 'no_via'
 FEED_TITLE_VIA: Final = 'feed_title_via'
 LINK_VIA: Final = 'link_via'
+LINK_VIA_AS_POST_TITLE: Final = 'post_title_link_via'
 TypeViaType = Union[NO_VIA, FEED_TITLE_VIA, LINK_VIA]
 
 # message type
@@ -122,7 +124,8 @@ class PostFormatter:
             send via Telegraph when a post cannot be sent in a single message
         :param link_preview: 0=auto, 1=force enable
         :param display_author: -1=disable, 0=auto, 1=force display
-        :param display_via: -2=completely disable, -1=disable but display link, 0=auto, 1=force display
+        :param display_via: -3=disable but display link as post title, -2=completely disable,
+            -1=disable but display link on the bottom, 0=auto, 1=force display
         :param display_title: -1=disable, 0=auto, 1=force display
         :param style: 0=RSStT, 1=flowerss
         :param display_media: -1=disable, 0=enable
@@ -132,7 +135,8 @@ class PostFormatter:
         assert isinstance(length_limit, int) and length_limit >= 0
         assert link_preview in {AUTO, FORCE_ENABLE}
         assert display_author in {DISABLE, AUTO, FORCE_DISPLAY}
-        assert display_via in {COMPLETELY_DISABLE, DISABLE_BUT_DISPLAY_LINK, AUTO, FORCE_DISPLAY}
+        assert display_via in {DISABLE_BUT_DISPLAY_LINK_AS_POST_TITLE, COMPLETELY_DISABLE, DISABLE_BUT_DISPLAY_LINK,
+                               AUTO, FORCE_DISPLAY}
         assert display_title in {DISABLE, AUTO, FORCE_DISPLAY}
         assert style in {RSSTT, FLOWERSS}
 
@@ -168,6 +172,7 @@ class PostFormatter:
         need_title = display_title != DISABLE and self.title and (
                 display_title == FORCE_DISPLAY
                 or (display_title == AUTO and self.__title_similarity < 90)
+                or (display_via == DISABLE_BUT_DISPLAY_LINK_AS_POST_TITLE and self.link)
         )
 
         # ---- determine via_type ----  # FORCE_DISPLAY is now considered as AUTO
@@ -175,6 +180,8 @@ class PostFormatter:
             via_type = NO_VIA
         elif display_via == DISABLE_BUT_DISPLAY_LINK and self.link:
             via_type = LINK_VIA
+        elif display_via == DISABLE_BUT_DISPLAY_LINK_AS_POST_TITLE and self.link:
+            via_type = LINK_VIA_AS_POST_TITLE
         elif display_via in {AUTO, FORCE_DISPLAY} and self.feed_title:
             via_type = FEED_TITLE_VIA
         elif display_via in {AUTO, FORCE_DISPLAY} and not self.feed_title and self.link:
@@ -290,12 +297,12 @@ class PostFormatter:
         # title:
         #   NORMAL_MESSAGE && need_title: <b><u>Title</u></b>
         #   NORMAL_MESSAGE && !need_title: (* nothing)
-        #   TELEGRAPH_MESSAGE || LINK_MESSAGE: <b><u>Title (* text link)</u></b>
+        #   TELEGRAPH_MESSAGE || LINK_MESSAGE || LINK_VIA_AS_POST_TITLE: <b><u>Title (* text link)</u></b>
         #
         # via:
         #   FEED_TITLE_VIA: via Feed Title (* text link if possible)
         #   LINK_VIA: source (* text link)
-        #   NO_VIA: (* nothing)
+        #   NO_VIA / LINK_VIA_AS_POST_TITLE: (* nothing)
 
         # flowerss style:
         # {feed_title}
@@ -309,10 +316,10 @@ class PostFormatter:
         #
         # feed_title:
         #   FEED_TITLE_VIA: <b>Feed Title</b>
-        #   LINK_VIA / NO_VIA: (* nothing)
+        #   LINK_VIA / LINK_VIA_AS_POST_TITLE / NO_VIA: (* nothing)
         #
         # title:
-        #   LINK_MESSAGE: <b><u>Title (* text link)</u></b>
+        #   LINK_MESSAGE || LINK_VIA_AS_POST_TITLE: <b><u>Title (* text link)</u></b>
         #   need_title: <b><u>Title</u></b>
         #   !need_title: (* nothing)
         #
@@ -335,7 +342,7 @@ class PostFormatter:
             # ---- title ----
             if message_type == TELEGRAPH_MESSAGE:
                 title_text = Link(title, param=self.telegraph_link)
-            elif message_type == LINK_MESSAGE:
+            elif message_type == LINK_MESSAGE or (via_type == LINK_VIA_AS_POST_TITLE and self.link):
                 title_text = Link(title, param=self.link)
             else:  # NORMAL_MESSAGE
                 title_text = title if need_title else None
@@ -346,6 +353,8 @@ class PostFormatter:
                 via_text = Text([Text('via '), Link(feed_title, param=self.link) if self.link else Text(feed_title)])
             elif via_type == LINK_VIA and self.link:
                 via_text = Link('source', param=self.link)
+            elif via_type == LINK_VIA_AS_POST_TITLE:
+                via_text = None
             else:
                 via_text = None
             via_html = via_text.get_html() if via_text else None
@@ -371,7 +380,7 @@ class PostFormatter:
                 feed_title_html = None
 
             # ---- title ----
-            if message_type == LINK_MESSAGE:
+            if message_type == LINK_MESSAGE or (via_type == LINK_VIA_AS_POST_TITLE and self.link):
                 title_html = Bold(Underline(Link(title, param=self.link))).get_html()
             else:
                 title_html = Bold(Underline(title)).get_html() if need_title else None
@@ -381,7 +390,7 @@ class PostFormatter:
                 sourcing_html = Link('Telegraph', param=self.telegraph_link).get_html()
                 if not via_type == NO_VIA:
                     sourcing_html += (' | ' + Link('source', param=self.link).get_html()) if self.link else ''
-            elif message_type == LINK_MESSAGE or via_type == NO_VIA:
+            elif message_type == LINK_MESSAGE or via_type in {NO_VIA, LINK_VIA_AS_POST_TITLE}:
                 sourcing_html = None
             else:  # NORMAL_MESSAGE
                 sourcing_html = Link('source', param=self.link).get_html() if self.link else None

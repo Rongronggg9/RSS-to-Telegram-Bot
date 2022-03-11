@@ -18,7 +18,7 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "display_media": (0, -1),
     "display_author": (0, 1, -1),
     # "display_via": (-2, -1, 0, 1),  # currently 1 will be treated as 0
-    "display_via": (0, -1, -2),
+    "display_via": (0, -1, -3, -2),
     "display_title": (0, 1, -1),
     "style": (0, 1)
 }

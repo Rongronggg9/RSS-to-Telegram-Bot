@@ -691,15 +691,21 @@ class Media:
 
 
 def construct_images_weserv_nl_url(url: str,
-                                   width: int = 1280,
-                                   height: int = 1280,
-                                   fit: str = 'inside',
-                                   output_format: str = 'png') -> str:
-    query_string = urlencode({
+                                   width: Optional[int] = 1280,
+                                   height: Optional[int] = 1280,
+                                   fit: Optional[str] = 'inside',
+                                   output_format: Optional[str] = 'png',
+                                   without_enlargement: Optional[bool] = False,
+                                   default_image: Optional[str] = None) -> str:
+    params = {
         'url': url,
         'w': width,
         'h': height,
         'fit': fit,
         'output': output_format,
-    })
+        'we': '1' if without_enlargement else None,
+        'default': default_image,
+    }
+    filtered_params = {k: v for k, v in params.items() if v is not None}
+    query_string = urlencode(filtered_params)
     return env.IMAGES_WESERV_NL + '?' + query_string

@@ -52,7 +52,8 @@ EXCEPTIONS_SHOULD_RETRY = (asyncio.TimeoutError,
                            # aiohttp.ClientResponseError,
                            # aiohttp.ClientConnectionError,
                            aiohttp.ServerConnectionError,
-                           TimeoutError)
+                           TimeoutError,
+                           ConnectionError)
 
 RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
 

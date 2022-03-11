@@ -37,8 +37,8 @@
         "permission_denied_switch_pm": "在與機器人的私人聊天中繼續…",
         "permission_denied_input_command": "請輸入命令以繼續…",
         "permission_denied_no_direct_use": "不應直接使用此命令。請改用 /set。",
-        "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升為管理員 (無需權限)，以授權機器人驗證您的身份。",
-        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級為超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改為「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改為「隱藏」\n6. 現在您應該能夠使用機器人了"
+        "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升爲管理員 (無需權限)，以授權機器人驗證您的身份。",
+        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級爲超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改爲「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改爲「隱藏」\n6. 現在您應該能夠使用機器人了"
     },
     "l10n_misc": {
         "choose_sub_prompt": "請選擇訂閱",
@@ -52,7 +52,10 @@
         "processing": "正在處理中，請稍等片刻…",
         "canceled_by_user": "由用戶取消。",
         "n_subscriptions_in_total": "共有 %d 個訂閲",
-        "other_settings_button": "其他設置…"
+        "other_settings_button": "其他設置…",
+        "user": "User",
+        "channel": "Channel",
+        "group": "Group"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "請以 RSS 源的 URL 回復這條消息。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批量訂閱。",
@@ -72,8 +75,8 @@
         "unsub_all_successful": "已成功退訂所有訂閱"
     },
     "l10n_cmd_import": {
-        "send_opml_prompt": "請發送要匯入的 OPML 檔 (擴展名必須為 .opml)。",
-        "send_opml_reply_placeholder": "OPML 檔 (擴展名必須為 .opml)",
+        "send_opml_prompt": "請發送要匯入的 OPML 檔 (擴展名必須爲 .opml)。",
+        "send_opml_reply_placeholder": "OPML 檔 (擴展名必須爲 .opml)",
         "fetch_file_failed": "提取文件失敗",
         "opml_import_processing": "如果訂閲數目很大或訂閲所在之伺服器速度較慢，則可能需要等待較長時間，坐下來放鬆一下。",
         "opml_parse_error": "OPML 解析錯誤",
@@ -109,7 +112,7 @@
         "display_via": "顯示來源",
         "display_via_-2": "完全禁用",
         "display_via_-1": "僅鏈接 (隱藏源標題)",
-        "display_via_0": "自動 (鏈接顯示為源標題)",
+        "display_via_0": "自動 (鏈接顯示爲源標題)",
         "display_title": "顯示標題",
         "display_title_-1": "禁用",
         "display_title_0": "自動",
@@ -118,11 +121,11 @@
         "style_0": "",
         "style_1": "",
         "set_custom_title_button": "自定義標題…",
-        "set_custom_interval_button": "自定義間隔 (以分鐘為單位)…",
+        "set_custom_interval_button": "自定義間隔 (以分鐘爲單位)…",
         "set_custom_hashtags_button": "自定義 hashtag…",
         "set_interval_prompt": "請選擇監視間隔。",
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中發送，則將通過 Telegraph 發送。\n如果通過 Telegraph 發送失敗，則只會發送其標題和來源。",
-        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式為自動時有效。",
+        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式爲自動時有效。",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "現在的發送方式永遠不會在 Telegram 消息中顯示媒體。",
         "use_user_default_button": "使用我的預設值",
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">在這裏閱讀格式設置手冊。</a>"
@@ -158,18 +161,18 @@
     },
     "l10n_cmd_set_title": {
         "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設置過才能清除，否則就會收到此提示) 。",
-        "set_title_success": "訂閱的自定義標題已修改為: ",
+        "set_title_success": "訂閱的自定義標題已修改爲: ",
         "set_title_success_cleared": "訂閱的自定義標題已清除。"
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位為分鐘 (無需包含單位) 。",
-        "set_interval_success_html": "訂閱的監視間隔已修改為 <b>%d 分鐘</b>。",
-        "set_default_interval_success_html": "預設的監視間隔已修改為 <b>%d 分鐘</b>。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位爲分鐘 (無需包含單位) 。",
+        "set_interval_success_html": "訂閱的監視間隔已修改爲 <b>%d 分鐘</b>。",
+        "set_default_interval_success_html": "預設的監視間隔已修改爲 <b>%d 分鐘</b>。",
         "set_interval_failure_too_small_html": "監視間隔必須大於 <b>%d 分鐘</b>。"
     },
     "l10n_cmd_set_hashtags": {
         "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果沒有 hashtag 提供，已存在的 hashtag 就會被清除 (僅當先前設置過才能清除，否則就會收到此提示) 。",
-        "set_hashtags_success_html": "訂閱的自定義 hashtag 已修改為: ",
+        "set_hashtags_success_html": "訂閱的自定義 hashtag 已修改爲: ",
         "set_hashtags_success_cleared": "訂閱的自定義 hashtag 已清除。",
         "set_hashtags_failure_too_many": "Hashtag 太多，請刪除一些后重試。"
     },
@@ -180,7 +183,20 @@
         "option_value_type": "值類型",
         "option_key_invalid": "選項鍵無效",
         "option_value_invalid": "選項值無效，請檢查其類型",
-        "option_updated": "選項已更新"
+        "option_updated": "選項已更新",
+        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用戶ID</code> 或 <code>/user_info @使用者名稱</code>",
+        "user_not_found": "未能找尋到用戶，請使用用戶 ID。",
+        "user_info": "用戶資訊",
+        "sub_count": "訂閱數目",
+        "participant_count": "成員數目",
+        "user_state": "用戶狀態",
+        "user_state_-1": "被封鎖",
+        "user_state_description_-1": "不能使用機器人",
+        "user_state_0": "訪客",
+        "user_state_description_0": "只在多用戶模式啓用時可使用機器人",
+        "user_state_1": "用戶",
+        "user_state_description_1": "可使用機器人",
+        "set_user_state_as": "更改用戶狀態爲"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "選擇語言",
         "cmd_description_help": "查看幫助",
         "cmd_description_test": "測試 (僅限機器人管理員)",
-        "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)"
+        "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)",
+        "cmd_description_user_info": "查看/更改用戶資訊 (僅限機器人管理員)"
     }
 }

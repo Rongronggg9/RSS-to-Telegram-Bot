@@ -52,7 +52,10 @@
         "processing": "Traitement en cours, veuillez patienter un instant…",
         "canceled_by_user": "Annulé par l'utilisateur.",
         "n_subscriptions_in_total": "%d abonnements au total",
-        "other_settings_button": ""
+        "other_settings_button": "",
+        "user": "",
+        "channel": "",
+        "group": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "",
@@ -180,7 +183,20 @@
         "option_value_type": "",
         "option_key_invalid": "",
         "option_value_invalid": "",
-        "option_updated": ""
+        "option_updated": "",
+        "cmd_user_info_usage_prompt_html": "",
+        "user_not_found": "",
+        "user_info": "",
+        "sub_count": "",
+        "participant_count": "",
+        "user_state": "",
+        "user_state_-1": "",
+        "user_state_description_-1": "",
+        "user_state_0": "",
+        "user_state_description_0": "",
+        "user_state_1": "",
+        "user_state_description_1": "",
+        "set_user_state_as": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "",
         "cmd_description_help": "",
         "cmd_description_test": "",
-        "cmd_description_set_option": ""
+        "cmd_description_set_option": "",
+        "cmd_description_user_info": ""
     }
 }

@@ -52,7 +52,10 @@
         "processing": "Elaborazione, si prega di attendere un momento…",
         "canceled_by_user": "Annullato dall'utente.",
         "n_subscriptions_in_total": "%d abbonamenti in totale",
-        "other_settings_button": ""
+        "other_settings_button": "",
+        "user": "",
+        "channel": "",
+        "group": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Si prega di inserire l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
@@ -180,7 +183,20 @@
         "option_value_type": "Tipo di valore",
         "option_key_invalid": "Il tasto opzione non è valido",
         "option_value_invalid": "Il valore dell'opzione non è valido, controlla il suo tipo",
-        "option_updated": "L'opzione è stata aggiornata"
+        "option_updated": "L'opzione è stata aggiornata",
+        "cmd_user_info_usage_prompt_html": "",
+        "user_not_found": "",
+        "user_info": "",
+        "sub_count": "",
+        "participant_count": "",
+        "user_state": "",
+        "user_state_-1": "",
+        "user_state_description_-1": "",
+        "user_state_0": "",
+        "user_state_description_0": "",
+        "user_state_1": "",
+        "user_state_description_1": "",
+        "set_user_state_as": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "Comandi",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "Selezionare una lingua",
         "cmd_description_help": "Visualizza l'aiuto",
         "cmd_description_test": "Test (solo manager di bot)",
-        "cmd_description_set_option": "Imposta le opzioni del bot (solo per il bot manager)"
+        "cmd_description_set_option": "Imposta le opzioni del bot (solo per il bot manager)",
+        "cmd_description_user_info": ""
     }
 }

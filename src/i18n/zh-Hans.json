@@ -52,7 +52,10 @@
         "processing": "正在处理中，请稍候…",
         "canceled_by_user": "被用户取消。",
         "n_subscriptions_in_total": "总共 %d 个订阅",
-        "other_settings_button": "其他设置…"
+        "other_settings_button": "其他设置…",
+        "user": "用户",
+        "channel": "频道",
+        "group": "群组"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "请用订阅 URL 回复这条消息。\n或者，你也可以使用 <code>/sub url1 url2 url3 …</code> 来批量订阅。",
@@ -180,7 +183,20 @@
         "option_value_type": "值类型",
         "option_key_invalid": "配置的键不合法",
         "option_value_invalid": "配置的值不合法，请检查其类型",
-        "option_updated": "配置已更新"
+        "option_updated": "配置已更新",
+        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用户ID</code> 或 <code>/user_info @用户名</code>",
+        "user_not_found": "未找到用户，请使用用户 ID。",
+        "user_info": "用户信息",
+        "sub_count": "订阅数量",
+        "participant_count": "成员数量",
+        "user_state": "用户状态",
+        "user_state_-1": "已封禁",
+        "user_state_description_-1": "无法使用 bot",
+        "user_state_0": "访客",
+        "user_state_description_0": "只能在开启多用户模式时使用 bot",
+        "user_state_1": "用户",
+        "user_state_description_1": "可以使用 bot",
+        "set_user_state_as": "将用户状态设置为"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "选择语言",
         "cmd_description_help": "查看帮助",
         "cmd_description_test": "测试 (仅 bot 管理员)",
-        "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)"
+        "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)",
+        "cmd_description_user_info": "查看/修改用户信息 (仅 bot 管理员)"
     }
 }

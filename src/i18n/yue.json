@@ -50,9 +50,12 @@
         "unsubscribe": "退訂",
         "subscription_list": "訂閲清單",
         "processing": "處理緊，唔該等陣…",
-        "canceled_by_user": "畀用戶取消咗。",
+        "canceled_by_user": "畀用户取消咗。",
         "n_subscriptions_in_total": "總共 %d 個訂閲",
-        "other_settings_button": "其他設定…"
+        "other_settings_button": "其他設定…",
+        "user": "用户",
+        "channel": "台",
+        "group": "谷"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "唔該用 RSS 嘅 URL 回復呢條訊息。\n或者，用 <code>/sub url1 url2 url3 …</code> 嚟批量訂閲都得。",
@@ -180,7 +183,20 @@
         "option_value_type": "值嘅類型",
         "option_key_invalid": "選項嘅鍵唔啱",
         "option_value_invalid": "選項嘅值唔啱，唔該檢查吓佢嘅類型",
-        "option_updated": "選項改咗"
+        "option_updated": "選項改咗",
+        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用户ID</code> 或者 <code>/user_info @用户名</code>",
+        "user_not_found": "揾唔到用户，唔該用用户 ID。",
+        "user_info": "用户資料",
+        "sub_count": "訂閲計數",
+        "participant_count": "成員計數",
+        "user_state": "用户狀態",
+        "user_state_-1": "畀杯葛咗",
+        "user_state_description_-1": "用唔到機械人",
+        "user_state_0": "訪客",
+        "user_state_description_0": "只有喺多用户模式開咗嘅時候先用到機械人",
+        "user_state_1": "用户",
+        "user_state_description_1": "用唔到機械人",
+        "set_user_state_as": "將用户狀態改做"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "選擇語言",
         "cmd_description_help": "睇幫助",
         "cmd_description_test": "測試 (僅機械人管理員)",
-        "cmd_description_set_option": "改機械人選項 (僅機械人管理員)"
+        "cmd_description_set_option": "改機械人選項 (僅機械人管理員)",
+        "cmd_description_user_info": "睇/改用户資料 (僅機械人管理員)"
     }
 }

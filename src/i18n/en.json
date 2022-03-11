@@ -52,7 +52,10 @@
         "processing": "Processing, please wait for a moment…",
         "canceled_by_user": "Canceled by the user.",
         "n_subscriptions_in_total": "%d subscriptions in total",
-        "other_settings_button": "Other settings…"
+        "other_settings_button": "Other settings…",
+        "user": "User",
+        "channel": "Channel",
+        "group": "Group"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Please reply to this message with the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
@@ -180,7 +183,20 @@
         "option_value_type": "Value type",
         "option_key_invalid": "The option key is invalid",
         "option_value_invalid": "The option value is invalid, please check its type",
-        "option_updated": "The option has been updated"
+        "option_updated": "The option has been updated",
+        "cmd_user_info_usage_prompt_html": "Command usage: <code>/user_info user_id</code> or <code>/user_info @username</code>",
+        "user_not_found": "The user was not found. Use their user ID instead.",
+        "user_info": "User info",
+        "sub_count": "Subscription count",
+        "participant_count": "Participant count",
+        "user_state": "User state",
+        "user_state_-1": "Banned",
+        "user_state_description_-1": "can never use the bot",
+        "user_state_0": "Guest",
+        "user_state_description_0": "can use the bot only if multi-user mode is enabled",
+        "user_state_1": "User",
+        "user_state_description_1": "can use the bot",
+        "set_user_state_as": "Set user state as"
     },
     "l10n_cmd_descriptions": {
         "commands": "Commands",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "Select a language",
         "cmd_description_help": "View help",
         "cmd_description_test": "Test (bot manager only)",
-        "cmd_description_set_option": "Set bot options (bot manager only)"
+        "cmd_description_set_option": "Set bot options (bot manager only)",
+        "cmd_description_user_info": "View/modify user info (bot manager only)"
     }
 }

@@ -4,6 +4,7 @@ from typing import Optional
 from json import load
 from os import listdir, path
 from multidict import CIMultiDict, istr
+from telethon.tl import types
 
 I18N_PATH = path.split(path.realpath(__file__))[0]
 ALL_LANGUAGES = tuple(lang[:-5] for lang in listdir(I18N_PATH) if lang.endswith('.json'))
@@ -16,6 +17,10 @@ NEED_PRE_FILL = {
     istr('read_formatting_settings_guidebook_html'):
         ('https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/dev/docs/formatting-settings.md',),
 }
+
+COMMANDS = ('sub', 'unsub', 'unsub_all', 'list', 'set', 'set_default', 'import', 'export', 'activate_subs',
+            'deactivate_subs', 'version', 'help', 'lang')
+MANAGER_COMMANDS = ('test', 'set_option', 'user_info')
 
 
 class _I18N:
@@ -75,24 +80,20 @@ class _I18N:
                     + cmd_lang_description
             )
             help_msg_html = (
-                f"<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>{l10n.html_escaped('rsstt_slogan')}</a>\n"
-                f"\n"
+                f"<a href='https://github.com/Rongronggg9/RSS-to-Telegram-Bot'>{l10n.html_escaped('rsstt_slogan')}</a>"
+                f"\n\n"
                 f"{l10n.html_escaped('commands')}:\n"
-                f"<b>/sub</b>: {l10n.html_escaped('cmd_description_sub')}\n"
-                f"<b>/unsub</b>: {l10n.html_escaped('cmd_description_unsub')}\n"
-                f"<b>/unsub_all</b>: {l10n.html_escaped('cmd_description_unsub_all')}\n"
-                f"<b>/list</b>: {l10n.html_escaped('cmd_description_list')}\n"
-                f"<b>/set</b>: {l10n.html_escaped('cmd_description_set')}\n"
-                f"<b>/set_default</b>: {l10n.html_escaped('cmd_description_set_default')}\n"
-                f"<b>/import</b>: {l10n.html_escaped('cmd_description_import')}\n"
-                f"<b>/export</b>: {l10n.html_escaped('cmd_description_export')}\n"
-                f"<b>/activate_subs</b>: {l10n.html_escaped('cmd_description_activate_subs')}\n"
-                f"<b>/deactivate_subs</b>: {l10n.html_escaped('cmd_description_deactivate_subs')}\n"
-                f"<b>/version</b>: {l10n.html_escaped('cmd_description_version')}\n"
-                f"<b>/lang</b>: {_cmd_description_lang}\n"
-                f"<b>/help</b>: {l10n.html_escaped('cmd_description_help')}\n\n"
             )
-            l10n.set_help_msg_html(help_msg_html)
+            help_msg_html += '\n'.join(
+                f"<b>/{command}</b>: "
+                f"{l10n.html_escaped(f'cmd_description_{command}') if command != 'lang' else _cmd_description_lang}"
+                for command in COMMANDS
+            )
+            manager_help_msg_html = help_msg_html + '\n\n' + '\n'.join(
+                f"<b>/{command}</b>: {l10n.html_escaped(f'cmd_description_{command}')}"
+                for command in MANAGER_COMMANDS
+            )
+            l10n.set_help_msg_html(help_msg_html, manager_help_msg_html)
 
 
 class _L10N:
@@ -131,8 +132,20 @@ class _L10N:
     def html_escaped(self, key: str):
         return self[key].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
-    def set_help_msg_html(self, msg_html: str):
+    def set_help_msg_html(self, msg_html: str, manager_msg_html: str = None):
         self.__l10n_lang['help_msg_html'] = msg_html
+        self.__l10n_lang['manager_help_msg_html'] = manager_msg_html or msg_html
 
 
 i18n = _I18N()
+
+
+def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> list[types.BotCommand]:
+    commands = [types.BotCommand(command=command, description=i18n[lang][f'cmd_description_{command}'])
+                for command in COMMANDS]
+
+    if manager:
+        commands.extend(types.BotCommand(command=command, description=i18n[lang][f'cmd_description_{command}'])
+                        for command in MANAGER_COMMANDS)
+
+    return commands

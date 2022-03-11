@@ -19,7 +19,7 @@ from random import sample
 from pathlib import Path
 
 from src import env, log, db, command
-from src.i18n import i18n, ALL_LANGUAGES
+from src.i18n import i18n, ALL_LANGUAGES, get_commands_list
 from src.parsing import tgraph
 
 # log
@@ -80,16 +80,16 @@ async def pre():
     try:  # set bot command
         await asyncio.gather(
             command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(), lang_code='',
-                                           commands=command.utils.get_commands_list()),
+                                           commands=get_commands_list()),
             *(
                 command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
                                                lang_code=i18n[lang]['iso_639_code'],
-                                               commands=command.utils.get_commands_list(lang=lang))
+                                               commands=get_commands_list(lang=lang))
                 for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
             ),
             command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
                                            lang_code='',
-                                           commands=command.utils.get_commands_list(lang=manager_lang, manager=True)),
+                                           commands=get_commands_list(lang=manager_lang, manager=True)),
         )
     except Exception as e:
         logger.warning('Set command error: ', exc_info=e)
@@ -137,6 +137,8 @@ async def pre():
                           events.NewMessage(pattern='/version'))
     bot.add_event_handler(command.administration.cmd_test,
                           events.NewMessage(pattern='/test'))
+    bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
+                          events.NewMessage(pattern='/user_info'))
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern='/set_option'))
     # callback query handler
@@ -186,6 +188,8 @@ async def pre():
                           events.CallbackQuery(pattern=r'^reset_all_confirm$'))
     bot.add_event_handler(command.customization.callback_del_subs_title,
                           events.CallbackQuery(pattern=r'^del_subs_title=(\d+-\d+\|)*(\d+-\d+)$'))
+    bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
+                          events.CallbackQuery(pattern=r'^set_user=-?\d+,(-1|0|1)$'))
     # inline query handler
     bot.add_event_handler(command.misc.inline_command_constructor,
                           events.InlineQuery())

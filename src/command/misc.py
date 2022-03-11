@@ -4,9 +4,9 @@ from telethon.tl.patched import Message
 from telethon.errors import RPCError
 
 from src import env, db
-from .utils import command_gatekeeper, get_group_migration_help_msg, get_commands_list, set_bot_commands, logger, \
+from .utils import command_gatekeeper, get_group_migration_help_msg, set_bot_commands, logger, \
     parse_callback_data_with_page
-from src.i18n import i18n, ALL_LANGUAGES
+from src.i18n import i18n, ALL_LANGUAGES, get_commands_list
 from . import inner
 
 
@@ -46,7 +46,7 @@ async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, ev
                                *_,
                                lang: Optional[str] = None,
                                **__):  # callback data: help; command: /help
-    msg = i18n[lang]['help_msg_html']
+    msg = i18n[lang]['help_msg_html' if event.chat_id != env.MANAGER else 'manager_help_msg_html']
     await event.respond(msg, parse_mode='html') \
         if isinstance(event, events.NewMessage.Event) or not hasattr(event, 'edit') \
         else await event.edit(msg, parse_mode='html')
@@ -95,6 +95,7 @@ async def callback_del_buttons(event: events.CallbackQuery.Event,
     await event.answer(cache_time=3600)
     await msg.edit(buttons=None)
 
+
 @command_gatekeeper(only_manager=False, allow_in_others_private_chat=False, quiet=True)
 async def inline_command_constructor(event: events.InlineQuery.Event,
                                      *_,
@@ -112,4 +113,3 @@ async def inline_command_constructor(event: events.InlineQuery.Event,
     await event.answer(results=[builder.article(title=text, text=text)],
                        cache_time=3600,
                        private=False)
-

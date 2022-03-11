@@ -4,7 +4,6 @@ from collections.abc import MutableMapping
 from src.compat import Final
 
 import asyncio
-from html import unescape
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from collections import defaultdict, Counter

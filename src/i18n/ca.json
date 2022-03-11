@@ -52,7 +52,10 @@
         "processing": "Processant, espera un moment…",
         "canceled_by_user": "Cancel·lat per l'usuari.",
         "n_subscriptions_in_total": "%d subscripcions en total",
-        "other_settings_button": ""
+        "other_settings_button": "",
+        "user": "",
+        "channel": "",
+        "group": ""
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Respon l'adreça URL d'un canal RSS. \nO bé, pots utilitzar-lo <code>/sub url1 url2 url3 …</code> per a subscriure't de manera massiva.",
@@ -180,7 +183,20 @@
         "option_value_type": "Tipus de valor",
         "option_key_invalid": "La clau d'opció no és vàlida",
         "option_value_invalid": "El valor de l'opció no és vàlid, comprova el tipus",
-        "option_updated": "L'opció s'ha actualitzat correctament"
+        "option_updated": "L'opció s'ha actualitzat correctament",
+        "cmd_user_info_usage_prompt_html": "",
+        "user_not_found": "",
+        "user_info": "",
+        "sub_count": "",
+        "participant_count": "",
+        "user_state": "",
+        "user_state_-1": "",
+        "user_state_description_-1": "",
+        "user_state_0": "",
+        "user_state_description_0": "",
+        "user_state_1": "",
+        "user_state_description_1": "",
+        "set_user_state_as": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "Ordres",
@@ -198,6 +214,7 @@
         "cmd_description_lang": "Seleccionar un idioma",
         "cmd_description_help": "Visualitzar l'ajuda",
         "cmd_description_test": "Provar (només gestor de bots)",
-        "cmd_description_set_option": "Establir les opcions del bot (només el gestor de bots)"
+        "cmd_description_set_option": "Establir les opcions del bot (només el gestor de bots)",
+        "cmd_description_user_info": ""
     }
 }

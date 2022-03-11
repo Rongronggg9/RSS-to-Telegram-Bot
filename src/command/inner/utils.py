@@ -15,6 +15,8 @@ from src.i18n import i18n
 
 logger = log.getLogger('RSStT.command')
 
+emptyButton = Button.inline(' ', data='null')
+
 
 def parse_hashtags(text: str) -> list[str]:
     if text.find('#') != -1:
@@ -140,7 +142,7 @@ def get_page_buttons(page_number: int,
     page_buttons = [
         Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}|{page_number - 1}')
         if page_number > 1
-        else Button.inline(' ', data='null'),
+        else emptyButton,
 
         Button.inline(page_info + ' | ' + i18n[lang]['cancel'], data='cancel')
         if display_cancel
@@ -148,7 +150,7 @@ def get_page_buttons(page_number: int,
 
         Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}|{page_number + 1}')
         if page_number < page_count
-        else Button.inline(' ', data='null'),
+        else emptyButton,
     ]
     return page_buttons
 
@@ -256,6 +258,10 @@ async def update_interval(feed: Union[db.Feed, db.Sub, int]):
 
 async def list_sub(user_id: int, *args, **kwargs) -> list[db.Sub]:
     return await db.Sub.filter(user=user_id, *args, **kwargs).prefetch_related('feed')
+
+
+async def count_sub(user_id: int, *args, **kwargs) -> int:
+    return await db.Sub.filter(user=user_id, *args, **kwargs).count()
 
 
 async def have_subs(user_id: int) -> bool:

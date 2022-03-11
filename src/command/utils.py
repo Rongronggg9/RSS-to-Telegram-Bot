@@ -524,34 +524,6 @@ class GroupMigratedAction(events.ChatAction):
                 return cls.Event(msg)
 
 
-def get_commands_list(lang: Optional[str] = None, manager: bool = False) -> list[types.BotCommand]:
-    commands = [
-        types.BotCommand(command="sub", description=i18n[lang]['cmd_description_sub']),
-        types.BotCommand(command="unsub", description=i18n[lang]['cmd_description_unsub']),
-        types.BotCommand(command="unsub_all", description=i18n[lang]['cmd_description_unsub_all']),
-        types.BotCommand(command="list", description=i18n[lang]['cmd_description_list']),
-        types.BotCommand(command="set", description=i18n[lang]['cmd_description_set']),
-        types.BotCommand(command="set_default", description=i18n[lang]['cmd_description_set_default']),
-        types.BotCommand(command="import", description=i18n[lang]['cmd_description_import']),
-        types.BotCommand(command="export", description=i18n[lang]['cmd_description_export']),
-        types.BotCommand(command="activate_subs", description=i18n[lang]['cmd_description_activate_subs']),
-        types.BotCommand(command="deactivate_subs", description=i18n[lang]['cmd_description_deactivate_subs']),
-        types.BotCommand(command="version", description=i18n[lang]['cmd_description_version']),
-        types.BotCommand(command="lang", description=i18n[lang]['cmd_description_lang']),
-        types.BotCommand(command="help", description=i18n[lang]['cmd_description_help']),
-    ]
-
-    if manager:
-        commands.extend(
-            (
-                types.BotCommand(command="test", description=i18n[lang]['cmd_description_test']),
-                types.BotCommand(command="set_option", description=i18n[lang]['cmd_description_set_option']),
-            )
-        )
-
-    return commands
-
-
 async def set_bot_commands(scope: Union[types.BotCommandScopeDefault,
                                         types.BotCommandScopePeer,
                                         types.BotCommandScopePeerAdmins,

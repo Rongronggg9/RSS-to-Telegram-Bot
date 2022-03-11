@@ -245,10 +245,6 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 '__chat_action__'
             )
 
-            sender_state = sender_id and await db.User.get_or_none(id=sender_id).values_list('state', flat=True)
-            if not sender_state:
-                sender_state = 0  # default state
-
             # get the user's lang
             lang_in_db = await db.User.get_or_none(id=chat_id).values_list('lang', flat=True)
             lang = lang_in_db if lang_in_db != 'null' else None
@@ -275,10 +271,13 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     logger.warning(f'Redirected {describe_user()} (using {command}) to the private chat with the bot')
                     raise events.StopPropagation
 
+            sender_state = (sender_id and await db.User.get_or_none(id=sender_id).values_list('state', flat=True)) or 0
+            chat_state = (chat_id and await db.User.get_or_none(id=chat_id).values_list('state', flat=True)) or 0
+
             permission_denied_not_manager = only_manager and sender_id != env.MANAGER
             permission_denied_no_permission = (
                     sender_id != env.MANAGER
-                    and ((not env.MULTIUSER and sender_state < 1) or sender_state < 0)
+                    and ((not env.MULTIUSER and max(sender_state, chat_state) < 1) or min(sender_state, chat_state) < 0)
             )
             if permission_denied_not_manager or permission_denied_no_permission:
                 if is_chat_action:  # chat action, bypassing

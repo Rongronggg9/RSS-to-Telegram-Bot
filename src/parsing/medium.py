@@ -273,6 +273,8 @@ class Medium:
                         self.urls = []  # clear the urls, force fall back to file
                 elif self.size <= self.maxSize:  # valid
                     self.valid = True
+                else:
+                    self.valid = False
 
                 if self.valid:
                     self.chosen_url = url
@@ -556,23 +558,6 @@ class Media:
         :return: ((uploaded/original medium, medium type)), invalid media html node)
         """
         await self.validate()
-        async with self.modify_lock:
-            # at least a file and an image
-            if (
-                    sum(isinstance(medium.type_fallback_chain(), File)
-                        for medium in self._media
-                        if not medium.drop_silently) > 0
-                    and
-                    sum(isinstance(medium.type_fallback_chain(), Image)
-                        for medium in self._media
-                        if not medium.drop_silently) > 0
-            ):
-                # fall back all image to files
-                await asyncio.gather(
-                    *(medium.type_fallback()
-                      for medium in self._media
-                      if isinstance(medium.type_fallback_chain(), Image) and not medium.drop_silently)
-                )
 
         media_and_types: tuple[
             Union[tuple[Union[TypeMessageMedia, Medium, None], Optional[TypeMedium]], BaseException],

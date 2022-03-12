@@ -28,6 +28,7 @@
         "message_too_long_prompt": "命令應該執行成功咗，但係返回嘅訊息太長，傳送唔到。"
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "揾唔到谷/台。",
         "permission_denied_no_permission": "你冇用呢條命令嘅許可。",
         "permission_denied_not_bot_manager": "只有機械人嘅管理員先畀用呢條命令。",
         "permission_denied_not_chat_admin": "只有谷/台嘅管理員先畀用呢條命令。",
@@ -76,6 +77,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "唔該送出要匯入嘅 OPML 檔案 (副檔名一定要係 .opml)。",
+        "import_for_channel_or_group_prompt": "如果你要為台/谷匯入訂閲，唔該喺説明文字度寫低台/谷嘅 ID (一定要係 '-100' 打頭) 或者 @username。",
         "send_opml_reply_placeholder": "OPML 檔案 (副檔名一定要係 .opml)",
         "fetch_file_failed": "攞唔到檔案",
         "opml_import_processing": "如果 RSS 太多或者 RSS 喺嘅伺服器太慢，可能會處理好耐，唔該多等陣。",
@@ -186,8 +188,8 @@
         "option_key_invalid": "選項嘅鍵唔啱",
         "option_value_invalid": "選項嘅值唔啱，唔該檢查吓佢嘅類型",
         "option_updated": "選項改咗",
-        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用户ID</code> 或者 <code>/user_info @用户名</code>",
-        "user_not_found": "揾唔到用户，唔該用用户 ID。",
+        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用户ID</code> 或者 <code>/user_info @username</code>",
+        "user_not_found": "揾唔到用户，唔該用用户 ID 代替。",
         "user_info": "用户資料",
         "sub_count": "訂閲計數",
         "participant_count": "成員計數",
@@ -217,6 +219,7 @@
         "cmd_description_help": "睇幫助",
         "cmd_description_test": "測試 (僅機械人管理員)",
         "cmd_description_set_option": "改機械人選項 (僅機械人管理員)",
-        "cmd_description_user_info": "睇/改用户資料 (僅機械人管理員)"
+        "cmd_description_user_info": "睇/改用户資料 (僅機械人管理員)",
+        "usage_in_channel_or_group_prompt_html": "<b>喺台/谷入面嘅用法:</b>\n1. 將機械人加到台/谷入面。\n2a. 直接<b>喺台/谷入面</b>送出命令。\n2b. 或者，好似噉<b>喺同機械人嘅私人傾偈入面</b>送出命令: <code>/sub @username https://exmaple.com</code> 或者 <code>/sub -10010000000000 https://exmaple.com</code>。\n(<code>@username</code> 係台/谷嘅用户名，<code>@</code> 唔可以少；<code>-10010000000000</code> 係台/谷嘅 ID，一定要係 <code>-100</code> 打頭)"
     }
 }

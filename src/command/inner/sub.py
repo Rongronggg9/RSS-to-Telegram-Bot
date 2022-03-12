@@ -8,14 +8,14 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from urllib.parse import urljoin
-from pylru import lrucache
+from cachetools import TTLCache
 
 from src import db, web
 from src.i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html
 from src.parsing.utils import html_space_stripper
 
-FeedSnifferCache = lrucache(size=256)
+FeedSnifferCache = TTLCache(maxsize=256, ttl=60 * 60 * 24)
 
 with open('src/opml_template.opml', 'r') as __template:
     OPML_TEMPLATE = __template.read()

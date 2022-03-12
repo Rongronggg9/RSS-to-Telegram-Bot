@@ -28,6 +28,7 @@
         "message_too_long_prompt": "Il comando avrebbe dovuto essere eseguito correttamente, ma il messaggio di ritorno è troppo lungo e non può essere inviato."
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "",
         "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "Questo comando può essere usato solo dal bot manager.",
         "permission_denied_not_chat_admin": "Questo comando può essere usato solo dagli amministratori di questo gruppo/canale.",
@@ -76,6 +77,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Per favore inviatemi il file OPML da importare (il nome dell'estensione deve essere .opml).",
+        "import_for_channel_or_group_prompt": "",
         "send_opml_reply_placeholder": "Il file OPML da importare (l'estensione deve essere .opml)",
         "fetch_file_failed": "Fallito il recupero del file",
         "opml_import_processing": "Se il numero di feed è grande o i server dei feed sono lenti, l'attesa può essere lunga. Siediti e rilassati.",
@@ -217,6 +219,7 @@
         "cmd_description_help": "Visualizza l'aiuto",
         "cmd_description_test": "Test (solo manager di bot)",
         "cmd_description_set_option": "Imposta le opzioni del bot (solo per il bot manager)",
-        "cmd_description_user_info": ""
+        "cmd_description_user_info": "",
+        "usage_in_channel_or_group_prompt_html": ""
     }
 }

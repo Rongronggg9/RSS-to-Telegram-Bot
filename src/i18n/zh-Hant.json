@@ -25,9 +25,10 @@
         "flood_wait_prompt": "您的操作太頻繁，以至於機器人已超出 Telegram 的速率限制。請放慢速度。",
         "edit_conflict_prompt": "您的操作太頻繁，導致操作衝突。請放慢速度。",
         "callback_already_running_prompt": "您已請求另一個命令。請在它完成後重試。",
-        "message_too_long_prompt": "該命令應該已經執行成功，但是返回消息太長，無法發送。"
+        "message_too_long_prompt": "該命令應該已經執行成功，但是返回消息太長，無法傳送。"
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "未能找尋到頻道/群組。",
         "permission_denied_no_permission": "您沒有權限執行此命令。",
         "permission_denied_not_bot_manager": "此命令只能由機器人管理員使用。",
         "permission_denied_not_chat_admin": "此命令只能由該群組/頻道的管理員使用。",
@@ -46,16 +47,16 @@
         "next_page": "下一頁",
         "back": "後退",
         "cancel": "取消",
-        "subscribe": "增加訂閲",
+        "subscribe": "新增訂閲",
         "unsubscribe": "退訂訂閲",
         "subscription_list": "訂閱清單",
         "processing": "正在處理中，請稍等片刻…",
         "canceled_by_user": "由用戶取消。",
         "n_subscriptions_in_total": "共有 %d 個訂閲",
         "other_settings_button": "其他設置…",
-        "user": "User",
-        "channel": "Channel",
-        "group": "Group"
+        "user": "用戶",
+        "channel": "頻道",
+        "group": "群組"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "請以 RSS 源的 URL 回復這條消息。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批量訂閱。",
@@ -75,7 +76,8 @@
         "unsub_all_successful": "已成功退訂所有訂閱"
     },
     "l10n_cmd_import": {
-        "send_opml_prompt": "請發送要匯入的 OPML 檔 (擴展名必須爲 .opml)。",
+        "send_opml_prompt": "請傳送要匯入的 OPML 檔 (擴展名必須爲 .opml)。",
+        "import_for_channel_or_group_prompt": "如果要爲頻道/群組匯入訂閱，請在說明文字處填入頻道/群組 ID (必須以 '-100' 爲開頭) 或 @username。",
         "send_opml_reply_placeholder": "OPML 檔 (擴展名必須爲 .opml)",
         "fetch_file_failed": "提取文件失敗",
         "opml_import_processing": "如果訂閲數目很大或訂閲所在之伺服器速度較慢，則可能需要等待較長時間，坐下來放鬆一下。",
@@ -92,7 +94,7 @@
         "notification_normal": "常規",
         "notification_muted": "靜音",
         "monitor_interval": "監視間隔",
-        "send_mode": "發送方式",
+        "send_mode": "傳送方式",
         "send_mode_-1": "僅標題和來源",
         "send_mode_0": "自動",
         "send_mode_1": "强制 Telegraph",
@@ -126,9 +128,9 @@
         "set_custom_interval_button": "自定義間隔 (以分鐘爲單位)…",
         "set_custom_hashtags_button": "自定義 hashtag…",
         "set_interval_prompt": "請選擇監視間隔。",
-        "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中發送，則將通過 Telegraph 發送。\n如果通過 Telegraph 發送失敗，則只會發送其標題和來源。",
-        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在發送方式爲自動時有效。",
-        "display_media_only_effective_if_send_mode_auto_and_telegram": "現在的發送方式永遠不會在 Telegram 消息中顯示媒體。",
+        "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中傳送，則將通過 Telegraph 傳送。\n如果通過 Telegraph 傳送失敗，則只會傳送其標題和來源。",
+        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在傳送方式爲自動時有效。",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "現在的傳送方式永遠不會在 Telegram 消息中顯示媒體。",
         "use_user_default_button": "使用我的預設值",
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">在這裏閱讀格式設置手冊。</a>"
     },
@@ -186,7 +188,7 @@
         "option_key_invalid": "選項鍵無效",
         "option_value_invalid": "選項值無效，請檢查其類型",
         "option_updated": "選項已更新",
-        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用戶ID</code> 或 <code>/user_info @使用者名稱</code>",
+        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用戶ID</code> 或 <code>/user_info @username</code>",
         "user_not_found": "未能找尋到用戶，請使用用戶 ID。",
         "user_info": "用戶資訊",
         "sub_count": "訂閱數目",
@@ -202,7 +204,7 @@
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",
-        "cmd_description_sub": "增加訂閲",
+        "cmd_description_sub": "新增訂閲",
         "cmd_description_unsub": "退訂訂閲",
         "cmd_description_unsub_all": "退訂所有訂閲",
         "cmd_description_list": "查看訂閱清單",
@@ -217,6 +219,7 @@
         "cmd_description_help": "查看幫助",
         "cmd_description_test": "測試 (僅限機器人管理員)",
         "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)",
-        "cmd_description_user_info": "查看/更改用戶資訊 (僅限機器人管理員)"
+        "cmd_description_user_info": "查看/更改用戶資訊 (僅限機器人管理員)",
+        "usage_in_channel_or_group_prompt_html": "<b>在頻道/群組中的用法:</b>\n1. 將機器人新增至頻道/群組中。\n2a. 直接<b>在頻道/群組中</b>傳送命令。\n2b. 或者，您可以<b>在和機器人的私人聊天中</b>像這樣傳送命令: <code>/sub @username https://exmaple.com</code> 或者 <code>/sub -10010000000000 https://exmaple.com</code>。\n(<code>@username</code> 是頻道/群組的用戶名稱，<code>@</code> 是不可或缺的; <code>-10010000000000</code> 是頻道/群組的 ID，且必須以 <code>-100</code> 爲開頭)"
     }
 }

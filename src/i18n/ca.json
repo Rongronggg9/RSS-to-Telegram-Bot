@@ -28,6 +28,7 @@
         "message_too_long_prompt": "L'ordre s'hauria d'haver executat correctament, però el missatge de retorn és massa llarg i no es pot enviar."
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "",
         "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "Aquesta ordre només la pot utilitzar el gestor de bots.",
         "permission_denied_not_chat_admin": "Aquesta ordre només la poden utilitzar els administradors d'aquest grup/canal.",
@@ -76,6 +77,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Envia'm el fitxer OPML que s'importarà (el nom de l'extensió ha de ser .opml).",
+        "import_for_channel_or_group_prompt": "",
         "send_opml_reply_placeholder": "El fitxer OPML que s'ha d'importar (el nom de l'extensió ha de ser .opml)",
         "fetch_file_failed": "No s'ha pogut obtenir el fitxer",
         "opml_import_processing": "Si el nombre de canals de continguts és gran o els servidors d'alimentació són lents, pot ser una llarga espera. Asseu-te i relaxa't.",
@@ -217,6 +219,7 @@
         "cmd_description_help": "Visualitzar l'ajuda",
         "cmd_description_test": "Provar (només gestor de bots)",
         "cmd_description_set_option": "Establir les opcions del bot (només el gestor de bots)",
-        "cmd_description_user_info": ""
+        "cmd_description_user_info": "",
+        "usage_in_channel_or_group_prompt_html": ""
     }
 }

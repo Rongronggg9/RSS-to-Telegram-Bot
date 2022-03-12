@@ -25,18 +25,18 @@
         "flood_wait_prompt": "Botu, Telegram'ın hız sınırını aşacak kadar sık çalıştırıyorsunuz. Lütfen yavaşlayın.",
         "edit_conflict_prompt": "İşlem çatışmalarını çok sık yaşıyorsunuz. Lütfen yavaşlayın.",
         "callback_already_running_prompt": "Başka bir komut istediniz. Lütfen bittikten sonra tekrar deneyin.",
-        "message_too_long_prompt": "Komut başarıyla yürütülmüş olmalı, ancak dönüş mesajı çok uzun ve gönderilemiyor."
+        "message_too_long_prompt": "Komut başarıyla yürütülmüş olmalıydı, ancak dönüş mesajı gönderilemeyecek kadar uzun."
     },
     "l10n_permission_denied_reasons": {
-        "permission_denied_no_permission": "",
+        "permission_denied_no_permission": "Bu komutu kullanma izniniz yok.",
         "permission_denied_not_bot_manager": "Bu komut yalnızca bot yöneticisi tarafından kullanılabilir.",
         "permission_denied_not_chat_admin": "Bu komut yalnızca bu grubun/kanalın yöneticileri tarafından kullanılabilir.",
         "permission_denied_not_in_private_chat": "Bu komut yalnızca özel bir sohbette kullanılabilir.",
         "permission_denied_not_member": "Bu grupta/kanalda değilsiniz, bu nedenle botu kullanamazsınız.",
         "permission_denied_bot_not_member": "Bot artık bu grupta/kanalda değil, dolayısıyla burada çalışmayacak.",
-        "permission_denied_switch_pm": "",
-        "permission_denied_input_command": "",
-        "permission_denied_no_direct_use": "",
+        "permission_denied_switch_pm": "Botla özel sohbete devam edin…",
+        "permission_denied_input_command": "Devam etmek için lütfen bir komut girin…",
+        "permission_denied_no_direct_use": "Bu komut doğrudan kullanılmamalıdır. Bunun yerine /set kullanın.",
         "promote_to_admin_prompt": "Bu grubun anonim bir yöneticisiyseniz, botu kimliğinizi doğrulamasını sağlamak için lütfen botu bir yöneticiye (izne gerek yok) yükseltin.",
         "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız"
     },
@@ -52,13 +52,13 @@
         "processing": "İşleniyor, lütfen biraz bekleyin…",
         "canceled_by_user": "Kullanıcı tarafından iptal edildi.",
         "n_subscriptions_in_total": "Toplamda %d abonelik",
-        "other_settings_button": "",
-        "user": "",
-        "channel": "",
-        "group": ""
+        "other_settings_button": "Diğer ayarlar…",
+        "user": "Kullanıcı",
+        "channel": "Kanal",
+        "group": "Grup"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "Lütfen bir RSS beslemesi URL'si ile yanıtlayın.\nVeya toplu abone olmak için <code>/sub url1 url2 url3 …</code> kullanabilirsiniz.",
+        "sub_reply_feed_url_prompt_html": "Lütfen bu mesajı bir RSS beslemesinin URL'si ile yanıtlayın.\nVeya toplu abone olmak için <code>/sub url1 url2 url3 …</code> kullanabilirsiniz.",
         "sub_usage_in_channel_html": "Abone olmak için lütfen <code>/sub url1 url2 url3 …</code> kullanın.",
         "sub_successful": "Başarıyla abone olundu",
         "sub_failed": "Abone olunamadı"
@@ -66,13 +66,13 @@
     "l10n_cmd_unsub": {
         "unsub_choose_sub_prompt_html": "Lütfen aboneliğinizi iptal etmek istediğiniz bir abonelik seçin.\nVeya toplu olarak abonelikten çıkmak için <code>/unsub url1 url2 url3 …</code> kullanabilirsiniz.",
         "unsub_successful": "Abonelikten başarıyla çıkıldı",
-        "unsub_failed": "Abonelikten çıkılamadı"
+        "unsub_failed": "Abonelikten çıkma başarısız"
     },
     "l10n_cmd_unsub_all": {
-        "unsub_all_confirm_prompt": "Tüm abonelikleri iptal etmek istediğinizden emin misiniz?",
-        "unsub_all_confirm": "Evet, tüm aboneliklerin aboneliğini iptal et",
+        "unsub_all_confirm_prompt": "Tüm aboneliklerden çıkmak istediğinizden emin misiniz?",
+        "unsub_all_confirm": "Evet, tüm aboneliklerden çık",
         "unsub_all_cancel": "Hayır, iptal et",
-        "unsub_all_successful": "Tüm aboneliklerin aboneliği başarıyla iptal edildi"
+        "unsub_all_successful": "Tüm aboneliklerden başarıyla çıkıldı"
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Lütfen içe aktarılacak OPML dosyasını bana gönderin (uzantı adı .opml olmalıdır).",
@@ -80,8 +80,8 @@
         "fetch_file_failed": "Dosya getirilemedi",
         "opml_import_processing": "Besleme sayısı fazlaysa veya besleme sunucuları yavaşsa, uzun bir bekleme olabilir. Arkana yaslan ve rahatla.",
         "opml_parse_error": "OPML ayrıştırma hatası",
-        "keep_subs_title_button": "",
-        "delete_subs_title_button": ""
+        "keep_subs_title_button": "İçe aktarılan aboneliklerin özel başlıklarını sakla",
+        "delete_subs_title_button": "İçe aktarılan aboneliklerin özel başlıklarını sil"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Lütfen özelleştirmek istediğiniz bir abonelik seçin.",
@@ -92,61 +92,61 @@
         "notification_normal": "Normal",
         "notification_muted": "Sessiz",
         "monitor_interval": "İzleme aralığı",
-        "send_mode": "",
-        "send_mode_-1": "",
-        "send_mode_0": "",
-        "send_mode_1": "",
-        "send_mode_2": "",
-        "length_limit": "",
-        "length_limit_unlimited": "",
-        "link_preview": "",
-        "link_preview_0": "",
-        "link_preview_1": "",
-        "display_media": "",
-        "display_media_-1": "",
-        "display_media_0": "",
-        "display_author": "",
-        "display_author_-1": "",
-        "display_author_0": "",
-        "display_author_1": "",
-        "display_via": "",
-        "display_via_-3": "",
-        "display_via_-2": "",
-        "display_via_-1": "",
-        "display_via_0": "",
-        "display_via_1": "",
-        "display_title": "",
-        "display_title_-1": "",
-        "display_title_0": "",
-        "display_title_1": "",
-        "style": "",
+        "send_mode": "Gönderme modu",
+        "send_mode_-1": "Yalnızca başlık ve kaynak",
+        "send_mode_0": "Otomatik",
+        "send_mode_1": "Telgrafı Zorla",
+        "send_mode_2": "Telegram mesajlarını zorla",
+        "length_limit": "Uzunluk sınırı (yalnızca otomatik mod)",
+        "length_limit_unlimited": "Sınırsız",
+        "link_preview": "Bağlantı önizlemesi",
+        "link_preview_0": "Otomatik",
+        "link_preview_1": "Etkinleştirmeyi zorla",
+        "display_media": "Medyayı görüntüle",
+        "display_media_-1": "Devre dışı bırak",
+        "display_media_0": "Etkinleştir",
+        "display_author": "Yazarı görüntüle",
+        "display_author_-1": "Devre dışı bırak",
+        "display_author_0": "Otomatik",
+        "display_author_1": "Etkinleştirmeyi zorla",
+        "display_via": "Kaynak göster",
+        "display_via_-3": "Özet akışı başlığı yok, bağlantı gönderi başlığı olarak görüntüleniyor",
+        "display_via_-2": "Tamamen devre dışı bırak",
+        "display_via_-1": "Yayın başlığı yok, bağlantı sonda",
+        "display_via_0": "Özet akışı başlığı ve bağlantısı",
+        "display_via_1": "Akış başlığı ve bağlantı gönderi başlığı olarak görüntülenir",
+        "display_title": "Gönderi başlığını görüntüle",
+        "display_title_-1": "Devre dışı bırak",
+        "display_title_0": "Otomatik",
+        "display_title_1": "Etkinleştirmeye zorla",
+        "style": "Stil",
         "style_0": "",
         "style_1": "",
-        "set_custom_title_button": "",
-        "set_custom_interval_button": "",
-        "set_custom_hashtags_button": "",
+        "set_custom_title_button": "Özel Başlık…",
+        "set_custom_interval_button": "Özel aralık (dakika olarak)…",
+        "set_custom_hashtags_button": "Özel hashtag'ler…",
         "set_interval_prompt": "Lütfen bir izleme aralığı seçin.",
-        "set_length_limit_prompt": "",
-        "length_limit_only_effective_if_send_mode_auto": "",
-        "display_media_only_effective_if_send_mode_auto_and_telegram": "",
-        "use_user_default_button": "",
-        "read_formatting_settings_guidebook_html": ""
+        "set_length_limit_prompt": "Lütfen bir uzunluk sınırı seçin.\n\nBir gönderi sınırdan uzunsa veya tek bir mesajda gönderilemiyorsa, Telegraph aracılığıyla gönderilir.\nTelegraph üzerinden gönderme başarısız olursa, yalnızca başlığı ve kaynağı gönderilir.",
+        "length_limit_only_effective_if_send_mode_auto": "Uzunluk sınırı yalnızca gönderme modu otomatik olduğunda geçerlidir.",
+        "display_media_only_effective_if_send_mode_auto_and_telegram": "Geçerli gönderme modu, Telegram mesajlarında hiçbir zaman medyayı göstermez.",
+        "use_user_default_button": "Varsayılanımı kullan",
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Biçimlendirme ayarları kılavuzunu buradan okuyun.</a>"
     },
     "l10n_cmd_set_default": {
-        "set_user_default_description": "",
-        "reset_all_button": "",
-        "reset_all_confirm_prompt": "",
-        "reset_all_confirm": "",
-        "reset_all_cancel": "",
-        "reset_all_successful": ""
+        "set_user_default_description": "Abonelikler için varsayılan ayarları belirleyin.\n\nBir aboneliğin ayarlanmamış ayarları, bu sayfadaki ayarlara geri döner. Aboneliklerinizin çoğu için aynı ayarları yapmak istiyorsanız kullanışlıdır.",
+        "reset_all_button": "Tüm abonelikleri varsayılanıma sıfırla",
+        "reset_all_confirm_prompt": "Tüm abonelikleri varsayılana sıfırlamak istediğinizden emin misiniz?",
+        "reset_all_confirm": "Evet, tüm abonelikleri varsayılanıma sıfırla",
+        "reset_all_cancel": "Hayır, iptal et",
+        "reset_all_successful": "Tüm abonelikleri başarıyla varsayılana sıfırlandı"
     },
     "l10n_sub_info": {
         "subscription_info": "Abonelik bilgileri",
-        "feed_title": "",
-        "subscription_title": "Abonelik başlığı",
+        "feed_title": "Özet akışı başlığı",
+        "subscription_title": "Özel başlık",
         "feed_url": "Besleme URL'si",
-        "hashtags": "",
-        "default_emoji_header_description": ""
+        "hashtags": "Hashtag'ler",
+        "default_emoji_header_description": "%s aboneliğin varsayılan ayarlarınızı kullandığı anlamına gelir. /set_default kullanarak bunları değiştirebilirsiniz."
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "İzleme görevi arka arkaya 100 kez başarısız olmuştu. RSS beslemesine aboneliğiniz devre dışı bırakıldı.\nYeniden etkinleştirmek için lütfen /activate_subs komutunu kullanın."
@@ -157,26 +157,26 @@
         "all_subs_are_activated": "Tüm abonelikler etkinleştirildi."
     },
     "l10n_cmd_deactivate": {
-        "choose_sub_to_be_deactivated": "Aşağıdaki abonelikler etkinleştirildi, devre dışı bırakmak için birini seçin.\nDevre dışı bırakıldıktan sonra, güncelleştirmeleri izlemeden askıya alınır. Aboneliğe artık ihtiyacınız yoksa, lütfen devre dışı bırakmak yerine aboneliği iptal etmeyi düşünün.",
+        "choose_sub_to_be_deactivated": "Aşağıdaki abonelikler etkinleştirildi, devre dışı bırakmak için birini seçin.\nDevre dışı bırakıldıktan sonra, güncelleştirmeleri izlemeden askıya alınır. Artık aboneliğe ihtiyacınız yoksa, lütfen devre dışı bırakmak yerine aboneliği iptal etmeyi düşünün.",
         "deactivate_all_subs": "Tüm aboneliklerimi devre dışı bırak",
         "all_subs_are_deactivated": "Tüm abonelikler devre dışı bırakıldı."
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "",
-        "set_title_success": "",
-        "set_title_success_cleared": ""
+        "cmd_set_title_usage_prompt_html": "Komut kullanımı: <code>/set_title sub_id başlık</code>\n\nNot: Özel başlığı temizlemek için <code>title</code> komut başlığını kullanın (yalnızca önceden ayarlanmışsa, aksi takdirde bu mesajı dikkate alın).",
+        "set_title_success": "Aboneliğin özel başlığı şu şekilde değiştirildi: ",
+        "set_title_success_cleared": "Aboneliğin özel başlığı temizlendi."
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "",
-        "set_interval_success_html": "",
-        "set_default_interval_success_html": "",
-        "set_interval_failure_too_small_html": ""
+        "cmd_set_interval_usage_prompt_html": "Komut kullanımı: <code>/set_interval sub_id monitor_interval</code>\n\nNot: <code>monitor_interval</code> dakikalar pozitif bir tamsayı olmalıdır (birimi dahil etmenize gerek yoktur).",
+        "set_interval_success_html": "Aboneliğin monitör aralığı <b>%d dakika</b> olarak değiştirildi.",
+        "set_default_interval_success_html": "Varsayılan monitör aralığı <b>%d dakika</b> olarak değiştirildi.",
+        "set_interval_failure_too_small_html": "İzleme aralığı <b>%d dakikadan</b> fazla olmalıdır."
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "",
-        "set_hashtags_success_html": "",
-        "set_hashtags_success_cleared": "",
-        "set_hashtags_failure_too_many": ""
+        "cmd_set_hashtags_usage_prompt_html": "Komut kullanımı: <code>/set_hashtags sub_id #hashtag1 #hashtag2 ... </code>\n\nNot: Hashtag sağlanmadıysa, mevcut hashtag'ler temizlenecektir (yalnızca önceden ayarlanmışsa, aksi takdirde bu mesajı dikkate alın).",
+        "set_hashtags_success_html": "Aboneliğin özel hashtag'leri şu şekilde değiştirildi: ",
+        "set_hashtags_success_cleared": "Aboneliğin özel hashtag'leri temizlendi.",
+        "set_hashtags_failure_too_many": "Çok fazla hashtag var. Lütfen bazı hashtag'leri kaldırın ve yeniden deneyin."
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "Komut kullanımı: <code>/test RSS_URL entry_start_number(isteğe bağlı) entry_end_number(isteğe bağlı)</code>",
@@ -186,28 +186,28 @@
         "option_key_invalid": "Seçenek anahtarı geçersiz",
         "option_value_invalid": "Seçenek değeri geçersiz, lütfen türünü kontrol edin",
         "option_updated": "Seçenek güncelleştirildi",
-        "cmd_user_info_usage_prompt_html": "",
-        "user_not_found": "",
-        "user_info": "",
-        "sub_count": "",
-        "participant_count": "",
-        "user_state": "",
-        "user_state_-1": "",
-        "user_state_description_-1": "",
-        "user_state_0": "",
-        "user_state_description_0": "",
-        "user_state_1": "",
-        "user_state_description_1": "",
-        "set_user_state_as": ""
+        "cmd_user_info_usage_prompt_html": "Komut kullanımı: <code>/user_info user_id</code> veya <code>/user_info @username</code>",
+        "user_not_found": "Kullanıcı bulunamadı. Bunun yerine kullanıcı kimliğini kullanın.",
+        "user_info": "Kullanıcı bilgisi",
+        "sub_count": "Abonelik sayısı",
+        "participant_count": "Katılımcı sayısı",
+        "user_state": "Kullanıcı durumu",
+        "user_state_-1": "Yasaklı",
+        "user_state_description_-1": "botu asla kullanamaz",
+        "user_state_0": "Misafir",
+        "user_state_description_0": "Botu yalnızca çok kullanıcılı mod etkinleştirilmişse kullanabilir",
+        "user_state_1": "Kullanıcı",
+        "user_state_description_1": "botu kullanabilir",
+        "set_user_state_as": "Kullanıcı durumunu şöyle ayarla"
     },
     "l10n_cmd_descriptions": {
         "commands": "Komutlar",
         "cmd_description_sub": "Abone ol",
         "cmd_description_unsub": "Aboneliği iptal et",
-        "cmd_description_unsub_all": "Tüm aboneliklerin aboneliğini iptal et",
+        "cmd_description_unsub_all": "Bütün aboneliklerden çık",
         "cmd_description_list": "Abonelik listesini denetle",
         "cmd_description_set": "Abonelikleri özelleştir",
-        "cmd_description_set_default": "",
+        "cmd_description_set_default": "Varsayılan ayarları özelleştir",
         "cmd_description_import": "Bir OPML dosyasından abonelikleri içe aktarın",
         "cmd_description_export": "Abonelikleri bir OPML dosyasına aktarın",
         "cmd_description_activate_subs": "Abonelikleri etkinleştir",
@@ -217,6 +217,6 @@
         "cmd_description_help": "Yardımı görüntüle",
         "cmd_description_test": "Test (yalnızca bot yöneticisi)",
         "cmd_description_set_option": "Bot seçeneklerini ayarla (yalnızca bot yöneticisi)",
-        "cmd_description_user_info": ""
+        "cmd_description_user_info": "Kullanıcı bilgilerini görüntüle/değiştir (yalnızca bot yöneticisi)"
     }
 }

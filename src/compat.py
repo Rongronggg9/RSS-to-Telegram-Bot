@@ -1,6 +1,9 @@
 """Containing something make the bot compatible with Python 3.7 ~ 3.10"""
 
 import sys
+import functools
+
+from cachetools.keys import hashkey
 
 _version_info = sys.version_info
 if not (_version_info[0] == 3 and _version_info[1] >= 7):
@@ -81,3 +84,34 @@ def ssl_create_default_context():
     if _version_info[1] >= 10:  # However, TLSv1.1 still not enabled
         context.set_ciphers(_ciphers_py39)
     return context
+
+
+def cached_async(cache, key=hashkey):
+    """
+    https://github.com/tkem/cachetools/commit/3f073633ed4f36f05b57838a3e5655e14d3e3524
+    """
+
+    def decorator(func):
+        if cache is None:
+
+            async def wrapper(*args, **kwargs):
+                return await func(*args, **kwargs)
+
+        else:
+
+            async def wrapper(*args, **kwargs):
+                k = key(*args, **kwargs)
+                try:
+                    return cache[k]
+                except KeyError:
+                    pass  # key not found
+                v = await func(*args, **kwargs)
+                try:
+                    cache[k] = v
+                except ValueError:
+                    pass  # value too large
+                return v
+
+        return functools.update_wrapper(wrapper, func)
+
+    return decorator

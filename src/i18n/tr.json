@@ -28,6 +28,7 @@
         "message_too_long_prompt": "Komut başarıyla yürütülmüş olmalı, ancak dönüş mesajı çok uzun ve gönderilemiyor."
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "",
         "permission_denied_no_permission": "",
         "permission_denied_not_bot_manager": "Bu komut yalnızca bot yöneticisi tarafından kullanılabilir.",
         "permission_denied_not_chat_admin": "Bu komut yalnızca bu grubun/kanalın yöneticileri tarafından kullanılabilir.",
@@ -76,6 +77,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Lütfen içe aktarılacak OPML dosyasını bana gönderin (uzantı adı .opml olmalıdır).",
+        "import_for_channel_or_group_prompt": "",
         "send_opml_reply_placeholder": "İçe aktarılacak OPML dosyası (uzantı adı .opml olmalıdır)",
         "fetch_file_failed": "Dosya getirilemedi",
         "opml_import_processing": "Besleme sayısı fazlaysa veya besleme sunucuları yavaşsa, uzun bir bekleme olabilir. Arkana yaslan ve rahatla.",
@@ -217,6 +219,7 @@
         "cmd_description_help": "Yardımı görüntüle",
         "cmd_description_test": "Test (yalnızca bot yöneticisi)",
         "cmd_description_set_option": "Bot seçeneklerini ayarla (yalnızca bot yöneticisi)",
-        "cmd_description_user_info": ""
+        "cmd_description_user_info": "",
+        "usage_in_channel_or_group_prompt_html": ""
     }
 }

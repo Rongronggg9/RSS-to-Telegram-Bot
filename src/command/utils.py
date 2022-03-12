@@ -1,11 +1,14 @@
 from __future__ import annotations
+from re import Match
 from typing import Union, Optional, AnyStr, Any
 from collections.abc import Callable
 
 import asyncio
 import re
 from functools import partial, wraps
+from cachetools import TTLCache
 from telethon import events, Button
+from telethon.utils import get_peer_id, resolve_id
 from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
@@ -17,15 +20,21 @@ from src import env, log, db, locks
 from src.i18n import i18n, ALL_LANGUAGES
 from . import inner
 from src.exceptions import UserBlockedErrors
+from src.compat import cached_async
 
 logger = log.getLogger('RSStT.command')
 
 
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
-
 def parse_command(command: str, max_split: int = 0) -> list[AnyStr]:
-    return re.split(r'\s+', command.strip(), maxsplit=max_split)
+    command = command.strip()
+    temp = re.split(r'\s+', command, 2)
+    if len(temp) >= 2 and temp[1].startswith(('@', '-100')):
+        del temp[1]
+    command = ' '.join(temp)
+    ret = re.split(r'\s+', command, maxsplit=max_split)
+    return ret
 
 
 async def parse_command_get_sub_or_user_and_param(command: str,
@@ -35,7 +44,7 @@ async def parse_command_get_sub_or_user_and_param(command: str,
         -> tuple[Optional[db.Sub], Optional[str]]:
     args = parse_command(command, max_split=max_split)
     sub_or_user = param = None
-    if len(args) >= 1 and args[1] == 'default' and allow_setting_user_default:
+    if len(args) >= 2 and args[1] == 'default' and allow_setting_user_default:
         sub_or_user = await db.User.get_or_none(id=user_id)
     if len(args) >= 2 and args[1].isdecimal() and int(args[1]) >= 1:
         sub_id = int(args[1])
@@ -53,6 +62,7 @@ def parse_callback_data_with_page(callback_data: bytes) -> tuple[str, int]:
     :return: params, page
     """
     callback_data = callback_data.decode().strip()
+    callback_data = callback_data.rsplit('%', 1)[0]
     params_and_page = callback_data.split('|')
     params = params_and_page[0].split('=')[-1]
     page = int(params_and_page[1]) if len(params_and_page) > 1 else 1
@@ -68,6 +78,7 @@ def parse_customization_callback_data(callback_data: bytes) \
     :return: id, action, param
     """
     callback_data = callback_data.decode().strip()
+    callback_data = callback_data.rsplit('%', 1)[0]
     args = callback_data.split('|')
     page = int(args[1]) if len(args) > 1 else 1
     args = args[0].split('=', 1)
@@ -131,6 +142,36 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
         pass  # silently ignore
 
 
+async def is_self_admin(chat_id: int) -> Optional[bool]:
+    ret, _ = await is_user_admin(chat_id, env.bot_id)
+    return ret
+
+
+@cached_async(cache=TTLCache(maxsize=64, ttl=20))
+async def is_user_admin(chat_id: int, user_id: int) -> tuple[Optional[bool], Optional[str]]:
+    """
+    Check if the user is an admin in the chat.
+
+    :param chat_id: chat id
+    :param user_id: user id
+    :return: True if user is admin, False if not, None if self not in the chat
+    """
+    input_chat = await env.bot.get_input_entity(chat_id)
+    input_user = await env.bot.get_input_entity(user_id)
+    is_admin = None
+    participant_type = None
+    try:
+        # noinspection PyTypeChecker
+        participant: types.channels.ChannelParticipant = await env.bot(
+            GetParticipantRequest(input_chat, input_user))
+        is_admin = isinstance(participant.participant,
+                              (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
+        participant_type = type(participant.participant).__name__
+    except (UserNotParticipantError, ValueError):
+        pass
+    return is_admin, participant_type
+
+
 def command_gatekeeper(func: Optional[Callable] = None,
                        *,
                        only_manager: bool = False,
@@ -148,6 +189,11 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        ignore_tg_lang=ignore_tg_lang,
                        timeout=timeout,
                        quiet=quiet)
+
+    # assume that managing commands are only allowed in private chat
+    only_in_private_chat = only_in_private_chat or only_manager
+    # block contradicting settings
+    assert not (only_in_private_chat and allow_in_old_fashioned_groups)
 
     @wraps(func)
     async def wrapper(event: Union[events.NewMessage.Event, Message,
@@ -200,7 +246,10 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 logger.log(log_level, f'Allow {describe_user()} to use {command}')
                 async with flood_lock:
                     pass  # wait for flood wait
-                await asyncio.wait_for(func(event, *args, lang=lang, **kwargs), timeout=timeout)
+                await asyncio.wait_for(
+                    func(event, *args, lang=lang, chat_id=chat_id, **kwargs),  # execute the command!
+                    timeout=timeout
+                )
             except asyncio.TimeoutError as _e:
                 logger.error(f'Cancel {command} for {describe_user()} due to timeout ({timeout}s)', exc_info=_e)
                 await respond_or_answer(event, 'ERROR: ' + i18n[lang]['operation_timeout_error'])
@@ -253,6 +302,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 if not lang and sender_id != chat_id:
                     lang = db.User.get_or_none(id=sender_id).values_list('lang', flat=True)
 
+            # inline refusing check
             if is_inline:
                 query: types.UpdateBotInlineQuery = event.query
                 if (
@@ -274,6 +324,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
             sender_state = (sender_id and await db.User.get_or_none(id=sender_id).values_list('state', flat=True)) or 0
             chat_state = (chat_id and await db.User.get_or_none(id=chat_id).values_list('state', flat=True)) or 0
 
+            # user permission check
             permission_denied_not_manager = only_manager and sender_id != env.MANAGER
             permission_denied_no_permission = (
                     sender_id != env.MANAGER
@@ -294,46 +345,70 @@ def command_gatekeeper(func: Optional[Callable] = None,
                                ))
                 raise events.StopPropagation
 
-            if is_inline:
-                await execute()
-                raise events.StopPropagation
+            # operating channel/group in private chat, firstly get base info
+            pattern_match: Match = event.pattern_match if not is_chat_action else None
+            target_chat_id = (pattern_match and pattern_match.groupdict().get('target')) or ''
+            target_chat_id: Union[str, int, None] = target_chat_id.decode() \
+                if isinstance(target_chat_id, bytes) else target_chat_id
+            if target_chat_id.startswith('-100') and target_chat_id.lstrip('-').isdecimal():
+                target_chat_id = int(target_chat_id)
+            elif target_chat_id.isdecimal():
+                target_chat_id = -(1000000000000 + int(target_chat_id))
+            elif target_chat_id.lstrip('-').isdecimal():
+                # target_chat_id = int(target_chat_id)
+                target_chat_id = None  # disallow old-fashioned group
+            elif target_chat_id.startswith('@'):
+                target_chat_id = target_chat_id[1:]
+            else:
+                target_chat_id = None
 
             if (
-                    event.is_private or  # deal with commands in private chats
+                    is_inline or  # allow inline
+                    event.is_private or  # allow commands in private chats
                     (
-                            (event.is_channel  # deal with commands in channels
+                            (event.is_channel  # allow commands in channels
                              # a supergroup is also a channel, but we only expect a "real" channel here
                              and not event.is_group)
                             # if receiving a callback, we must verify that the sender is an admin. jump below
                             and not is_callback
+                            and not only_in_private_chat
                     )
-                    and not only_manager and not only_in_private_chat
-            ):  # we can deal with private chats and channels in the same way
+            ) and not target_chat_id:  # if a target chat is specified, jump to admin check
                 await execute()
                 raise events.StopPropagation
 
+            # admin check
             if (
-                    (
-                            event.is_group or  # deal with commands in groups
-                            (event.is_channel and is_callback)  # deal with callback in channels
-                    )
-                    and not only_manager
-            ):  # receiving a command in a group, or, a callback in a channel
+                    target_chat_id or  # deal with operating-channel/group commands in private chats
+                    event.is_group or  # deal with commands in groups
+                    event.is_channel  # deal with commands in channels
+            ):
                 if isinstance(sender, types.Channel):
                     raise events.StopPropagation  # channel messages are none of my business
 
-                # supergroup is a special form of channel
-                input_chat: Optional[Union[types.InputChannel,
-                                           types.InputPeerChannel,
-                                           types.InputPeerChat]] = await event.get_input_chat()
-                chat: Optional[Union[types.Chat, types.Channel]] = await event.get_chat()
-                chat_title = chat and chat.title
-
-                if only_in_private_chat:
+                if only_in_private_chat or (target_chat_id and not event.is_private):
                     await respond_or_answer(event, i18n[lang]['permission_denied_not_in_private_chat'])
                     logger.warning(f'Refused {describe_user()} to use {command} '
                                    f'because the command can only be used in a private chat')
                     raise events.StopPropagation
+
+                if target_chat_id:
+                    try:
+                        input_chat = await env.bot.get_input_entity(target_chat_id)
+                        chat = await env.bot.get_entity(input_chat)
+                        chat_id = get_peer_id(chat)
+                        if not isinstance(chat, types.Channel):
+                            raise TypeError  # only allow operating channel/group in private chats
+                    except (TypeError, ValueError):
+                        await respond_or_answer(event, i18n[lang]['channel_or_group_not_found'])
+                        raise events.StopPropagation
+                else:
+                    # supergroup is a special form of channel
+                    input_chat: Optional[Union[types.InputChannel,
+                                               types.InputPeerChannel,
+                                               types.InputPeerChat]] = await event.get_input_chat()
+                    chat: Optional[Union[types.Chat, types.Channel]] = await event.get_chat()
+                chat_title = chat and chat.title
 
                 if isinstance(input_chat, types.InputPeerChat):
                     if allow_in_old_fashioned_groups:
@@ -348,14 +423,11 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     raise events.StopPropagation
 
                 # check if self is in the group/chanel and if is an admin
-                self_is_admin = True  # bypass check if the event is a callback query, set to True for convenience
-                if is_callback:
-                    try:
-                        self_participant: types.channels.ChannelParticipant = await env.bot(
-                            GetParticipantRequest(input_chat, env.bot_input_peer))
-                        self_is_admin = isinstance(self_participant.participant,
-                                                   (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
-                    except UserNotParticipantError:  # I am not a participant of the group/channel, none of my business!
+                self_is_admin = True
+                # bypass check if the event is not a callback query or a remote operation, set to True for convenience
+                if is_callback or target_chat_id:
+                    self_is_admin = await is_self_admin(chat_id)
+                    if self_is_admin is None:  # I am not a participant of the group/channel, none of my business!
                         await respond_or_answer(event, i18n[lang]['permission_denied_bot_not_member'], cache_time=15)
                         raise events.StopPropagation
 
@@ -364,11 +436,8 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     is_admin = True
                     participant_type = 'ChatAction, bypassing admin check'
                 elif sender_id is not None:  # a "real" user triggering the command
-                    input_sender: types.InputPeerUser = await event.get_input_sender()
-                    try:
-                        participant: types.channels.ChannelParticipant = await env.bot(
-                            GetParticipantRequest(input_chat, input_sender))
-                    except UserNotParticipantError:
+                    is_admin, participant_type = await is_user_admin(chat_id, sender_id)
+                    if is_admin is None:
                         await respond_or_answer(event,
                                                 i18n[lang]['permission_denied_not_member'] if self_is_admin else
                                                 i18n[lang]['promote_to_admin_prompt'],
@@ -376,9 +445,6 @@ def command_gatekeeper(func: Optional[Callable] = None,
                         logger.warning(f'Refused Refused {describe_user()} to use {command} '
                                        f'because they is not a participant')
                         raise events.StopPropagation
-                    is_admin = isinstance(participant.participant,
-                                          (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
-                    participant_type = type(participant.participant).__name__
                 else:  # an anonymous admin
                     is_admin = True
                     participant_type = 'AnonymousAdmin'
@@ -604,3 +670,12 @@ def get_group_migration_help_msg(lang: Optional[str] = None) \
         ),
         columns=3)
     return msg, buttons
+
+
+def get_callback_tail(event: Union[events.NewMessage.Event, Message,
+                                   events.CallbackQuery.Event],
+                      chat_id: int) -> str:
+    if 0 > chat_id != event.chat_id and event.is_private:
+        chat_id_str, _ = resolve_id(chat_id)
+        return f'%{chat_id_str}'
+    return ''

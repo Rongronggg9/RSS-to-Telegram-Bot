@@ -49,7 +49,8 @@ async def get_sub_info(sub: db.Sub,
 # noinspection DuplicatedCode
 async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                                     lang: Optional[str] = None,
-                                    page: Optional[int] = None) -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
+                                    page: Optional[int] = None,
+                                    tail: str = '') -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
     page = page or 1
     is_user = isinstance(sub_or_user, db.User)
     if is_user:
@@ -85,103 +86,107 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
         (
             Button.inline(f"{i18n[lang]['status']}: "
                           + i18n[lang]['status_activated' if sub_or_user.state == 1 else 'status_deactivated'],
-                          data=f'set={sub_or_user.id},activate|{page}')
+                          data=f'set={sub_or_user.id},activate|{page}{tail}')
             if not is_user else
             Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['reset_all_button'],
-                          data=f'reset_all_confirm'),
+                          data=f'reset_all_confirm{tail}'),
         ),
         (
             Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
-                          data=f'reset={sub_or_user.id}|{page}'),
+                          data=f'reset={sub_or_user.id}|{page}{tail}'),
         ) if not is_user and not all_default else None,
         (
             Button.inline(f"{i18n[lang]['monitor_interval']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if interval_d else '')
                           + formatting_time(minutes=interval or db.EffectiveOptions.default_interval),
-                          data=(f'set={sub_or_user.id},interval|{page}'
+                          data=(f'set={sub_or_user.id},interval|{page}{tail}'
                                 if not is_user
-                                else f'set_default=interval')),
+                                else f'set_default=interval{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['notification']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if notify_d else '')
                           + i18n[lang]['notification_normal' if notify else 'notification_muted'],
-                          data=(f'set={sub_or_user.id},notify|{page}'
+                          data=(f'set={sub_or_user.id},notify|{page}{tail}'
                                 if not is_user
-                                else f'set_default=notify')),
+                                else f'set_default=notify{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['send_mode']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if send_mode_d else '')
                           + i18n[lang][f'send_mode_{send_mode}'],
-                          data=(f'set={sub_or_user.id},send_mode|{page}'
+                          data=(f'set={sub_or_user.id},send_mode|{page}{tail}'
                                 if not is_user
-                                else f'set_default=send_mode')),
+                                else f'set_default=send_mode{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['length_limit']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if length_limit_d else '')
                           + (str(sub_or_user.length_limit) if length_limit else i18n[lang]['length_limit_unlimited']),
-                          data=(f'set={sub_or_user.id},length_limit|{page}'
+                          data=(f'set={sub_or_user.id},length_limit|{page}{tail}'
                                 if not is_user
-                                else f'set_default=length_limit')),
+                                else f'set_default=length_limit{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['display_media']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_media_d else '')
                           + i18n[lang][f'display_media_{display_media}'],
-                          data=(f'set={sub_or_user.id},display_media|{page}'
+                          data=(f'set={sub_or_user.id},display_media|{page}{tail}'
                                 if not is_user
-                                else f'set_default=display_media')),
+                                else f'set_default=display_media{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['display_title']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_title_d else '')
                           + i18n[lang][f'display_title_{display_title}'],
-                          data=(f'set={sub_or_user.id},display_title|{page}'
+                          data=(f'set={sub_or_user.id},display_title|{page}{tail}'
                                 if not is_user
-                                else f'set_default=display_title')),
+                                else f'set_default=display_title{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['display_via']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_via_d else '')
                           + i18n[lang][f'display_via_{display_via}'],
-                          data=(f'set={sub_or_user.id},display_via|{page}'
+                          data=(f'set={sub_or_user.id},display_via|{page}{tail}'
                                 if not is_user
-                                else f'set_default=display_via')),
+                                else f'set_default=display_via{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['display_author']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_author_d else '')
                           + i18n[lang][f'display_author_{display_author}'],
-                          data=(f'set={sub_or_user.id},display_author|{page}'
+                          data=(f'set={sub_or_user.id},display_author|{page}{tail}'
                                 if not is_user
-                                else f'set_default=display_author')),
+                                else f'set_default=display_author{tail}')),
         ),
         (
             Button.inline(f"{i18n[lang]['link_preview']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if link_preview_d else '')
                           + i18n[lang][f'link_preview_{link_preview}'],
-                          data=(f'set={sub_or_user.id},link_preview|{page}'
+                          data=(f'set={sub_or_user.id},link_preview|{page}{tail}'
                                 if not is_user else
-                                f'set_default=link_preview')),
+                                f'set_default=link_preview{tail}')),
             Button.inline(f"{i18n[lang]['style']}: "
                           + (FALLBACK_TO_USER_DEFAULT_EMOJI if style_d else '')
                           + i18n[lang][f'style_{style}'],
-                          data=(f'set={sub_or_user.id},style|{page}'
+                          data=(f'set={sub_or_user.id},style|{page}{tail}'
                                 if not is_user
-                                else f'set_default=style')),
+                                else f'set_default=style{tail}')),
         ),
         (
             Button.switch_inline(f"{i18n[lang]['set_custom_title_button']}",
-                                 query=f'/set_title {sub_or_user.id} ',
+                                 query=(f'/set_title {sub_or_user.id} '
+                                        if not tail
+                                        else f'/set_title {sub_or_user.user_id} {sub_or_user.id} '),
                                  same_peer=True),
             Button.switch_inline(f"{i18n[lang]['set_custom_hashtags_button']}",
-                                 query=f'/set_hashtags {sub_or_user.id} ',
+                                 query=(f'/set_hashtags {sub_or_user.id} '
+                                        if not tail
+                                        else f'/set_hashtags {sub_or_user.user_id} {sub_or_user.id} '),
                                  same_peer=True),
         ) if not is_user else None,
         (
-            Button.inline(f'< {i18n[lang]["back"]}', data=f'get_set_page|{page}'),
+            Button.inline(f'< {i18n[lang]["back"]}', data=f'get_set_page|{page}{tail}'),
         ) if not is_user else
         (
             Button.inline(f'{i18n[lang]["cancel"]}', data=f'cancel'),
@@ -192,7 +197,8 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
 
 async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
                                    lang: Optional[str] = None,
-                                   page: Optional[int] = None) -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
+                                   page: Optional[int] = None,
+                                   tail: str = '') -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
     is_user = isinstance(sub_or_user, db.User)
     page = page or 1
 
@@ -214,30 +220,30 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
     buttons = (
             ((
                  Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang][f'use_user_default_button'],
-                               data=f'set={sub_or_user.id},interval,default|{page}'),
+                               data=f'set={sub_or_user.id},interval,default|{page}{tail}'),
              ) if not is_user else None,)
             +
             arrange_grid(
                 to_arrange=chain(
                     (
                         Button.inline('1h' if interval == 60 else f'{interval}min',
-                                      data=f'set={sub_or_user.id},interval,{interval}|{page}'
+                                      data=f'set={sub_or_user.id},interval,{interval}|{page}{tail}'
                                       if not is_user else
-                                      f'set_default=interval,{interval}')
+                                      f'set_default=interval,{interval}{tail}')
                         for interval in chain(range(1, 5), range(5, 61, 5)) if interval >= minimal_interval
                     ),
                     (
                         Button.inline(f'{interval}h',
-                                      data=f'set={sub_or_user.id},interval,{interval * 60}|{page}'
+                                      data=f'set={sub_or_user.id},interval,{interval * 60}|{page}{tail}'
                                       if not is_user else
-                                      f'set_default=interval,{interval * 60}')
+                                      f'set_default=interval,{interval * 60}{tail}')
                         for interval in range(2, 24) if interval * 60 >= minimal_interval
                     ),
                     (
                         Button.inline(f'{interval}d',
-                                      data=f'set={sub_or_user.id},interval,{interval * 60 * 24}|{page}'
+                                      data=f'set={sub_or_user.id},interval,{interval * 60 * 24}|{page}{tail}'
                                       if not is_user else
-                                      f'set_default=interval,{interval * 60 * 24}')
+                                      f'set_default=interval,{interval * 60 * 24}{tail}')
                         for interval in range(1, buttons_in_day_count + 1) if interval * 60 * 24 >= minimal_interval
                     )
                 ),
@@ -246,17 +252,21 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
             +
             ((
                  Button.switch_inline(f"{i18n[lang]['set_custom_interval_button']}",
-                                      query=f'/set_interval {sub_or_user.id} '
-                                      if not is_user else
-                                      f'/set_interval default ',
+                                      query=((f'/set_interval {sub_or_user.id} '
+                                              if not tail
+                                              else f'/set_interval {sub_or_user.user_id} {sub_or_user.id} ')
+                                             if not is_user else
+                                             (f'/set_interval default '
+                                              if not tail
+                                              else f'/set_interval {sub_or_user.id} default ')),
                                       same_peer=True),
              ),)
             +
             ((
                  Button.inline(f'< {i18n[lang]["back"]}',
-                               data=f'set={sub_or_user.id}|{page}'
+                               data=f'set={sub_or_user.id}|{page}{tail}'
                                if not is_user else
-                               f'set_default'),
+                               f'set_default{tail}'),
              ),)
     )
     return tuple(filter(None, buttons))
@@ -264,7 +274,8 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
 
 async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
                                        lang: Optional[str] = None,
-                                       page: Optional[int] = None) -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
+                                       page: Optional[int] = None,
+                                       tail: str = '') -> tuple[tuple[KeyboardButtonCallback, ...], ...]:
     is_user = isinstance(sub_or_user, db.User)
     page = page or 1
 
@@ -273,22 +284,22 @@ async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
     buttons = (
             ((
                  Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang][f'use_user_default_button'],
-                               data=f'set={sub_or_user.id},length_limit,default|{page}'),
+                               data=f'set={sub_or_user.id},length_limit,default|{page}{tail}'),
              ) if not is_user else None,)
             +
             ((
                  Button.inline(i18n[lang]['length_limit_unlimited'],
-                               data=f'set={sub_or_user.id},length_limit,0|{page}'
+                               data=f'set={sub_or_user.id},length_limit,0|{page}{tail}'
                                if not is_user else
-                               f'set_default=length_limit,0'),
+                               f'set_default=length_limit,0{tail}'),
              ),)
             +
             arrange_grid(
                 to_arrange=(
                     Button.inline(str(length_limit),
-                                  data=f'set={sub_or_user.id},length_limit,{length_limit}|{page}'
+                                  data=f'set={sub_or_user.id},length_limit,{length_limit}|{page}{tail}'
                                   if not is_user else
-                                  f'set_default=length_limit,{length_limit}')
+                                  f'set_default=length_limit,{length_limit}{tail}')
                     for length_limit in length_limit_range
                 ),
                 columns=4
@@ -296,9 +307,9 @@ async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
             +
             ((
                  Button.inline(f'< {i18n[lang]["back"]}',
-                               data=f'set={sub_or_user.id}|{page}'
+                               data=f'set={sub_or_user.id}|{page}{tail}'
                                if not is_user else
-                               f'set_default'),
+                               f'set_default{tail}'),
              ),)
     )
     return tuple(filter(None, buttons))

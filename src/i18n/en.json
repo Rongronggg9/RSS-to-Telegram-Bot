@@ -28,6 +28,7 @@
         "message_too_long_prompt": "The command should have been executed successfully, but the return message is too long to send."
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "The channel/group was not found.",
         "permission_denied_no_permission": "You don't have permission to use this command.",
         "permission_denied_not_bot_manager": "This command can only be used by the bot manager.",
         "permission_denied_not_chat_admin": "This command can only be used by the admins of this group/channel.",
@@ -76,6 +77,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Please send me the OPML file to be imported (extension name must be .opml).",
+        "import_for_channel_or_group_prompt": "If you want to import subscriptions for your channel/group, please fill in the caption with the channel/group's ID (must start with '-100') or @username.",
         "send_opml_reply_placeholder": "The OPML file to be imported (extension name must be .opml)",
         "fetch_file_failed": "Failed to fetch the file",
         "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
@@ -217,6 +219,7 @@
         "cmd_description_help": "View help",
         "cmd_description_test": "Test (bot manager only)",
         "cmd_description_set_option": "Set bot options (bot manager only)",
-        "cmd_description_user_info": "View/modify user info (bot manager only)"
+        "cmd_description_user_info": "View/modify user info (bot manager only)",
+        "usage_in_channel_or_group_prompt_html": "<b>Usage in channel/group:</b>\n1. Add the bot to your channel/group.\n2a. Directly send commands <b>in the channel/group</b>.\n2b. Or alternatively, you can send commands like <code>/sub @username https://exmaple.com</code> or <code>/sub -10010000000000 https://exmaple.com</code> <b>in the private chat with the bot</b>.\n(<code>@username</code> is the channel/group's username, <code>@</code> is required; <code>-10010000000000</code> is the channel/group's ID, it must start with <code>-100</code>)"
     }
 }

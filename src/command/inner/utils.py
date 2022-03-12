@@ -136,11 +136,12 @@ def get_page_buttons(page_number: int,
                      get_page_callback: str,
                      total_count: Optional[int] = None,
                      display_cancel: bool = False,
-                     lang: Optional[str] = None) -> list[Button]:
+                     lang: Optional[str] = None,
+                     tail: str = '') -> list[Button]:
     page_number = min(page_number, page_count)
     page_info = f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else '')
     page_buttons = [
-        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}|{page_number - 1}')
+        Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}|{page_number - 1}{tail}')
         if page_number > 1
         else emptyButton,
 
@@ -148,7 +149,7 @@ def get_page_buttons(page_number: int,
         if display_cancel
         else Button.inline(page_info, data='null'),
 
-        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}|{page_number + 1}')
+        Button.inline(f'{i18n[lang]["next_page"]} >', data=f'{get_page_callback}|{page_number + 1}{tail}')
         if page_number < page_count
         else emptyButton,
     ]
@@ -163,6 +164,7 @@ async def get_sub_choosing_buttons(user_id: int,
                                    lang: Optional[str] = None,
                                    rows: int = 12,
                                    columns: int = 1,
+                                   tail: str = '',
                                    *args, **kwargs) -> Optional[tuple[tuple[KeyboardButtonCallback, ...], ...]]:
     """
     :param user_id: user id
@@ -175,6 +177,7 @@ async def get_sub_choosing_buttons(user_id: int,
     :param columns: the number of columns
     :param args: args for `list_sub`
     :param kwargs: kwargs for `list_sub`
+    :param tail: callback data tail
     :return: ReplyMarkup
     """
     if page_number <= 0:
@@ -189,7 +192,8 @@ async def get_sub_choosing_buttons(user_id: int,
 
     buttons_to_arrange = tuple(Button.inline(_sub.title or _sub.feed.title,
                                              data=f'{callback}={_sub.id}'
-                                                  + (f'|{page_number}' if callback_contain_page_num else ''))
+                                                  + (f'|{page_number}' if callback_contain_page_num else '')
+                                                  + tail)
                                for _sub in page)
     buttons = arrange_grid(to_arrange=buttons_to_arrange, columns=columns, rows=rows)
 
@@ -198,7 +202,8 @@ async def get_sub_choosing_buttons(user_id: int,
                                     get_page_callback=get_page_callback,
                                     total_count=sub_count,
                                     display_cancel=True,
-                                    lang=lang)
+                                    lang=lang,
+                                    tail=tail)
 
     return buttons + (tuple(page_buttons),) if page_buttons else buttons
 

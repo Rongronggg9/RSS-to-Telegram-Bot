@@ -28,6 +28,7 @@
         "message_too_long_prompt": "命令应已成功执行，但返回消息太长了，无法发送。"
     },
     "l10n_permission_denied_reasons": {
+        "channel_or_group_not_found": "未找到群组/频道。",
         "permission_denied_no_permission": "你没有使用此命令的权限。",
         "permission_denied_not_bot_manager": "此命令只可由机器人的管理员使用。",
         "permission_denied_not_chat_admin": "此命令只可由群/频道管理员使用。",
@@ -76,6 +77,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "请发送需要导入的 OPML 文件 (扩展名必须为 .opml)。",
+        "import_for_channel_or_group_prompt": "如果你想要为频道/群组导入订阅，请在说明中填入频道/群组的 ID (必须以 '-100' 开头) 或 @username。",
         "send_opml_reply_placeholder": "OPML 文件 (扩展名必须为 .opml)",
         "fetch_file_failed": "获取文件失败",
         "opml_import_processing": "如订阅较多或订阅所在的服务器太慢，将会处理较长时间，请耐心等待。",
@@ -186,7 +188,7 @@
         "option_key_invalid": "配置的键不合法",
         "option_value_invalid": "配置的值不合法，请检查其类型",
         "option_updated": "配置已更新",
-        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用户ID</code> 或 <code>/user_info @用户名</code>",
+        "cmd_user_info_usage_prompt_html": "命令用法: <code>/user_info 用户ID</code> 或 <code>/user_info @username</code>",
         "user_not_found": "未找到用户，请使用用户 ID。",
         "user_info": "用户信息",
         "sub_count": "订阅数量",
@@ -217,6 +219,7 @@
         "cmd_description_help": "查看帮助",
         "cmd_description_test": "测试 (仅 bot 管理员)",
         "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)",
-        "cmd_description_user_info": "查看/修改用户信息 (仅 bot 管理员)"
+        "cmd_description_user_info": "查看/修改用户信息 (仅 bot 管理员)",
+        "usage_in_channel_or_group_prompt_html": "<b>在频道/群组里的使用方式:</b>\n1. 将 bot 添加到频道/群组里。\n2a. 直接<b>在频道/群组里</b>发送命令。\n2b. 或者，你也可以<b>在和 bot 的私聊里</b>像这样发送命令: <code>/sub @username https://exmaple.com</code> 或 <code>/sub -10010000000000 https://exmaple.com</code>。\n(<code>@username</code> 是频道/群组的用户名，<code>@</code> 是不可缺少的；<code>-10010000000000</code> 是频道/群组的 ID，必须以 <code>-100</code> 开头)"
     }
 }

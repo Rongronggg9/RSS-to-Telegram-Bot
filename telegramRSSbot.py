@@ -94,43 +94,50 @@ async def pre():
     except Exception as e:
         logger.warning('Set command error: ', exc_info=e)
 
+    bare_target_matcher = r'(?P<target>@\w{5,}|-100\d+)'
+    target_matcher = rf'(\s+{bare_target_matcher})?'
     # command handler
     bot.add_event_handler(command.sub.cmd_sub,
-                          events.NewMessage(pattern='/add|/sub'))
+                          events.NewMessage(pattern=r'(?P<command>/add|/sub)(@\w+)?'
+                                                    + target_matcher +
+                                                    r'(\s+(?P<url>.*))?\s*$'))
     bot.add_event_handler(command.sub.cmd_sub,
                           command.utils.PrivateMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_sub,
                           command.utils.ReplyMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_unsub,
-                          events.NewMessage(pattern='(/remove|/unsub)([^_]|$)'))
+                          events.NewMessage(pattern=r'(?P<command>/remove|/unsub)(@\w+)?'
+                                                    + target_matcher +
+                                                    r'(\s+(?P<url>.*))?\s*$'))
     bot.add_event_handler(command.sub.cmd_or_callback_unsub_all,
-                          events.NewMessage(pattern='/remove_all|/unsub_all'))
+                          events.NewMessage(pattern=r'(?P<command>/remove_all|/unsub_all)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,
-                          events.NewMessage(pattern='/list'))
+                          events.NewMessage(pattern=r'(?P<command>/list)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.opml.cmd_import,
-                          events.NewMessage(pattern='/import'))
+                          events.NewMessage(pattern=r'(?P<command>/import)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.opml.cmd_export,
-                          events.NewMessage(pattern='/export'))
+                          events.NewMessage(pattern=r'(?P<command>/export)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
-                          events.NewMessage(pattern=r'/set(\W|$)'))
+                          events.NewMessage(pattern=r'(?P<command>/set(?!_))(@\w+)?' + target_matcher))
     bot.add_event_handler(command.customization.cmd_set_default,
-                          events.NewMessage(pattern=r'/set_default(\W|$)'))
+                          events.NewMessage(pattern=r'(?P<command>/set_default)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.customization.cmd_set_title,
-                          events.NewMessage(pattern='/set_title'))
+                          events.NewMessage(pattern=r'(?P<command>/set_title)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.customization.cmd_set_interval,
-                          events.NewMessage(pattern='/set_interval'))
+                          events.NewMessage(pattern=r'(?P<command>/set_interval)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.customization.cmd_set_hashtags,
-                          events.NewMessage(pattern='/set_hashtags'))
+                          events.NewMessage(pattern=r'(?P<command>/set_hashtags)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.opml.opml_import,
-                          command.utils.NewFileMessage(filename_pattern=r'^.*\.opml$'))
+                          command.utils.NewFileMessage(pattern='.*?' + bare_target_matcher + '?',
+                                                       filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.misc.cmd_start,
                           events.NewMessage(pattern='/start'))
     bot.add_event_handler(command.misc.cmd_or_callback_help,
                           events.NewMessage(pattern='/help'))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=True),
-                          events.NewMessage(pattern='/activate_subs'))
+                          events.NewMessage(pattern=r'(?P<command>/activate_subs)(@\w+)?' + target_matcher))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=False),
-                          events.NewMessage(pattern='/deactivate_subs'))
+                          events.NewMessage(pattern=r'(?P<command>/deactivate_subs)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.misc.cmd_lang,
                           events.NewMessage(pattern='/lang'))
     bot.add_event_handler(command.misc.cmd_version,
@@ -141,53 +148,56 @@ async def pre():
                           events.NewMessage(pattern='/user_info'))
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern='/set_option'))
+
+    callback_target_matcher = r'(%(?P<target>\d+))?'
     # callback query handler
     bot.add_event_handler(command.misc.callback_del_buttons,  # delete buttons
-                          events.CallbackQuery(data='del_buttons'))
+                          events.CallbackQuery(pattern='^del_buttons$'))
     bot.add_event_handler(command.misc.callback_null,  # null callback query
-                          events.CallbackQuery(data='null'))
+                          events.CallbackQuery(pattern='^null$'))
     bot.add_event_handler(command.misc.callback_cancel,
-                          events.CallbackQuery(data='cancel'))
+                          events.CallbackQuery(pattern='^cancel$'))
     bot.add_event_handler(command.misc.callback_get_group_migration_help,
                           events.CallbackQuery(pattern=r'^get_group_migration_help=[\w_\-]+$'))
     bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,
-                          events.CallbackQuery(pattern=r'^get_list_page|\d+$'))
+                          events.CallbackQuery(pattern=rf'^get_list_page\|\d+{callback_target_matcher}$'))
     bot.add_event_handler(command.sub.callback_unsub,
-                          events.CallbackQuery(pattern=r'^unsub=\d+(\|\d+)$'))
+                          events.CallbackQuery(pattern=rf'^unsub=\d+(\|\d+)?{callback_target_matcher}$'))
     bot.add_event_handler(command.sub.callback_get_unsub_page,
-                          events.CallbackQuery(pattern=r'^get_unsub_page|\d+$'))
+                          events.CallbackQuery(pattern=rf'^get_unsub_page\|\d+{callback_target_matcher}$'))
     bot.add_event_handler(command.sub.cmd_or_callback_unsub_all,
-                          events.CallbackQuery(data='unsub_all'))
+                          events.CallbackQuery(pattern=rf'unsub_all{callback_target_matcher}$'))
     bot.add_event_handler(command.misc.callback_set_lang,
                           events.CallbackQuery(pattern=r'^set_lang=[\w_\-]+$'))
     bot.add_event_handler(command.misc.cmd_or_callback_help,
-                          events.CallbackQuery(data='help'))
+                          events.CallbackQuery(pattern='^help$'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_all_subs, activate=True),
-                          events.CallbackQuery(data='activate_all_subs'))
+                          events.CallbackQuery(pattern=rf'^activate_all_subs{callback_target_matcher}$'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_all_subs, activate=False),
-                          events.CallbackQuery(data='deactivate_all_subs'))
+                          events.CallbackQuery(pattern=rf'^deactivate_all_subs{callback_target_matcher}$'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_sub, activate=True),
-                          events.CallbackQuery(pattern=r'^activate_sub=\d+(\|\d+)?$'))
+                          events.CallbackQuery(pattern=rf'^activate_sub=\d+(\|\d+)?{callback_target_matcher}$'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_sub, activate=False),
-                          events.CallbackQuery(pattern=r'^deactivate_sub=\d+(\|\d+)?$'))
+                          events.CallbackQuery(pattern=rf'^deactivate_sub=\d+(\|\d+)?{callback_target_matcher}$'))
     bot.add_event_handler(partial(command.customization.callback_get_activate_or_deactivate_page, activate=True),
-                          events.CallbackQuery(pattern=r'^get_activate_page|\d+$'))
+                          events.CallbackQuery(pattern=rf'^get_activate_page\|\d+{callback_target_matcher}$'))
     bot.add_event_handler(partial(command.customization.callback_get_activate_or_deactivate_page, activate=False),
-                          events.CallbackQuery(pattern=r'^get_deactivate_page|\d+$'))
-    bot.add_event_handler(partial(command.customization.callback_set, set_user_default=False),
-                          events.CallbackQuery(pattern=r'^set(=\d+(,\w+(,\w+)?)?)?(\|\d+)?$'))
-    bot.add_event_handler(partial(command.customization.callback_set, set_user_default=True),
-                          events.CallbackQuery(pattern=r'^set_default(=\w+(,\w+)?)?$'))
+                          events.CallbackQuery(pattern=rf'^get_deactivate_page\|\d+{callback_target_matcher}$'))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
-                          events.CallbackQuery(pattern=r'^get_set_page|\d+$'))
+                          events.CallbackQuery(pattern=rf'^get_set_page\|\d+{callback_target_matcher}$'))
+    bot.add_event_handler(partial(command.customization.callback_set, set_user_default=False),
+                          events.CallbackQuery(pattern=rf'^set(=\d+(,\w+(,\w+)?)?)?(\|\d+)?{callback_target_matcher}$'))
+    bot.add_event_handler(partial(command.customization.callback_set, set_user_default=True),
+                          events.CallbackQuery(pattern=rf'^set_default(=\w+(,\w+)?)?{callback_target_matcher}$'))
     bot.add_event_handler(command.customization.callback_reset,
-                          events.CallbackQuery(pattern=r'^reset=\d+(\|\d+)?$'))
+                          events.CallbackQuery(pattern=rf'^reset=\d+(\|\d+)?{callback_target_matcher}$'))
     bot.add_event_handler(command.customization.callback_reset_all,
-                          events.CallbackQuery(pattern=r'^reset_all$'))
+                          events.CallbackQuery(pattern=rf'^reset_all{callback_target_matcher}$'))
     bot.add_event_handler(command.customization.callback_reset_all_confirm,
-                          events.CallbackQuery(pattern=r'^reset_all_confirm$'))
+                          events.CallbackQuery(pattern=rf'^reset_all_confirm{callback_target_matcher}$'))
     bot.add_event_handler(command.customization.callback_del_subs_title,
-                          events.CallbackQuery(pattern=r'^del_subs_title=(\d+-\d+\|)*(\d+-\d+)$'))
+                          events.CallbackQuery(pattern=r'^del_subs_title=(\d+-\d+\|)*(\d+-\d+)'
+                                                       rf'{callback_target_matcher}$'))
     bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
                           events.CallbackQuery(pattern=r'^set_user=-?\d+,(-1|0|1)$'))
     # inline query handler

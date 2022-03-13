@@ -156,9 +156,9 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
                     pass
             try:
                 encoding = response.get_encoding()
+                return body.decode(encoding=encoding, errors='replace')
             except (LookupError, RuntimeError):
-                encoding = "utf-8"
-            return body.decode(encoding=encoding, errors='replace')
+                return body.decode(encoding='utf-8', errors='replace')
         elif max_size is None:
             return await response.read()
         elif max_size > 0:

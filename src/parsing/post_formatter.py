@@ -33,6 +33,7 @@ FEED_TITLE_AND_LINK_AS_POST_TITLE: Final = 1
 NO_FEED_TITLE_BUT_LINK: Final = -1
 NO_FEED_TITLE_BUT_LINK_AS_POST_TITLE: Final = -3
 COMPLETELY_DISABLE: Final = -2
+ONLY_MEDIA_NO_CONTENT: Final = 1
 RSSTT: Final = 0
 FLOWERSS: Final = 1
 
@@ -146,6 +147,7 @@ class PostFormatter:
         assert display_via in {NO_FEED_TITLE_BUT_LINK_AS_POST_TITLE, COMPLETELY_DISABLE, NO_FEED_TITLE_BUT_LINK,
                                FEED_TITLE_AND_LINK, FEED_TITLE_AND_LINK_AS_POST_TITLE}
         assert display_title in {DISABLE, AUTO, FORCE_DISPLAY}
+        assert display_media in {DISABLE, AUTO, ONLY_MEDIA_NO_CONTENT}
         assert style in {RSSTT, FLOWERSS}
 
         sub_title = (sub_title or self.feed_title)
@@ -245,9 +247,15 @@ class PostFormatter:
                                                            message_style=message_style)
             normal_msg_len = get_plain_text_length(normal_msg_post)
             if (
-                    (0 < length_limit <= self.plain_length)  # length_limit == 0 means no limit
-                    or
-                    normal_msg_len > (4096 if not media_msg_count else 1024)
+                    (
+                            # bypass length check if no content needed
+                            not (display_media == ONLY_MEDIA_NO_CONTENT and self.media)
+                            and (
+                                    0 < length_limit <= self.plain_length  # length_limit == 0 means no limit
+                                    or
+                                    normal_msg_len > (4096 if not media_msg_count else 1024)
+                            )
+                    )
                     or
                     media_msg_count > 1
             ):
@@ -263,14 +271,23 @@ class PostFormatter:
         if self.telegraph_link is False and message_type == TELEGRAPH_MESSAGE:  # fallback to normal message if needed
             message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
 
+        if message_type == NORMAL_MESSAGE and display_media == ONLY_MEDIA_NO_CONTENT and self.media:
+            message_type = LINK_MESSAGE
+
         if message_type == LINK_MESSAGE:
             title_type = POST_TITLE_W_LINK
 
         # ---- determine need_media ----
-        need_media = display_media != DISABLE and message_type == NORMAL_MESSAGE and self.media
+        need_media = (
+                self.media
+                and (
+                        (message_type == NORMAL_MESSAGE and display_media != DISABLE)
+                        or (message_type == LINK_MESSAGE and display_media == ONLY_MEDIA_NO_CONTENT)
+                )
+        )
 
         # ---- determine need_link_preview ----
-        need_link_preview = not need_media and (link_preview == FORCE_ENABLE or message_type != NORMAL_MESSAGE)
+        need_link_preview = link_preview == FORCE_ENABLE or message_type != NORMAL_MESSAGE
 
         option_hash = f'{sub_title}|{tags}|{title_type}|{via_type}|{need_author}|{message_type}|{message_style}'
         self.__param_to_option_cache[param_hash] = option_hash

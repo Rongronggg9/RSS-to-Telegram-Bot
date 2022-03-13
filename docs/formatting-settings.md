@@ -24,22 +24,22 @@
 - **Length limit**:
     - A positive integer between [<ins>0</ins>, 4096]. <ins>0</ins> means "unlimited", actually equivalent to 4096 due to the internal limitation of Telegram (4096 characters for pure text messages; 1024 characters for text messages with media; some media types cannot be mixed with some others).
     - It is only effective when **send mode** is **auto**. Even if a post can be sent in a single Telegram message, but exceeding this limit, it has to be sent as a Telegraph post. Useful when you prefer Telegraph posts more than Telegram messages but still prefer receiving very short posts as Telegram messages. _Note that the media of a post will affect the internal limitation of Telegram, so it is possible that the length limit is not exceeded but the post is still too long for Telegram._
-- **Display media**:
+- **Media**:
     - **<ins>Enable</ins>**: including media in Telegram messages (if any media is attached)
     - **Disable**: send pure-text Telegram messages, no matter whether media is attached or not
     - **Only media, no content (if any media)**: if any media is attached, send it as a Telegram message containing only its media, no post content. Otherwise, send a pure-text Telegram message (of course, with its content). You may want to switch the **send mode** to **force Telegram messages** also.
     - _(Note that the option is only effective when **send mode** is **auto** or **force Telegram messages**)_
-- **Display title**:
-    - **<ins>Auto</ins>**: display title only when the title is not auto-filled _(e.g., some routes of [RSSHub](https://github.com/DIYGod/RSSHub) will autofill the title)_
-    - **Force enable**: always display title _(the post must have a title)_
-    - **Disable**: never display title
-- **Display source**:
+- **Post title**:
+    - **<ins>Auto</ins>**: display the post title only when it is not auto-filled _(e.g., some routes of [RSSHub](https://github.com/DIYGod/RSSHub) will autofill the title)_
+    - **Force enable**: always display post title _(the post must have a title)_
+    - **Disable**: never display post title
+- **Source**:
     - **<ins>Feed title and link</ins>**: display a link to the post and the feed title. If **style** is **RSStT**, they will be displayed together as a text link at the end of the message. _(note that if the link does not exist, only the feed title will be displayed)_
     - **Feed title and link displayed as post title**: display the link and post title together as a text link at the beginning of the message, but not to omit the feed title _(note that if the link does not exist, only the post title will be displayed)_
     - **No feed title, link at the end**: display a link to the post at the end of the message _(note that if the link does not exist, fall back to **completely disable**)_
     - **No feed title, link displayed as post title**: display the link and post title together as a text link at the beginning of the message, omitting the feed title _(note that if the link does not exist, fall back to **completely disable**)_
     - **Completely disable**: do not display anything about the source
-- **Display author**:
+- **Author**:
     - **<ins>Auto</ins>**: display author name if it is not fully contained in the feed title
     - **Force enable**: always display author name _(the post must have an author)_
     - **Disable**: never display author-name

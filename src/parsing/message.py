@@ -46,6 +46,9 @@ class MessageDispatcher:
             media_msg_count = len(media_and_types)
 
         if invalid_media_html:
+            invalid_media_html = (' '.join(invalid_media_html.split('\n'))
+                                  if len(invalid_media_html.split('\n')) == 2
+                                  else invalid_media_html)  # if only one invalid media, trim the newline
             self.html += '\n\n' + invalid_media_html
 
         if self.html:

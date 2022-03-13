@@ -169,7 +169,7 @@ async def callback_unsub(event: events.CallbackQuery.Event,
         await callback_get_unsub_page.__wrapped__(event, lang=lang, page=page, chat_id=chat_id)
 
     # await event.edit(msg, parse_mode='html')
-    await event.respond(msg, parse_mode='html')  # make unsubscribing multiple subscriptions more efficiency
+    await event.respond(msg, parse_mode='html')  # make unsubscribing multiple subscriptions more efficient
 
 
 @command_gatekeeper(only_manager=False)

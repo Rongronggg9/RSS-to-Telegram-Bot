@@ -107,6 +107,7 @@
         "display_media": "顯示媒體",
         "display_media_-1": "禁用",
         "display_media_0": "啟用",
+        "display_media_1": "僅媒體，無內容 (如有媒體)",
         "display_author": "顯示作者",
         "display_author_-1": "禁用",
         "display_author_0": "自動",

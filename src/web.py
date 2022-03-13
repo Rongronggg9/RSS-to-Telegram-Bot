@@ -146,7 +146,19 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
     content_type = response.headers.get('Content-Type')
     if not intended_content_type or not content_type or content_type.startswith(intended_content_type):
         if decode:
-            return await response.text()
+            body = await response.read()
+            xml_header = body.split(b'\n', 1)[0]
+            if xml_header.find(b'<?xml') == 0 and xml_header.find(b'?>') != -1:
+                try:
+                    encoding = BeautifulSoup(xml_header, 'lxml-xml').original_encoding
+                    return body.decode(encoding=encoding, errors='replace')
+                except (LookupError, RuntimeError):
+                    pass
+            try:
+                encoding = response.get_encoding()
+            except (LookupError, RuntimeError):
+                encoding = "utf-8"
+            return body.decode(encoding=encoding, errors='replace')
         elif max_size is None:
             return await response.read()
         elif max_size > 0:

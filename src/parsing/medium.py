@@ -12,7 +12,8 @@ from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
 from urllib.parse import urlencode
 
 from src import env, log, web, locks
-from src.parsing.html_node import Link, Br, Text, HtmlTree
+from .html_node import Link, Br, Text, HtmlTree
+from .utils import isAbsoluteHttpLink
 from src.exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
 
 logger = log.getLogger('RSStT.medium')
@@ -218,7 +219,11 @@ class Medium:
                 error_tries += 1
 
     def get_link_html_node(self):
-        return Link(self.type, param=self.original_urls[0])
+        url = self.original_urls[0]
+        if isAbsoluteHttpLink(url):
+            return Link(self.type, param=self.original_urls[0])
+        else:
+            return Text(f'{self.type} ({url})')
 
     async def validate(self, flush: bool = False) -> bool:
         if self.valid is not None and not flush:  # already validated
@@ -230,6 +235,8 @@ class Medium:
         async with self.validating_lock:
             while self.urls:
                 url = self.urls.pop(0)
+                if not isAbsoluteHttpLink(url):  # bypass non-http links
+                    continue
                 medium_info = await web.get_medium_info(url)
                 if medium_info is None:
                     continue

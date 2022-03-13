@@ -10,6 +10,7 @@ from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
 from telethon.helpers import add_surrogate
 from functools import partial
+from urllib.parse import urljoin
 
 from src import log
 
@@ -19,6 +20,7 @@ stripBr = partial(re.compile(r'\s*<br\s*/?>\s*').sub, '<br/>')
 stripLineEnd = partial(re.compile(r'[ 　\xa0\t\r\u200b\u2006\u2028\u2029]+\n').sub, '\n')  # use firstly
 stripNewline = partial(re.compile(r'[\f\n\u2028\u2029]{3,}').sub, '\n\n')  # use secondly
 stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
+isAbsoluteHttpLink = re.compile(r'^https?://').match
 
 
 class Enclosure:
@@ -40,8 +42,10 @@ with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
     emoji_dict = json.load(emojify_json)
 
 
-def is_absolute_link(link: str) -> bool:
-    return link.startswith('http://') or link.startswith('https://')
+def resolve_relative_link(base: str, url: str) -> str:
+    if isAbsoluteHttpLink(url) or not (base and url):
+        return url
+    return urljoin(base, url)
 
 
 def emojify(xml):

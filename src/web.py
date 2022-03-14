@@ -32,6 +32,12 @@ from src.i18n import i18n
 SOI: Final = b'\xff\xd8'
 EOI: Final = b'\xff\xd9'
 
+IMAGE_MAX_FETCH_SIZE: Final = 1024 * 5
+IMAGE_ITER_CHUNK_SIZE: Final = 128
+IMAGE_READ_BUFFER_SIZE: Final = 1
+
+DEFAULT_READ_BUFFER_SIZE: Final = 2 ** 16
+
 PROXY: Final = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
 PRIVATE_NETWORKS: Final = tuple(ip_network(ip_block) for ip_block in
                                 ('127.0.0.0/8', '::1/128',
@@ -192,13 +198,15 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
         _get(
             url=url, timeout=timeout, semaphore=semaphore, headers=headers,
             resp_callback=partial(__norm_callback, decode=decode, max_size=max_size,
-                                  intended_content_type=intended_content_type)
+                                  intended_content_type=intended_content_type),
+            read_bufsize=max_size or DEFAULT_READ_BUFFER_SIZE, read_until_eof=not max_size
         ),
         wait_for_timeout)
 
 
 async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = None,
-               semaphore: Union[bool, asyncio.Semaphore] = None, headers: Optional[dict] = None) -> WebResponse:
+               semaphore: Union[bool, asyncio.Semaphore] = None, headers: Optional[dict] = None,
+               read_bufsize: int = DEFAULT_READ_BUFFER_SIZE, read_until_eof: bool = True) -> WebResponse:
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -235,7 +243,8 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
                 async with semaphore_to_use:
                     async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
                                            timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
-                        async with session.get(url) as response:
+                        async with session.get(url,
+                                               read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
                             status = response.status
                             content = None
                             if status == 200:
@@ -327,25 +336,43 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
 async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int, int]:
     content_type = response.headers.get('Content-Type', '').lower()
     content_length = int(response.headers.get('Content-Length', '1024'))
-    max_read_length = min(content_length, 5 * 1024)
-    if not (
+    content = response.content
+    preloaded_length = content.total_bytes  # part of response body already came with the response headers
+    if not (  # hey, here is a `not`!
             # a non-webp-or-svg image
             (content_type.startswith('image') and content_type.find('webp') == -1 and content_type.find('svg') == -1)
             or (
                     # an un-truncated webp image
                     (content_type.find('webp') != -1 or content_type == 'application/octet-stream')
-                    and content_length <= max_read_length  # PIL cannot handle a truncated webp image
+                    # PIL cannot handle a truncated webp image
+                    and content_length <= max(preloaded_length, IMAGE_MAX_FETCH_SIZE)
             )
     ):
         return -1, -1
     is_jpeg = None
     already_read = 0
-    iter_length = 128
     buffer = BytesIO()
-    async for chunk in response.content.iter_chunked(iter_length):
-        already_read += len(chunk)
-        buffer.seek(0, SEEK_END)
-        buffer.write(chunk)
+    eof_flag = False
+    while True:
+        if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
+            break
+
+        curr_chunk_length = 0
+        preloaded_length = content.total_bytes - already_read
+        while preloaded_length > IMAGE_READ_BUFFER_SIZE or curr_chunk_length < IMAGE_ITER_CHUNK_SIZE:
+            # get almost all preloaded bytes, but leaving some to avoid next automatic preloading
+            chunk = await content.read(max(preloaded_length - IMAGE_READ_BUFFER_SIZE, IMAGE_READ_BUFFER_SIZE))
+            if chunk == b'':  # EOF
+                eof_flag = True
+                break
+            if is_jpeg is None:
+                is_jpeg = chunk.startswith(SOI)
+            already_read += len(chunk)
+            curr_chunk_length += len(chunk)
+            buffer.seek(0, SEEK_END)
+            buffer.write(chunk)
+            preloaded_length = content.total_bytes - already_read
+
         # noinspection PyBroadException
         try:
             image = PIL.Image.open(buffer)
@@ -354,8 +381,6 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
         except UnidentifiedImageError:
             return -1, -1  # not a format that PIL can handle
         except Exception:
-            if is_jpeg is None:
-                is_jpeg = chunk.startswith(SOI)
             if is_jpeg:
                 file_header = buffer.getvalue()
                 soi_count = file_header.count(SOI)
@@ -363,8 +388,6 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
                 if eoi_count != soi_count - 1:
                     # we are currently entering the thumbnail in Exif, bypassing...
                     # (why the specifications makers made Exif so freaky?)
-                    if already_read >= max_read_length:
-                        return -1, -1
                     continue
                 eoi_pos = file_header.find(EOI)
                 pointer = -1
@@ -380,9 +403,6 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
                     width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
                     height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
                     return width, height
-
-        if already_read >= max_read_length:
-            return -1, -1
     return -1, -1
 
 
@@ -391,9 +411,10 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[st
     if url.startswith('data:'):
         return None
     try:
-        r = await _get(url, resp_callback=__medium_info_callback)
+        r = await _get(url, timeout=6, resp_callback=__medium_info_callback,
+                       read_bufsize=IMAGE_READ_BUFFER_SIZE, read_until_eof=False)
         if r.status != 200:
-            raise ValueError('status code not 200')
+            raise ValueError(f'status code is not 200, but {r.status}')
     except Exception as e:
         logger.debug(f'Medium fetch failed: {url}', exc_info=e)
         return None

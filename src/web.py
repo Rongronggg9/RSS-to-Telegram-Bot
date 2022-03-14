@@ -6,7 +6,6 @@ from src.compat import nullcontext, ssl_create_default_context, Final
 import re
 import asyncio
 import functools
-import aiodns
 import aiohttp
 import feedparser
 import PIL.Image
@@ -17,6 +16,8 @@ from io import BytesIO, SEEK_END
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
 from aiohttp_retry import RetryClient, ExponentialRetry
+from dns.asyncresolver import resolve
+from dns.exception import DNSException
 from ssl import SSLError
 from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
@@ -72,7 +73,6 @@ PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
-_resolver = aiodns.DNSResolver(timeout=3, loop=env.loop)
 
 contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=").+?(?=")').search, flags=re.I)
 
@@ -210,14 +210,14 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
-    v6_address = None
+    v6_rr_set = None
     try:
-        v6_address = await asyncio.wait_for(_resolver.query(host, 'AAAA'), timeout=1) if env.IPV6_PRIOR else None
-    except (aiodns.error.DNSError, asyncio.TimeoutError):
+        v6_rr_set = (await resolve(host, 'AAAA', lifetime=1)).rrset if env.IPV6_PRIOR else None
+    except DNSException:
         pass
     except Exception as e:
         logger.debug(f'Error occurred when querying {url} AAAA:', exc_info=e)
-    socket_family = AF_INET6 if v6_address else 0
+    socket_family = AF_INET6 if v6_rr_set else 0
 
     _headers = HEADER_TEMPLATE.copy()
     if headers:

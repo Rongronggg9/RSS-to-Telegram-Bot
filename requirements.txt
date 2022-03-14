@@ -23,7 +23,7 @@ aiohttp[speedups]==3.8.1
 aiohttp-socks==0.7.1
 aiohttp-retry==2.4.6
 python-socks[asyncio]==2.0.3
-aiodns==3.0.0
+dnspython[idna]==2.2.1
 url-normalize==1.4.3
 
 # utils

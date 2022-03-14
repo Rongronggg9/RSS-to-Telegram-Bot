@@ -241,6 +241,12 @@ class Medium:
                 if medium_info is None:
                     continue
                 self.size, self.width, self.height, self.content_type = medium_info
+                if self.type == IMAGE and self.size <= self.maxSize and min(self.width, self.height) == -1 \
+                        and self.content_type and self.content_type.startswith('image') \
+                        and self.content_type.find('webp') == -1 and self.content_type.find('svg') == -1 \
+                        and not url.startswith(env.IMAGES_WESERV_NL):
+                    # enforcing dimension detection for images
+                    self.width, self.height = await detect_image_dimension_via_images_weserv_nl(url)
                 self.max_width = max(self.max_width, self.width)
                 self.max_height = max(self.max_height, self.height)
 
@@ -271,7 +277,7 @@ class Medium:
                             0.05 < self.width / self.height < 20
                             and
                             # Telegram downsizes images to fit 1280x1280. If not downsized a lot, passing
-                            max(self.max_width, self.max_height) <= 1280 * 1.5
+                            0 < max(self.max_width, self.max_height) <= 1280 * 1.5
                     ):
                         self.valid = True
                     # let long images fall back to file
@@ -282,6 +288,11 @@ class Medium:
                     self.valid = True
                 else:
                     self.valid = False
+
+                # some images cannot be sent as file directly, if so, images.weserv.nl may help
+                if self.type == FILE and self.content_type and self.content_type.startswith('image') \
+                        and not url.startswith(env.IMAGES_WESERV_NL):
+                    self.urls.append(construct_images_weserv_nl_url_convert_to_jpg(url))
 
                 if self.valid:
                     self.chosen_url = url
@@ -698,11 +709,11 @@ class Media:
 
 
 def construct_images_weserv_nl_url(url: str,
-                                   width: Optional[int] = 1280,
-                                   height: Optional[int] = 1280,
+                                   width: Optional[int] = 2560,
+                                   height: Optional[int] = 2560,
                                    fit: Optional[str] = 'inside',
                                    output_format: Optional[str] = 'png',
-                                   without_enlargement: Optional[bool] = False,
+                                   without_enlargement: Optional[bool] = True,
                                    default_image: Optional[str] = None) -> str:
     params = {
         'url': url,
@@ -716,3 +727,14 @@ def construct_images_weserv_nl_url(url: str,
     filtered_params = {k: v for k, v in params.items() if v is not None}
     query_string = urlencode(filtered_params)
     return env.IMAGES_WESERV_NL + '?' + query_string
+
+
+def construct_images_weserv_nl_url_convert_to_jpg(url: str) -> str:
+    return construct_images_weserv_nl_url(url, width=None, height=None, fit=None, without_enlargement=None,
+                                          output_format='jpg')
+
+
+async def detect_image_dimension_via_images_weserv_nl(url: str) -> tuple[int, int]:
+    url = construct_images_weserv_nl_url_convert_to_jpg(url)
+    _, width, height, _ = await web.get_medium_info(url)
+    return width, height

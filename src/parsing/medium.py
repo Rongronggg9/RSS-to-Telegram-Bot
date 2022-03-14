@@ -736,5 +736,8 @@ def construct_images_weserv_nl_url_convert_to_jpg(url: str) -> str:
 
 async def detect_image_dimension_via_images_weserv_nl(url: str) -> tuple[int, int]:
     url = construct_images_weserv_nl_url_convert_to_jpg(url)
-    _, width, height, _ = await web.get_medium_info(url)
+    res = await web.get_medium_info(url)
+    if not res:
+        return -1, -1
+    _, width, height, _ = res
     return width, height

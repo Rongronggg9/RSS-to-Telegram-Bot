@@ -383,26 +383,27 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
         except Exception:
             if is_jpeg:
                 file_header = buffer.getvalue()
-                soi_count = file_header.count(SOI)
-                eoi_count = file_header.count(EOI)
-                if eoi_count != soi_count - 1:
-                    # we are currently entering the thumbnail in Exif, bypassing...
-                    # (why the specifications makers made Exif so freaky?)
-                    continue
-                eoi_pos = file_header.find(EOI)
-                pointer = -1
-                for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
-                    p = file_header.find(marker)
-                    if p != -1:
-                        pointer = p
-                        break
-                if (
-                        pointer != -1 and pointer + 9 <= len(file_header)
-                        and (pointer > eoi_pos != -1 or soi_count == 1)  # reject Exif thumbnail
-                ):
-                    width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
-                    height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
-                    return width, height
+                find_start_pos = 0
+                for _ in range(3):
+                    pointer = -1
+                    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
+                        p = file_header.find(marker, find_start_pos)
+                        if p != -1:
+                            pointer = p
+                            break
+                    if pointer != -1 and pointer + 9 <= len(file_header):
+                        if file_header.count(EOI, 0, pointer) != file_header.count(SOI, 0, pointer) - 1:
+                            # we are currently entering the thumbnail in Exif, bypassing...
+                            # (why the specifications makers made Exif so freaky?)
+                            eoi_pos = file_header.find(EOI, pointer)
+                            if eoi_pos == -1:
+                                break  # no EOI found, we could never leave the thumbnail...
+                            find_start_pos = eoi_pos + len(EOI)
+                            continue
+                        width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
+                        height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
+                        return width, height
+                    break
     return -1, -1
 
 

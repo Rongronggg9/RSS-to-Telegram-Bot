@@ -9,7 +9,7 @@ class Text:
     tag: Optional[str] = None
     attr: Optional[str] = None
 
-    def __init__(self, content: Union["Text", str, list], param: Optional[str] = None, *_args, **_kwargs):
+    def __init__(self, content: Union["Text", str, list["Text"]], param: Optional[str] = None, *_args, **_kwargs):
         if content is None:
             content = ''
         self.param = param

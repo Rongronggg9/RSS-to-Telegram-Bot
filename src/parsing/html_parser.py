@@ -105,7 +105,9 @@ class Parser:
                 return None
             href = resolve_relative_link(self.feed_link, href)
             if not isAbsoluteHttpLink(href):
-                return Text(f'{text} ({href})')
+                if href.startswith('javascript'):  # drop javascript links
+                    return text
+                return Text([Text(f'{text} ('), Code(href), Text(')')])
             return Link(text, href)
 
         if tag == 'img':

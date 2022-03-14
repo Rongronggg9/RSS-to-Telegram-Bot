@@ -12,7 +12,7 @@ from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
 from urllib.parse import urlencode
 
 from src import env, log, web, locks
-from .html_node import Link, Br, Text, HtmlTree
+from .html_node import Code, Link, Br, Text, HtmlTree
 from .utils import isAbsoluteHttpLink
 from src.exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
 
@@ -223,7 +223,7 @@ class Medium:
         if isAbsoluteHttpLink(url):
             return Link(self.type, param=self.original_urls[0])
         else:
-            return Text(f'{self.type} ({url})')
+            return Text([Text(f'{self.type} ('), Code(url), Text(')')])
 
     async def validate(self, flush: bool = False) -> bool:
         if self.valid is not None and not flush:  # already validated

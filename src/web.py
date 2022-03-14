@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections.abc import Callable
 from typing import Union, Optional, AnyStr, Any
-from src.compat import nullcontext, ssl_create_default_context
+from src.compat import nullcontext, ssl_create_default_context, Final
 
 import re
 import asyncio
@@ -29,33 +29,37 @@ from asyncstdlib.functools import lru_cache
 from src import env, log, locks
 from src.i18n import i18n
 
-PROXY = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
-PRIVATE_NETWORKS = tuple(ip_network(ip_block) for ip_block in
-                         ('127.0.0.0/8', '::1/128',  # loopback is not a private network, list in here for convenience
-                          '169.254.0.0/16', 'fe80::/10',  # link-local address
-                          '10.0.0.0/8',  # class A private network
-                          '172.16.0.0/12',  # class B private networks
-                          '192.168.0.0/16',  # class C private networks
-                          'fc00::/7',  # ULA
-                          ))
+SOI: Final = b'\xff\xd8'
+EOI: Final = b'\xff\xd9'
 
-HEADER_TEMPLATE = {
+PROXY: Final = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
+PRIVATE_NETWORKS: Final = tuple(ip_network(ip_block) for ip_block in
+                                ('127.0.0.0/8', '::1/128',
+                                 # loopback is not a private network, list in here for convenience
+                                 '169.254.0.0/16', 'fe80::/10',  # link-local address
+                                 '10.0.0.0/8',  # class A private network
+                                 '172.16.0.0/12',  # class B private networks
+                                 '192.168.0.0/16',  # class C private networks
+                                 'fc00::/7',  # ULA
+                                 ))
+
+HEADER_TEMPLATE: Final = {
     'User-Agent': env.USER_AGENT,
     'Accept': '*/*',
     'Accept-Encoding': 'gzip, deflate, br',
 }
-FEED_ACCEPT = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
-              'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
+FEED_ACCEPT: Final = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
+                     'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
-EXCEPTIONS_SHOULD_RETRY = (asyncio.TimeoutError,
-                           # aiohttp.ClientPayloadError,
-                           # aiohttp.ClientResponseError,
-                           # aiohttp.ClientConnectionError,
-                           aiohttp.ServerConnectionError,
-                           TimeoutError,
-                           ConnectionError)
+EXCEPTIONS_SHOULD_RETRY: Final = (asyncio.TimeoutError,
+                                  # aiohttp.ClientPayloadError,
+                                  # aiohttp.ClientResponseError,
+                                  # aiohttp.ClientConnectionError,
+                                  aiohttp.ServerConnectionError,
+                                  TimeoutError,
+                                  ConnectionError)
 
-RETRY_OPTION = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
+RETRY_OPTION: Final = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -334,7 +338,7 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
             )
     ):
         return -1, -1
-    is_jpeg = content_type.startswith('image/jpeg')
+    is_jpeg = None
     already_read = 0
     iter_length = 128
     buffer = BytesIO()
@@ -350,15 +354,29 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
         except UnidentifiedImageError:
             return -1, -1  # not a format that PIL can handle
         except Exception:
+            if is_jpeg is None:
+                is_jpeg = chunk.startswith(SOI)
             if is_jpeg:
                 file_header = buffer.getvalue()
+                soi_count = file_header.count(SOI)
+                eoi_count = file_header.count(EOI)
+                if eoi_count != soi_count - 1:
+                    # we are currently entering the thumbnail in Exif, bypassing...
+                    # (why the specifications makers made Exif so freaky?)
+                    if already_read >= max_read_length:
+                        return -1, -1
+                    continue
+                eoi_pos = file_header.find(EOI)
                 pointer = -1
                 for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
                     p = file_header.find(marker)
                     if p != -1:
                         pointer = p
                         break
-                if pointer != -1 and pointer + 9 <= len(file_header):
+                if (
+                        pointer != -1 and pointer + 9 <= len(file_header)
+                        and (pointer > eoi_pos != -1 or soi_count == 1)  # reject Exif thumbnail
+                ):
                     width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
                     height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
                     return width, height

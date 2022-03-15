@@ -11,9 +11,8 @@ from attr import define
 from src import web
 from .medium import Video, Image, Media, Animation, Audio
 from .html_node import *
-from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify
+from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
 
-isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 srcsetParser = re.compile(r'(?:^|,\s*)'
                           r'(?P<url>\S+)'  # allow comma here because it is valid in URL
                           r'(?:\s+'
@@ -114,14 +113,8 @@ class Parser:
             src, srcset = soup.get('src'), soup.get('srcset')
             if not (src or srcset):
                 return None
-            alt, _class = soup.get('alt', ''), soup.get('class', '')
-            style, width, height = soup.get('style', ''), soup.get('width', ''), soup.get('height', '')
-            width = int(width) if width and width.isdigit() else float('inf')
-            height = int(height) if height and height.isdigit() else float('inf')
-            # drop icons
-            if width <= 30 or height <= 30 or isSmallIcon(style) \
-                    or 'emoji' in _class or (alt.startswith(':') and alt.endswith(':')) \
-                    or (src and src.startswith('data:')):
+            if is_emoticon(soup):
+                alt = soup.get('alt')
                 return Text(emojify(alt)) if alt else None
             _multi_src = []
             if srcset:

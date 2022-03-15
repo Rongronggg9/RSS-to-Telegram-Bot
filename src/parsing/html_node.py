@@ -1,15 +1,19 @@
+from __future__ import annotations
 from typing import Optional, Union
+
 from url_normalize import url_normalize
 
 __all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Code", "Pre", "Br", "Hr",
            "ListItem", "OrderedList", "UnorderedList"]
+
+_TypeTextContent = Union["Text", str, list["Text"]]
 
 
 class Text:
     tag: Optional[str] = None
     attr: Optional[str] = None
 
-    def __init__(self, content: Union["Text", str, list["Text"]], param: Optional[str] = None, *_args, **_kwargs):
+    def __init__(self, content: _TypeTextContent, param: Optional[str] = None, *_args, **_kwargs):
         if content is None:
             content = ''
         self.param = param
@@ -172,7 +176,7 @@ class HtmlTree(Text):
 
 # ---- HTML tags super class ----
 class TagWithParam(Text):
-    def __init__(self, content: Union["Text", str, list], param: str, *_args, **_kwargs):
+    def __init__(self, content: _TypeTextContent, param: str, *_args, **_kwargs):
         super().__init__(content, param)
 
 
@@ -181,7 +185,7 @@ class TagWithOptionalParam(Text):
 
 
 class TagWithoutParam(Text):
-    def __init__(self, content: Union["Text", str, list], *_args, **_kwargs):
+    def __init__(self, content: _TypeTextContent, *_args, **_kwargs):
         super().__init__(content)
 
 
@@ -194,7 +198,7 @@ class Link(TagWithParam):
     tag = 'a'
     attr = 'href'
 
-    def __init__(self, content: Union["Text", str, list], param: str, copy: bool = False, *_args, **_kwargs):
+    def __init__(self, content: _TypeTextContent, param: str, copy: bool = False, *_args, **_kwargs):
         super().__init__(content, param)
         if not copy:
             try:

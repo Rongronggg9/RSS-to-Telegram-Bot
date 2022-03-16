@@ -34,7 +34,7 @@ docker-compose up -d
 
 ### Deploy
 
-> Uncheck the checkbox `Private repo?`! Or you are not able to update with ease.
+> Uncheck the checkbox `Private repository`! Or you are not able to update with ease.
 
 |                             master                              |                            dev                            |
 |:---------------------------------------------------------------:|:---------------------------------------------------------:|
@@ -75,7 +75,7 @@ Turn to the fork automatically created by Railway and switch to the branch you'v
 > **IMPORTANT**  
 > If you deploy RSStT as a **free dyno**, it will sleep if the dyno receives no web traffic in 30 minutes. Sending commands to the bot will NOT help.
 
-Turn to [Kaffeine](https://kaffeine.herokuapp.com/), filling your Heroku app name, and click `Give my app a caffeine shot every 30 minutes ☕`. You do not need to check `I want a bedtime!` as long as your account has a verified payment method since Heroku has no longer enforced 6-hour-per-day sleeps since 2017. However, you may still want to check `I want a bedtime!` if your account has no verified payment method. By checking it, your dyno will have a 6-hour sleep per day, which ensures that it will not exhaust your 550-hour credit.
+Turn to [Kaffeine](https://kaffeine.herokuapp.com/), filling your Heroku app name, and click `Give my app a caffeine shot every 30 minutes ☕`. You do not need to check `I want a bedtime!` as long as your account has a verified payment method since Heroku has no longer enforced 6-hour-per-day sleeps since 2017. However, if your account has no verified payment method, you may still want to check `I want a bedtime!`. By checking it, your dyno will have a 6-hour sleep per day, which ensures that it will not exhaust your 550-hour credit.
 
 ### Update
 

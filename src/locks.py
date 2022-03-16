@@ -4,6 +4,7 @@ Shared locks.
 from __future__ import annotations
 
 import asyncio
+from time import time
 from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 from functools import partial
@@ -50,18 +51,18 @@ def user_pending_callbacks(user: _USER_LIKE) -> set:
 
 
 async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
+    call_time = time()
     flood_lock = user_flood_lock(user)
-    if not flood_lock.locked():
-        try:
-            await asyncio.wait_for(flood_lock.acquire(), timeout=2)  # double insurance to make sure only wait once
-            try:
-                await asyncio.sleep(seconds + 1)
-            finally:
-                flood_lock.release()
-        except asyncio.TimeoutError:
-            return False
-        return True
-    return False
+    if flood_lock.locked():
+        return False
+    seconds = seconds + 1
+    async with flood_lock:
+        lock_got_time = time()
+        time_left = seconds - (lock_got_time - call_time)
+        if time_left > 0:
+            await asyncio.sleep(time_left)
+            return True
+        return False
 
 
 # ----- web locks -----

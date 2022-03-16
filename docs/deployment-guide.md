@@ -42,9 +42,9 @@ docker-compose up -d
 
 [railway_button]: https://railway.app/button.svg
 
-[railway_master]: https://railway.app/new/template/UojxgA&referralCode=PEOFMi
+[railway_master]: https://railway.app/new/template/UojxgA?referralCode=PEOFMi
 
-[railway_dev]: https://railway.app/new/template/1_Wcri&referralCode=PEOFMi
+[railway_dev]: https://railway.app/new/template/1_Wcri?referralCode=PEOFMi
 
 After deployed, check the bot log to see if it is using PostgreSQL (`postgre`), otherwise, all the data will be lost when updating.
 

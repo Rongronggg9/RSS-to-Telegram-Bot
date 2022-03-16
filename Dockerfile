@@ -19,8 +19,13 @@ RUN pip install --trusted-host pypi.python.org -r /app/requirements.txt
 
 COPY . /app
 
+# inject railway env vars
+ARG RAILWAY_GIT_COMMIT_SHA
+ARG RAILWAY_GIT_BRANCH
+
 RUN \
-    echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; \
+    echo "$(expr substr "$RAILWAY_GIT_COMMIT_SHA" 1 7)@$RAILWAY_GIT_BRANCH" | tee .version ; \
+    if test $(expr length "$(cat .version)") -le 3; then echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; fi ; \
     if test $(expr length "$(cat .version)") -le 3; then echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; fi ; \
     rm -rf .git .github config docs && \
     ls -la ; \

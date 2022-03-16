@@ -129,8 +129,11 @@ TELEGRAPH_REPLACE_TAGS: Final = {
     'h4': 'u',
     'h5': 'p',
     'h6': 'p',
-    'div': 'p',
     'details': 'blockquote',
+}
+
+TELEGRAPH_TAGS_INSERT_BR_AFTER: Final = {
+    'div', 'section'
 }
 
 TELEGRAPH_DEL_TAGS: Final = {
@@ -158,6 +161,10 @@ class TelegraphIfy:
 
         for tag in soup.find_all(recursive=True):
             try:
+                # add linebreak after certain tags
+                if tag.name in TELEGRAPH_TAGS_INSERT_BR_AFTER:
+                    tag.insert_after(soup.new_tag('br'))
+
                 # deal with tags itself
                 if tag.name in TELEGRAPH_DEL_TAGS:
                     tag.decompose()

@@ -2,13 +2,13 @@
 Shared locks.
 """
 from __future__ import annotations
+from typing import Union
 
 import asyncio
 from time import time
 from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 from functools import partial
-from typing import Union
 from urllib.parse import urlparse
 
 _USER_LIKE = Union[int, str]

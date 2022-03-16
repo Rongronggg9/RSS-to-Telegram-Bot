@@ -31,7 +31,17 @@
 
 [Channels Using RSStT]: docs/channels-using-rsstt.md
 
-[![Deploy on Railway](https://railway.app/button.svg)](docs/deployment-guide.md#option-2-railwayapp)
+| [![Deploy on Railway][railway_button]][railway_guide] | [![Deploy to Heroku][heroku_button]][heroku_guide] |
+|:-----------------------------------------------------:|:--------------------------------------------------:|
+
+[railway_button]: https://railway.app/button.svg
+
+[heroku_button]: https://www.herokucdn.com/deploy/button.svg
+
+[railway_guide]: docs/deployment-guide.md#option-2-railwayapp
+
+[heroku_guide]: docs/deployment-guide.md#option-3-heroku
+
 
 **Important**: If you have your own RSStT bot (v1), please read the [migration guide](docs/migration-guide-v2.md) to learn how to migrate to v2.
 
@@ -43,7 +53,7 @@
 - The content of the posts of an RSS feed will be sent to Telegram
     - Keep rich-text format
     - Keep media (customizable)
-        - Images, Videos, and Audio both in the post content and enclosure; Documents in the post enclosure 
+        - Images, Videos, and Audio both in the post content and enclosure; Documents in the post enclosure
         - Long images will be sent as files to prevent Telegram from compressing the image and making it unreadable
         - Drop annoying icons, they break the reading experience
     - Automatically replace emoji shortcodes with emoji

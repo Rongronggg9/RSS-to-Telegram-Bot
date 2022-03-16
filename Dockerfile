@@ -5,10 +5,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential git
 
 # initialize venv
-RUN python -m venv /app/venv
+RUN python -m venv /opt/venv
 
 # activate venv
-ENV PATH="/app/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH"
 
 # upgrade venv deps
 RUN pip install --trusted-host pypi.python.org --upgrade pip setuptools wheel
@@ -37,10 +37,12 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+COPY --from=builder /opt/venv /opt/venv
+
 COPY --from=builder /app /app
 
 # activate venv
-ENV PATH="/app/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH"
 
 ENV PYTHONUNBUFFERED=1
 

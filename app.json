@@ -1,0 +1,57 @@
+{
+    "name": "RSS to Telegram Bot",
+    "description": "A Telegram RSS bot that cares about your reading experience",
+    "logo": "https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/dev/docs/resources/RSStT_icon.svg",
+    "repository": "https://github.com/Rongronggg9/RSS-to-Telegram-Bot",
+    "website": "https://t.me/RSStT_Channel",
+    "keywords": [
+        "python",
+        "RSS",
+        "Telegram",
+        "bot"
+    ],
+    "addons": [
+        "heroku-postgresql"
+    ],
+    "env": {
+        "TOKEN": {
+            "description": "Your bot token. Get it from @BotFather",
+            "required": true
+        },
+        "MANAGER": {
+            "description": "Your Telegram user ID. Get it from @userinfobot",
+            "required": true
+        },
+        "TELEGRAPH_TOKEN": {
+            "description": "Telegraph API access token. Get it from https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot",
+            "required": false
+        },
+        "API_ID": {
+            "description": "Your Telegram API ID. Get it from https://my.telegram.org/apps",
+            "required": false
+        },
+        "API_HASH": {
+            "description": "Your Telegram API hash. Get it from https://my.telegram.org/apps",
+            "required": false
+        },
+        "USER_AGENT": {
+            "description": "User-Agent",
+            "required": false
+        },
+        "IPV6_PRIOR": {
+            "description": "Enforce fetching feeds over IPv6 firstly or not? (0/1)",
+            "value": "0",
+            "required": false
+        },
+        "MULTIUSER": {
+            "description": "Enable multi-user feature or not? (0/1)",
+            "value": "1",
+            "required": false
+        },
+        "DEBUG": {
+            "description": "Enable debug logging or not? (0/1)",
+            "value": "0",
+            "required": false
+        }
+    }
+}

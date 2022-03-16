@@ -1,4 +1,6 @@
+from __future__ import annotations
 from typing import Optional, Union
+
 from telethon import events, types, Button
 from telethon.tl.patched import Message
 from telethon.errors import RPCError

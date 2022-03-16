@@ -1,4 +1,5 @@
 """Containing something make the bot compatible with Python 3.7 ~ 3.10"""
+from __future__ import annotations
 
 import sys
 import functools

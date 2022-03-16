@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tortoise import Tortoise
 from aerich import Command
 

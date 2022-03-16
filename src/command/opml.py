@@ -1,6 +1,8 @@
+from __future__ import annotations
+from typing import Union, Optional
+
 import listparser
 from datetime import datetime
-from typing import Union, Optional
 from telethon import events, Button
 from telethon.tl import types
 from telethon.tl.patched import Message

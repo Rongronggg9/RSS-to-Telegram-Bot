@@ -1,6 +1,7 @@
 """
 RSStT db models
 """
+from __future__ import annotations
 
 from tortoise import fields
 from tortoise.models import Model

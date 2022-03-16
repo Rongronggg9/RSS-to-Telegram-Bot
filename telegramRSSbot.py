@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 
 try:
@@ -18,7 +20,7 @@ from telethon.tl import types
 from random import sample
 from pathlib import Path
 
-from src import env, log, db, command
+from src import env, log, db, command, redirect_server
 from src.i18n import i18n, ALL_LANGUAGES, get_commands_list
 from src.parsing import tgraph
 
@@ -73,6 +75,10 @@ async def pre():
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
 
     await db.init()
+
+    # enable redirect server for Railway, Heroku, etc
+    if env.PORT:
+        await redirect_server.run(port=env.PORT)
 
     # noinspection PyTypeChecker
     manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)

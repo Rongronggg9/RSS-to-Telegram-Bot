@@ -1,5 +1,7 @@
-import asyncio
+from __future__ import annotations
 from typing import Union, Optional
+
+import asyncio
 from telethon import events, Button
 from telethon.tl.patched import Message
 from telethon.tl import types

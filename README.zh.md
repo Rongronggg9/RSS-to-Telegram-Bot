@@ -31,7 +31,17 @@
 
 [使用 RSStT 的频道]: docs/channels-using-rsstt.md
 
-[![Deploy on Railway](https://railway.app/button.svg)](docs/deployment-guide.md#option-2-railwayapp)
+| [![Deploy on Railway][railway_button]][railway_guide] | [![Deploy to Heroku][heroku_button]][heroku_guide] |
+|:-----------------------------------------------------:|:--------------------------------------------------:|
+
+[railway_button]: https://railway.app/button.svg
+
+[heroku_button]: https://www.herokucdn.com/deploy/button.svg
+
+[railway_guide]: docs/deployment-guide.md#option-2-railwayapp
+
+[heroku_guide]: docs/deployment-guide.md#option-3-heroku
+
 
 **重要**: 如果你有自己的 RSStT bot (v1)，请阅读[迁移指南](docs/migration-guide-v2.zh.md) 来了解如何迁移到 v2。
 

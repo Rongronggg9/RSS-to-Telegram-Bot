@@ -4,7 +4,7 @@
 
 > For more env variables and detailed information, read [Advanced Settings](advanced-settings.md).
 
-1. Turn to [@BotFather](https://t.me/BotFather) to create a new bot, then get its token (env variable: `TOKEN`).
+1. Turn to [@BotFather](https://t.me/BotFather), send `/newbot` create a new bot, then get its token (env variable: `TOKEN`). After that, send `/setinline`, select your bot, and reply with an inline placeholder you like to enable inline mode for your bot. For example, [@RSStT_Bot](https://t.me/RSStT_Bot) is using `Please input a command to continue...`.
 2. Turn to [@userinfobot](https://t.me/userinfobot) to get your user ID (env variable: `MANAGER`).
 3. [Get Telegraph API access tokens](https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot) (env variable: `TELEGRAPH_TOKEN`). Refresh the page every time you get a new token. If you have a lot of subscriptions, make sure to get at least 5 tokens.
 
@@ -36,15 +36,15 @@ docker-compose up -d
 
 > Uncheck the checkbox `Private repo?`! Or you are not able to update with ease.
 
-|                      master                       |                     dev                     |
-|:-------------------------------------------------:|:-------------------------------------------:|
-|  [![Deploy on Railway (master)][button]][master]  |  [![Deploy on Railway (dev)][button]][dev]  |
+|                             master                              |                            dev                            |
+|:---------------------------------------------------------------:|:---------------------------------------------------------:|
+| [![Deploy on Railway (master)][railway_button]][railway_master] | [![Deploy on Railway (dev)][railway_button]][railway_dev] |
 
-[button]: https://railway.app/button.svg
+[railway_button]: https://railway.app/button.svg
 
-[master]: https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fmaster&plugins=postgresql&envs=TOKEN%2CMANAGER%2CMULTIUSER%2CTELEGRAPH_TOKEN&optionalEnvs=MULTIUSER%2CTELEGRAPH_TOKEN&TOKENDesc=Your+bot+token&MANAGERDesc=Your+Telegram+user+ID&MULTIUSERDesc=If+set+to+0%2C+only+the+manager+can+use+the+bot&TELEGRAPH_TOKENDesc=To+enable+sending+via+Telegraph%2C+you+need+to+set+this&referralCode=PEOFMi
+[railway_master]: https://railway.app/new/template/UojxgA&referralCode=PEOFMi
 
-[dev]: https://railway.app/new/template?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fdev&plugins=postgresql&envs=TOKEN%2CMANAGER%2CMULTIUSER%2CTELEGRAPH_TOKEN&optionalEnvs=MULTIUSER%2CTELEGRAPH_TOKEN&TOKENDesc=Your+bot+token&MANAGERDesc=Your+Telegram+user+ID&MULTIUSERDesc=If+set+to+0%2C+only+the+manager+can+use+the+bot&TELEGRAPH_TOKENDesc=To+enable+sending+via+Telegraph%2C+you+need+to+set+this&referralCode=PEOFMi
+[railway_dev]: https://railway.app/new/template/1_Wcri&referralCode=PEOFMi
 
 After deployed, check the bot log to see if it is using PostgreSQL (`postgre`), otherwise, all the data will be lost when updating.
 
@@ -52,9 +52,33 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ### Update
 
-Turn to your GitHub repository and switch to the branch you've deployed, then click `Fetch upstream` and `Fetch and merge`.
+Turn to the fork automatically created by Railway and switch to the branch you've deployed, then click `Fetch upstream` and `Fetch and merge`.
 
-## Option 3: Dirty run
+## Option 3: Heroku
+
+> Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.
+
+### Deploy
+
+|                            master                            |                          dev                           |
+|:------------------------------------------------------------:|:------------------------------------------------------:|
+| [![Deploy to Heroku (master)][heroku_button]][heroku_master] | [![Deploy to Heroku (dev)][heroku_button]][heroku_dev] |
+
+[heroku_button]: https://www.herokucdn.com/deploy/button.svg
+
+[heroku_master]: https://heroku.com/deploy?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fmaster
+
+[heroku_dev]: https://heroku.com/deploy?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fdev
+
+### Update
+
+1. [Fork RSStT](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/fork) to your GitHub account.
+2. Use the instant deploy buttons above to deploy RSStT to Heroku.
+3. Switch the `Deployment method` to `GitHub` (`Deploy` tab -> `Deployment method`) and connect the app to your fork.
+4. Enable `Automatic deploys` (`Deploy` tab -> `Automatic deploys` -> `Enable Automatic Deploys`).
+5. Each time upstream updates, turn to your fork and switch to the branch you've deployed, then click `Fetch upstream` and `Fetch and merge`.
+
+## Option 4: Dirty run
 
 Minimal: Python 3.7+  
 Recommended: Python 3.9+

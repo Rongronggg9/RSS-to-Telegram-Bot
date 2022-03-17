@@ -228,6 +228,37 @@ def command_gatekeeper(func: Optional[Callable] = None,
                    + ')' \
                    + (f' in {chat_info}' if chat_info else '')
 
+        async def user_and_chat_permission_check():
+            sender_state = chat_state = 0
+            if sender_id:
+                sender_in_db, _ = await db.User.get_or_create(id=sender_id, defaults={'lang': 'null'})
+                sender_state = sender_in_db.state
+            if chat_id == sender_id:
+                chat_state = sender_state
+            elif chat_id:
+                chat_in_db, _ = await db.User.get_or_create(id=chat_id, defaults={'lang': 'null'})
+                chat_state = chat_in_db.state
+
+            permission_denied_not_manager = only_manager and sender_id != env.MANAGER
+            permission_denied_no_permission = (
+                    sender_id != env.MANAGER
+                    and ((not env.MULTIUSER and max(sender_state, chat_state) < 1) or min(sender_state, chat_state) < 0)
+            )
+            if permission_denied_not_manager or permission_denied_no_permission:
+                if is_chat_action:  # chat action, bypassing
+                    raise events.StopPropagation
+                await respond_or_answer(event,
+                                        i18n[lang]['permission_denied_not_bot_manager']
+                                        if permission_denied_not_manager
+                                        else i18n[lang]['permission_denied_no_permission'])
+                logger.warning(f'Refused {describe_user()} to use {command} '
+                               f'because ' + (
+                                   'the command can only be used by the bot manager'
+                                   if permission_denied_not_manager else
+                                   'the user has no permission to use the command'
+                               ))
+                raise events.StopPropagation
+
         async def execute():
             callback_msg_id = event.message_id if is_callback else None
             log_level = log.DEBUG if quiet else log.INFO
@@ -241,8 +272,6 @@ def command_gatekeeper(func: Optional[Callable] = None,
             if callback_msg_id:
                 pending_callbacks.add(callback_msg_id)
             try:
-                if lang_in_db is None:
-                    await db.User.get_or_create(id=chat_id, lang='null')  # create the user if it doesn't exist
                 logger.log(log_level, f'Allow {describe_user()} to use {command}')
                 async with flood_lock:
                     pass  # wait for flood wait
@@ -321,29 +350,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     logger.warning(f'Redirected {describe_user()} (using {command}) to the private chat with the bot')
                     raise events.StopPropagation
 
-            sender_state = (sender_id and await db.User.get_or_none(id=sender_id).values_list('state', flat=True)) or 0
-            chat_state = (chat_id and await db.User.get_or_none(id=chat_id).values_list('state', flat=True)) or 0
-
-            # user permission check
-            permission_denied_not_manager = only_manager and sender_id != env.MANAGER
-            permission_denied_no_permission = (
-                    sender_id != env.MANAGER
-                    and ((not env.MULTIUSER and max(sender_state, chat_state) < 1) or min(sender_state, chat_state) < 0)
-            )
-            if permission_denied_not_manager or permission_denied_no_permission:
-                if is_chat_action:  # chat action, bypassing
-                    raise events.StopPropagation
-                await respond_or_answer(event,
-                                        i18n[lang]['permission_denied_not_bot_manager']
-                                        if permission_denied_not_manager
-                                        else i18n[lang]['permission_denied_no_permission'])
-                logger.warning(f'Refused {describe_user()} to use {command} '
-                               f'because ' + (
-                                   'the command can only be used by the bot manager'
-                                   if permission_denied_not_manager else
-                                   'the user has no permission to use the command'
-                               ))
-                raise events.StopPropagation
+            await user_and_chat_permission_check()
 
             # operating channel/group in private chat, firstly get base info
             pattern_match: Match = event.pattern_match if not is_chat_action else None
@@ -399,6 +406,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                         chat_id = get_peer_id(chat)
                         if not isinstance(chat, types.Channel):
                             raise TypeError  # only allow operating channel/group in private chats
+                        await user_and_chat_permission_check()
                     except (TypeError, ValueError):
                         await respond_or_answer(event, i18n[lang]['channel_or_group_not_found'])
                         raise events.StopPropagation

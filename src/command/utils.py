@@ -24,16 +24,19 @@ from src.compat import cached_async
 
 logger = log.getLogger('RSStT.command')
 
+splitByWhitespace = re.compile(r'\s+').split
+
 
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
-def parse_command(command: str, max_split: int = 0) -> list[AnyStr]:
+def parse_command(command: str, max_split: int = 0, strip_target_chat: bool = True) -> list[AnyStr]:
     command = command.strip()
-    temp = re.split(r'\s+', command, 2)
-    if len(temp) >= 2 and temp[1].startswith(('@', '-100')):
-        del temp[1]
-    command = ' '.join(temp)
-    ret = re.split(r'\s+', command, maxsplit=max_split)
+    if strip_target_chat:
+        temp = splitByWhitespace(command, maxsplit=2)
+        if len(temp) >= 2 and temp[1].startswith(('@', '-100')):
+            del temp[1]
+        command = ' '.join(temp)
+    ret = splitByWhitespace(command, maxsplit=max_split)
     return ret
 
 
@@ -299,7 +302,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        f'(ChatAction, {event.action_message and type(event.action_message.action).__name__})'
                        if is_chat_action else
                        '(no command, other message)')
-            command_header = parse_command(command)[0]
+            command_header = parse_command(command, max_split=1, strip_target_chat=False)[0]
             if command_header.startswith('/') and '@' in command_header:
                 mention = command_header.split('@')[-1]
                 if mention != env.bot_peer.username:

@@ -447,8 +447,13 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     is_admin, participant_type = await is_user_admin(chat_id, sender_id)
                     if is_admin is None:
                         await respond_or_answer(event,
-                                                i18n[lang]['permission_denied_not_member'] if self_is_admin else
-                                                i18n[lang]['promote_to_admin_prompt'],
+                                                i18n[lang]['permission_denied_not_member']
+                                                if (self_is_admin or (chat and chat.broadcast)) else
+                                                (
+                                                        (i18n[lang]['permission_denied_not_member'] + '\n\n'
+                                                         if not is_callback else '')
+                                                        + i18n[lang]['promote_to_admin_prompt']
+                                                ),
                                                 cache_time=15)
                         logger.warning(f'Refused Refused {describe_user()} to use {command} '
                                        f'because they is not a participant')

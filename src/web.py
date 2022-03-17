@@ -402,6 +402,9 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
                             continue
                         width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
                         height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
+                        if min(width, height) <= 0:
+                            find_start_pos = pointer + 1
+                            continue
                         return width, height
                     break
     return -1, -1

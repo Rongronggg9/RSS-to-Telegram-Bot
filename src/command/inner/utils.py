@@ -225,14 +225,14 @@ async def update_interval(feed: Union[db.Feed, db.Sub, int]):
     set_to_default = False
 
     sub_exist = await feed.subs.all().exists()
-    intervals = await feed.subs.filter(interval__not_isnull=True).values_list('interval', flat=True)
-    intervals += await feed.subs.filter(interval__isnull=True, user__interval__not_isnull=True) \
-        .values_list('user__interval', flat=True)
-    some_using_default = await feed.subs.filter(interval__isnull=True, user__interval__isnull=True).exists()
     if not sub_exist:  # no sub subs the feed, del the feed
         await feed.delete()
         db.effective_utils.EffectiveTasks.delete(feed.id)
         return
+    intervals = await feed.subs.filter(state=1, interval__not_isnull=True).values_list('interval', flat=True)
+    intervals += await feed.subs.filter(state=1, interval__isnull=True, user__interval__not_isnull=True) \
+        .values_list('user__interval', flat=True)
+    some_using_default = await feed.subs.filter(state=1, interval__isnull=True, user__interval__isnull=True).exists()
     if not intervals and not some_using_default:  # no active sub subs the feed, deactivate the feed
         if feed.state == 1:
             feed.state = 0

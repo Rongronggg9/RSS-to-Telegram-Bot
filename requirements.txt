@@ -12,7 +12,7 @@ beautifulsoup4==4.10.0
 lxml==4.8.0
 fuzzywuzzy==0.18.0
 emoji==1.7.0
-minify-html==0.8.0
+minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)
 
 # db
 tortoise-orm[asyncpg,accel]==0.18.1

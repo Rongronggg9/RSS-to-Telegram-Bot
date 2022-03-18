@@ -57,7 +57,7 @@ class MessageDispatcher:
                                          head_count=media_msg_count or -1,
                                          length_limit_tail=4096)
         else:
-            tel = [(None, None)]
+            tel = []
 
         while tel:
             plain_text, format_entities = tel.pop(0)

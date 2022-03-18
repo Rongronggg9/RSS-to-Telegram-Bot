@@ -271,11 +271,11 @@ class PostFormatter:
         if self.telegraph_link is False and message_type == TELEGRAPH_MESSAGE:  # fallback to normal message if needed
             message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
 
-        if message_type == NORMAL_MESSAGE and display_media == ONLY_MEDIA_NO_CONTENT and self.media:
-            message_type = LINK_MESSAGE
-
         if message_type == LINK_MESSAGE:
             title_type = POST_TITLE_W_LINK
+
+        if message_type == NORMAL_MESSAGE and display_media == ONLY_MEDIA_NO_CONTENT and self.media:
+            message_type = LINK_MESSAGE
 
         # ---- determine need_media ----
         need_media = (

@@ -102,6 +102,7 @@
         "length_limit": "Length limit (auto mode only)",
         "length_limit_unlimited": "Unlimited",
         "link_preview": "Link preview",
+        "link_preview_-1": "Disable",
         "link_preview_0": "Auto",
         "link_preview_1": "Force enable",
         "display_media": "Media",

@@ -102,6 +102,7 @@
         "length_limit": "長度限制 (僅限自動模式)",
         "length_limit_unlimited": "無限",
         "link_preview": "鏈接預覽",
+        "link_preview_-1": "禁用",
         "link_preview_0": "自動",
         "link_preview_1": "強制啟用",
         "display_media": "媒體",

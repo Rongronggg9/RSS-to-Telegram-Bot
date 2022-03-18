@@ -14,7 +14,7 @@ from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, fo
 SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "notify": (1, 0),
     "send_mode": (0, 1, 2, -1),
-    "link_preview": (0, 1),
+    "link_preview": (0, 1, -1),
     "display_media": (0, 1, -1),
     "display_author": (0, 1, -1),
     "display_via": (0, 1, -3, -1, -4, -2),

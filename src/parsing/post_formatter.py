@@ -236,7 +236,11 @@ class PostFormatter:
         elif send_mode == FORCE_TELEGRAPH and self.telegraph_link is not False:
             message_type = TELEGRAPH_MESSAGE
         elif send_mode == FORCE_TELEGRAPH and self.telegraph_link is False:
-            message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
+            if self.link:
+                message_type = LINK_MESSAGE
+                title_type = POST_TITLE_W_LINK
+            else:
+                message_type = NORMAL_MESSAGE
         else:  # AUTO
             # if display_media != DISABLE and self.media:
             #     await self.media.validate()  # check media validity
@@ -272,10 +276,15 @@ class PostFormatter:
                 if self.telegraph_link is None:  # double check
                     await self.telegraph_ify()
 
-        if self.telegraph_link is False and message_type == TELEGRAPH_MESSAGE:  # fallback to normal message if needed
-            message_type = LINK_MESSAGE if self.link else NORMAL_MESSAGE
+        if self.telegraph_link is False and message_type == TELEGRAPH_MESSAGE:  # fallback if needed
+            if self.link:
+                message_type = LINK_MESSAGE
+                if send_mode == FORCE_TELEGRAPH:
+                    title_type = POST_TITLE_W_LINK
+            else:
+                message_type = NORMAL_MESSAGE
 
-        if message_type == LINK_MESSAGE:
+        if message_type == LINK_MESSAGE and title_type == NO_POST_TITLE and via_type == NO_VIA:  # avoid empty message
             title_type = POST_TITLE_W_LINK
 
         if message_type == NORMAL_MESSAGE and display_media == ONLY_MEDIA_NO_CONTENT and self.media:

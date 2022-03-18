@@ -45,8 +45,9 @@
     - **Force enable**: always display author name _(the post must have an author)_
     - **Disable**: never display author-name
 - **Link preview**:
-    - **<ins>Auto</ins>**: Enable Telegram link preview when a post is sent as a Telegraph post or only its title and source are sent as a Telegram message
-    - **Force Enable**: Always enable Telegram link preview _(note that a message containing media does not support link preview)_
+    - **<ins>Auto</ins>**: enable Telegram link preview when a post is sent as a Telegraph post or only its title and source are sent as a Telegram message
+    - **Force Enable**: always enable Telegram link preview _(note that a message containing media does not support link preview)_
+    - **Disable**: always disable Telegram link preview
 - **Style**:
     - **<ins>RSStT</ins>**: the default message style of RSS to Telegram Bot
     - **flowerss**: a style that looks like [flowerss](https://github.com/indes/flowerss-bot)

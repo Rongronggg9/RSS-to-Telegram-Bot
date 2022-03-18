@@ -144,7 +144,7 @@ class PostFormatter:
         """
         assert send_mode in {FORCE_LINK, AUTO, FORCE_TELEGRAPH, FORCE_MESSAGE}
         assert isinstance(length_limit, int) and length_limit >= 0
-        assert link_preview in {AUTO, FORCE_ENABLE}
+        assert link_preview in {DISABLE, AUTO, FORCE_ENABLE}
         assert display_author in {DISABLE, AUTO, FORCE_DISPLAY}
         assert display_via in {NO_FEED_TITLE_BUT_LINK_AS_POST_TITLE, COMPLETELY_DISABLE, NO_FEED_TITLE_BUT_TEXT_LINK,
                                NO_FEED_TITLE_BUT_BARE_LINK, FEED_TITLE_AND_LINK, FEED_TITLE_AND_LINK_AS_POST_TITLE}
@@ -291,7 +291,7 @@ class PostFormatter:
         )
 
         # ---- determine need_link_preview ----
-        need_link_preview = link_preview == FORCE_ENABLE or message_type != NORMAL_MESSAGE
+        need_link_preview = link_preview != DISABLE and (link_preview == FORCE_ENABLE or message_type != NORMAL_MESSAGE)
 
         option_hash = f'{sub_title}|{tags}|{title_type}|{via_type}|{need_author}|{message_type}|{message_style}'
         self.__param_to_option_cache[param_hash] = option_hash

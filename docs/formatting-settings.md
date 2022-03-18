@@ -36,8 +36,9 @@
 - **Source**:
     - **<ins>Feed title and link</ins>**: display a link to the post and the feed title. If **style** is **RSStT**, they will be displayed together as a text link at the end of the message. _(note that if the link does not exist, only the feed title will be displayed)_
     - **Feed title and link displayed as post title**: display the link and post title together as a text link at the beginning of the message, but not to omit the feed title _(note that if the link does not exist, only the post title will be displayed)_
-    - **No feed title, link at the end**: display a link to the post at the end of the message _(note that if the link does not exist, fall back to **completely disable**)_
     - **No feed title, link displayed as post title**: display the link and post title together as a text link at the beginning of the message, omitting the feed title _(note that if the link does not exist, fall back to **completely disable**)_
+    - **No feed title, text link at the end**: display a text link to the post at the end of the message, just like [`source`](https://git.io/RSStT) _(note that if the link does not exist, fall back to **completely disable**)_
+    - **No feed title, bare link at the end**: display a bare link to the post at the end of the message, just like [`https://git.io/RSStT`](https://git.io/RSStT) _(note that if the link does not exist, fall back to **completely disable**)_
     - **Completely disable**: do not display anything about the source
 - **Author**:
     - **<ins>Auto</ins>**: display author name if it is not fully contained in the feed title

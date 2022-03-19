@@ -1,5 +1,47 @@
 # Changelog
 
+## Channel remote management, more formatting options, and more (v2.2.0)
+
+### Additions
+
+#### Highlights
+
+- **Channel/group remote management**: Now you can manage the subscription of your channel/group in the private chat with the bot. Most commands are supported. Just send commands like `/sub @username https://exmaple.com` or `/sub -10010000000000 https://exmaple.com`. (`@username` is the channel/group's username, `@` is required; `-10010000000000` is the channel/group's ID, it must start with `-100`)
+- **More custom formatting options**:
+    - **Media**: You can make Telegram messages come with no media (just text) if you want (by default, they always come with media if any media is attached to the post). Also, you can make Telegram messages come with only media and metadata (no content) if you want, only when any media is attached to the post, otherwise, they will still come with the content.
+    - **Link Preview**: Now you can force disable link preview for Telegram messages.
+    - **Source**: More sourcing formats available. Read the detailed description in the [Formatting Settings Guidebook](formatting-settings.md).
+- **Deployment to Heroku**: The bot can now be deployed to Heroku. Read the detailed description in the [Deployment Guide](deployment-guide.md).
+- **User permission management**: The bot manager can now manage the permissions of the bot users by using the `/user_info` command. In this way, the bot manager can set who (user/channel/group) can use the bot, even if the multi-user mode is disabled.
+
+#### Other additions
+
+- **Single-column table support**: Formerly, all HTML tables were dropped from the output. Now those tables with only one column are rendered as multi-line text. Note that multi-column tables will still be dropped from the output.
+- **Audio fallback for [lizhi.fm](https://www.lizhi.fm)**: Automatically fallback to the less-quality version of the audio if the higher-quality version exceeds the file size limit. Only for [lizhi.fm](https://www.lizhi.fm).
+
+### Enhancements
+
+- **Prettified Telegraph post**: The format of Telegraph posts is prettified. In addition, all images and videos are using the media relay server to avoid anti-hotlinking.
+- **Non-HTTP hyperlinks**: Non-HTTP hyperlinks are not supported by Telegram. The bot will automatically convert them to bare URLs.
+- **Enclosure cleaning**: If an enclosure with a non-HTTP URL is already included in a link in the post, it will be removed.
+- **Lazy media validator**: The media validator is now lazy. It will only run if a post will be probably sent as Telegram messages. This will reduce CPU usage and network traffic.
+- **Enhanced image dimension extraction**: Image dimension extraction is now faster and more flexible. If failed, the bot will try to extract the dimension using [images.weserv.nl](https://images.weserv.nl).
+- **L10n update**: Turkish (Türkçe) l10n file updated. (English, Simplified Chinese / 简体中文, Traditional Chinese / 正體中文, Cantonese / 廣東話 are always up-to-date.)
+- **Improved Docker build caching**: If the dependencies are not changed, no need to fetch the whole Docker image again. Just use the cached dependencies and fetch the latest source code.
+- **Extract git info from Railway.app env variables**: Deployment on Railway.app can now recognize the git info.
+- **Minor enhancements**
+
+### Bug fixes
+
+- **Python 3.7 compatibility**: The previous version of the bot broke the compatibility with Python 3.7. Now it has been fixed. Please note that only x86 and amd64 architectures are supported. For arm64, the minimum Python version requirement is 3.8.
+- **EntitiesTooLongError**: Posts with tons of text hyperlinks could cause Telegram API to throw this error. Now the bot will try to fix this error by more aggressive post splitting.
+- `<div>`: The bot will now ensure that each `<div>` tag takes up a whole line.
+- **Unnecessary image fallback**: The bot will no longer fall back all images to file if at least one image needs to be sent as a file.
+- **Web retry**: Added a need-to-retry exception.
+- **Webpage decode error**: `cchardet` is not robust enough to handle all feeds. Now the bot will try to detect the encoding of the webpage according to the XML encoding declaration. Also, if `cchardet` returns a not-supported encoding, the bot will try to decode the webpage using UTF-8. Any character that cannot be decoded will be replaced with `�`.
+- **Extracting image dimension from Exif thumbnail**: Some images may contain a thumbnail in the Exif data. The bot will now avoid extracting the dimension from the thumbnail.
+- **Minor bug fixes**
+
 ## Custom format, new l10n, improved media fallback, and more (v2.1.0)
 
 Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `dev` branch. If you are using it, you may have noticed the new features. Since new commands are added, please use `/lang` command once again and select your language to let the bot update your command list.

@@ -42,7 +42,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 | [it] / Italian / Italiano              | [@Alfy] ([@AlfyT96]) | [![it_s]][it_w]           |
 | [ca] / Catalan / Català                | [@maite.guix]        | [![ca_s]][ca_w]           |
 | [tr] / Turkish / Türkçe                | [@wiseweb-works]     | [![tr_s]][tr_w]           |
-| [fr] / French / français                 | [@Edanas]     | [![fr_s]][fr_w]           |
+| [fr] / French / français               | [@Edanas]            | [![fr_s]][fr_w]           |
 
 [i18n]: ../src/i18n
 

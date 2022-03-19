@@ -85,7 +85,7 @@ class Parser:
                 return None
             rows_content = []
             for row in rows:
-                columns = list(row.findAll('td')) + list(row.findAll('th'))
+                columns = row.findAll(('td', 'th'))
                 if len(columns) != 1:
                     return None  # only support one column
                 row_content = await self._parse_item(columns[0])
@@ -233,7 +233,7 @@ class Parser:
 
         if tag == 'ol' or tag == 'ul':
             texts = []
-            list_items = soup.findAll('li')
+            list_items = soup.findAll('li', recursive=False)
             if not list_items:
                 return None
             for list_item in list_items:

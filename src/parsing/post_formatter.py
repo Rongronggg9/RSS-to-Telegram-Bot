@@ -505,6 +505,8 @@ class PostFormatter:
                 # https://www.iana.org/assignments/media-types/media-types.xhtml
                 if not enclosure.url or self.media.url_exists(enclosure.url):
                     continue
+                if not utils.isAbsoluteHttpLink(enclosure.url) and parsed.parser.soup.findAll('a', href=enclosure.url):
+                    continue
                 elif not enclosure.type:
                     medium = File(enclosure.url)
                 elif enclosure.type.find('webp') != -1 or enclosure.type.find('svg') != -1:

@@ -87,7 +87,7 @@ Turn to [Kaffeine](https://kaffeine.herokuapp.com/), filling your Heroku app nam
 
 ## Option 4: Dirty run
 
-Minimal: Python 3.7+  
+Minimal: Python 3.7+ (x86 / amd64), Python 3.8+ (arm64)  
 Recommended: Python 3.9+
 
 ```sh

@@ -33,7 +33,7 @@
 | `R_PROXY`              | Proxy used to fetch feeds [^3]                        | `socks5://172.17.0.1:1080`     |                        |
 | `PROXY_BYPASS_PRIVATE` | Pypass proxy for private IPs or not?                  | `1`                            | `0`                    |
 | `PROXY_BYPASS_DOMAINS` | Pypass proxy for listed domains                       | `example.com;example.net` [^2] |                        |
-| `USER_AGENT`           | User-Agent                                            | `Mozilla/5.0`                  | `RSStT/2.0 RSS Reader` |
+| `USER_AGENT`           | User-Agent                                            | `Mozilla/5.0`                  | `RSStT/2.2 RSS Reader` |
 | `IPV6_PRIOR`           | Enforce fetching feeds over IPv6 firstly or not? [^4] | `1`                            | `0`                    |
 
 ### Misc settings

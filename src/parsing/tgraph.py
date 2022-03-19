@@ -167,7 +167,19 @@ class TelegraphIfy:
 
                 # deal with tags itself
                 if tag.name in TELEGRAPH_DEL_TAGS:
-                    tag.decompose()
+                    if tag.name == 'table':
+                        rows = tag.find_all('tr')
+                        if not rows:
+                            tag.decompose()
+                            continue
+                        for row in rows:
+                            columns = list(row.find_all('td')) + list(row.find_all('th'))
+                            if len(columns) != 1:
+                                tag.decompose()
+                                continue
+                        tag.replaceWithChildren()
+                    else:
+                        tag.decompose()
                     continue
                 elif tag.name in TELEGRAPH_REPLACE_TAGS:
                     tag.name = TELEGRAPH_REPLACE_TAGS[tag.name]

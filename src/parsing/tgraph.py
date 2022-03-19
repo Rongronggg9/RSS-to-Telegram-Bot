@@ -173,7 +173,7 @@ class TelegraphIfy:
                             tag.decompose()
                             continue
                         for row in rows:
-                            columns = list(row.find_all('td')) + list(row.find_all('th'))
+                            columns = row.find_all(('td', 'th'))
                             if len(columns) != 1:
                                 tag.decompose()
                                 continue

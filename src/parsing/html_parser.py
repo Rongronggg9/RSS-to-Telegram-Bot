@@ -69,7 +69,21 @@ class Parser:
             return None
 
         if tag == 'table':
-            return None  # drop table
+            rows = soup.findAll('tr')
+            if not rows:
+                return None
+            rows_content = []
+            for row in rows:
+                columns = list(row.findAll('td')) + list(row.findAll('th'))
+                if len(columns) != 1:
+                    return None  # only support one column
+                row_content = await self._parse_item(columns[0])
+                if row_content:
+                    if Text(row_content).get_html().endswith('\n'):
+                        rows_content.append(row_content)
+                        continue
+                    rows_content.extend((row_content, Br()))
+            return Text(rows_content) or None
 
         if tag == 'p' or tag == 'section':
             parent = soup.parent.name

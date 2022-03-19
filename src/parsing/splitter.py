@@ -57,6 +57,7 @@ def split_text(text: str,
     return ret
 
 
+# noinspection PyProtectedMember
 def text_and_format_entities_split(plain_text: str,
                                    format_entities: Sequence[TypeMessageEntity],
                                    length_limit_head: int = 4096,
@@ -72,7 +73,11 @@ def text_and_format_entities_split(plain_text: str,
     surrogate_len_sum = 0
     while pending_text:
         curr_length_limit = length_limit_head if head_count <= -1 or len(chunks) < head_count else length_limit_tail
-        if len(pending_text) <= curr_length_limit:
+        curr_length_limit = min(curr_length_limit, len(pending_text))
+        # note: Telegram only allows up to 10000-Byte formatting entities per message
+        # here the limit is set to 9500 Bytes to avoid possible problems
+        if (len(pending_text) == curr_length_limit
+                and not (len(pending_entities) > 100 or len(b''.join(x._bytes() for x in pending_entities)) >= 9500)):
             if surrogate_len_sum > 0:
                 for entity in pending_entities:
                     entity.offset -= surrogate_len_sum
@@ -80,15 +85,15 @@ def text_and_format_entities_split(plain_text: str,
             break
         for curr_length_limit in range(curr_length_limit, 0, -100):
             try:
-                for sep in ('\n', '。', '. ', '；', '; ', '，', ', ', '？', '? ', '！', '! ', '：', ': ', '\t', ' ', '\xa0',
-                            ''):
+                for sep in ('\n', '。', '. ', '；', '; ', '，', ', ', '？', '? ', '！', '! ', '：', ': ', '\t',
+                            ' ', '\xa0', ''):
                     sep_pos = pending_text.rfind(sep, int(curr_length_limit * 0.5), curr_length_limit)
                     if sep_pos != -1:
                         curr_text = pending_text[:sep_pos + len(sep)]
                         surrogate_end_pos = surrogate_len_sum + surrogate_len(curr_text)
                         _curr_entities = filter_entities_by_range(surrogate_len_sum, surrogate_end_pos,
                                                                   pending_entities)
-                        if len(_curr_entities) > 100:
+                        if len(_curr_entities) > 100 or len(b''.join(x._bytes() for x in _curr_entities)) >= 9500:
                             raise OverflowError('Too many entities')
                         curr_entities, pending_entities = split_entities(surrogate_end_pos, pending_entities)
                         if surrogate_len_sum > 0:

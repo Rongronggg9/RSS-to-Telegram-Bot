@@ -125,6 +125,7 @@ class Message:
             )
         )
 
+    # noinspection PyProtectedMember
     async def send(self, reply_to: Union[int, types.Message, None] = None) \
             -> Optional[Union[types.Message, list[types.Message]]]:
         msg_lock, flood_lock = locks.user_msg_locks(self.user_id)

@@ -48,7 +48,7 @@ with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
 
 
 def resolve_relative_link(base: str, url: str) -> str:
-    if isAbsoluteHttpLink(url) or not (base and url):
+    if not (base and url) or isAbsoluteHttpLink(url) or not isAbsoluteHttpLink(base):
         return url
     return urljoin(base, url)
 
@@ -132,7 +132,11 @@ def parse_entry(entry):
         EntryParsed.enclosures = []
         for link in entry['links']:
             if link.get('rel') == 'enclosure':
-                EntryParsed.enclosures.append(Enclosure(url=link.get('href'),
+                enclosure_url = link.get('href')
+                if not enclosure_url:
+                    continue
+                enclosure_url = resolve_relative_link(EntryParsed.link, enclosure_url)
+                EntryParsed.enclosures.append(Enclosure(url=enclosure_url,
                                                         length=link.get('length'),
                                                         _type=link.get('type')))
         if EntryParsed.enclosures and entry.get('itunes_duration'):

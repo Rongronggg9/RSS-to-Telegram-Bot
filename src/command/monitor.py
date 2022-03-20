@@ -217,7 +217,7 @@ async def __monitor(feed: db.Feed) -> str:
         new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
         feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
-    await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries))
+    await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries[::-1]))
 
     return UPDATED
 

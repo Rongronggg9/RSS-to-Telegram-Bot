@@ -25,8 +25,8 @@ services:
         1a23b456c78de90f1a23b456c78de90f1a23b456c78de90f1a23b456c78d
 # ↑------ To disable sending via Telegraph, comment out this area ------↑ #
 
-# ↓------ Advanced settings ------↓ #
 # Please read https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/master/docs/advanced-settings.md for more details.
+# ↓------ Advanced settings ------↓ #
       #- MULTIUSER=0  # default: 1
       #- CRON_SECOND=30  # 0-59, default: 0
       #- DATABASE_URL=postgres://username:password@host:port/db_name  # default: sqlite://config/db.sqlite3?journal_mode=OFF

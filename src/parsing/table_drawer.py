@@ -124,6 +124,7 @@ def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
             finally:
                 # noinspection PyBroadException
                 try:
+                    plt.clf()
                     plt.close()
                 except Exception:
                     pass

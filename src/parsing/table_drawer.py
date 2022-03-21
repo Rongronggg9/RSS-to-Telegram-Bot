@@ -33,7 +33,7 @@ plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False
 
 filterwarnings('error', 'constrained_layout not applied', UserWarning)
-
+filterwarnings('ignore', "coroutine 'convert_table_to_png' was never awaited", RuntimeWarning)
 
 def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
     soup = BeautifulSoup(table_html, 'lxml')
@@ -87,40 +87,49 @@ def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
 
         auto_set_column_width_flag = True
         for tries in range(2):
-            # draw table
-            fig, ax = plt.subplots(figsize=(8, 8))
-            table = ax.table(cellText=cell_texts,
-                             rowLabels=row_labels or None,
-                             colLabels=column_labels or None,
-                             loc='center',
-                             cellLoc='center',
-                             rowLoc='center')
-            row_heights = defaultdict(lambda: 0)
-            if auto_set_column_width_flag:
-                table.auto_set_column_width(tuple(range(max_columns)))
-            # set row height
-            for xy, cell in table.get_celld().items():
-                text = cell.get_text().get_text()
-                text = fill(text.strip(), wrap_length)
-                cell.get_text().set_text(text)
-                row_heights[xy[0]] = max(
-                    cell.get_height() * (text.count('\n') + 1) * 0.75 + cell.get_height() * 0.25,
-                    row_heights[xy[0]]
-                )
-            for xy, cell in table.get_celld().items():
-                cell.set_height(row_heights[xy[0]])
-            fig.set_constrained_layout(True)
-            ax.axis('off')
-            buffer = BytesIO()
             try:
+                # draw table
+                fig, ax = plt.subplots(figsize=(8, 8))
+                table = ax.table(cellText=cell_texts,
+                                 rowLabels=row_labels or None,
+                                 colLabels=column_labels or None,
+                                 loc='center',
+                                 cellLoc='center',
+                                 rowLoc='center')
+                row_heights = defaultdict(lambda: 0)
+                if auto_set_column_width_flag:
+                    table.auto_set_column_width(tuple(range(max_columns)))
+                # set row height
+                for xy, cell in table.get_celld().items():
+                    text = cell.get_text().get_text()
+                    text = fill(text.strip(), wrap_length)
+                    cell.get_text().set_text(text)
+                    row_heights[xy[0]] = max(
+                        cell.get_height() * (text.count('\n') + 1) * 0.75 + cell.get_height() * 0.25,
+                        row_heights[xy[0]]
+                    )
+                for xy, cell in table.get_celld().items():
+                    cell.set_height(row_heights[xy[0]])
+                fig.set_constrained_layout(True)
+                ax.axis('off')
+                buffer = BytesIO()
                 fig.savefig(buffer, format='png', dpi=200)
             except UserWarning:
                 # if auto_set_column_width_flag:
                 #     auto_set_column_width_flag = False  # oops, overflowed!
                 #     continue  # once a figure is exported, some stuff may be frozen, so we need to re-create the table
                 return None
+            except Exception as e:
+                raise e
+            finally:
+                # noinspection PyBroadException
+                try:
+                    plt.close()
+                except Exception:
+                    pass
 
             # crop
+            # noinspection PyUnboundLocalVariable
             image = Image.open(buffer)
             ori_width, ori_height = image.size
             upper = left = float('inf')

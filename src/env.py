@@ -175,8 +175,9 @@ DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _da
                        else _database_url)
 del _database_url
 
-# ----- debug config -----
+# ----- misc config -----
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
+TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
 
 # ----- environment config -----
 RAILWAY_STATIC_URL: Final = os.environ.get('RAILWAY_STATIC_URL')

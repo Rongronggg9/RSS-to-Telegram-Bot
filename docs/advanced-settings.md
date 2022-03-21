@@ -45,6 +45,7 @@
 | `IMG_RELAY_SERVER` | Media relay server URL                                                 | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/` |
 | `IMAGES_WESERV_NL` | images.weserv.nl URL                                                   | `https://t0.nl/`                              | `https://images.weserv.nl/`                     |
 | `DATABASE_URL`     | Database URL [^5]                                                      | `postgres://user:pass@example.com:5432/table` | `sqlite://config/db.sqlite3?journal_mode=OFF`   |
+| `TABLE_TO_IMAGE`   | Convert tables to image (causing high CPU usage) or just drop them?    | `1`                                           | `0`                                             |
 | `DEBUG`            | Enable debug logging or not?                                           | `1`                                           | `0`                                             |
 
 ## Manager options

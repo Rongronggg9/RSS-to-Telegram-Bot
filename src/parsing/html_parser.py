@@ -8,7 +8,7 @@ from bs4.element import NavigableString, PageElement, Tag
 from urllib.parse import urlparse
 from attr import define
 
-from src import web
+from src import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
@@ -88,7 +88,8 @@ class Parser:
             for row in rows:
                 columns = row.findAll(('td', 'th'))
                 if len(columns) != 1:
-                    self.media.add(UploadedImage(convert_table_to_png(str(soup))))
+                    if env.TABLE_TO_IMAGE:
+                        self.media.add(UploadedImage(convert_table_to_png(str(soup))))
                     return None
                 row_content = await self._parse_item(columns[0])
                 if row_content:

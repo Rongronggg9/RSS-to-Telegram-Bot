@@ -137,7 +137,8 @@ class Message:
                 async with msg_lock:  # acquire a msg lock
                     async with self.__overall_semaphore:  # only acquire overall semaphore when sending
                         if self.media_type == MEDIA_GROUP:
-                            # telethon does not support formatting a media group using formatting entities, sad
+                            # # telethon does not support formatting a media group using formatting entities, sad
+                            # from telethon.extensions.html import unparse as html_unparse
                             # html = html_unparse(self.plain_text, self.format_entities)
                             # return await env.bot.send_message(entity=self.user_id,
                             #                                   message=html,

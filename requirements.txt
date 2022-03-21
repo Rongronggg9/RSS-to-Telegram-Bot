@@ -13,6 +13,8 @@ lxml==4.8.0
 fuzzywuzzy==0.18.0
 emoji==1.7.0
 minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)
+matplotlib==3.5.1
+numpy>=1.21.5, <=1.22.3  # 1.21.5 for Python 3.7
 
 # db
 tortoise-orm[asyncpg,accel]==0.18.1
@@ -34,4 +36,5 @@ multidict==6.0.2
 attrs==21.4.0
 asyncstdlib==3.10.3
 cachetools==5.0.0
+CJKwrap==2.2
 uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

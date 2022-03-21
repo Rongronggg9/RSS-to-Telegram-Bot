@@ -1,14 +1,17 @@
 from __future__ import annotations
 from src.compat import Final
 from typing import Optional, Union
+from abc import ABC, abstractmethod
+from collections.abc import Callable, Awaitable
 
 import asyncio
 import re
+from io import BytesIO
 from collections import defaultdict
 from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
-    MessageMediaPhoto, MessageMediaDocument
-from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError
+    MessageMediaPhoto, MessageMediaDocument, InputFile, InputFileBig, InputMediaUploadedPhoto
+from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError, BadRequestError
 from urllib.parse import urlencode
 
 from src import env, log, web, locks
@@ -46,12 +49,14 @@ ANIMATION: Final = 'animation'
 AUDIO: Final = 'audio'
 FILE: Final = 'file'
 MEDIUM_BASE_CLASS: Final = 'medium'
-TypeMedium = Union[IMAGE, VIDEO, ANIMATION, FILE]
+TypeMedium = Union[IMAGE, VIDEO, AUDIO, ANIMATION, FILE]
 
 MEDIA_GROUP: Final = 'media_group'
 TypeMessage = Union[MEDIA_GROUP, TypeMedium]
 
-TypeMessageMedia = Union[MessageMediaPhoto, MessageMediaDocument]
+TypeMessageMedia = Union[MessageMediaPhoto, MessageMediaDocument, InputMediaUploadedPhoto]
+TypeInputFile = Union[InputFile, InputFileBig]
+TypeTelegramMedia = Union[TypeMessageMedia, TypeInputFile]
 
 IMAGE_MAX_SIZE: Final = 5242880
 MEDIA_MAX_SIZE: Final = 20971520
@@ -75,59 +80,51 @@ MEDIA_MAX_SIZE: Final = 20971520
 # 4. The only possible fallback chain is: video -> image(poster) -> file.
 # 5. If an image fall back to a file, rest images must fall back to file too!
 
-class Medium:
-    type = MEDIUM_BASE_CLASS
-    maxSize = MEDIA_MAX_SIZE
-    # noinspection PyTypeChecker
-    typeFallbackTo: Optional[type[Medium]] = None
-    typeFallbackAllowSelfUrls: bool = False
-    # noinspection PyTypeChecker
-    inputMediaExternalType: Optional[Union[type[InputMediaPhotoExternal], type[InputMediaDocumentExternal]]] = None
+class AbstractMedium(ABC):
+    type: str = ''
 
-    def __init__(self, urls: Union[str, list[str]], type_fallback_urls: Optional[Union[str, list[str]]] = None):
-        urls = urls if isinstance(urls, list) else [urls]
-        self.urls: list[str] = []
-        for url in urls:  # dedup, should not use a set because sequence is important
-            if url not in self.urls:
-                self.urls.append(url)
-        self.original_urls: tuple[str, ...] = tuple(self.urls)
-        self.chosen_url: Optional[str] = self.urls[0]
+    def __init__(self):
         self.valid: Optional[bool] = None
-        self._server_change_count: int = 0
-        self.size = self.width = self.height = None
-        self.max_width = self.max_height = -1  # use for long pic judgment
-        self.type_fallback_urls: list[str] = type_fallback_urls if isinstance(type_fallback_urls, list) \
-            else [type_fallback_urls] if type_fallback_urls and isinstance(type_fallback_urls, str) \
-            else []  # use for fallback if not type_fallback_allow_self_urls
-        self.type_fallback_medium: Optional[Medium] = None
-        self.need_type_fallback: bool = False
-        self.content_type: Optional[str] = None
         self.drop_silently: bool = False  # if True, will not be included in invalid media
+        self.original_urls: tuple[str, ...] = tuple()
+        self.type_fallback_medium: Optional[AbstractMedium] = None
+        self.need_type_fallback: bool = False
         self.uploaded_bucket: defaultdict[int, Optional[tuple[TypeMessageMedia, TypeMedium]]] \
             = defaultdict(lambda: None)
         self.uploading_lock = asyncio.Lock()
         self.validating_lock = asyncio.Lock()
 
-    def telegramize(self):
-        if self.inputMediaExternalType is None:
-            raise NotImplementedError
-        return self.inputMediaExternalType(self.chosen_url)
+    @abstractmethod
+    def telegramize(self) -> Optional[TypeMessageMedia]:
+        pass
 
-    def type_fallback_chain(self) -> Optional[Medium]:
-        return (
-            self
-            if self.valid
-            else
-            (self.type_fallback_medium.type_fallback_chain()
-             if self.need_type_fallback and self.type_fallback_medium is not None
-             else None)
-        ) if not self.drop_silently else None
+    @abstractmethod
+    async def validate(self, flush: bool = False) -> bool:
+        pass
+
+    @abstractmethod
+    async def fallback(self) -> bool:
+        pass
+
+    @abstractmethod
+    def type_fallback_chain(self) -> Optional[AbstractMedium]:
+        pass
+
+    @abstractmethod
+    def get_link_html_node(self) -> Optional[Text]:
+        pass
+
+    @property
+    @abstractmethod
+    def hash(self) -> str:
+        pass
+
+    @abstractmethod
+    async def change_server(self) -> bool:
+        pass
 
     async def upload(self, chat_id: int, force_upload: bool = False) \
             -> tuple[Optional[TypeMessageMedia], Optional[TypeMedium]]:
-        """
-        :return: tuple(MessageMedia, self)
-        """
         if self.valid is None:
             await self.validate()
         medium_to_upload = self.type_fallback_chain()
@@ -218,7 +215,49 @@ class Medium:
 
                 error_tries += 1
 
-    def get_link_html_node(self):
+
+class Medium(AbstractMedium):
+    type = MEDIUM_BASE_CLASS
+    maxSize = MEDIA_MAX_SIZE
+    # noinspection PyTypeChecker
+    typeFallbackTo: Optional[type[Medium]] = None
+    typeFallbackAllowSelfUrls: bool = False
+    # noinspection PyTypeChecker
+    inputMediaExternalType: Optional[Union[type[InputMediaPhotoExternal], type[InputMediaDocumentExternal]]] = None
+
+    def __init__(self, urls: Union[str, list[str]], type_fallback_urls: Optional[Union[str, list[str]]] = None):
+        super().__init__()
+        urls = urls if isinstance(urls, list) else [urls]
+        self.urls: list[str] = []
+        for url in urls:  # dedup, should not use a set because sequence is important
+            if url not in self.urls:
+                self.urls.append(url)
+        self.original_urls: tuple[str, ...] = tuple(self.urls)
+        self.chosen_url: Optional[str] = self.urls[0]
+        self._server_change_count: int = 0
+        self.size = self.width = self.height = None
+        self.max_width = self.max_height = -1  # use for long pic judgment
+        self.type_fallback_urls: list[str] = type_fallback_urls if isinstance(type_fallback_urls, list) \
+            else [type_fallback_urls] if type_fallback_urls and isinstance(type_fallback_urls, str) \
+            else []  # use for fallback if not type_fallback_allow_self_urls
+        self.content_type: Optional[str] = None
+
+    def telegramize(self) -> Optional[Union[InputMediaPhotoExternal, InputMediaDocumentExternal]]:
+        if self.inputMediaExternalType is None:
+            raise NotImplementedError
+        return self.inputMediaExternalType(self.chosen_url)
+
+    def type_fallback_chain(self) -> Optional[Medium]:
+        return (
+            self
+            if self.valid
+            else
+            (self.type_fallback_medium.type_fallback_chain()
+             if self.need_type_fallback and self.type_fallback_medium is not None
+             else None)
+        ) if not self.drop_silently else None
+
+    def get_link_html_node(self) -> Text:
         url = self.original_urls[0]
         if isAbsoluteHttpLink(url):
             return Link(self.type, param=self.original_urls[0])
@@ -344,7 +383,7 @@ class Medium:
                          or self.need_type_fallback)
         return fallback_flag
 
-    async def change_server(self):
+    async def change_server(self) -> bool:
         if self._server_change_count >= 1:
             return False
         self._server_change_count += 1
@@ -365,7 +404,7 @@ class Medium:
         return type(self) == type(other) and self.original_urls == other.original_urls
 
     @property
-    def hash(self):
+    def hash(self) -> str:
         if self.drop_silently:
             return ''
         return '|'.join(
@@ -435,7 +474,7 @@ class Image(Medium):
         self.urls.extend(construct_images_weserv_nl_url(urls_not_images_weserv_nl[i])
                          for i in range(min(len(urls_not_images_weserv_nl), 3)))  # use for final fallback
 
-    async def change_server(self):
+    async def change_server(self) -> bool:
         sinaimg_server_match = sinaimg_server_parser(self.chosen_url)
         if not sinaimg_server_match:  # is not a sinaimg img
             return await super().change_server()
@@ -484,7 +523,7 @@ class Audio(Medium):
                 new_urls.append(url)
         self.urls = new_urls
 
-    async def change_server(self):
+    async def change_server(self) -> bool:
         lizhi_match = lizhi_parser(self.chosen_url)
         if not lizhi_match:  # is not a lizhi audio
             return await super().change_server()
@@ -510,15 +549,92 @@ class Animation(Image):
     inputMediaExternalType = InputMediaDocumentExternal
 
 
+class UploadedImage(AbstractMedium):
+    type: str = IMAGE
+    original_urls = ['']
+
+    def __init__(self, file: Union[bytes, BytesIO, Callable, Awaitable]):
+        super().__init__()
+        self.file = file
+        self.uploaded_file: Union[InputFile, InputFileBig, None] = None
+
+    def telegramize(self) -> Optional[InputMediaUploadedPhoto]:
+        if self.valid is None:
+            raise RuntimeError('Validate() must be called before telegramize()')
+        if self.uploaded_file:
+            return InputMediaUploadedPhoto(self.uploaded_file)
+        return None
+
+    @property
+    def hash(self) -> str:
+        return str(hash(self.file))
+
+    @property
+    def drop_silently(self):
+        if self.valid is None:
+            return False
+        return not self.valid
+
+    @drop_silently.setter
+    def drop_silently(self, value):
+        if not value and self.valid is None:
+            return
+        self.valid = not value
+
+    def type_fallback_chain(self) -> Optional[UploadedImage]:
+        return self if not self.drop_silently and self.valid else None
+
+    def get_link_html_node(self) -> None:
+        return None
+
+    async def fallback(self) -> bool:
+        if self.valid:
+            self.valid = False
+            return True
+        return False
+
+    change_server = fallback
+
+    async def validate(self, flush: bool = False):
+        if flush and self.valid:
+            self.valid = False
+            return False
+        if not flush and self.valid is not None:
+            return self.valid
+        async with self.validating_lock:
+            if not flush and self.valid is not None:
+                return self.valid
+            try:
+                try:
+                    callable_file = self.file
+                    if isinstance(self.file, Awaitable):
+                        self.file = await callable_file
+                    elif isinstance(self.file, Callable):
+                        self.file = callable_file()
+                except Exception as e:
+                    self.valid = False
+                    logger.error(f'Failed to generate file for {callable_file.__name__}', exc_info=e)
+                if not isinstance(self.file, (bytes, BytesIO)):
+                    raise ValueError(f'File must be bytes or BytesIO, got {type(self.file)}')
+                elif isinstance(self.file, BytesIO):
+                    self.file.seek(0)
+                self.uploaded_file = await env.bot.upload_file(self.file)
+                self.valid = True
+            except (BadRequestError, ValueError) as e:
+                logger.debug(f'Failed to upload file', exc_info=e)
+                self.valid = False
+        return self.valid
+
+
 class Media:
     def __init__(self):
-        self._media: list[Medium] = []
+        self._media: list[AbstractMedium] = []
         self.modify_lock = asyncio.Lock()
         self.allow_mixing_images_and_videos: bool = True
         self.consider_videos_as_gifs: bool = False
         self.allow_files_sent_as_album: bool = True
 
-    def add(self, medium: Medium):
+    def add(self, medium: AbstractMedium):
         if medium in self._media:
             return
         self._media.append(medium)
@@ -573,7 +689,7 @@ class Media:
         """
         Upload all media to telegram.
         :param chat_id: chat_id to upload to. If None, the origin media will be returned.
-        :return: ((uploaded/original medium, medium type)), invalid media html node)
+        :return: ((uploaded/original medium, medium type), invalid media html node)
         """
         await self.validate()
 
@@ -600,7 +716,7 @@ class Media:
         audios: list[tuple[Union[MessageMediaDocument, Audio], AUDIO]] = []
         files: list[tuple[Union[MessageMediaDocument, File], FILE]] = []
 
-        link_nodes: list[Link] = []
+        link_nodes: list[Text] = []
         for medium, medium_and_type in zip(self._media, media_and_types):
             if isinstance(medium_and_type, Exception):
                 if type(medium_and_type) in UserBlockedErrors:  # user blocked, let it go
@@ -654,6 +770,8 @@ class Media:
         html_nodes = []
         invalid_html_node: Optional[HtmlTree] = None
         for link in link_nodes:
+            if not link:
+                continue
             html_nodes.append(link)
             html_nodes.append(Br())
         if html_nodes:

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Iterator, Iterable
+from collections.abc import Iterator, Iterable, Awaitable
 from typing import Union, Optional
 
 import re
@@ -12,7 +12,12 @@ from src import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
-from .table_drawer import convert_table_to_png
+
+convert_table_to_png: Optional[Awaitable]
+if env.TABLE_TO_IMAGE:
+    from .table_drawer import convert_table_to_png
+else:
+    convert_table_to_png = None
 
 srcsetParser = re.compile(r'(?:^|,\s*)'
                           r'(?P<url>\S+)'  # allow comma here because it is valid in URL

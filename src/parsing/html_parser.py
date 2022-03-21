@@ -9,9 +9,10 @@ from urllib.parse import urlparse
 from attr import define
 
 from src import web
-from .medium import Video, Image, Media, Animation, Audio
+from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
+from .table_drawer import convert_table_to_png
 
 srcsetParser = re.compile(r'(?:^|,\s*)'
                           r'(?P<url>\S+)'  # allow comma here because it is valid in URL
@@ -87,7 +88,8 @@ class Parser:
             for row in rows:
                 columns = row.findAll(('td', 'th'))
                 if len(columns) != 1:
-                    return None  # only support one column
+                    self.media.add(UploadedImage(convert_table_to_png(str(soup))))
+                    return None
                 row_content = await self._parse_item(columns[0])
                 if row_content:
                     if row_content.get_html().endswith('\n'):

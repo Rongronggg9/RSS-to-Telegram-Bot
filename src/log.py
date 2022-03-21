@@ -28,6 +28,8 @@ getLogger('aiosqlite').setLevel(_muted)
 getLogger('tortoise').setLevel(_muted)
 getLogger('asyncpg').setLevel(_muted)
 getLogger('PIL').setLevel(_muted)
+getLogger('matplotlib').setLevel(_muted)
+getLogger('matplotlib.font_manager').setLevel(_shut_upped)
 
 _logger = getLogger('rsstt.watchdog')
 

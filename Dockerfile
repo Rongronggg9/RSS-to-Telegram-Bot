@@ -35,6 +35,16 @@ RUN \
 
 FROM python:3.10-slim
 
+# install fonts
+RUN apt-get update && apt-get install -y fonts-wqy-microhei
+
+# install wkhtmltopdf  # hmmm, wkhtmltopdf works strangely...
+#RUN \
+#    apt-get update && apt-get -y install wget && \
+#    wget "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_$(dpkg --print-architecture).deb" -O /tmp/wkhtmltopdf.deb && \
+#    dpkg -i /tmp/wkhtmltopdf.deb && apt-get -f install && \
+#    rm -f /tmp/wkhtmltopdf.deb && apt-get purge wget --auto-remove
+
 WORKDIR /app
 
 COPY --from=builder /opt/venv /opt/venv

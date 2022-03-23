@@ -3,6 +3,7 @@ from typing import Union
 from collections.abc import MutableMapping
 from src.compat import Final
 
+import gc
 import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
@@ -60,6 +61,7 @@ class MonitoringLogs:
         cls.monitoring_counts += 1
         if cls.monitoring_counts == 10:
             cls.print_summary()
+            gc.collect()
 
     @classmethod
     def print_summary(cls):

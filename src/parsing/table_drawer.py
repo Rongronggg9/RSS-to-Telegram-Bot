@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Optional
+from src.compat import Final
 
 import gc
 import numpy as np
@@ -10,7 +11,6 @@ from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
 from matplotlib.font_manager import FontManager
 from concurrent.futures import ThreadPoolExecutor
-from collections import defaultdict
 from cjkwrap import fill
 from warnings import filterwarnings
 
@@ -20,15 +20,16 @@ from .utils import logger
 _matplotlib_thread_pool = ThreadPoolExecutor(1, 'matplotlib_')
 
 MPL_TTF_LIST = FontManager().ttflist
-MPL_SANS_FONTS = \
-    list({f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Micro Hei'}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Zen Hei'}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans CJK')}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Microsoft YaHei')}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name == 'SimHei'}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name in {'SimKai', 'SimSun', 'SimSun-ExtB'}}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans') and 'cjk' not in f.name.lower()}) \
-    + list({f.name for f in MPL_TTF_LIST if not f.name.startswith('Noto Sans') and 'sans' in f.name.lower()})
+MPL_SANS_FONTS: Final = (
+        list({f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Micro Hei'})
+        + list({f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Zen Hei'})
+        + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans CJK')})
+        + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Microsoft YaHei')})
+        + list({f.name for f in MPL_TTF_LIST if f.name == 'SimHei'})
+        + list({f.name for f in MPL_TTF_LIST if f.name in {'SimKai', 'SimSun', 'SimSun-ExtB'}})
+        + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans') and 'cjk' not in f.name.lower()})
+        + list({f.name for f in MPL_TTF_LIST if not f.name.startswith('Noto Sans') and 'sans' in f.name.lower()})
+)
 
 plt.rcParams['font.sans-serif'] = MPL_SANS_FONTS
 plt.rcParams['font.family'] = 'sans-serif'
@@ -36,6 +37,7 @@ plt.rcParams['axes.unicode_minus'] = False
 
 filterwarnings('error', 'constrained_layout not applied', UserWarning)
 filterwarnings('ignore', "coroutine 'convert_table_to_png' was never awaited", RuntimeWarning)
+
 
 def _convert_table_to_png(table_html: str) -> Optional[bytes]:
     soup = BeautifulSoup(table_html, 'lxml')
@@ -86,6 +88,12 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
         if len(cell_texts) < max_rows:
             cell_texts += [[''] * max_columns] * (max_rows - len(cell_texts))
         wrap_length = max(wrap_length // max_columns, 10)
+        for i, row in enumerate(cell_texts):
+            cell_texts[i] = [fill(cell, wrap_length) for cell in row]
+        for i, label in enumerate(column_labels):
+            column_labels[i] = fill(label, wrap_length)
+        for i, label in enumerate(row_labels):
+            row_labels[i] = fill(label, wrap_length)
 
         auto_set_column_width_flag = True
         for tries in range(2):
@@ -98,19 +106,20 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
                                  loc='center',
                                  cellLoc='center',
                                  rowLoc='center')
-                row_heights = defaultdict(lambda: 0)
                 if auto_set_column_width_flag:
                     table.auto_set_column_width(tuple(range(max_columns)))
                 # set row height
-                for xy, cell in table.get_celld().items():
-                    text = cell.get_text().get_text()
-                    text = fill(text.strip(), wrap_length)
-                    cell.get_text().set_text(text)
-                    row_heights[xy[0]] = max(
-                        cell.get_height() * (text.count('\n') + 1) * 0.75 + cell.get_height() * 0.25,
-                        row_heights[xy[0]]
-                    )
-                for xy, cell in table.get_celld().items():
+                cell_d = table.get_celld()
+                row_range = {xy[0] for xy in cell_d}
+                column_range = {xy[1] for xy in cell_d}
+                row_heights = {
+                    row:
+                        max(cell.get_height() * (cell.get_text().get_text().count('\n') + 1) * 0.75
+                            + cell.get_height() * 0.25
+                            for cell in (cell_d[row, column] for column in column_range))
+                    for row in row_range
+                }
+                for xy, cell in cell_d.items():
                     cell.set_height(row_heights[xy[0]])
                 fig.set_constrained_layout(True)
                 ax.axis('off')
@@ -136,27 +145,31 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
             # noinspection PyUnboundLocalVariable
             image = Image.open(plt_buffer)
             ori_width, ori_height = image.size
-            upper = left = float('inf')
-            lower = right = float('-inf')
             # noinspection PyTypeChecker
             ia = np.array(image)
             # trim white border
-            for r in range(ori_height):
-                if min(ia[r][c][0] for c in range(ori_width)) < 128:
-                    upper = min(upper, r)
-                    lower = max(lower, r)
-            for c in range(ori_width):
-                if min(ia[r][c][0] for r in range(upper, lower)) < 128:
-                    left = min(left, c)
-                    right = max(right, c)
-            if any(isinstance(_, float) for _ in (upper, lower, left, right)):
-                raise ValueError('Failed to find the table boundaries.')
+            upper = left = 0
+            lower, right = ori_height - 1, ori_width - 1
+            while ia[upper][left][0] >= 128 and upper + 1 < ori_height and left + 1 < ori_width:
+                upper += 1
+                left += 1
+            while ia[upper - 1][left][0] < 128 and upper - 1 >= 0:
+                upper -= 1
+            while ia[upper][left - 1][0] < 128 and left - 1 >= 0:
+                left -= 1
+            while ia[lower][right][0] >= 128 and lower - 1 >= 0 and right - 1 >= 0:
+                lower -= 1
+                right -= 1
+            while ia[lower + 1][right][0] < 128 and lower + 1 < ori_height:
+                lower += 1
+            while ia[lower][right + 1][0] < 128 and right + 1 < ori_width:
+                right += 1
             # add a slim border
             border_width = 15
             left = max(0, left - border_width)
-            right = min(ori_width, right + border_width)
+            right = min(ori_width - 1, right + border_width)
             upper = max(0, upper - border_width)
-            lower = min(ori_height, lower + border_width)
+            lower = min(ori_height - 1, lower + border_width)
             width, height = right - left, lower - upper
             # ensure aspect ratio
             max_aspect_ratio = 15

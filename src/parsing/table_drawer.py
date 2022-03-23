@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
+import gc
 import numpy as np
 from math import ceil
 from PIL import Image
@@ -36,7 +37,7 @@ plt.rcParams['axes.unicode_minus'] = False
 filterwarnings('error', 'constrained_layout not applied', UserWarning)
 filterwarnings('ignore', "coroutine 'convert_table_to_png' was never awaited", RuntimeWarning)
 
-def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
+def _convert_table_to_png(table_html: str) -> Optional[bytes]:
     soup = BeautifulSoup(table_html, 'lxml')
     table = soup.find('table')
     if not table:
@@ -113,8 +114,8 @@ def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
                     cell.set_height(row_heights[xy[0]])
                 fig.set_constrained_layout(True)
                 ax.axis('off')
-                buffer = BytesIO()
-                fig.savefig(buffer, format='png', dpi=200)
+                plt_buffer = BytesIO()
+                fig.savefig(plt_buffer, format='png', dpi=200)
             except UserWarning:
                 # if auto_set_column_width_flag:
                 #     auto_set_column_width_flag = False  # oops, overflowed!
@@ -127,12 +128,13 @@ def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
                 try:
                     plt.clf()
                     plt.close()
+                    del fig, ax
                 except Exception:
                     pass
-
+                gc.collect()
             # crop
             # noinspection PyUnboundLocalVariable
-            image = Image.open(buffer)
+            image = Image.open(plt_buffer)
             ori_width, ori_height = image.size
             upper = left = float('inf')
             lower = right = float('-inf')
@@ -168,14 +170,20 @@ def _convert_table_to_png(table_html: str) -> Optional[BytesIO]:
                 middle = int((left + right) / 2)
                 left = middle - width // 2
                 right = middle + width // 2
+            old_image = image
             image = image.crop((left, upper, right, lower))
+            old_image.close()
             buffer = BytesIO()
             image.save(buffer, format='png')
-            return buffer
+            ret = buffer.getvalue()
+            image.close()
+            buffer.close()
+            plt_buffer.close()
+            return ret
     except Exception as e:
         logger.debug('Drawing table failed', exc_info=e)
         return None
 
 
-async def convert_table_to_png(table_html: str) -> Optional[BytesIO]:
+async def convert_table_to_png(table_html: str) -> Optional[bytes]:
     return await env.loop.run_in_executor(_matplotlib_thread_pool, _convert_table_to_png, table_html)

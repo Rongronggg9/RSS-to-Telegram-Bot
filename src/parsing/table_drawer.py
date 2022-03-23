@@ -20,12 +20,13 @@ _matplotlib_thread_pool = ThreadPoolExecutor(1, 'matplotlib_')
 
 MPL_TTF_LIST = FontManager().ttflist
 MPL_SANS_FONTS = \
-    list(f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Micro Hei') \
-    + list(f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Zen Hei') \
+    list({f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Micro Hei'}) \
+    + list({f.name for f in MPL_TTF_LIST if f.name == 'WenQuanYi Zen Hei'}) \
     + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans CJK')}) \
     + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Microsoft YaHei')}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name in {'SimHei', 'SimKai', 'SimSun', 'SimSun-ExtB'}}) \
-    + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans') and 'cjk' in f.name.lower()}) \
+    + list({f.name for f in MPL_TTF_LIST if f.name == 'SimHei'}) \
+    + list({f.name for f in MPL_TTF_LIST if f.name in {'SimKai', 'SimSun', 'SimSun-ExtB'}}) \
+    + list({f.name for f in MPL_TTF_LIST if f.name.startswith('Noto Sans') and 'cjk' not in f.name.lower()}) \
     + list({f.name for f in MPL_TTF_LIST if not f.name.startswith('Noto Sans') and 'sans' in f.name.lower()})
 
 plt.rcParams['font.sans-serif'] = MPL_SANS_FONTS

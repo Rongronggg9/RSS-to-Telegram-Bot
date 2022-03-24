@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional
-from src.compat import Final
+from src.compat import Final, cached_async
 
 import gc
 import numpy as np
@@ -13,6 +13,7 @@ from matplotlib.font_manager import FontManager
 from concurrent.futures import ThreadPoolExecutor
 from cjkwrap import fill
 from warnings import filterwarnings
+from cachetools import TTLCache
 
 from src import env
 from .utils import logger
@@ -198,5 +199,6 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
         return None
 
 
+@cached_async(TTLCache(maxsize=32, ttl=180))
 async def convert_table_to_png(table_html: str) -> Optional[bytes]:
     return await env.loop.run_in_executor(_matplotlib_thread_pool, _convert_table_to_png, table_html)

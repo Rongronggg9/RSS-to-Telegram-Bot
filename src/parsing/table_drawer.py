@@ -151,19 +151,19 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
             # trim white border
             upper = left = 0
             lower, right = ori_height - 1, ori_width - 1
-            while ia[upper][left][0] >= 128 and upper + 1 < ori_height and left + 1 < ori_width:
+            while upper + 1 < ori_height and left + 1 < ori_width and ia[upper][left][0] >= 128:
                 upper += 1
                 left += 1
-            while ia[upper - 1][left][0] < 128 and upper - 1 >= 0:
+            while upper - 1 >= 0 and ia[upper - 1][left][0] < 128:
                 upper -= 1
-            while ia[upper][left - 1][0] < 128 and left - 1 >= 0:
+            while left - 1 >= 0 and ia[upper][left - 1][0] < 128:
                 left -= 1
-            while ia[lower][right][0] >= 128 and lower - 1 >= 0 and right - 1 >= 0:
+            while lower - 1 >= 0 and right - 1 >= 0 and ia[lower][right][0] >= 128:
                 lower -= 1
                 right -= 1
-            while ia[lower + 1][right][0] < 128 and lower + 1 < ori_height:
+            while lower + 1 < ori_height and ia[lower + 1][right][0] < 128:
                 lower += 1
-            while ia[lower][right + 1][0] < 128 and right + 1 < ori_width:
+            while right + 1 < ori_width and ia[lower][right + 1][0] < 128:
                 right += 1
             # add a slim border
             border_width = 15

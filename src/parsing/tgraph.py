@@ -223,7 +223,17 @@ class TelegraphIfy:
                         tag.decompose()
                     continue
                 elif tag.name in TELEGRAPH_REPLACE_TAGS:
-                    tag.name = TELEGRAPH_REPLACE_TAGS[tag.name]
+                    old_name = tag.name
+                    new_name = TELEGRAPH_REPLACE_TAGS[old_name]
+                    tag.name = new_name
+                    if old_name.startswith('h') and not new_name.startswith('h') and new_name != 'p':
+                        # ensure take a whole line
+                        tag.insert_before(soup.new_tag('br')) \
+                            if (hasattr(tag.previous_sibling, 'name')
+                                and tag.previous_sibling.name not in {'br', 'p'}
+                                and not tag.previous_sibling.name.startswith('h')) \
+                            else None
+                        tag.insert_after(soup.new_tag('br'))
                 elif tag.name not in TELEGRAPH_ALLOWED_TAGS:
                     tag.replaceWithChildren()  # remove disallowed tags
                     continue

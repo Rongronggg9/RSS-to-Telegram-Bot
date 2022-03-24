@@ -14,7 +14,6 @@ fuzzywuzzy==0.18.0
 emoji==1.7.0
 minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)
 matplotlib==3.5.1
-numpy>=1.21.5, <=1.22.3  # 1.21.5 for Python 3.7
 
 # db
 tortoise-orm[asyncpg,accel]==0.18.1

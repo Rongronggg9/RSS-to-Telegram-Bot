@@ -3,7 +3,6 @@ from typing import Optional
 from src.compat import Final, cached_async
 
 import gc
-import numpy as np
 from math import ceil
 from PIL import Image
 from io import BytesIO
@@ -146,24 +145,22 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
             # noinspection PyUnboundLocalVariable
             image = Image.open(plt_buffer)
             ori_width, ori_height = image.size
-            # noinspection PyTypeChecker
-            ia = np.array(image)
             # trim white border
             upper = left = 0
             lower, right = ori_height - 1, ori_width - 1
-            while upper + 1 < ori_height and left + 1 < ori_width and ia[upper][left][0] >= 128:
+            while left + 1 < ori_width and upper + 1 < ori_height and image.getpixel((left, upper))[0] >= 128:
                 upper += 1
                 left += 1
-            while upper - 1 >= 0 and ia[upper - 1][left][0] < 128:
+            while upper - 1 >= 0 and image.getpixel((left, upper - 1))[0] < 128:
                 upper -= 1
-            while left - 1 >= 0 and ia[upper][left - 1][0] < 128:
+            while left - 1 >= 0 and image.getpixel((left - 1, upper))[0] < 128:
                 left -= 1
-            while lower - 1 >= 0 and right - 1 >= 0 and ia[lower][right][0] >= 128:
+            while right - 1 >= 0 and lower - 1 >= 0 and image.getpixel((right, lower))[0] >= 128:
                 lower -= 1
                 right -= 1
-            while lower + 1 < ori_height and ia[lower + 1][right][0] < 128:
+            while lower + 1 < ori_height and image.getpixel((right, lower + 1))[0] < 128:
                 lower += 1
-            while right + 1 < ori_width and ia[lower][right + 1][0] < 128:
+            while right + 1 < ori_width and image.getpixel((right + 1, lower))[0] < 128:
                 right += 1
             # add a slim border
             border_width = 15

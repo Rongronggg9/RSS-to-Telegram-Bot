@@ -16,7 +16,8 @@ minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.
 matplotlib==3.5.1
 
 # db
-tortoise-orm[asyncpg,accel]==0.18.1
+git+https://github.com/Rongronggg9/asyncpg.git@fix/pep-621
+tortoise-orm[accel]==0.18.1
 aerich==0.6.2
 
 # network

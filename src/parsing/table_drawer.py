@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional
 from src.compat import Final, cached_async
 
-import gc
 from math import ceil
 from PIL import Image
 from io import BytesIO
@@ -37,6 +36,8 @@ plt.rcParams['axes.unicode_minus'] = False
 
 filterwarnings('error', 'constrained_layout not applied', UserWarning)
 filterwarnings('ignore', "coroutine 'convert_table_to_png' was never awaited", RuntimeWarning)
+
+fig, ax = plt.subplots(figsize=(8, 8))
 
 
 def _convert_table_to_png(table_html: str) -> Optional[bytes]:
@@ -99,7 +100,6 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
         for tries in range(2):
             try:
                 # draw table
-                fig, ax = plt.subplots(figsize=(8, 8))
                 table = ax.table(cellText=cell_texts,
                                  rowLabels=row_labels or None,
                                  colLabels=column_labels or None,
@@ -135,12 +135,9 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
             finally:
                 # noinspection PyBroadException
                 try:
-                    plt.clf()
-                    plt.close()
-                    del fig, ax
+                    plt.cla()
                 except Exception:
                     pass
-                gc.collect()
             # crop
             # noinspection PyUnboundLocalVariable
             image = Image.open(plt_buffer)

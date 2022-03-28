@@ -314,8 +314,7 @@ class TelegraphIfy:
                 rets = await asyncio.gather(telegraph_account.flood_wait(retry_after), self.telegraph_ify())
 
                 return rets[0]
-            else:
-                raise e
+            raise e
         except (TimeoutError, asyncio.TimeoutError) as e:
             raise e  # aiohttp_retry will retry automatically, so it means too many retries if caught
         except (ClientError, ConnectionError) as e:

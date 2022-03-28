@@ -252,7 +252,7 @@ class Parser:
                 return None
             if tag == 'ol':
                 return OrderedList([Br(), *texts, Br()])
-            elif tag == 'ul':
+            if tag == 'ul':
                 return UnorderedList([Br(), *texts, Br()])
 
         text = await self._parse_item(soup.children)

@@ -60,9 +60,8 @@ async def sub(user_id: int,
                         sniff_ret = await sub(user_id, sniffed_feed_url, lang=lang, bypass_feed_sniff=True)
                         if sniff_ret['sub']:
                             return sniff_ret
-                        else:
-                            FeedSnifferCache[feed_url] = None
-                            FeedSnifferCache[feed_url_original] = None
+                        FeedSnifferCache[feed_url] = None
+                        FeedSnifferCache[feed_url_original] = None
                 logger.warning(f'Sub {feed_url} for {user_id} failed: ({wf.error})')
                 return ret
 
@@ -107,7 +106,8 @@ async def sub(user_id: int,
                 ret['sub'] = None
                 ret['msg'] = 'ERROR: ' + i18n[lang]['already_subscribed']
                 return ret
-            elif _sub.title != sub_title:
+
+            if _sub.title != sub_title:
                 _sub.state = 1
                 _sub.title = sub_title
                 await _sub.save()

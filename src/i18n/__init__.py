@@ -122,12 +122,11 @@ class _L10N:
     def __getitem__(self, key: str) -> str:
         if self.key_exist(key):
             return self.__l10n_lang[key]
-        elif self.__lang_code != FALLBACK_LANGUAGE:
+        if self.__lang_code != FALLBACK_LANGUAGE:
             return _I18N().get_fallback_l10n(
                 self.__lang_code if not self.__l10n_lang['iso_639_code'] else None  # get ISO 639 fallback if needed
             )[key]
-        else:
-            return key
+        return key
 
     def html_escaped(self, key: str):
         return self[key].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')

@@ -52,10 +52,10 @@ if _version == 'dirty':
 
     # noinspection PyBroadException
     try:
-        with Popen('git describe --tags', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+        with Popen(['git', 'describe', '--tags'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
             __.wait(3)
             _version = __.stdout.read().decode().strip()
-        with Popen('git branch --show-current', shell=True, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+        with Popen(['git', 'branch', '--show-current'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
             __.wait(3)
             __ = __.stdout.read().decode().strip()
             if __:

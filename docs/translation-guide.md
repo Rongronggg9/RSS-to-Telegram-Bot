@@ -43,6 +43,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 | [ca] / Catalan / Català                | [@maite.guix]        | [![ca_s]][ca_w]           |
 | [tr] / Turkish / Türkçe                | [@wiseweb-works]     | [![tr_s]][tr_w]           |
 | [fr] / French / français               | [@Edanas]            | [![fr_s]][fr_w]           |
+| [id] / Indonesian / Bahasa Indonesia   | [@liimee]            | [![id_s]][id_w]           |
 
 [i18n]: ../src/i18n
 
@@ -54,6 +55,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 [ca]: ../src/i18n/ca.json
 [tr]: ../src/i18n/tr.json
 [fr]: ../src/i18n/fr.json
+[id]: ../src/i18n/id.json
 
 [en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/glossary/svg-badge.svg
 [zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/glossary/svg-badge.svg
@@ -63,6 +65,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 [ca_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ca/glossary/svg-badge.svg
 [tr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/tr/glossary/svg-badge.svg
 [fr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/fr/glossary/svg-badge.svg
+[id_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/id/glossary/svg-badge.svg
 
 [en_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/en/
 [zh_Hans_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/zh_Hans/
@@ -72,6 +75,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 [ca_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/ca/
 [tr_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/tr/
 [fr_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/fr/
+[id_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/id/
 
 [@Rongronggg9]: https://github.com/Rongronggg9
 [@Alfy]: https://hosted.weblate.org/user/Alfy/
@@ -79,6 +83,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 [@maite.guix]: https://hosted.weblate.org/user/maite.guix/
 [@wiseweb-works]: https://hosted.weblate.org/user/wiseweb-works/
 [@Edanas]: https://hosted.weblate.org/user/Edanas/
+[@liimee]: https://hosted.weblate.org/user/liimee/
 
 [^1]: Shorter is better. Usually, it's the same as `iso_639_code`. However, if a language does have multiple common variants and of which no one can be a common standard, consider using an extended [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) instead. Please make sure the language code is [IANA-registered](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) and not deprecated or not about to be deprecated.
 

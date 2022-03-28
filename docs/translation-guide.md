@@ -1,6 +1,6 @@
 # Translation Guide
 
-[![Translating Status](https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/svg-badge.svg)](https://hosted.weblate.org/engage/rss-to-telegram-bot/)
+[![Translating status](https://img.shields.io/weblate/progress/rss-to-telegram-bot?logo=weblate)](https://hosted.weblate.org/engage/rss-to-telegram-bot/)
 
 You can contribute by helping us to translate the bot to your language.
 

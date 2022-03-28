@@ -4,6 +4,7 @@
 
 [English README](README.md)
 
+[![Code Quality](https://img.shields.io/codefactor/grade/github/Rongronggg9/RSS-to-Telegram-Bot)](https://www.codefactor.io/repository/github/rongronggg9/rss-to-telegram-bot)
 [![Translating Status](https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/svg-badge.svg)](https://hosted.weblate.org/engage/rss-to-telegram-bot/)
 [![Build Status (master)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/master?label=build%20%28master%29)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Amaster)
 [![Build Status (dev)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/dev?label=build%20%28dev%29)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Adev)

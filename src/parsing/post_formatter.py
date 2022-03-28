@@ -423,7 +423,7 @@ class PostFormatter:
             )
 
             return header, footer
-        elif message_style == FLOWERSS_STYLE:
+        if message_style == FLOWERSS_STYLE:
             # ---- feed title ----
             if via_type in {FEED_TITLE_VIA_W_LINK, FEED_TITLE_VIA_NO_LINK}:
                 feed_title_html = Bold(feed_title).get_html() if feed_title else None
@@ -467,6 +467,7 @@ class PostFormatter:
             )
 
             return header, footer
+        raise ValueError(f'Unknown message style: {message_style}')
 
     def generate_formatted_post(self,
                                 sub_title: Optional[str],

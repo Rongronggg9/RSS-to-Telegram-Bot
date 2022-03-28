@@ -164,15 +164,15 @@ class Message:
                             random_ids = [m.random_id for m in media]
                             ret = env.bot._get_response_message(random_ids, result, entity)
                             return ret
-                        else:
-                            return await env.bot.send_message(entity=self.user_id,
-                                                              message=self.plain_text,
-                                                              formatting_entities=self.format_entities,
-                                                              file=self.media,
-                                                              attributes=self.attributes,
-                                                              reply_to=reply_to,
-                                                              link_preview=self.link_preview,
-                                                              silent=self.silent)
+                        # non-album
+                        return await env.bot.send_message(entity=self.user_id,
+                                                          message=self.plain_text,
+                                                          formatting_entities=self.format_entities,
+                                                          file=self.media,
+                                                          attributes=self.attributes,
+                                                          reply_to=reply_to,
+                                                          link_preview=self.link_preview,
+                                                          silent=self.silent)
             except (FloodWaitError, SlowModeWaitError) as e:
                 # telethon has retried for us, but we release locks and retry again here to see if it will be better
                 if self.retries >= 1:

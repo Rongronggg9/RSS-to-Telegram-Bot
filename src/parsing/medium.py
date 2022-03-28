@@ -261,8 +261,7 @@ class Medium(AbstractMedium):
         url = self.original_urls[0]
         if isAbsoluteHttpLink(url):
             return Link(self.type, param=self.original_urls[0])
-        else:
-            return Text([Text(f'{self.type} ('), Code(url), Text(')')])
+        return Text([Text(f'{self.type} ('), Code(url), Text(')')])
 
     async def validate(self, flush: bool = False) -> bool:
         if self.valid is not None and not flush:  # already validated
@@ -296,7 +295,7 @@ class Medium(AbstractMedium):
                         self.drop_silently = True
                         return False
                     # force convert WEBP/SVG to PNG
-                    elif (
+                    if (
                             self.content_type
                             and (self.content_type.find('webp') != -1
                                  or self.content_type.startswith('application')
@@ -306,7 +305,7 @@ class Medium(AbstractMedium):
                         self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
                         continue
                     # always invalid
-                    elif self.width + self.height > 10000 or self.size > self.maxSize:
+                    if self.width + self.height > 10000 or self.size > self.maxSize:
                         self.valid = False
                     # Telegram accepts 0.05 < w/h < 20. But after downsized, it will be ugly. Narrow the range down
                     elif 0.4 <= self.width / self.height <= 2.5:
@@ -373,15 +372,13 @@ class Medium(AbstractMedium):
                 self.need_type_fallback = False
                 self.valid = False
             return True
-        else:
-            urls_len = len(self.urls)
-            formerly_valid = self.valid
-            if formerly_valid:
-                await self.validate(flush=True)
-        fallback_flag = (self.valid != formerly_valid
-                         or (self.valid and urls_len != len(self.urls))
-                         or self.need_type_fallback)
-        return fallback_flag
+        urls_len = len(self.urls)
+        formerly_valid = self.valid
+        if formerly_valid:
+            await self.validate(flush=True)
+        return (self.valid != formerly_valid
+                or (self.valid and urls_len != len(self.urls))
+                or self.need_type_fallback)
 
     async def change_server(self) -> bool:
         if self._server_change_count >= 1:
@@ -444,8 +441,8 @@ class Image(Medium):
     typeFallbackAllowSelfUrls = True
     inputMediaExternalType = InputMediaPhotoExternal
 
-    def __init__(self, url: Union[str, list[str]]):
-        super().__init__(url)
+    def __init__(self, urls: Union[str, list[str]]):
+        super().__init__(urls)
         new_urls = []
         for url in self.urls:
             sinaimg_match = sinaimg_size_parser(url)
@@ -505,8 +502,8 @@ class Audio(Medium):
     typeFallbackAllowSelfUrls = False
     inputMediaExternalType = InputMediaDocumentExternal
 
-    def __init__(self, url: Union[str, list[str]]):
-        super().__init__(url)
+    def __init__(self, urls: Union[str, list[str]]):
+        super().__init__(urls)
         new_urls = []
         for url in self.urls:
             lizhi_match = lizhi_parser(url)
@@ -616,7 +613,7 @@ class UploadedImage(AbstractMedium):
                     logger.error(f'Failed to generate file for {callable_file.__name__}', exc_info=e)
                 if not isinstance(self.file, (bytes, BytesIO)):
                     raise ValueError(f'File must be bytes or BytesIO, got {type(self.file)}')
-                elif isinstance(self.file, BytesIO):
+                if isinstance(self.file, BytesIO):
                     self.file.seek(0)
                 self.uploaded_file = await env.bot.upload_file(self.file)
                 self.valid = True

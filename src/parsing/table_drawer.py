@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional
-from src.compat import Final, cached_async
+from ..compat import Final, cached_async
 
 from math import ceil
 from PIL import Image
@@ -13,7 +13,7 @@ from cjkwrap import fill
 from warnings import filterwarnings
 from cachetools import TTLCache
 
-from src import env
+from .. import env
 from .utils import logger
 
 _matplotlib_thread_pool = ThreadPoolExecutor(1, 'matplotlib_')

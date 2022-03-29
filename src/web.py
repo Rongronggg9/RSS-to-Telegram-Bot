@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections.abc import Callable
 from typing import Union, Optional, AnyStr, Any
-from src.compat import nullcontext, ssl_create_default_context, Final
+from .compat import nullcontext, ssl_create_default_context, Final
 
 import re
 import asyncio
@@ -27,8 +27,8 @@ from attr import define
 from functools import partial
 from asyncstdlib.functools import lru_cache
 
-from src import env, log, locks
-from src.i18n import i18n
+from . import env, log, locks
+from .i18n import i18n
 
 SOI: Final = b'\xff\xd8'
 EOI: Final = b'\xff\xd9'

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional
-from src.compat import Final
+from .compat import Final
 
 import asyncio
 import os

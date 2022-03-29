@@ -1,5 +1,5 @@
 from __future__ import annotations
-from src.compat import Final
+from ..compat import Final
 from typing import Optional, Union
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Awaitable
@@ -14,10 +14,10 @@ from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExterna
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError, BadRequestError
 from urllib.parse import urlencode
 
-from src import env, log, web, locks
+from .. import env, log, web, locks
 from .html_node import Code, Link, Br, Text, HtmlTree
 from .utils import isAbsoluteHttpLink
-from src.exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
+from ..exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
 
 logger = log.getLogger('RSStT.medium')
 

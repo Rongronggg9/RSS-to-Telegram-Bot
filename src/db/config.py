@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src import env
+from .. import env
 
 TORTOISE_ORM = {
     "connections": {

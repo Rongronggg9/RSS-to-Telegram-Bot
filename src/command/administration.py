@@ -7,9 +7,9 @@ from telethon.tl.patched import Message
 from telethon.tl import types
 from telethon.utils import get_peer_id
 
-from src import web, db, env
-from src.i18n import i18n
-from src.parsing.post import get_post_from_entry
+from .. import web, db, env
+from ..i18n import i18n
+from ..parsing.post import get_post_from_entry
 from .utils import command_gatekeeper, parse_command, logger, parse_customization_callback_data
 from . import inner
 

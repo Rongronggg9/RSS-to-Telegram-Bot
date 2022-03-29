@@ -16,11 +16,11 @@ from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, QueryIdInvalidError, \
     EntitiesTooLongError, MessageTooLongError
 
-from src import env, log, db, locks
-from src.i18n import i18n, ALL_LANGUAGES
+from .. import env, log, db, locks
+from ..i18n import i18n, ALL_LANGUAGES
 from . import inner
-from src.exceptions import UserBlockedErrors
-from src.compat import cached_async
+from ..exceptions import UserBlockedErrors
+from ..compat import cached_async
 
 logger = log.getLogger('RSStT.command')
 

@@ -10,8 +10,8 @@ from zlib import crc32
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
-from src import db, log, env
-from src.i18n import i18n
+from ... import db, log, env
+from ...i18n import i18n
 
 logger = log.getLogger('RSStT.command')
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Awaitable
-from src.compat import Final
+from ..compat import Final
 
 import asyncio
 import time
@@ -12,7 +12,7 @@ from aiohttp import ClientTimeout, ClientError
 from aiohttp_retry import RetryClient
 from aiohttp_socks import ProxyConnector
 
-from src import env, log
+from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
 
 convert_table_to_png: Optional[Awaitable]

@@ -8,7 +8,7 @@ from bs4.element import NavigableString, PageElement, Tag
 from urllib.parse import urlparse
 from attr import define
 
-from src import web, env
+from .. import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon

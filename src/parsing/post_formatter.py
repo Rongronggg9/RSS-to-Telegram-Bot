@@ -1,5 +1,5 @@
 from __future__ import annotations
-from src.compat import Final
+from ..compat import Final
 from typing import Union, Optional
 
 import asyncio

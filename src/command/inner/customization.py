@@ -6,8 +6,8 @@ from itertools import chain
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
-from src import db, env
-from src.i18n import i18n
+from ... import db, env
+from ...i18n import i18n
 from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time, logger, \
     construct_hashtags
 

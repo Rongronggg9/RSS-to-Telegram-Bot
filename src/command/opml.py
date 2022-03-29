@@ -7,8 +7,8 @@ from telethon import events, Button
 from telethon.tl import types
 from telethon.tl.patched import Message
 
-from src import env, db
-from src.i18n import i18n
+from .. import env, db
+from ..i18n import i18n
 from . import inner
 from .utils import command_gatekeeper, logger, send_success_and_failure_msg, get_callback_tail
 

@@ -1,12 +1,12 @@
 from __future__ import annotations
 from typing import Optional, Any, NoReturn, Union
 from collections.abc import Callable
-from src.compat import Final
+from ..compat import Final
 
 from math import ceil
 from random import shuffle
 
-from src.db import models
+from . import models
 
 
 class __EffectiveOptions:

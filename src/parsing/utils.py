@@ -12,8 +12,9 @@ from telethon.tl.types import TypeMessageEntity
 from telethon.helpers import add_surrogate
 from functools import partial
 from urllib.parse import urljoin
+from os import path
 
-from src import log
+from .. import log
 
 logger = log.getLogger('RSStT.parsing')
 
@@ -43,7 +44,7 @@ class Enclosure:
 
 
 # load emoji dict
-with open('src/parsing/emojify.json', 'r', encoding='utf-8') as emojify_json:
+with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-8') as emojify_json:
     emoji_dict = json.load(emojify_json)
 
 

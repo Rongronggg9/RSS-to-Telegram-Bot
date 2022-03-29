@@ -4,7 +4,7 @@ import logging
 import colorlog
 from time import sleep
 
-from src import env
+from . import env
 
 getLogger = colorlog.getLogger
 DEBUG = colorlog.DEBUG

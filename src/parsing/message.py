@@ -9,7 +9,8 @@ from telethon.utils import get_message_id
 from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 
-from src import log, env, locks, exceptions
+# noinspection PyCompatibility
+from .. import log, env, locks, exceptions
 from .medium import Media, TypeMessage, TypeMessageMedia, VIDEO, ANIMATION, MEDIA_GROUP
 from .splitter import html_to_telegram_split
 

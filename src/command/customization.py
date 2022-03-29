@@ -7,8 +7,8 @@ from telethon.tl.patched import Message
 from . import inner, misc
 from .utils import command_gatekeeper, parse_customization_callback_data, parse_callback_data_with_page, \
     escape_html, parse_command_get_sub_or_user_and_param, get_callback_tail
-from src import db, env
-from src.i18n import i18n
+from .. import db, env
+from ..i18n import i18n
 
 
 @command_gatekeeper(only_manager=False)

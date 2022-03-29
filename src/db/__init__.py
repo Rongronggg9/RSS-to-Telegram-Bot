@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from tortoise import Tortoise
 from aerich import Command
+from os import path
 
 from . import config, models
-from src import env, log
+from .. import env, log
 from . import effective_utils
 
 logger = log.getLogger('RSStT.db')
@@ -19,9 +20,11 @@ EffectiveTasks = effective_utils.EffectiveTasks
 
 async def init():
     if env.DATABASE_URL.startswith('sqlite'):
-        aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_sqlite')
+        aerich_command = Command(tortoise_config=config.TORTOISE_ORM,
+                                 location=path.join(path.dirname(__file__), 'migrations_sqlite'))
     elif env.DATABASE_URL.startswith('postgres'):
-        aerich_command = Command(tortoise_config=config.TORTOISE_ORM, location='src/db/migrations_pgsql')
+        aerich_command = Command(tortoise_config=config.TORTOISE_ORM,
+                                 location=path.join(path.dirname(__file__), 'migrations_pgsql'))
     else:
         aerich_command = None
         logger.critical('INVALID DB SCHEME! ONLY "sqlite" AND "postgres" ARE SUPPORTED!')

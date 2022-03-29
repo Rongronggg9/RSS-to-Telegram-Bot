@@ -5,10 +5,10 @@ from telethon import events, types, Button
 from telethon.tl.patched import Message
 from telethon.errors import RPCError
 
-from src import env, db
+from .. import env, db
 from .utils import command_gatekeeper, get_group_migration_help_msg, set_bot_commands, logger, \
     parse_callback_data_with_page
-from src.i18n import i18n, ALL_LANGUAGES, get_commands_list
+from ..i18n import i18n, ALL_LANGUAGES, get_commands_list
 from . import inner
 
 

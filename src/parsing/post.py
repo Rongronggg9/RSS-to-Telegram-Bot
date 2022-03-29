@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
-from src import db, env, exceptions
+from .. import db, env, exceptions
 from .utils import parse_entry, logger, Enclosure
 from .post_formatter import PostFormatter
 from .message import MessageDispatcher

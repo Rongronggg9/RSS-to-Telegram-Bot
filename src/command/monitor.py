@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union
 from collections.abc import MutableMapping
-from src.compat import Final
+from ..compat import Final
 
 import gc
 import asyncio
@@ -13,11 +13,11 @@ from traceback import format_exc
 from . import inner
 from .utils import escape_html
 from .inner.utils import get_hash, update_interval, deactivate_feed
-from src import log, db, env, web
-from src.exceptions import EntityNotFoundError, UserBlockedErrors
-from src.i18n import i18n
-from src.parsing.post import get_post_from_entry, Post
-from src.parsing.utils import html_space_stripper
+from .. import log, db, env, web
+from ..exceptions import EntityNotFoundError, UserBlockedErrors
+from ..i18n import i18n
+from ..parsing.post import get_post_from_entry, Post
+from ..parsing.utils import html_space_stripper
 
 logger = log.getLogger('RSStT.monitor')
 

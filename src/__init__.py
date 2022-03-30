@@ -18,7 +18,7 @@ from telethon import TelegramClient, events
 from telethon.errors import ApiIdPublishedFloodError
 from telethon.tl import types
 from random import sample
-from pathlib import Path
+from os import path
 
 from . import env, log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
@@ -30,7 +30,6 @@ logger = log.getLogger('RSStT')
 # initializing bot
 loop = env.loop
 
-Path("config").mkdir(parents=True, exist_ok=True)
 bot: Optional[TelegramClient] = None
 if not env.API_ID or not env.API_HASH:
     logger.info('API_ID and/or API_HASH not set, use sample APIs instead. API_ID_PUBLISHED_FLOOD_ERROR may occur.')
@@ -44,7 +43,8 @@ while API_KEYs:
     sleep_for += 10
     API_ID, API_HASH = API_KEYs.popitem()
     try:
-        bot = TelegramClient('config/bot', API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
+        bot = TelegramClient(path.join(env.config_folder_path, 'bot'),
+                             API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
                              raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
         break
     except ApiIdPublishedFloodError:

@@ -4,12 +4,19 @@ from .compat import Final
 
 import asyncio
 import os
+import sys
 import logging
 import re
+import argparse
 from telethon import TelegramClient
 from telethon.tl.types import User, InputPeerUser
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
+from pathlib import Path
+
+from .version import __version__
+
+logging.basicConfig(level=logging.INFO)
 
 
 # ----- utils -----
@@ -36,35 +43,72 @@ def __list_parser(var: Optional[str]) -> list[str]:
     return var_t
 
 
+# ----- determine the environment -----
+__arg_parser = argparse.ArgumentParser(
+    description='RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience.')
+__arg_parser.add_argument('-c', '--config', metavar='/path/to/config/folder', type=str, nargs=1,
+                          help='path to the config folder')
+cli_args = __arg_parser.parse_args()
+cli_entry = sys.argv[0]  # expect `-m` or `/path/to/telegramRSSbot.py`
+custom_config_path = cli_args.config[0] if cli_args.config else None
+is_self_run_as_a_whole_package = cli_entry.endswith('telegramRSSbot.py')
+
+user_home = os.path.expanduser('~')
+self_path = os.path.dirname(__file__)
+self_module_name = os.path.basename(self_path)
+
+if custom_config_path:
+    config_folder_path = os.path.normpath(os.path.abspath(custom_config_path))
+elif is_self_run_as_a_whole_package:
+    config_folder_path = os.path.normpath(os.path.join(self_path, '..', 'config'))
+else:
+    config_folder_path = os.path.join(user_home, '.rsstt')
+
+Path(config_folder_path).mkdir(parents=True, exist_ok=True)
+logging.info(f'Config folder: {config_folder_path}')
+
 # ----- load .env -----
-load_dotenv(override=True)
+dot_env_paths = (os.path.join(config_folder_path, '.env'),
+                 os.path.join(os.path.abspath('.'), '.env'))
+if is_self_run_as_a_whole_package:
+    dot_env_paths = (os.path.normpath(os.path.join(self_path, '..', '.env')),) + dot_env_paths
+for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
+    if os.path.isfile(dot_env_path):
+        load_dotenv(dot_env_path, override=True)
+        logging.info(f'Found .env file at "{dot_env_path}", loaded')
 
 # ----- get version -----
-# noinspection PyBroadException
-try:
-    with open('.version', 'r') as v:
-        _version = v.read().strip()
-except Exception:
-    _version = 'dirty'
-
-if _version == 'dirty':
-    from subprocess import Popen, PIPE, DEVNULL
-
+if is_self_run_as_a_whole_package:
     # noinspection PyBroadException
     try:
-        with Popen(['git', 'describe', '--tags'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-            __.wait(3)
-            _version = __.stdout.read().decode().strip()
-        with Popen(['git', 'branch', '--show-current'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-            __.wait(3)
-            __ = __.stdout.read().decode().strip()
-            if __:
-                _version += f'@{__}'
+        with open(os.path.normpath(os.path.join(self_path, '..', '.version')), 'r') as v:
+            _version = v.read().strip()
     except Exception:
         _version = 'dirty'
 
-if not _version or _version == '@':
+    if _version == 'dirty':
+        from subprocess import Popen, PIPE, DEVNULL
+
+        # noinspection PyBroadException
+        try:
+            with Popen(['git', 'describe', '--tags'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+                __.wait(3)
+                _version = __.stdout.read().decode().strip()
+            with Popen(['git', 'branch', '--show-current'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
+                __.wait(3)
+                __ = __.stdout.read().decode().strip()
+                if __:
+                    _version += f'@{__}'
+        except Exception:
+            _version = 'dirty'
+
+    if not _version or _version == '@':
+        _version = 'dirty'
+else:
     _version = 'dirty'
+
+if not re.match(r'v?\d+\.\d+(\.\d+)?', _version):
+    _version = 'v' + (__version__ + '-' + _version if not _version == 'dirty' else __version__)
 
 VERSION: Final = _version
 del _version
@@ -152,7 +196,7 @@ else:
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
-USER_AGENT: Final = os.environ.get('USER_AGENT') or 'RSStT/2.2 RSS Reader'
+USER_AGENT: Final = os.environ.get('USER_AGENT') or f'RSStT/{__version__} RSS Reader'
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 # ----- img relay server config -----
@@ -170,7 +214,7 @@ IMAGES_WESERV_NL: Final = ('https://' if not _images_weserv_nl.startswith('http'
 del _images_weserv_nl
 
 # ----- db config -----
-_database_url = os.environ.get('DATABASE_URL') or 'sqlite://config/db.sqlite3?journal_mode=OFF'
+_database_url = os.environ.get('DATABASE_URL') or f'sqlite://{config_folder_path}/db.sqlite3?journal_mode=OFF'
 DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
                        else _database_url)
 del _database_url
@@ -204,8 +248,8 @@ if any((os.environ.get('REDISHOST'), os.environ.get('REDISUSER'), os.environ.get
                     'REDISPORT\n'
                     'REDIS_NUM')
 
-if os.path.exists('config/rss.db'):
-    os.rename('config/rss.db', 'config/rss.db.bak')
+if is_self_run_as_a_whole_package and os.path.exists(os.path.join(config_folder_path, 'rss.db')):
+    os.rename(os.path.join(config_folder_path, 'rss.db'), os.path.join(config_folder_path, 'rss.db.bak'))
     logging.warning('Sqlite DB "rss.db" with old schema is DEPRECATED and renamed to "rss.db.bak" automatically!\n'
                     'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
                     'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.')

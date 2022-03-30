@@ -19,7 +19,7 @@ from ...parsing.utils import html_space_stripper
 
 FeedSnifferCache = TTLCache(maxsize=256, ttl=60 * 60 * 24)
 
-with open(path.join(path.dirname(__file__), '../..', 'opml_template.opml'), 'r') as __template:
+with open(path.normpath(path.join(path.dirname(__file__), '../..', 'opml_template.opml')), 'r') as __template:
     OPML_TEMPLATE = __template.read()
 
 

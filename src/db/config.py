@@ -8,7 +8,7 @@ TORTOISE_ORM = {
     },
     "apps": {
         "models": {
-            "models": ["aerich.models", "src.db.models"],
+            "models": ["aerich.models", f"{env.self_module_name}.db.models"],
             "default_connection": "default",
         },
     },

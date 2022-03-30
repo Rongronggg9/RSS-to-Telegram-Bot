@@ -44,18 +44,19 @@ def __list_parser(var: Optional[str]) -> list[str]:
 
 
 # ----- determine the environment -----
+user_home = os.path.expanduser('~')
+self_path = os.path.dirname(__file__)
+self_module_name = os.path.basename(self_path)
+cli_entry = sys.argv[0]  # expect `-m` or `/path/to/telegramRSSbot.py`
+is_self_run_as_a_whole_package = cli_entry.endswith('telegramRSSbot.py')
+
 __arg_parser = argparse.ArgumentParser(
+    prog=cli_entry if cli_entry != '-m' else f'python3 -m {self_module_name}',
     description='RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience.')
 __arg_parser.add_argument('-c', '--config', metavar='/path/to/config/folder', type=str, nargs=1,
                           help='path to the config folder')
 cli_args = __arg_parser.parse_args()
-cli_entry = sys.argv[0]  # expect `-m` or `/path/to/telegramRSSbot.py`
 custom_config_path = cli_args.config[0] if cli_args.config else None
-is_self_run_as_a_whole_package = cli_entry.endswith('telegramRSSbot.py')
-
-user_home = os.path.expanduser('~')
-self_path = os.path.dirname(__file__)
-self_module_name = os.path.basename(self_path)
 
 if custom_config_path:
     config_folder_path = os.path.normpath(os.path.abspath(custom_config_path))

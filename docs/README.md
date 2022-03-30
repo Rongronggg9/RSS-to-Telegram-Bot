@@ -11,3 +11,4 @@
 | [Migration Guide (to v2)](migration-guide-v2.md)        | [迁移指南 (至 v2)](migration-guide-v2.zh.md) |
 | [FAQ](FAQ.md)                                           | [FAQ](FAQ.zh.md)                        |
 | [CHANGELOG](CHANGELOG.md)                               | [更新日志](CHANGELOG.zh.md)                 |
+| [Channels Using RSStT](channels-using-rsstt.md)         | 使用 RSStT 的频道                            |

@@ -1,11 +1,11 @@
-name: Publish to PyPI
+name: Publish to Test PyPI
 on:
   push:
-    tags:
-      - '**'
+    paths:
+      - "src/version.py"
 jobs:
   build-n-publish:
-    name: Build and publish package to PyPI
+    name: Build and publish package to Test PyPI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -27,10 +27,10 @@ jobs:
           --wheel
           --outdir dist/
           .
-      - name: Publish distribution to PyPI
-#        if: startsWith(github.ref, 'refs/tags')
+      - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
           print_hash: true
           skip_existing: true

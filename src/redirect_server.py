@@ -3,7 +3,7 @@ from typing import Optional
 
 from aiohttp import web
 
-import log
+from . import log
 
 logger = log.getLogger('rsstt.redirect_server')
 

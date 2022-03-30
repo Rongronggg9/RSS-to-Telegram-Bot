@@ -21,7 +21,7 @@ For the docker images go to: https://hub.docker.com/r/rongronggg9/rss-to-telegra
 ```sh
 mkdir rsstt
 cd rsstt
-wget https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/master/docker-compose.yml.sample -O docker-compose.yml
+wget https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/dev/docker-compose.yml.sample -O docker-compose.yml
 vi docker-compose.yml  # fill in env variables
 docker-compose up -d
 ```
@@ -89,14 +89,22 @@ Turn to [Kaffeine](https://kaffeine.herokuapp.com/), filling your Heroku app nam
 4. Enable `Automatic deploys` (`Deploy` tab -> `Automatic deploys` -> `Enable Automatic Deploys`).
 5. Each time upstream updates, turn to your fork and switch to the branch you've deployed, then click `Fetch upstream` and `Fetch and merge`.
 
-## Option 4: Dirty run
+## Option 4: Install from PyPI / Dirty run from source
 
-Minimal: Python 3.7+ (x86 / amd64), Python 3.8+ (arm64)  
-Recommended: Python 3.9+
+### System requirements
+
+> RSStT is tested only under the recommended system requirements.
+
+|                      | **Minimum**                   | **Recommended** |
+|----------------------|-------------------------------|-----------------|
+| **Operating system** | Linux, Windows, macOS         | Linux           |
+| **Architecture**     | x86, amd64, arm64             | amd64           |
+| **Python**           | 3.7 (x84, amd64), 3.8 (arm64) | 3.9, 3.10       |
+| **Free memory**      | 128MB                         | \> 384MB        |
 
 ### Prerequisites
 
-> These fonts are used for HTML table rendering. You may use WenQuanYi Zen Hei, WenQuanYI Micro Hei, Noto Sans CJK, Microsoft YaHei, or SimHei.
+> These fonts are used for HTML table rendering (to enable it, set the environment variable `TABLE_TO_IMAGE` to `1`). You may use WenQuanYi Zen Hei, WenQuanYI Micro Hei, Noto Sans CJK, Microsoft YaHei, or SimHei.
 
 #### Debian / Ubuntu
 
@@ -108,7 +116,29 @@ sudo apt install -y fonts-wqy-microhei
 
 You know what to do. However, I cannot guarantee that the fonts can be recognized properly by matplotlib.
 
-### Execute
+### Option 4.1: Install from PyPI
+
+[![PyPI](https://img.shields.io/pypi/v/rsstt)](https://pypi.org/project/rsstt/)
+[![PyPI publish status](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20to%20PyPI?label=publish&logo=pypi)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-pypi.yml)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/rsstt)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rsstt)
+![PyPI - License](https://img.shields.io/pypi/l/rsstt?color=informational)
+
+> Create a virtual environment (`venv`) and activate it first if needed.
+> Default config folder is `~/.rsstt`.
+
+```sh
+pip3 install -U pip setuptools
+pip3 install rsstt
+mkdir -p ~/.rsstt
+wget https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/dev/.env.sample -O ~/.rsstt/.env
+vi ~/.rsstt/.env  # fill in env variables
+python3 -m rsstt
+```
+
+### Option 4.2: Dirty run from source
+
+> Default config folder is `./config`, default `.env` path is `./.env` (placing it inside the config folder is also supported).
 
 ```sh
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git
@@ -118,3 +148,8 @@ cp .env.example .env
 vi .env  # fill in env variables
 python3 -u telegramRSSbot.py
 ```
+
+###     * Advanced command line arguments
+
+- `-h`, `--help`: show the help message and exit
+- `-c`, `--config`: path to the config folder

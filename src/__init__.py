@@ -78,7 +78,7 @@ async def pre():
 
     # enable redirect server for Railway, Heroku, etc
     if env.PORT:
-        import redirect_server
+        from . import redirect_server
         await redirect_server.run(port=env.PORT)
 
     # noinspection PyTypeChecker

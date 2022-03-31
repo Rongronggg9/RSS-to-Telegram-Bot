@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 from .. import env, log, web, locks
 from .html_node import Code, Link, Br, Text, HtmlTree
 from .utils import isAbsoluteHttpLink
-from ..exceptions import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
+from ..errors_collection import InvalidMediaErrors, ExternalMediaFetchFailedErrors, UserBlockedErrors
 
 logger = log.getLogger('RSStT.medium')
 

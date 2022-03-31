@@ -6,11 +6,10 @@ import asyncio
 from telethon.tl import types, functions
 from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
 from telethon.utils import get_message_id
-from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 
-# noinspection PyCompatibility
-from .. import log, env, locks, exceptions
+from .. import log, env, locks
+from ..errors_collection import MediaSendFailErrors
 from .medium import Media, TypeMessage, TypeMessageMedia, VIDEO, ANIMATION, MEDIA_GROUP
 from .splitter import html_to_telegram_split
 
@@ -18,7 +17,7 @@ logger = log.getLogger('RSStT.message')
 
 
 class MessageDispatcher:
-    user_sending_lock = defaultdict(Lock)
+    user_sending_lock = defaultdict(asyncio.Lock)
 
     def __init__(self,
                  user_id: int,
@@ -85,7 +84,7 @@ class MessageDispatcher:
                     msg = await message.send(reply_to=sent_msgs[-1] if sent_msgs else None)
                     if msg:
                         sent_msgs.extend(msg) if isinstance(msg, list) else sent_msgs.append(msg)
-        except exceptions.MediaSendFailErrors as e:
+        except MediaSendFailErrors as e:
             if sent_msgs:
                 await asyncio.gather(
                     *(env.bot.delete_messages(self.user_id, msg, revoke=True) for msg in sent_msgs),
@@ -97,7 +96,7 @@ class MessageDispatcher:
 class Message:
     no_retry = False
     __overall_concurrency = 30
-    __overall_semaphore = BoundedSemaphore(__overall_concurrency)
+    __overall_semaphore = asyncio.BoundedSemaphore(__overall_concurrency)
 
     def __init__(self,
                  user_id: int,
@@ -138,17 +137,6 @@ class Message:
                 async with msg_lock:  # acquire a msg lock
                     async with self.__overall_semaphore:  # only acquire overall semaphore when sending
                         if self.media_type == MEDIA_GROUP:
-                            # # telethon does not support formatting a media group using formatting entities, sad
-                            # from telethon.extensions.html import unparse as html_unparse
-                            # html = html_unparse(self.plain_text, self.format_entities)
-                            # return await env.bot.send_message(entity=self.user_id,
-                            #                                   message=html,
-                            #                                   file=self.media,
-                            #                                   reply_to=reply_to,
-                            #                                   link_preview=self.link_preview,
-                            #                                   silent=self.silent,
-                            #                                   parse_mode='HTML')
-
                             media = []
                             for medium in self.media:
                                 _, fm, _ = await env.bot._file_to_media(medium)

@@ -5,7 +5,6 @@ from .compat import nullcontext, ssl_create_default_context, Final
 
 import re
 import asyncio
-import functools
 import aiohttp
 import feedparser
 import PIL.Image
@@ -308,9 +307,9 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             rss_d = feedparser.parse(rss_content, sanitize_html=False)
         else:  # feed too large, run in another thread to avoid blocking the bot
             rss_d = await asyncio.get_event_loop().run_in_executor(_feedparser_thread_pool,
-                                                                   functools.partial(feedparser.parse,
-                                                                                     rss_content,
-                                                                                     sanitize_html=False))
+                                                                   partial(feedparser.parse,
+                                                                           rss_content,
+                                                                           sanitize_html=False))
 
         if 'title' not in rss_d.feed:
             ret.error = WebError(error_name='feed invalid', url=url, log_level=log_level)

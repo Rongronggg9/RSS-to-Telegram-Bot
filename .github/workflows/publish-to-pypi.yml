@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - '**'
+  workflow_dispatch: ~
 jobs:
   build-n-publish:
     name: Build and publish package to PyPI

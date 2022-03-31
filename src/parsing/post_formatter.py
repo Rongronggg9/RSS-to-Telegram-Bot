@@ -1,6 +1,6 @@
 from __future__ import annotations
-from ..compat import Final
 from typing import Union, Optional
+from typing_extensions import Final
 
 import asyncio
 from aiographfix.utils import exceptions

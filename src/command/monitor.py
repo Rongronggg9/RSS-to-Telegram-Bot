@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union
+from typing_extensions import Final
 from collections.abc import MutableMapping
-from ..compat import Final
 
 import gc
 import asyncio

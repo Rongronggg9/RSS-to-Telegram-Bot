@@ -1,6 +1,6 @@
 from __future__ import annotations
-from ..compat import Final
 from typing import Optional, Union
+from typing_extensions import Final
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Awaitable
 

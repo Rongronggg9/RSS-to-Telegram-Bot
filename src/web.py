@@ -1,7 +1,8 @@
 from __future__ import annotations
-from collections.abc import Callable
 from typing import Union, Optional, AnyStr, Any
-from .compat import nullcontext, ssl_create_default_context, Final
+from typing_extensions import Final
+from collections.abc import Callable
+from .compat import nullcontext, ssl_create_default_context
 
 import re
 import asyncio

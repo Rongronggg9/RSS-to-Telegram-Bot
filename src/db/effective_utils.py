@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Any, NoReturn, Union
+from typing_extensions import Final
 from collections.abc import Callable
-from ..compat import Final
 
 from math import ceil
 from random import shuffle

@@ -36,4 +36,5 @@ attrs==21.4.0
 asyncstdlib==3.10.4
 cachetools==5.0.0
 CJKwrap==2.2
+typing-extensions==4.1.1
 uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

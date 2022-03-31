@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union, Optional
+from typing_extensions import Final
 from collections.abc import Awaitable
-from ..compat import Final
 
 import asyncio
 import time

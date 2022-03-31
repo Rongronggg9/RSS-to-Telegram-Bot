@@ -12,13 +12,6 @@ if not (_version_info[0] == 3 and _version_info[1] >= 7):
 
 import ssl
 from contextlib import AbstractContextManager, AbstractAsyncContextManager
-from typing import Any
-
-# add a false `Final` for Python 3.7
-try:
-    from typing import Final
-except ImportError:
-    Final = Any
 
 # backport `contextlib.nullcontext` for Python 3.7 ~ 3.9
 if _version_info[1] >= 10:

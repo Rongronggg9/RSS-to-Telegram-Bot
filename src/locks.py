@@ -11,7 +11,12 @@ from collections import defaultdict
 from functools import partial
 from urllib.parse import urlparse
 
+from . import log
+
 _USER_LIKE = Union[int, str]
+
+logger = log.getLogger('RSStT.locks')
+logger.setLevel(log.logger_level_muted)
 
 
 # ----- user locks -----
@@ -53,15 +58,19 @@ def user_pending_callbacks(user: _USER_LIKE) -> set:
 async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
     call_time = time()
     flood_lock = user_flood_lock(user)
-    if flood_lock.locked():
-        return False
     seconds = seconds + 1
     async with flood_lock:
         lock_got_time = time()
         time_left = seconds - (lock_got_time - call_time)
-        if time_left > 0:
+        if time_left > 0.1:
+            logger.log(
+                level=log.INFO if time_left < 120 else log.WARNING,
+                msg=f'Blocking any further messages for {user} due to flood control, {time_left:0.2f}s left'
+                    + (f' ({seconds}s requested)' if seconds - time_left > 5 else '')
+            )
             await asyncio.sleep(time_left)
             return True
+        logger.info(f'Skipped flood wait for {user} because the wait had been finished before the lock was acquired')
         return False
 
 

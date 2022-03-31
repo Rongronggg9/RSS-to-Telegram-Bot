@@ -5,7 +5,7 @@ from aiohttp import web
 
 from . import log
 
-logger = log.getLogger('rsstt.redirect_server')
+logger = log.getLogger('RSStT.redirect_server')
 
 
 async def redirect(_):

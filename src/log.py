@@ -13,25 +13,21 @@ WARNING = colorlog.WARNING
 ERROR = colorlog.ERROR
 CRITICAL = colorlog.CRITICAL
 
-colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
-                     datefmt='%Y-%m-%d-%H:%M:%S',
-                     level=colorlog.DEBUG if env.DEBUG else colorlog.INFO)
-
-_muted = colorlog.INFO if env.DEBUG else colorlog.WARNING
-_shut_upped = colorlog.ERROR if env.DEBUG else colorlog.CRITICAL
+logger_level_muted = colorlog.INFO if env.DEBUG else colorlog.WARNING
+logger_level_shut_upped = colorlog.ERROR if env.DEBUG else colorlog.CRITICAL
 
 getLogger('apscheduler').setLevel(colorlog.WARNING)
-getLogger('aiohttp_retry').setLevel(_muted)
-getLogger('asyncio').setLevel(_muted)
-getLogger('telethon').setLevel(_muted)
-getLogger('aiosqlite').setLevel(_muted)
-getLogger('tortoise').setLevel(_muted)
-getLogger('asyncpg').setLevel(_muted)
-getLogger('PIL').setLevel(_muted)
-getLogger('matplotlib').setLevel(_muted)
-getLogger('matplotlib.font_manager').setLevel(_shut_upped)
+getLogger('aiohttp_retry').setLevel(logger_level_muted)
+getLogger('asyncio').setLevel(logger_level_muted)
+getLogger('telethon').setLevel(logger_level_muted)
+getLogger('aiosqlite').setLevel(logger_level_muted)
+getLogger('tortoise').setLevel(logger_level_muted)
+getLogger('asyncpg').setLevel(logger_level_muted)
+getLogger('PIL').setLevel(logger_level_muted)
+getLogger('matplotlib').setLevel(logger_level_muted)
+getLogger('matplotlib.font_manager').setLevel(logger_level_shut_upped)
 
-_logger = getLogger('rsstt.watchdog')
+_logger = getLogger('RSStT.watchdog')
 
 
 # flit log from apscheduler.scheduler

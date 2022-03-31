@@ -5,7 +5,7 @@ from .compat import Final
 import asyncio
 import os
 import sys
-import logging
+import colorlog
 import re
 import argparse
 from telethon import TelegramClient
@@ -15,8 +15,6 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 from .version import __version__
-
-logging.basicConfig(level=logging.INFO)
 
 
 # ----- utils -----
@@ -43,6 +41,13 @@ def __list_parser(var: Optional[str]) -> list[str]:
     return var_t
 
 
+# ----- setup logging -----
+DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
+colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
+                     datefmt='%Y-%m-%d-%H:%M:%S',
+                     level=colorlog.DEBUG if DEBUG else colorlog.INFO)
+logger = colorlog.getLogger('RSStT.env')
+
 # ----- determine the environment -----
 user_home = os.path.expanduser('~')
 self_path = os.path.dirname(__file__)
@@ -66,7 +71,7 @@ else:
     config_folder_path = os.path.join(user_home, '.rsstt')
 
 Path(config_folder_path).mkdir(parents=True, exist_ok=True)
-logging.info(f'Config folder: {config_folder_path}')
+logger.info(f'Config folder: {config_folder_path}')
 
 # ----- load .env -----
 dot_env_paths = (os.path.join(config_folder_path, '.env'),
@@ -76,7 +81,7 @@ if is_self_run_as_a_whole_package:
 for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
     if os.path.isfile(dot_env_path):
         load_dotenv(dot_env_path, override=True)
-        logging.info(f'Found .env file at "{dot_env_path}", loaded')
+        logger.info(f'Found .env file at "{dot_env_path}", loaded')
 
 # ----- get version -----
 if is_self_run_as_a_whole_package:
@@ -145,10 +150,10 @@ try:
     del _manager
 
     if not all((TOKEN, MANAGER)):
-        logging.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
+        logger.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
         exit(1)
 except Exception as e:
-    logging.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
+    logger.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
 
 TELEGRAPH_TOKEN: Final = __list_parser(os.environ.get('TELEGRAPH_TOKEN'))
@@ -221,7 +226,6 @@ DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _da
 del _database_url
 
 # ----- misc config -----
-DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
 
 # ----- environment config -----
@@ -230,30 +234,30 @@ PORT: Final = int(os.environ.get('PORT', 0)) or (8080 if RAILWAY_STATIC_URL else
 
 # !!!!! DEPRECATED WARNING !!!!!
 if os.environ.get('DELAY'):
-    logging.warning('Env var "DELAY" is DEPRECATED and of no use!\n'
-                    'To avoid this warning, remove this env var.')
+    logger.warning('Env var "DELAY" is DEPRECATED and of no use!\n'
+                   'To avoid this warning, remove this env var.')
 
 if os.environ.get('CHATID'):
-    logging.warning('Env var "CHATID" is DEPRECATED!\n'
-                    'To avoid this warning, remove this env var.')
+    logger.warning('Env var "CHATID" is DEPRECATED!\n'
+                   'To avoid this warning, remove this env var.')
 
 if any((os.environ.get('REDISHOST'), os.environ.get('REDISUSER'), os.environ.get('REDISPASSWORD'),
         os.environ.get('REDISPORT'), os.environ.get('REDIS_NUM'),)):
-    logging.warning('Redis DB is DEPRECATED!\n'
-                    'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
-                    'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.\n\n'
-                    'Please remove these env vars (if exist):\n'
-                    'REDISHOST\n'
-                    'REDISUSER\n'
-                    'REDISPASSWORD\n'
-                    'REDISPORT\n'
-                    'REDIS_NUM')
+    logger.warning('Redis DB is DEPRECATED!\n'
+                   'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
+                   'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.\n\n'
+                   'Please remove these env vars (if exist):\n'
+                   'REDISHOST\n'
+                   'REDISUSER\n'
+                   'REDISPASSWORD\n'
+                   'REDISPORT\n'
+                   'REDIS_NUM')
 
 if is_self_run_as_a_whole_package and os.path.exists(os.path.join(config_folder_path, 'rss.db')):
     os.rename(os.path.join(config_folder_path, 'rss.db'), os.path.join(config_folder_path, 'rss.db.bak'))
-    logging.warning('Sqlite DB "rss.db" with old schema is DEPRECATED and renamed to "rss.db.bak" automatically!\n'
-                    'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
-                    'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.')
+    logger.warning('Sqlite DB "rss.db" with old schema is DEPRECATED and renamed to "rss.db.bak" automatically!\n'
+                   'ALL SUBS IN THE OLD DB WILL NOT BE MIGRATED. '
+                   'IF YOU NEED TO BACKUP YOUR SUBS, DOWNGRADE AND USE "/export" COMMAND TO BACKUP.')
 
 # ----- shared var -----
 bot: Optional[TelegramClient] = None  # placeholder

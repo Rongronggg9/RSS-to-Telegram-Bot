@@ -7,7 +7,6 @@ aiographfix==0.2.2
 feedparser==6.0.8
 listparser==0.18
 pillow==9.0.1
-bs4==0.0.1
 beautifulsoup4==4.10.0
 lxml==4.8.0
 fuzzywuzzy==0.18.0

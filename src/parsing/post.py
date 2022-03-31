@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Optional
 
-from .. import db, env, exceptions
+from .. import db, env
+from ..errors_collection import MediaSendFailErrors
 from .utils import parse_entry, logger, Enclosure
 from .post_formatter import PostFormatter
 from .message import MessageDispatcher
@@ -118,7 +119,7 @@ class Post:
                                                    silent=silent)
             try:
                 return await message_dispatcher.send_messages()
-            except exceptions.MediaSendFailErrors as e:
+            except MediaSendFailErrors as e:
                 media = self.post_formatter.media
                 log_header = f'Failed to send post to user {user_id} (feed: {self.feed_link}, post: {self.link}) ' \
                              f'due to {type(e).__name__}'

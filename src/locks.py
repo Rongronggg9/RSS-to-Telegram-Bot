@@ -6,7 +6,6 @@ from typing import Union
 
 import asyncio
 from time import time
-from asyncio import BoundedSemaphore, Lock
 from collections import defaultdict
 from functools import partial
 from urllib.parse import urlparse
@@ -23,28 +22,28 @@ logger.setLevel(log.logger_level_muted)
 
 class _UserLockBucket:
     def __init__(self):
-        self.msg_lock = Lock()
-        self.flood_lock = Lock()
-        self.media_upload_semaphore = BoundedSemaphore(3)
+        self.msg_lock = asyncio.Lock()
+        self.flood_lock = asyncio.Lock()
+        self.media_upload_semaphore = asyncio.BoundedSemaphore(3)
         self.pending_callbacks = set()
 
 
 _user_bucket: defaultdict[_USER_LIKE, _UserLockBucket] = defaultdict(_UserLockBucket)
 
 
-def user_msg_lock(user: _USER_LIKE) -> Lock:
+def user_msg_lock(user: _USER_LIKE) -> asyncio.Lock:
     return _user_bucket[user].msg_lock
 
 
-def user_flood_lock(user: _USER_LIKE) -> Lock:
+def user_flood_lock(user: _USER_LIKE) -> asyncio.Lock:
     return _user_bucket[user].flood_lock
 
 
-def user_media_upload_semaphore(user: _USER_LIKE) -> BoundedSemaphore:
+def user_media_upload_semaphore(user: _USER_LIKE) -> asyncio.BoundedSemaphore:
     return _user_bucket[user].media_upload_semaphore
 
 
-def user_msg_locks(user: _USER_LIKE) -> tuple[Lock, Lock]:
+def user_msg_locks(user: _USER_LIKE) -> tuple[asyncio.Lock, asyncio.Lock]:
     """
     :return: user_msg_lock, user_flood_lock
     """
@@ -75,10 +74,11 @@ async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
 
 
 # ----- web locks -----
-_hostname_semaphore_bucket: defaultdict[str, BoundedSemaphore] = defaultdict(partial(BoundedSemaphore, 5))
-overall_web_semaphore = BoundedSemaphore(100)
+_hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = defaultdict(
+    partial(asyncio.BoundedSemaphore, 5))
+overall_web_semaphore = asyncio.BoundedSemaphore(100)
 
 
-def hostname_semaphore(url: str, parse: bool = True) -> BoundedSemaphore:
+def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:
     hostname = urlparse(url).hostname if parse else url
     return _hostname_semaphore_bucket[hostname]

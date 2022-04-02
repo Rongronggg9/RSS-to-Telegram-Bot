@@ -13,6 +13,7 @@ from telethon.tl.types import User, InputPeerUser
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
 from pathlib import Path
+from distutils.version import StrictVersion
 
 from .version import __version__
 
@@ -113,11 +114,18 @@ if is_self_run_as_a_whole_package:
 else:
     _version = 'dirty'
 
-if not re.match(r'v?\d+\.\d+(\.\d+)?', _version):
-    _version = 'v' + (__version__ + '-' + _version if not _version == 'dirty' else __version__)
+_version_match = re.match(r'^v?\d+\.\d+(\.\w+(\.\w+)?)?', _version)
+if _version_match:
+    try:
+        if StrictVersion(_version_match.group(0).lstrip('v')) <= StrictVersion(__version__):
+            _version = _version[_version_match.end():]
+            _version = re.sub(r'-\d+-', '', _version)
+    except ValueError:
+        _version = 'dirty'
+    _version = 'v' + __version__ + ('-' + _version if not _version == 'dirty' else '')
 
 VERSION: Final = _version
-del _version
+del _version, _version_match
 
 # ----- basic config -----
 SAMPLE_APIS: Final = {

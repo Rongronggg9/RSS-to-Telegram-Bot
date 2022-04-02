@@ -43,10 +43,9 @@ def __list_parser(var: Optional[str]) -> list[str]:
 
 
 # ----- setup logging -----
-DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
                      datefmt='%Y-%m-%d-%H:%M:%S',
-                     level=colorlog.DEBUG if DEBUG else colorlog.INFO)
+                     level=colorlog.INFO)
 logger = colorlog.getLogger('RSStT.env')
 
 # ----- determine the environment -----
@@ -235,6 +234,11 @@ del _database_url
 
 # ----- misc config -----
 TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
+DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
+colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
+                     datefmt='%Y-%m-%d-%H:%M:%S',
+                     level=colorlog.INFO if not DEBUG else colorlog.DEBUG,
+                     force=True)
 
 # ----- environment config -----
 RAILWAY_STATIC_URL: Final = os.environ.get('RAILWAY_STATIC_URL')

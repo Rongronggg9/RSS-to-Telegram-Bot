@@ -10,9 +10,10 @@
 
 ## Option 1: Docker Compose
 
-[![Build status (master)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/master?label=build%20%28master%29&logo=docker)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Amaster)
+[![Docker Image Size (tag)](https://img.shields.io/docker/image-size/rongronggg9/rss-to-telegram/latest?logo=docker)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
+[![Build status (master)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/master?label=build&logo=docker)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Amaster)
 [![Build status (dev)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/dev?label=build%20%28dev%29&logo=docker)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Adev)
-[![Docker pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram?label=pulls&logo=docker)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
+[![Docker pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram?label=pulls&logo=docker&color=informational)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
 
 For the docker images go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
 
@@ -118,11 +119,11 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 
 ### Option 4.1: Install from PyPI
 
-[![PyPI](https://img.shields.io/pypi/v/rsstt)](https://pypi.org/project/rsstt/)
-[![PyPI publish status](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20to%20PyPI?label=publish&logo=pypi)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-pypi.yml)
-![PyPI - Implementation](https://img.shields.io/pypi/implementation/rsstt)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rsstt)
-![PyPI - License](https://img.shields.io/pypi/l/rsstt?color=informational)
+[![PyPI](https://img.shields.io/pypi/v/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
+[![PyPI publish status](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20to%20PyPI?label=publish&logo=pypi&logoColor=white)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-pypi.yml)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
+[![PyPI - Implementation](https://img.shields.io/pypi/implementation/rsstt?logo=python)](https://www.python.org)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rsstt?logo=python)](https://www.python.org)
 
 > Create a virtual environment (`venv`) and activate it first if needed.
 > Default config folder is `~/.rsstt`.
@@ -137,6 +138,11 @@ python3 -m rsstt
 ```
 
 ### Option 4.2: Dirty run from source
+
+[![GitHub repo size](https://img.shields.io/github/repo-size/Rongronggg9/RSS-to-Telegram-Bot?logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/archive/refs/heads/dev.zip)
+[![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/Rongronggg9/RSS-to-Telegram-Bot?include_prereleases&sort=semver&logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/releases)
+[![GitHub last commit (dev)](https://img.shields.io/github/last-commit/Rongronggg9/RSS-to-Telegram-Bot/dev?logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
+[![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/Rongronggg9/RSS-to-Telegram-Bot/latest?include_prereleases&sort=semver&logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
 
 > Default config folder is `./config`, default `.env` path is `./.env` (placing it inside the config folder is also supported).
 

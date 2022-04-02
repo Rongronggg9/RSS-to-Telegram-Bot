@@ -1,5 +1,33 @@
 # Changelog
 
+## Published to PyPI, HTML table converter, and more (v2.2.1)
+
+### Additions
+
+#### Highlights
+
+- **Published to PyPI**: RSStT is now available on [PyPI](https://pypi.org/project/rsstt/). You may install it with `pip install rsstt`. For more details, refer to the [Deployment Guide](deployment-guide.md).
+- **HTML table converter**: An HTML table converter has been implemented to convert HTML tables to images. It requires the environment variable `TABLE_TO_IMAGE` to be set to `1`, and CJK fonts to be installed. Please do note that the converter is not perfect, cannot handle rich-text formatting, may not work for all HTML tables, and can potentially lead to a higher performance cost and longer processing time.
+
+### Other additions
+
+- **New l10n**: The Indonesian (`id`, Bahasa Indonesia) translation has been added.
+- **Add `.env.sample`**: A sample `.env` file has been added.
+
+### Enhancements
+
+- **Natural sorting**: Send posts from the oldest to the newest.
+- **Timed GC**: Perform a GC (garbage collection) every 10 minutes to clean up the memory.
+- **Update l10n**: The Turkish (`tr`, Türkçe) translation has been updated.
+- **Security**: Execute `git` outside of the shell.
+- **Minor enhancements**
+
+### Bug fixes
+
+- **Misfired monitor job**: Increased the `misfire_grace_time` to 10s to avoid monitor jobs being misfired because of high load.
+- **Deps bump**: Fixed an upstream bug preventing users from resetting all subscriptions to the user's default settings on a PostgreSQL-based instance.
+- **Minor bug fixes**
+
 ## Channel remote management, more formatting options, and more (v2.2.0)
 
 ### Additions

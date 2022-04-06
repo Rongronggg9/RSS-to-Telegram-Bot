@@ -116,11 +116,13 @@ else:
 _version_match = re.match(r'^v?\d+\.\d+(\.\w+(\.\w+)?)?', _version)
 if _version_match:
     try:
-        if StrictVersion(_version_match.group(0).lstrip('v')) <= StrictVersion(__version__):
+        if StrictVersion(_version_match.group(0).lstrip('v')) < StrictVersion(__version__):
             _version = _version[_version_match.end():]
-            _version = re.sub(r'-\d+-', '', _version)
+            _version = re.sub(r'(?<!\d{4})-\d+-(?!\d{2})', '', _version, count=1)
+            _version = 'v' + __version__ + '-' + _version
     except ValueError:
-        _version = 'dirty'
+        _version = 'v' + __version__
+else:
     _version = 'v' + __version__ + ('-' + _version if not _version == 'dirty' else '')
 
 VERSION: Final = _version

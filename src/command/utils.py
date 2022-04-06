@@ -683,7 +683,7 @@ def get_group_migration_help_msg(lang: Optional[str] = None) \
             Button.inline(i18n[_lang]['lang_native_name'], data=f'get_group_migration_help={_lang}')
             for _lang in ALL_LANGUAGES if _lang != lang
         ),
-        columns=3)
+        columns=2)
     return msg, buttons
 
 

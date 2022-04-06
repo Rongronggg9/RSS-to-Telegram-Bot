@@ -26,7 +26,7 @@ async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
                     for lang in ALL_LANGUAGES)
     buttons = inner.utils.arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'set_lang={lang}')
                                         for lang in ALL_LANGUAGES),
-                                       columns=3)
+                                       columns=2)
     await event.respond(msg, buttons=buttons)
 
 

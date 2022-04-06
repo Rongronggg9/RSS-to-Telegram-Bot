@@ -1,7 +1,7 @@
 {
     "l10n_info": {
         "lang_code": "cs",
-        "iso_639_code": "",
+        "iso_639_code": "cs",
         "language_name": "Czech",
         "lang_native_name": "Čeština",
         "select_lang_prompt": "Prosím vyberte jazyk.",

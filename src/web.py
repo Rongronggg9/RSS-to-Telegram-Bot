@@ -155,8 +155,12 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
                           intended_content_type: Optional[str] = None) -> Optional[AnyStr]:
     content_type = response.headers.get('Content-Type')
     if not intended_content_type or not content_type or content_type.startswith(intended_content_type):
-        if decode:
+        body: Optional[bytes] = None
+        if max_size is None:
             body = await response.read()
+        elif max_size > 0:
+            body = await response.content.read(max_size)
+        if decode and body:
             xml_header = body.split(b'\n', 1)[0]
             if xml_header.find(b'<?xml') == 0 and xml_header.find(b'?>') != -1:
                 try:
@@ -169,10 +173,7 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
                 return body.decode(encoding=encoding, errors='replace')
             except (LookupError, RuntimeError):
                 return body.decode(encoding='utf-8', errors='replace')
-        elif max_size is None:
-            return await response.read()
-        elif max_size > 0:
-            return await response.content.read(max_size)
+        return body
     return None
 
 
@@ -184,7 +185,7 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     :param timeout: timeout in seconds
     :param semaphore: semaphore to use for limiting concurrent connections
     :param headers: headers to use
-    :param decode: whether to decode the response body (cannot mix with max_size)
+    :param decode: whether to decode the response body
     :param max_size: maximum size of the response body (in bytes), None=unlimited, 0=ignore response body
     :param intended_content_type: if specified, only return response if the content-type matches
     :return: {url, content, headers, status}
@@ -437,7 +438,7 @@ async def get_page_title(url: str, allow_hostname=True, allow_path: bool = False
     r = None
     # noinspection PyBroadException
     try:
-        r = await get(url=url, timeout=2, decode=True, intended_content_type='text/html')
+        r = await get(url=url, timeout=2, decode=True, intended_content_type='text/html', max_size=2 * 1024)
         if r.status != 200 or not r.content:
             raise ValueError('not an HTML page')
         if len(r.content) <= 27:  # len of `<html><head><title></title>`

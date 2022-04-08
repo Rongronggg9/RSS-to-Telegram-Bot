@@ -328,7 +328,7 @@ def feed_sniffer(url: str, html: str) -> Optional[str]:
     if not links:
         links = soup.find_all(name='a', attrs={'href': FeedAHrefMatcher})
     if not links:
-        links = soup.find_all(name='a', text=FeedATextMatcher)
+        links = soup.find_all(name='a', string=FeedATextMatcher)
     if links:
         feed_url = urljoin(url, links[0]['href'])
         FeedSnifferCache[url] = feed_url

@@ -78,7 +78,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
     uid = event.chat_id
 
     try:
-        wf = await web.feed_get(url, web_semaphore=False)
+        wf = await web.feed_get(url)
         rss_d = wf.rss_d
 
         if rss_d is None:

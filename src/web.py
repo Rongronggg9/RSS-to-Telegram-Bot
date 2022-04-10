@@ -27,7 +27,7 @@ from attr import define
 from functools import partial
 from asyncstdlib.functools import lru_cache
 
-from . import env, log, locks
+from . import env, log
 from .i18n import i18n
 
 SOI: Final = b'\xff\xd8'
@@ -38,6 +38,9 @@ IMAGE_ITER_CHUNK_SIZE: Final = 128
 IMAGE_READ_BUFFER_SIZE: Final = 1
 
 DEFAULT_READ_BUFFER_SIZE: Final = 2 ** 16
+
+CONNECTION_PER_CONNECTOR: Final = 72
+CONNECTION_PER_HOST: Final = 5
 
 PROXY: Final = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
 PRIVATE_NETWORKS: Final = tuple(ip_network(ip_block) for ip_block in
@@ -71,6 +74,25 @@ RETRY_OPTION: Final = ExponentialRetry(attempts=2, start_timeout=1, exceptions=s
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 logger = log.getLogger('RSStT.web')
+
+_connectors = {
+    'tcp': {
+        AF_INET: aiohttp.TCPConnector(family=AF_INET, ssl=ssl_create_default_context(),
+                                      limit=CONNECTION_PER_CONNECTOR, limit_per_host=CONNECTION_PER_HOST),
+        AF_INET6: aiohttp.TCPConnector(family=AF_INET6, ssl=ssl_create_default_context(),
+                                       limit=CONNECTION_PER_CONNECTOR, limit_per_host=CONNECTION_PER_HOST),
+        0: aiohttp.TCPConnector(family=0, ssl=ssl_create_default_context(), limit=CONNECTION_PER_CONNECTOR,
+                                limit_per_host=CONNECTION_PER_HOST),
+    },
+    'proxy': {
+        AF_INET: ProxyConnector.from_url(PROXY, family=AF_INET, ssl=ssl_create_default_context(),
+                                         limit=CONNECTION_PER_CONNECTOR, limit_per_host=CONNECTION_PER_HOST),
+        AF_INET6: ProxyConnector.from_url(PROXY, family=AF_INET6, ssl=ssl_create_default_context(),
+                                          limit=CONNECTION_PER_CONNECTOR, limit_per_host=CONNECTION_PER_HOST),
+        0: ProxyConnector.from_url(PROXY, family=0, ssl=ssl_create_default_context(),
+                                   limit=CONNECTION_PER_CONNECTOR, limit_per_host=CONNECTION_PER_HOST)
+    } if PROXY else None,
+}
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 
@@ -205,11 +227,10 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
 
 
 async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = None,
-               semaphore: Union[bool, asyncio.Semaphore] = None, headers: Optional[dict] = None,
+               semaphore: Optional[asyncio.Semaphore] = None, headers: Optional[dict] = None,
                read_bufsize: int = DEFAULT_READ_BUFFER_SIZE, read_until_eof: bool = True) -> WebResponse:
     host = urlparse(url).hostname
-    semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
-        else (semaphore or nullcontext())
+    semaphore = semaphore or nullcontext()
     v6_rr_set = None
     try:
         v6_rr_set = (await resolve(host, 'AAAA', lifetime=1)).rrset if env.IPV6_PRIOR else None
@@ -231,36 +252,31 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
 
         if retry_in_v4_flag:
             socket_family = AF_INET
-        ssl_context = ssl_create_default_context()
-        proxy_connector = (
-            ProxyConnector.from_url(PROXY, family=socket_family, ssl=ssl_context)
-            if (PROXY and proxy_filter(host, parse=False))
-            else aiohttp.TCPConnector(family=socket_family, ssl=ssl_context)
-        )
+        proxy_connector = _connectors['proxy' if PROXY and proxy_filter(host, parse=False) else 'tcp'][socket_family]
 
         try:
-            async with locks.overall_web_semaphore:
-                async with semaphore_to_use:
-                    async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
-                                           timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
-                        async with session.get(url,
-                                               read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
-                            status = response.status
-                            content = None
-                            if status == 200:
-                                content = await resp_callback(response)
-                            elif socket_family == AF_INET6 and tries == 1 \
-                                    and status in (400,  # Bad Request (some feed providers return 400 for banned IPs)
-                                                   403,  # Forbidden
-                                                   429,  # Too Many Requests
-                                                   451):  # Unavailable For Legal Reasons
-                                retry_in_v4_flag = True
-                                continue
-                            return WebResponse(url=url,
-                                               content=content,
-                                               headers=response.headers,
-                                               status=status,
-                                               reason=response.reason)
+            async with semaphore:
+                async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
+                                       timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers,
+                                       connector_owner=False) as session:
+                    async with session.get(url,
+                                           read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
+                        status = response.status
+                        content = None
+                        if status == 200:
+                            content = await resp_callback(response)
+                        elif socket_family == AF_INET6 and tries == 1 \
+                                and status in (400,  # Bad Request (some feed providers return 400 for banned IPs)
+                                               403,  # Forbidden
+                                               429,  # Too Many Requests
+                                               451):  # Unavailable For Legal Reasons
+                            retry_in_v4_flag = True
+                            continue
+                        return WebResponse(url=url,
+                                           content=content,
+                                           headers=response.headers,
+                                           status=status,
+                                           reason=response.reason)
         except EXCEPTIONS_SHOULD_RETRY as e:
             if socket_family != AF_INET6 or tries > 1:
                 raise e
@@ -353,10 +369,8 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
     already_read = 0
     buffer = BytesIO()
     eof_flag = False
-    while True:
-        if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
-            break
-
+    exit_flag = False
+    while not exit_flag:
         curr_chunk_length = 0
         preloaded_length = content.total_bytes - already_read
         while preloaded_length > IMAGE_READ_BUFFER_SIZE or curr_chunk_length < IMAGE_ITER_CHUNK_SIZE:
@@ -372,6 +386,10 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
             buffer.seek(0, SEEK_END)
             buffer.write(chunk)
             preloaded_length = content.total_bytes - already_read
+
+        if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
+            response.release()  # immediately close the connection to block any incoming data or retransmission
+            exit_flag = True
 
         # noinspection PyBroadException
         try:

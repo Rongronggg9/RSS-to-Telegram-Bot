@@ -103,4 +103,6 @@ Want to preview what the messages sent by RSStT look like? Here is a [list of ch
 
 ## License
 
-This project is licensed under the [AGPLv3 license](LICENSE). Closed-source distribution or bot-hosting are strictly prohibited. If you modify the code and distribute or host it, make sure any users who can use your bot can get the source code (by editing the repo URL in [`src/i18n/__init__.py`](src/i18n/__init__.py)).
+This project is licensed under [AGPLv3](LICENSE). Closed-source distribution or bot-hosting are strictly prohibited. If you modify the code and distribute or host it, make sure any users who can use your bot can get the source code (by editing the repo URL in [`src/i18n/__init__.py`](src/i18n/__init__.py)).
+
+The repository is formerly a fork of [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot). They have been entirely different projects since the early days of this project.

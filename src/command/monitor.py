@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union
 from typing_extensions import Final
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Iterable
 
 import gc
 import asyncio
@@ -13,7 +13,7 @@ from traceback import format_exc
 from . import inner
 from .utils import escape_html
 from .inner.utils import get_hash, update_interval, deactivate_feed
-from .. import log, db, env, web
+from .. import log, db, env, web, locks
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..i18n import i18n
 from ..parsing.post import get_post_from_entry, Post
@@ -141,6 +141,15 @@ async def __monitor(feed: db.Feed) -> str:
     if feed.next_check_time and now < feed.next_check_time:
         return SKIPPED  # skip this monitor task
 
+    subs = await feed.subs.filter(state=1)
+    if not subs:  # nobody has subbed it
+        logger.warning(f'Feed {feed.id} ({feed.link}) has no active subscribers.')
+        await update_interval(feed)
+        return SKIPPED
+
+    if all(locks.user_flood_lock(sub.user_id).locked() for sub in subs):
+        return SKIPPED  # all subscribers are experiencing flood wait, skip this monitor task
+
     headers = {
         'If-Modified-Since': format_datetime(feed.last_modified or feed.updated_at)
     }
@@ -165,7 +174,7 @@ async def __monitor(feed: db.Feed) -> str:
             logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
         if feed.error_count >= 100:
             logger.error(f'Deactivated feed due to too many errors: {feed.link}')
-            await __deactivate_feed_and_notify_all(feed, reason=wf.error)
+            await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
             return FAILED
         if feed.error_count >= 10:  # too much error, delay next check
             interval = feed.interval or db.EffectiveOptions.default_interval
@@ -219,15 +228,12 @@ async def __monitor(feed: db.Feed) -> str:
         new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
         feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
-    await asyncio.gather(*(__notify_all(feed, entry) for entry in updated_entries[::-1]))
+    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in updated_entries[::-1]))
 
     return UPDATED
 
 
-async def __notify_all(feed: db.Feed, entry: MutableMapping):
-    subs = await db.Sub.filter(feed=feed, state=1)
-    if not subs:  # nobody has subbed it
-        await update_interval(feed)
+async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapping):
     link = entry.get('link')
     try:
         post = get_post_from_entry(entry, feed.title, feed.link)
@@ -294,12 +300,17 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             await env.bot.send_message(env.MANAGER, f'An sending error message cannot be sent, please check the logs.')
 
 
-async def __deactivate_feed_and_notify_all(feed: db.Feed, reason: Union[web.WebError, str] = None):
-    subs = await db.Sub.filter(feed=feed, state=1).prefetch_related('user')
+async def __deactivate_feed_and_notify_all(feed: db.Feed,
+                                           subs: Iterable[db.Sub],
+                                           reason: Union[web.WebError, str] = None):
     await deactivate_feed(feed)
 
     if not subs:  # nobody has subbed it or no active sub exists
         return
+
+    langs: tuple[str, ...] = await asyncio.gather(
+        *(sub.user.get_or_none().values_list('lang', flat=True) for sub in subs)
+    )
 
     await asyncio.gather(
         *(
@@ -307,12 +318,13 @@ async def __deactivate_feed_and_notify_all(feed: db.Feed, reason: Union[web.WebE
                 sub=sub,
                 post=(
                         f'<a href="{feed.link}">{escape_html(sub.title or feed.title)}</a>\n'
-                        + i18n[sub.user.lang]['feed_deactivated_warn']
+                        + i18n[lang]['feed_deactivated_warn']
                         + (
-                            f'\n{reason.i18n_message(sub.user.lang) if isinstance(reason, web.WebError) else reason}'
+                            f'\n{reason.i18n_message(lang) if isinstance(reason, web.WebError) else reason}'
                             if reason else ''
                         )
                 )
             )
-            for sub in subs)
+            for sub, lang in (zip(subs, langs))
+        )
     )

@@ -104,7 +104,8 @@ def parse_customization_callback_data(callback_data: bytes) \
 
 async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
                                          events.CallbackQuery.Event,
-                                         events.InlineQuery.Event],
+                                         events.InlineQuery.Event,
+                                         events.ChatAction.Event],
                             msg: str,
                             alert: bool = True,
                             cache_time: int = 120,
@@ -139,7 +140,10 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
         async with locks.user_flood_lock(event.chat_id):
             pass  # wait for flood wait
 
-        await event.respond(msg, *args, **kwargs)
+        await event.respond(
+            msg, *args, **kwargs,
+            reply_to=event.message if isinstance(event, events.NewMessage.Event) and event.is_group else None
+        )
     except UserBlockedErrors:
         pass  # silently ignore
 

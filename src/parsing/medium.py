@@ -12,7 +12,7 @@ from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
     MessageMediaPhoto, MessageMediaDocument, InputFile, InputFileBig, InputMediaUploadedPhoto
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError, BadRequestError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from .. import env, log, web, locks
 from .html_node import Code, Link, Br, Text, HtmlTree
@@ -398,7 +398,7 @@ class Medium(AbstractMedium):
         return self.valid
 
     def __eq__(self, other):
-        return type(self) == type(other) and self.original_urls == other.original_urls
+        return type(self) == type(other) and set(self.original_urls) == set(other.original_urls)
 
     @property
     def hash(self) -> str:
@@ -470,6 +470,7 @@ class Image(Medium):
         urls_not_images_weserv_nl = [url for url in self.urls if not url.startswith(env.IMAGES_WESERV_NL)]
         self.urls.extend(construct_images_weserv_nl_url(urls_not_images_weserv_nl[i])
                          for i in range(min(len(urls_not_images_weserv_nl), 3)))  # use for final fallback
+        self.chosen_url = self.urls[0]
 
     async def change_server(self) -> bool:
         sinaimg_server_match = sinaimg_server_parser(self.chosen_url)
@@ -636,8 +637,22 @@ class Media:
             return
         self._media.append(medium)
 
-    def url_exists(self, url: str) -> bool:
-        return any(url in medium.original_urls for medium in self._media)
+    def url_exists(self, url: str, loose: bool = False) -> Optional[Medium]:
+        if loose:
+            url_obj = urlparse(url)
+            url_part = url_obj.netloc + url_obj.path
+            for medium in self._media:
+                if not isinstance(medium, Medium):
+                    continue
+                for original_url in medium.original_urls:
+                    if url_part in original_url:
+                        return medium
+            return None
+        for medium in self._media:
+            if isinstance(medium, Medium) and url in medium.original_urls:
+                return medium
+        return None
+
 
     async def fallback_all(self) -> bool:
         if not self._media:

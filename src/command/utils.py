@@ -6,16 +6,16 @@ import asyncio
 import re
 from functools import partial, wraps
 from cachetools import TTLCache
-from telethon import events, Button
+from telethon import events, Button, hints
 from telethon.utils import get_peer_id, resolve_id
 from telethon.tl import types
 from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, QueryIdInvalidError, \
-    EntitiesTooLongError, MessageTooLongError
+    EntitiesTooLongError, MessageTooLongError, BadRequestError
 
-from .. import env, log, db, locks
+from .. import env, log, db, locks, errors_collection
 from ..i18n import i18n, ALL_LANGUAGES
 from . import inner
 from ..errors_collection import UserBlockedErrors
@@ -148,25 +148,31 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
         pass  # silently ignore
 
 
-async def is_self_admin(chat_id: int) -> Optional[bool]:
+async def is_self_admin(chat_id: hints.EntityLike) -> Optional[bool]:
+    """
+    Check if the bot itself is an admin in the chat.
+
+    :param chat_id: chat id
+    :return: True if the bot is an admin, False if not, None if self not in the chat
+    """
     ret, _ = await is_user_admin(chat_id, env.bot_id)
     return ret
 
 
 @cached_async(cache=TTLCache(maxsize=64, ttl=20))
-async def is_user_admin(chat_id: int, user_id: int) -> tuple[Optional[bool], Optional[str]]:
+async def is_user_admin(chat_id: hints.EntityLike, user_id: hints.EntityLike) -> tuple[Optional[bool], Optional[str]]:
     """
     Check if the user is an admin in the chat.
 
     :param chat_id: chat id
     :param user_id: user id
-    :return: True if user is admin, False if not, None if self not in the chat
+    :return: True if user is admin, False if not, None if self / the user not in the chat
     """
-    input_chat = await env.bot.get_input_entity(chat_id)
-    input_user = await env.bot.get_input_entity(user_id)
     is_admin = None
     participant_type = None
     try:
+        input_chat = await env.bot.get_input_entity(chat_id)
+        input_user = await env.bot.get_input_entity(user_id)
         # noinspection PyTypeChecker
         participant: types.channels.ChannelParticipant = await env.bot(
             GetParticipantRequest(input_chat, input_user))
@@ -176,6 +182,18 @@ async def is_user_admin(chat_id: int, user_id: int) -> tuple[Optional[bool], Opt
     except (UserNotParticipantError, ValueError):
         pass
     return is_admin, participant_type
+
+
+async def leave_chat(chat_id: hints.EntityLike) -> bool:
+    if isinstance(chat_id, int) and chat_id > 0:
+        return False  # a bot cannot delete the dialog with a user
+    try:
+        ret = await env.bot.delete_dialog(chat_id)
+        if ret:
+            logger.warning(f"Left chat {chat_id}")
+        return bool(ret)
+    except (BadRequestError, ValueError):
+        return False
 
 
 def command_gatekeeper(func: Optional[Callable] = None,
@@ -503,6 +521,14 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])
                 elif isinstance(e, (EntitiesTooLongError, MessageTooLongError)):
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['message_too_long_prompt'])
+                elif isinstance(e, errors_collection.UserBlockedErrors):
+                    tasks = []
+                    if await inner.utils.have_subs(chat_id):
+                        tasks.append(inner.sub.unsub_all(chat_id))
+                    if chat_id < 0:  # it is a group
+                        tasks.append(leave_chat(chat_id))
+                    if tasks:
+                        await asyncio.gather(*tasks)
                 else:
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
             except (FloodError, MessageNotModifiedError):

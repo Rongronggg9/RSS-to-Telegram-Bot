@@ -15,7 +15,7 @@ from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from telethon import TelegramClient, events
-from telethon.errors import ApiIdPublishedFloodError
+from telethon.errors import ApiIdPublishedFloodError, RPCError
 from telethon.tl import types
 from random import sample
 from os import path
@@ -84,22 +84,25 @@ async def pre():
     # noinspection PyTypeChecker
     manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
 
-    try:  # set bot command
-        await asyncio.gather(
+    set_bot_commands_tasks = (
+        env.loop.create_task(
             command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(), lang_code='',
-                                           commands=get_commands_list()),
-            *(
+                                           commands=get_commands_list())
+        ),
+        *(
+            env.loop.create_task(
                 command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
                                                lang_code=i18n[lang]['iso_639_code'],
                                                commands=get_commands_list(lang=lang))
-                for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
-            ),
+            )
+            for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
+        ),
+        env.loop.create_task(
             command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
                                            lang_code='',
-                                           commands=get_commands_list(lang=manager_lang, manager=True)),
-        )
-    except Exception as e:
-        logger.warning('Set command error: ', exc_info=e)
+                                           commands=get_commands_list(lang=manager_lang, manager=True))
+        ),
+    )
 
     bare_target_matcher = r'(?P<target>@\w{5,}|-100\d+)'
     target_matcher = rf'(\s+{bare_target_matcher})?'
@@ -215,6 +218,12 @@ async def pre():
                           command.utils.AddedToGroupAction())
     bot.add_event_handler(command.misc.cmd_start,
                           command.utils.GroupMigratedAction())
+
+    # get set_bot_commands tasks result
+    try:
+        await asyncio.gather(*set_bot_commands_tasks)
+    except RPCError as e:
+        logger.warning('Set command error: ', exc_info=e)
 
 
 async def post():

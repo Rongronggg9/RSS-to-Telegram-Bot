@@ -11,7 +11,7 @@ from collections import defaultdict, Counter
 from traceback import format_exc
 
 from . import inner
-from .utils import escape_html
+from .utils import escape_html, leave_chat
 from .inner.utils import get_hash, update_interval, deactivate_feed
 from .. import log, db, env, web, locks
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
@@ -257,10 +257,11 @@ async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapp
 
 async def __send(sub: db.Sub, post: Union[str, Post]):
     user_id = sub.user_id
+    entity = None
     try:
         try:
             try:
-                await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
+                entity = await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
             except ValueError:  # cannot get the input entity, the bot may be banned by the user
                 raise EntityNotFoundError(user_id)
             if isinstance(post, str):
@@ -274,15 +275,19 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             if user_unsub_all_lock.locked():
                 return  # no need to unsub twice!
             async with user_unsub_all_lock:
-                # TODO: leave the group/channel if still in it
                 if __user_blocked_counter[user_id] < 5:
                     __user_blocked_counter[user_id] += 1
                     return  # skip once
                 # fail for 5 times, consider been banned
                 del __user_blocked_counter[user_id]
+                tasks = []
+                logger.error(f'User blocked ({type(e).__name__}): {user_id}')
                 if await inner.utils.have_subs(user_id):
-                    logger.error(f'User blocked ({type(e).__name__}): {user_id}')
-                    await inner.sub.unsub_all(user_id)
+                    tasks.append(inner.sub.unsub_all(user_id))
+                if user_id < 0 and entity:  # it is a group and can get the entity
+                    tasks.append(leave_chat(user_id))
+                if tasks:
+                    await asyncio.gather(*tasks)
     except Exception as e:
         logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}):', exc_info=e)
         try:

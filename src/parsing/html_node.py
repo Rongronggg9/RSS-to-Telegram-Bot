@@ -58,6 +58,14 @@ class Text:
     def rstrip(self, deeper: bool = False):
         self.strip(deeper=deeper, strip_l=False)
 
+    def is_empty(self, allow_whitespace: bool = False):
+        if self.is_listed():
+            return all(subText.is_empty(allow_whitespace=allow_whitespace) for subText in self.content)
+        elif self.is_nested():
+            return self.content.is_empty(allow_whitespace=allow_whitespace)
+        else:
+            return not (self.content if allow_whitespace else self.content and self.content.strip())
+
     def get_html(self, plain: bool = False) -> str:
         if self.is_listed():
             result = ''

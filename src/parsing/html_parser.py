@@ -116,6 +116,8 @@ class Parser:
             if not quote:
                 return None
             quote.strip()
+            if quote.is_empty():
+                return None
             return Text([Hr(), quote, Hr()])
 
         if tag == 'pre':
@@ -129,7 +131,7 @@ class Parser:
 
         if tag == 'a':
             text = await self._parse_item(soup.children)
-            if not text:
+            if not text or text.is_empty():
                 return None
             href = soup.get("href")
             if not href:

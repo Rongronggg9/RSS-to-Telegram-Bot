@@ -504,10 +504,19 @@ class PostFormatter:
         if self.enclosures:
             for enclosure in self.enclosures:
                 # https://www.iana.org/assignments/media-types/media-types.xhtml
-                if not enclosure.url or self.media.url_exists(enclosure.url):
+                if not enclosure.url:
+                    continue
+                dup_medium = self.media.url_exists(enclosure.url, loose=True)
+                if dup_medium is not None:
+                    if enclosure.url in dup_medium.original_urls:
+                        continue  # duplicated
+                    # add the url to the candidate list
+                    dup_medium.urls.insert(0, enclosure.url)
+                    dup_medium.original_urls = (enclosure.url,) + dup_medium.original_urls
+                    dup_medium.chosen_url = enclosure.url
                     continue
                 if not utils.isAbsoluteHttpLink(enclosure.url) and parsed.parser.soup.findAll('a', href=enclosure.url):
-                    continue
+                    continue  # the link is not an HTTP link and is already appearing in the post
                 elif not enclosure.type:
                     medium = File(enclosure.url)
                 elif enclosure.type.find('webp') != -1 or enclosure.type.find('svg') != -1:

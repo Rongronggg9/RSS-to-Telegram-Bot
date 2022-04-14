@@ -282,7 +282,10 @@ async def have_subs(user_id: int) -> bool:
 async def check_sub_limit(user_id: int) -> tuple[bool, int, int]:
     if user_id == env.MANAGER:
         return False, -1, -1
-    limit = db.EffectiveOptions.user_sub_limit if user_id > 0 else db.EffectiveOptions.channel_or_group_sub_limit
+    # noinspection PyTypeChecker
+    limit: Optional[int] = await db.User.get_or_none(id=user_id).values_list('sub_limit', flat=True)
+    if limit is None:
+        limit = db.EffectiveOptions.user_sub_limit if user_id > 0 else db.EffectiveOptions.channel_or_group_sub_limit
     if limit < 0:
         return False, -1, -1
     count = await count_sub(user_id)

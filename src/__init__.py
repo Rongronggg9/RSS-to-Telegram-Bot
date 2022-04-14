@@ -38,6 +38,15 @@ if not env.API_ID or not env.API_HASH:
 else:
     API_KEYs = {env.API_ID: env.API_HASH}
 
+# pre tasks
+pre_tasks = [env.loop.create_task(db.init())]
+
+if env.PORT:
+    # enable redirect server for Railway, Heroku, etc
+    from . import redirect_server
+
+    pre_tasks.append(env.loop.create_task(redirect_server.run(port=env.PORT)))
+
 sleep_for = 0
 while API_KEYs:
     sleep_for += 10
@@ -73,13 +82,8 @@ async def pre():
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
-
-    await db.init()
-
-    # enable redirect server for Railway, Heroku, etc
-    if env.PORT:
-        from . import redirect_server
-        await redirect_server.run(port=env.PORT)
+    # wait for pre tasks
+    await asyncio.gather(*pre_tasks)
 
     # noinspection PyTypeChecker
     manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)

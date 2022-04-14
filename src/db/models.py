@@ -29,6 +29,8 @@ class User(Model, Base):
     lang = fields.CharField(default='zh-Hans', max_length=16, description='Preferred language, lang code')
     admin = fields.BigIntField(null=True, description='One of the admins of the channel or group, '
                                                       'can be null if this "user" is not a channel or a group')
+    sub_limit = fields.SmallIntField(null=True, description='Subscription number limit')
+
     subs: fields.ReverseRelation['Sub']
 
     # default options of a user's feeds

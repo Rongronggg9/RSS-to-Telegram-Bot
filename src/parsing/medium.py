@@ -387,7 +387,7 @@ class Medium(AbstractMedium):
         self.chosen_url = env.IMG_RELAY_SERVER + self.chosen_url
         # noinspection PyBroadException
         try:
-            await web.get(url=self.chosen_url, max_size=0)  # let the img relay sever cache the img
+            await web.get(url=self.chosen_url, semaphore=False, max_size=0)  # let the img relay sever cache the img
         except Exception:
             pass
         return True

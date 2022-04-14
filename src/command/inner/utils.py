@@ -279,6 +279,16 @@ async def have_subs(user_id: int) -> bool:
     return await db.Sub.filter(user=user_id).exists()
 
 
+async def check_sub_limit(user_id: int) -> tuple[bool, int, int]:
+    if user_id == env.MANAGER:
+        return False, -1, -1
+    limit = db.EffectiveOptions.user_sub_limit if user_id > 0 else db.EffectiveOptions.channel_or_group_sub_limit
+    if limit < 0:
+        return False, -1, -1
+    count = await count_sub(user_id)
+    return count >= limit, count, limit
+
+
 async def activate_feed(feed: db.Feed) -> db.Feed:
     if feed.state == 1:
         return feed

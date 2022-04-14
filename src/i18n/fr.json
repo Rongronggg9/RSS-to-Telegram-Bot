@@ -39,7 +39,8 @@
         "permission_denied_input_command": "",
         "permission_denied_no_direct_use": "",
         "promote_to_admin_prompt": "",
-        "group_upgrade_needed_prompt": "Oups, votre groupe n’a pas été mis à niveau vers un supergroupe. En général, le serveur Telegram devrait effectuer cette mise à niveau automatiquement à un moment donné, mais si ce n'est pas le cas, vous devez la faire manuellement avant de pouvoir utiliser le robot.\nVeuillez suivre les étapes suivantes :\n1. Allez dans l'info du groupe, puis cliquez sur « Gérer le groupe » ;\n2. Changez l'option « Historique des discussions pour les nouveaux membres » en « Visible » ;\n3. Enregistrez le paramètre de visibilité de l'historique des discussions\n4. Sauvegarder tous les paramètres\n5. (Facultatif) Si nécessaire, vous pouvez changer l'option « Historique des chats pour les nouveaux membres » en « Caché ».\n6. Vous devriez maintenant être en mesure d'utiliser le robot"
+        "group_upgrade_needed_prompt": "Oups, votre groupe n’a pas été mis à niveau vers un supergroupe. En général, le serveur Telegram devrait effectuer cette mise à niveau automatiquement à un moment donné, mais si ce n'est pas le cas, vous devez la faire manuellement avant de pouvoir utiliser le robot.\nVeuillez suivre les étapes suivantes :\n1. Allez dans l'info du groupe, puis cliquez sur « Gérer le groupe » ;\n2. Changez l'option « Historique des discussions pour les nouveaux membres » en « Visible » ;\n3. Enregistrez le paramètre de visibilité de l'historique des discussions\n4. Sauvegarder tous les paramètres\n5. (Facultatif) Si nécessaire, vous pouvez changer l'option « Historique des chats pour les nouveaux membres » en « Caché ».\n6. Vous devriez maintenant être en mesure d'utiliser le robot",
+        "sub_limit_reached_prompt": ""
     },
     "l10n_misc": {
         "choose_sub_prompt": "Veuillez choisir un abonnement",

@@ -39,7 +39,8 @@
         "permission_denied_input_command": "",
         "permission_denied_no_direct_use": "",
         "promote_to_admin_prompt": "Si ets un administrador anònim d'aquest grup, promociona el bot a un administrador (no cal permís) per a donar poder al bot per a verificar la teva identitat.",
-        "group_upgrade_needed_prompt": "Oops, el teu grup no s'ha actualitzat a un supergrup. En general, el servidor de Telegram hauria de realitzar automàticament aquesta actualització en algun moment, però si no, has d'actualitzar-la manualment abans de poder utilitzar el bot.\nSi us plau, segueix aquests passos:\n1. Ves a la informació del grup i, a continuació, fes clic a «Gestionar el grup»\n2. Canvia «Historial de xat per a nous membres» a «Visible»\n3. Desa la configuració de visibilitat de l'historial de xat\n4. Desa tots els paràmetres\n5. (Opcional) Si cal, pots canviar «Historial de xat per a membres nous» a «Ocult» de nou\n6. Ara hauries de poder utilitzar el bot"
+        "group_upgrade_needed_prompt": "Oops, el teu grup no s'ha actualitzat a un supergrup. En general, el servidor de Telegram hauria de realitzar automàticament aquesta actualització en algun moment, però si no, has d'actualitzar-la manualment abans de poder utilitzar el bot.\nSi us plau, segueix aquests passos:\n1. Ves a la informació del grup i, a continuació, fes clic a «Gestionar el grup»\n2. Canvia «Historial de xat per a nous membres» a «Visible»\n3. Desa la configuració de visibilitat de l'historial de xat\n4. Desa tots els paràmetres\n5. (Opcional) Si cal, pots canviar «Historial de xat per a membres nous» a «Ocult» de nou\n6. Ara hauries de poder utilitzar el bot",
+        "sub_limit_reached_prompt": ""
     },
     "l10n_misc": {
         "choose_sub_prompt": "Triar una subscripció",

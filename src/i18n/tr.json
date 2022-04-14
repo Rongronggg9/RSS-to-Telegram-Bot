@@ -39,7 +39,8 @@
         "permission_denied_input_command": "Devam etmek için lütfen bir komut girin…",
         "permission_denied_no_direct_use": "Bu komut doğrudan kullanılmamalıdır. Bunun yerine /set kullanın.",
         "promote_to_admin_prompt": "Bu grubun anonim bir yöneticisiyseniz, botu kimliğinizi doğrulamasını sağlamak için lütfen botu bir yöneticiye (izne gerek yok) yükseltin.",
-        "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız"
+        "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız",
+        "sub_limit_reached_prompt": ""
     },
     "l10n_misc": {
         "choose_sub_prompt": "Lütfen bir abonelik seçin",

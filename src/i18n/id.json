@@ -39,7 +39,8 @@
         "permission_denied_input_command": "Silakan masukkan perintah untuk melanjutkan…",
         "permission_denied_no_direct_use": "Perintah ini tidak digunakan langsung. Gunakan /set.",
         "promote_to_admin_prompt": "Jika Anda adalah admin anonim pada grup ini, harap promosikan bot ini menjadi admin (tak perlu izin) agar bot dapat memverifikasi identitas Anda.",
-        "group_upgrade_needed_prompt": ""
+        "group_upgrade_needed_prompt": "",
+        "sub_limit_reached_prompt": ""
     },
     "l10n_misc": {
         "choose_sub_prompt": "",

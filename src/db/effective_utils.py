@@ -35,6 +35,7 @@ class __EffectiveOptions:
             "minimal_interval": 5,
             "user_sub_limit": -1,
             "channel_or_group_sub_limit": -1,
+            "sub_limit_reached_message": "",
         }
 
     @property
@@ -61,23 +62,27 @@ class __EffectiveOptions:
     def channel_or_group_sub_limit(self) -> int:
         return self.get("channel_or_group_sub_limit")
 
-    def validate(self, key: str, value: Union[int, str], ignore_type_error: bool = False) -> Union[int, str]:
+    @property
+    def sub_limit_reached_message(self) -> str:
+        return self.get("sub_limit_reached_message")
+
+    def cast(self, key: str, value: Any, ignore_type_error: bool = False) -> Union[int, str, None]:
         if len(key) > 255:
             raise KeyError("Option key must be 255 characters or less")
 
         value_type = type(self.__default_options[key])
-        if value_type is str:
-            return str(value)
 
-        if value_type is int and type(value) is str:
-            if value.lstrip('-').isdecimal():
-                return int(value)
+        if value is None:
+            if value_type is str:
+                return ""
+            return None
 
+        try:
+            return value_type(value)
+        except (ValueError, TypeError):
             if ignore_type_error:
                 return self.__default_options[key]
-            raise ValueError("Option value must be an integer")
-
-        return value
+            raise TypeError(f"Option value must be of type {value_type}")
 
     def get(self, key: str) -> Union[str, int]:
         """
@@ -97,7 +102,7 @@ class __EffectiveOptions:
         :param key: option key
         :param value: option value
         """
-        value = self.validate(key, value)
+        value = self.cast(key, value)
         await models.Option.update_or_create(defaults={'value': str(value)}, key=key)
         self.__options[key] = value
 
@@ -106,16 +111,14 @@ class __EffectiveOptions:
         Cache all options from the DB.
         """
         options = await models.Option.all()
-        for option in options:
-            if option.key not in self.__default_options:  # invalid option
-                continue
-            self.__options[option.key] = self.validate(option.key, option.value, ignore_type_error=True)
+        options = {o.key: o.value for o in options}
 
         for key, value in self.__default_options.items():
-            if key in self.__options:
-                continue
-            self.__options[key] = value
-            # await models.Option.create(key=key, value=value)  # init option
+            if key in options:
+                self.__options[key] = self.cast(key, options[key], ignore_type_error=True)
+            else:
+                self.__options[key] = value
+                # await models.Option.create(key=key, value=value)  # init option
 
         self.__cached = True
 

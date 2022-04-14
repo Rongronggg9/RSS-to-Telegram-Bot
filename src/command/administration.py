@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Union, Optional
 
 import asyncio
+import re
 from telethon import events, Button
 from telethon.tl.patched import Message
 from telethon.tl import types
@@ -13,12 +14,13 @@ from ..parsing.post import get_post_from_entry
 from .utils import command_gatekeeper, parse_command, logger, parse_customization_callback_data
 from . import inner
 
+parseKeyValuePair = re.compile(r'^/(?:\S+)\s+([^\s=]+)(?:\s*=\s*|\s+)?((?<=[\s=]).+)?$')
+
 
 @command_gatekeeper(only_manager=True)
 async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
-    raw_text = event.raw_text.replace('=', ' ')
-    args = parse_command(raw_text)
-    if len(args) < 3:  # return options info
+    kv = parseKeyValuePair.match(event.raw_text)
+    if not kv:  # return options info
         options = db.EffectiveOptions.options
         msg = (
                 f'<b>{i18n[lang]["current_options"]}</b>\n\n'
@@ -29,17 +31,18 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
         )
         await event.respond(msg, parse_mode='html')
         return
-    key = args[1]
-    value = args[2]
+    key, value = kv.groups()
 
     try:
         await db.EffectiveOptions.set(key, value)
     except KeyError:
         await event.respond(f'ERROR: {i18n[lang]["option_key_invalid"]}')
         return
-    except ValueError:
-        await event.respond(f'ERROR: {i18n[lang]["option_value_invalid"]}')
+    except TypeError as e:
+        await event.respond(f'ERROR: {i18n[lang]["option_value_invalid"]}\n\n{e}')
         return
+
+    value = db.EffectiveOptions.get(key)
 
     logger.info(f"Set option {key} to {value}")
 

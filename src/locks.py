@@ -71,3 +71,14 @@ async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
             return True
         logger.info(f'Skipped flood wait for {user} because the wait had been finished before the lock was acquired')
         return False
+
+
+# ----- web locks -----
+_hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = defaultdict(
+    partial(asyncio.BoundedSemaphore, 5))
+overall_web_semaphore = asyncio.BoundedSemaphore(100)
+
+
+def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:
+    hostname = urlparse(url).hostname if parse else url
+    return _hostname_semaphore_bucket[hostname]

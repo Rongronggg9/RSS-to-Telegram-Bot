@@ -353,10 +353,8 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
     already_read = 0
     buffer = BytesIO()
     eof_flag = False
-    while True:
-        if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
-            break
-
+    exit_flag = False
+    while not exit_flag:
         curr_chunk_length = 0
         preloaded_length = content.total_bytes - already_read
         while preloaded_length > IMAGE_READ_BUFFER_SIZE or curr_chunk_length < IMAGE_ITER_CHUNK_SIZE:
@@ -372,6 +370,10 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
             buffer.seek(0, SEEK_END)
             buffer.write(chunk)
             preloaded_length = content.total_bytes - already_read
+
+        if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
+            response.close()  # immediately close the connection to block any incoming data or retransmission
+            exit_flag = True
 
         # noinspection PyBroadException
         try:

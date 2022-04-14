@@ -8,7 +8,7 @@ from telethon.tl.patched import Message
 from ..i18n import i18n
 from . import inner
 from .utils import command_gatekeeper, parse_command, escape_html, parse_callback_data_with_page, \
-    send_success_and_failure_msg, get_callback_tail
+    send_success_and_failure_msg, get_callback_tail, check_sub_limit
 
 
 @command_gatekeeper(only_manager=False)
@@ -18,6 +18,9 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message],
                   chat_id: Optional[int] = None,
                   **__):
     chat_id = chat_id or event.chat_id
+
+    await check_sub_limit(event, user_id=chat_id, lang=lang)
+
     args = parse_command(event.raw_text)
     filtered_urls = inner.utils.filter_urls(args)
 

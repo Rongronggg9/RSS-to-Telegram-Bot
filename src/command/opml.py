@@ -10,14 +10,19 @@ from telethon.tl.patched import Message
 from .. import env, db
 from ..i18n import i18n
 from . import inner
-from .utils import command_gatekeeper, logger, send_success_and_failure_msg, get_callback_tail
+from .utils import command_gatekeeper, logger, send_success_and_failure_msg, get_callback_tail, check_sub_limit
 
 
 @command_gatekeeper(only_manager=False)
 async def cmd_import(event: Union[events.NewMessage.Event, Message],
                      *_,
+                     chat_id: Optional[int] = None,
                      lang: Optional[str] = None,
                      **__):
+    chat_id = chat_id or event.chat_id
+
+    await check_sub_limit(event, user_id=chat_id, lang=lang)
+
     await event.respond(
         i18n[lang]['send_opml_prompt'] + (
             '\n\n'
@@ -53,6 +58,9 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
                       chat_id: Optional[int] = None,
                       **__):
     chat_id = chat_id or event.chat_id
+
+    await check_sub_limit(event, user_id=chat_id, lang=lang)
+
     callback_tail = get_callback_tail(event, chat_id)
     reply_message: Message = await event.get_reply_message()
     if not (event.is_private or event.is_channel and not event.is_group) and reply_message.sender_id != env.bot_id:

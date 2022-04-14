@@ -33,6 +33,8 @@ class __EffectiveOptions:
         self.__default_options: dict[str, Union[str, int]] = {
             "default_interval": 10,
             "minimal_interval": 5,
+            "user_sub_limit": -1,
+            "channel_or_group_sub_limit": -1,
         }
 
     @property
@@ -50,6 +52,14 @@ class __EffectiveOptions:
     @property
     def minimal_interval(self) -> int:
         return self.get("minimal_interval")
+
+    @property
+    def user_sub_limit(self) -> int:
+        return self.get("user_sub_limit")
+
+    @property
+    def channel_or_group_sub_limit(self) -> int:
+        return self.get("channel_or_group_sub_limit")
 
     def validate(self, key: str, value: Union[int, str], ignore_type_error: bool = False) -> Union[int, str]:
         if len(key) > 255:

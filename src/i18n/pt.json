@@ -39,7 +39,8 @@
         "permission_denied_input_command": "Por favor, insira um comando para continuar…",
         "permission_denied_no_direct_use": "Este comando não deve ser usado diretamente. Use /set em vez disso.",
         "promote_to_admin_prompt": "Se você é um administrador anônimo deste grupo, por favor promova o bot a um administrador (não é necessária permissão) para capacitar o bot a verificar sua identidade.",
-        "group_upgrade_needed_prompt": "Opa, seu grupo não foi atualizado para um supergrupo. Geralmente, o servidor telegrama deve executar automaticamente essa atualização em algum momento, mas se não, você tem que atualizá-lo manualmente antes de poder usar o bot.\nPor favor, siga estas etapas:\n1. Vá para as informações do grupo e clique em \"Gerenciar grupo\"\n2. Alterar \"Histórico de bate-papo para novos membros\" para \"Visível\"\n3. Salve a configuração de visibilidade do histórico do chat\n4. Salve todas as configurações\n5. (Opcional) Se necessário, você pode alterar \"Histórico de bate-papo para novos membros\" para \"Escondido\" novamente\n6. Agora você deve ser capaz de usar o bot"
+        "group_upgrade_needed_prompt": "Opa, seu grupo não foi atualizado para um supergrupo. Geralmente, o servidor telegrama deve executar automaticamente essa atualização em algum momento, mas se não, você tem que atualizá-lo manualmente antes de poder usar o bot.\nPor favor, siga estas etapas:\n1. Vá para as informações do grupo e clique em \"Gerenciar grupo\"\n2. Alterar \"Histórico de bate-papo para novos membros\" para \"Visível\"\n3. Salve a configuração de visibilidade do histórico do chat\n4. Salve todas as configurações\n5. (Opcional) Se necessário, você pode alterar \"Histórico de bate-papo para novos membros\" para \"Escondido\" novamente\n6. Agora você deve ser capaz de usar o bot",
+        "sub_limit_reached_prompt": ""
     },
     "l10n_misc": {
         "choose_sub_prompt": "Por favor, escolha uma assinatura",

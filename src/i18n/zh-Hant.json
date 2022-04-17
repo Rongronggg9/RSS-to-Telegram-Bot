@@ -22,6 +22,7 @@
         "uncaught_internal_error": "未捕獲的內部錯誤",
         "operation_timeout_error": "操作超時",
         "action_invalid": "操作無效",
+        "sub_limit_reached": "訂閱數目達限",
         "flood_wait_prompt": "您的操作太頻繁，以至於機器人已超出 Telegram 的速率限制。請放慢速度。",
         "edit_conflict_prompt": "您的操作太頻繁，導致操作衝突。請放慢速度。",
         "callback_already_running_prompt": "您已請求另一個命令。請在它完成後重試。",

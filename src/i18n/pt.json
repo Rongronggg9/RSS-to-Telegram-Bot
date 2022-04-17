@@ -22,6 +22,7 @@
         "uncaught_internal_error": "Erro interno não detectado",
         "operation_timeout_error": "Tempo limite de operação",
         "action_invalid": "Ação inválida",
+        "sub_limit_reached": "",
         "flood_wait_prompt": "Você está operando com muita freqüência que o bot ultrapassou o limite da taxa do Telegrama. Por favor, desacelere.",
         "edit_conflict_prompt": "Você está operando com muita freqüência que a operação entra em conflito. Por favor, desacelere.",
         "callback_already_running_prompt": "Você pediu outro comando. Por favor, tente novamente depois de terminar.",

@@ -22,6 +22,7 @@
         "uncaught_internal_error": "Errore interno non rilevato",
         "operation_timeout_error": "Timeout dell'operazione",
         "action_invalid": "Azione non valida",
+        "sub_limit_reached": "",
         "flood_wait_prompt": "Stai operando così troppo frequentemente che il bot ha superato il limite di velocità di Telegram. Per favore rallenta.",
         "edit_conflict_prompt": "State operando così troppo frequentemente che l'operazione va in conflitto. Per favore, rallenta.",
         "callback_already_running_prompt": "Hai richiesto un altro comando. Si prega di riprovare dopo che è terminato.",

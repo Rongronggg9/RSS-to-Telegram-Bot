@@ -22,6 +22,7 @@
         "uncaught_internal_error": "冇捉到嘅內部錯誤",
         "operation_timeout_error": "操作超時",
         "action_invalid": "操作唔啱",
+        "sub_limit_reached": "訂閲數目到咗上限",
         "flood_wait_prompt": "你操作得太快喇，搞到機械人超出咗 Telegram 嘅速率限制。唔該慢少少。",
         "edit_conflict_prompt": "你操作得太快喇，搞到操作衝突。唔該慢少少。",
         "callback_already_running_prompt": "你已經請求咗其他命令，唔該等佢搞掂再來過。",

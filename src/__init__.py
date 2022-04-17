@@ -62,6 +62,9 @@ while API_KEYs:
             break
         logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
         sleep(sleep_for)
+    except Exception as e:
+        env.loop.run_until_complete(db.close())  # necessary
+        raise e
 
 if bot is None:
     logger.critical('LOGIN FAILED!')
@@ -246,11 +249,12 @@ def main():
                       misfire_grace_time=10)
     scheduler.start()
 
-    bot.run_until_disconnected()
-
-    loop.run_until_complete(
-        post()
-    )
+    try:
+        bot.run_until_disconnected()
+    finally:
+        loop.run_until_complete(
+            post()
+        )
 
 
 if __name__ == '__main__':

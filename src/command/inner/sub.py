@@ -11,10 +11,10 @@ from urllib.parse import urljoin
 from cachetools import TTLCache
 from os import path
 
-
 from ... import db, web
 from ...i18n import i18n
-from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html
+from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html, \
+    check_sub_limit
 from ...parsing.utils import html_space_stripper
 
 FeedSnifferCache = TTLCache(maxsize=256, ttl=60 * 60 * 24)
@@ -138,10 +138,17 @@ async def subs(user_id: int,
     if not feed_urls:
         return None
 
-    result = await asyncio.gather(*(sub(user_id, url, lang=lang) for url in feed_urls))
+    limit_reached, count, limit = await check_sub_limit(user_id)
+    remaining = limit - count if not limit_reached else 0
+    remaining_feed_urls = feed_urls[:remaining]
+    rejected = tuple({'url': url, 'msg': 'ERROR: ' + i18n[lang]['sub_limit_reached']} for url in feed_urls[remaining:])
+    if rejected:
+        logger.info(f'Sub limit reached for {user_id}, rejected {len(rejected)} feeds of {len(feed_urls)}')
+
+    result = await asyncio.gather(*(sub(user_id, url, lang=lang) for url in remaining_feed_urls))
 
     success = tuple(sub_d for sub_d in result if sub_d['sub'])
-    failure = tuple(sub_d for sub_d in result if not sub_d['sub'])
+    failure = rejected + tuple(sub_d for sub_d in result if not sub_d['sub'])
 
     success_msg = (
             (f'<b>{i18n[lang]["sub_successful"]}</b>\n' if success else '')

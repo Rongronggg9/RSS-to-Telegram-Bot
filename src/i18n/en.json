@@ -22,6 +22,7 @@
         "uncaught_internal_error": "Uncaught internal error",
         "operation_timeout_error": "Operation timeout",
         "action_invalid": "Action invalid",
+        "sub_limit_reached": "Subscription number limit reached",
         "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
         "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
         "callback_already_running_prompt": "You have requested another command. Please retry after it finishes.",

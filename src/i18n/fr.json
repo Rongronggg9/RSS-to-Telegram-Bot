@@ -22,6 +22,7 @@
         "uncaught_internal_error": "",
         "operation_timeout_error": "",
         "action_invalid": "Action invalide",
+        "sub_limit_reached": "",
         "flood_wait_prompt": "Vous opérez si fréquemment que le bot a dépassé la limite de vitesse de Telegram. Veuillez ralentir.",
         "edit_conflict_prompt": "",
         "callback_already_running_prompt": "",

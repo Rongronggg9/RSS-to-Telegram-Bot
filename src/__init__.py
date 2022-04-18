@@ -78,6 +78,9 @@ env.bot_id = env.bot_peer.id
 
 
 async def pre():
+    # wait for pre tasks
+    await asyncio.gather(*pre_tasks)
+
     # noinspection PyTypeChecker
     manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
 
@@ -237,9 +240,6 @@ def main():
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
                 f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
-    # wait for pre tasks
-    loop.run_until_complete(*pre_tasks)
-
     loop.run_until_complete(pre())
 
     scheduler = AsyncIOScheduler(event_loop=loop)

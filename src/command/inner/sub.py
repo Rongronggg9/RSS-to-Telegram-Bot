@@ -139,16 +139,21 @@ async def subs(user_id: int,
         return None
 
     limit_reached, count, limit = await check_sub_limit(user_id)
-    remaining = limit - count if not limit_reached else 0
-    remaining_feed_urls = feed_urls[:remaining]
-    rejected = tuple({'url': url, 'msg': 'ERROR: ' + i18n[lang]['sub_limit_reached']} for url in feed_urls[remaining:])
-    if rejected:
-        logger.info(f'Sub limit reached for {user_id}, rejected {len(rejected)} feeds of {len(feed_urls)}')
+    if limit > 0:
+        remaining = limit - count if not limit_reached else 0
+        remaining_feed_urls = feed_urls[:remaining]
+        failure = [{'url': url, 'msg': 'ERROR: ' + i18n[lang]['sub_limit_reached']}
+                   for url in feed_urls[remaining:]]
+        if failure:
+            logger.info(f'Sub limit reached for {user_id}, rejected {len(failure)} feeds of {len(feed_urls)}')
+    else:
+        remaining_feed_urls = feed_urls
+        failure = []
 
     result = await asyncio.gather(*(sub(user_id, url, lang=lang) for url in remaining_feed_urls))
 
     success = tuple(sub_d for sub_d in result if sub_d['sub'])
-    failure = rejected + tuple(sub_d for sub_d in result if not sub_d['sub'])
+    failure.extend(sub_d for sub_d in result if not sub_d['sub'])
 
     success_msg = (
             (f'<b>{i18n[lang]["sub_successful"]}</b>\n' if success else '')

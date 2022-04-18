@@ -30,7 +30,7 @@ Recommended for those who are not familiar with Git or GitHub. You may both impr
 <a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
 <a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/multi-auto.svg" width = "500" alt="" /></a>
 
-https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
+https://hosted.weblate.org/projects/rss-to-telegram-bot/
 
 ## Translators
 | Language                               | Translator(s)        | Status                    |
@@ -61,17 +61,17 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/glossary/
 [pt]: ../src/i18n/pt.json
 [cs]: ../src/i18n/cs.json
 
-[en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/glossary/svg-badge.svg
-[zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/glossary/svg-badge.svg
-[zh_Hant_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hant/glossary/svg-badge.svg
-[yue_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/yue/glossary/svg-badge.svg
-[it_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/it/glossary/svg-badge.svg
-[ca_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ca/glossary/svg-badge.svg
-[tr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/tr/glossary/svg-badge.svg
-[fr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/fr/glossary/svg-badge.svg
-[id_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/id/glossary/svg-badge.svg
-[pt_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pt/glossary/svg-badge.svg
-[cs_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/cs/glossary/svg-badge.svg
+[en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/svg-badge.svg
+[zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/svg-badge.svg
+[zh_Hant_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hant/svg-badge.svg
+[yue_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/yue/svg-badge.svg
+[it_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/it/svg-badge.svg
+[ca_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ca/svg-badge.svg
+[tr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/tr/svg-badge.svg
+[fr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/fr/svg-badge.svg
+[id_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/id/svg-badge.svg
+[pt_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pt/svg-badge.svg
+[cs_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/cs/svg-badge.svg
 
 [en_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/en/
 [zh_Hans_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/zh_Hans/

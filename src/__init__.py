@@ -39,13 +39,13 @@ else:
     API_KEYs = {env.API_ID: env.API_HASH}
 
 # pre tasks
-pre_tasks = [env.loop.create_task(db.init())]
+pre_tasks = [loop.create_task(db.init())]
 
 if env.PORT:
     # enable redirect server for Railway, Heroku, etc
     from . import redirect_server
 
-    pre_tasks.append(env.loop.create_task(redirect_server.run(port=env.PORT)))
+    pre_tasks.append(loop.create_task(redirect_server.run(port=env.PORT)))
 
 sleep_for = 0
 while API_KEYs:
@@ -63,11 +63,12 @@ while API_KEYs:
         logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
         sleep(sleep_for)
     except Exception as e:
-        env.loop.run_until_complete(db.close())  # necessary
-        raise e
+        logger.critical('Unknown error occurred during login:', exc_info=e)
+        break
 
 if bot is None:
     logger.critical('LOGIN FAILED!')
+    loop.run_until_complete(db.close())
     exit(1)
 
 env.bot = bot
@@ -77,34 +78,24 @@ env.bot_id = env.bot_peer.id
 
 
 async def pre():
-    logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
-                f"MANAGER: {env.MANAGER}\n"
-                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
-                f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
-                f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
-                f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
-                f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
-                f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
-    # wait for pre tasks
-    await asyncio.gather(*pre_tasks)
-
     # noinspection PyTypeChecker
     manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
 
     set_bot_commands_tasks = (
-        env.loop.create_task(
-            command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(), lang_code='',
+        loop.create_task(
+            command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
+                                           lang_code='',
                                            commands=get_commands_list())
         ),
         *(
-            env.loop.create_task(
+            loop.create_task(
                 command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
                                                lang_code=i18n[lang]['iso_639_code'],
                                                commands=get_commands_list(lang=lang))
             )
             for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
         ),
-        env.loop.create_task(
+        loop.create_task(
             command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
                                            lang_code='',
                                            commands=get_commands_list(lang=manager_lang, manager=True))
@@ -229,8 +220,8 @@ async def pre():
     # get set_bot_commands tasks result
     try:
         await asyncio.gather(*set_bot_commands_tasks)
-    except RPCError as e:
-        logger.warning('Set command error: ', exc_info=e)
+    except RPCError as _e:
+        logger.warning('Set command error: ', exc_info=_e)
 
 
 async def post():
@@ -238,9 +229,18 @@ async def post():
 
 
 def main():
-    loop.run_until_complete(
-        pre()
-    )
+    logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
+                f"MANAGER: {env.MANAGER}\n"
+                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
+                f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
+                f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
+                f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
+                f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
+                f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
+    # wait for pre tasks
+    loop.run_until_complete(*pre_tasks)
+
+    loop.run_until_complete(pre())
 
     scheduler = AsyncIOScheduler(event_loop=loop)
     scheduler.add_job(func=command.monitor.run_monitor_task,
@@ -252,9 +252,7 @@ def main():
     try:
         bot.run_until_disconnected()
     finally:
-        loop.run_until_complete(
-            post()
-        )
+        loop.run_until_complete(post())
 
 
 if __name__ == '__main__':

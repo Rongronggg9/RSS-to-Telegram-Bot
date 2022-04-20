@@ -96,10 +96,10 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
         while sub_ids:
             curr_id = sub_ids.pop(0)
             if not sub_ids:
-                sub_ranges.append((curr_start if curr_start else curr_id, curr_id))
+                sub_ranges.append((curr_start or curr_id, curr_id))
                 break
             next_id = sub_ids[0]
-            if next_id == curr_id + 1 or next_id == curr_id:
+            if next_id in [curr_id + 1, curr_id]:
                 continue
             elif sum(sub.title is not None for sub in subs
                      if sub.id in range(curr_start, curr_id + 1)):  # if any sub has custom title
@@ -116,7 +116,7 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
         if not sub_ranges:
             return  # no subscription set custom title
 
-        button_data = f'del_subs_title=' + '|'.join(f'{start}-{end}' for start, end in sub_ranges) + callback_tail
+        button_data = 'del_subs_title=' + '|'.join(f'{start}-{end}' for start, end in sub_ranges) + callback_tail
         if len(button_data) <= 64:  # Telegram API limit
             button = [
                 [Button.inline(i18n[lang]['delete_subs_title_button'], button_data)],

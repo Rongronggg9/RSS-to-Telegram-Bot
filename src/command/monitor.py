@@ -248,7 +248,7 @@ async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapp
             await error_message.send_formatted_post(env.MANAGER, send_mode=2)
         except Exception as e:
             logger.error(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
-            await env.bot.send_message(env.MANAGER, f'A parsing error message cannot be sent, please check the logs.')
+            await env.bot.send_message(env.MANAGER, 'A parsing error message cannot be sent, please check the logs.')
         return
     await asyncio.gather(
         *(__send(sub, post) for sub in subs)
@@ -262,8 +262,8 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
         try:
             try:
                 entity = await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
-            except ValueError:  # cannot get the input entity, the bot may be banned by the user
-                raise EntityNotFoundError(user_id)
+            except ValueError as e:  # cannot get the input entity, the bot may be banned by the user
+                raise EntityNotFoundError(user_id) from e
             if isinstance(post, str):
                 await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
                 return
@@ -291,9 +291,9 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
     except Exception as e:
         logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}):', exc_info=e)
         try:
-            error_message = Post(f'Something went wrong while sending this post '
+            error_message = Post('Something went wrong while sending this post '
                                  f'(feed: {post.feed_link}, user: {sub.user_id}). '
-                                 f'Please check:<br><br>' +
+                                 'Please check:<br><br>' +
                                  format_exc().replace('\n', '<br>'),
                                  title=post.title, feed_title=post.feed_title, link=post.link, author=post.author,
                                  feed_link=post.feed_link)
@@ -302,7 +302,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             logger.error(f'Failed to send sending error message for {post.link} '
                          f'(feed: {post.feed_link}, user: {sub.user_id}):',
                          exc_info=e)
-            await env.bot.send_message(env.MANAGER, f'An sending error message cannot be sent, please check the logs.')
+            await env.bot.send_message(env.MANAGER, 'An sending error message cannot be sent, please check the logs.')
 
 
 async def __deactivate_feed_and_notify_all(feed: db.Feed,

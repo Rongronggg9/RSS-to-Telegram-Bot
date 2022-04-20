@@ -46,7 +46,7 @@ async def exit_handler(prerequisite: Awaitable = None):
         finally:
             await Tortoise.close_connections()  # necessary, otherwise the connection will block the shutdown
     except Exception as e:
-        _logger.critical(f'Failed to gracefully exit:', exc_info=e)
+        _logger.critical('Failed to gracefully exit:', exc_info=e)
         os.kill(os.getpid(), signal.SIGTERM)
     exit(1)
 
@@ -67,7 +67,7 @@ class _Watchdog:
         _logger.critical(msg)
         coro = None
         if env.bot is not None:
-            coro = env.bot.send_message(env.MANAGER, 'WATCHDOG: ' + msg)
+            coro = env.bot.send_message(env.MANAGER, f'WATCHDOG: {msg}')
         shutdown(prerequisite=coro)
 
     def fine(self, delay: int = 15 * 60):

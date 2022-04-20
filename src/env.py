@@ -80,6 +80,8 @@ for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
         logger.info(f'Found .env file at "{dot_env_path}", loaded')
 
 # ----- get version -----
+_version = 'dirty'
+
 if is_self_run_as_a_whole_package:
     # noinspection PyBroadException
     try:
@@ -88,26 +90,26 @@ if is_self_run_as_a_whole_package:
     except Exception:
         _version = 'dirty'
 
-    if _version == 'dirty':
-        from subprocess import Popen, PIPE, DEVNULL
-
-        # noinspection PyBroadException
-        try:
-            with Popen(['git', 'describe', '--tags'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-                __.wait(3)
-                _version = __.stdout.read().decode().strip()
-            with Popen(['git', 'branch', '--show-current'], shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __:
-                __.wait(3)
-                __ = __.stdout.read().decode().strip()
-                if __:
-                    _version += f'@{__}'
-        except Exception:
-            _version = 'dirty'
-
     if not _version or _version == '@':
         _version = 'dirty'
-else:
-    _version = 'dirty'
+
+if _version == 'dirty':
+    from subprocess import Popen, PIPE, DEVNULL
+
+    # noinspection PyBroadException
+    try:
+        with Popen(['git', 'describe', '--tags', '--dirty', '--broken', '--always'],
+                   shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __git:
+            __git.wait(3)
+            _version = __git.stdout.read().decode().strip()
+        with Popen(['git', 'branch', '--show-current'],
+                   shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __git:
+            __git.wait(3)
+            __git = __git.stdout.read().decode().strip()
+            if __git:
+                _version += f'@{__git}'
+    except Exception:
+        _version = 'dirty'
 
 _version_match = re.match(r'^v?\d+\.\d+(\.\w+(\.\w+)?)?', _version)
 if _version_match:

@@ -24,7 +24,7 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message],
     args = parse_command(event.raw_text)
     filtered_urls = inner.utils.filter_urls(args)
 
-    allow_reply = (not event.is_channel or event.is_group) and chat_id == event.chat_id
+    allow_reply = (event.is_private or event.is_group) and chat_id == event.chat_id
     prompt = (i18n[lang]['sub_reply_feed_url_prompt_html']
               if allow_reply
               else i18n[lang]['sub_usage_in_channel_html'])

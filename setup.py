@@ -3,8 +3,8 @@ from functools import partial
 from setuptools import setup, find_packages
 from pathlib import Path
 
-version_info = re.search(r"[\d.]+", Path("src/version.py").read_text())
-version = {'__version__': version_info[0]}
+version_info = re.search(r"""__version__ *= *['"]([^'"]+)['"]""", Path("src/version.py").read_text())[1]
+version = {'__version__': version_info}
 
 replacePackagePath = partial(re.compile(r'^src').sub, 'rsstt')
 

@@ -117,7 +117,7 @@ class Text:
                 if stripped:
                     split_list.append(stripped)  # split
             elif curr_length >= curr_length_limit and sub_text:
-                split_list.extend(iter(sub_text.split_html(curr_length_limit)))  # split
+                split_list.extend(sub_text.split_html(curr_length_limit))  # split
 
             return split_list
 

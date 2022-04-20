@@ -1,13 +1,12 @@
 import re
 from functools import partial
 from setuptools import setup, find_packages
-from distutils.util import convert_path
+from pathlib import Path
 
-version = {}
-with open(convert_path('src/version.py')) as f:
-    exec(f.read(), version)
+version_info = re.search(r"[\d.]+", Path("src/version.py").read_text())
+version = {'__version__': version_info[0]}
 
-replacePackagePath = partial(re.compile('^src').sub, 'rsstt')
+replacePackagePath = partial(re.compile(r'^src').sub, 'rsstt')
 
 source_packages = find_packages(include=['src', 'src.*'])
 proj_packages = [replacePackagePath(name) for name in source_packages]

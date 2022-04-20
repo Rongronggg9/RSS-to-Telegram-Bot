@@ -229,7 +229,7 @@ class Medium(AbstractMedium):
         super().__init__()
         urls = urls if isinstance(urls, list) else [urls]
         # dedup, should not use a set because sequence is important
-        self.urls: list[str] = [url for url in urls if url not in self.urls]
+        self.urls: list[str] = sorted(set(urls), key=urls.index)
         self.original_urls: tuple[str, ...] = tuple(self.urls)
         self.chosen_url: Optional[str] = self.urls[0]
         self._server_change_count: int = 0

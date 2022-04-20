@@ -35,11 +35,7 @@ def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
 
 
 def __list_parser(var: Optional[str]) -> list[str]:
-    if not var:
-        return []
-
-    var_t = re.split(r'[\s,;，；]+', var.strip())
-    return var_t
+    return re.split(r'[\s,;，；]+', var.strip()) if var else []
 
 
 # ----- setup logging -----
@@ -123,7 +119,7 @@ if _version_match:
     except ValueError:
         _version = 'v' + __version__
 else:
-    _version = 'v' + __version__ + ('-' + _version if not _version == 'dirty' else '')
+    _version = 'v' + __version__ + ('-' + _version if _version != 'dirty' else '')
 
 VERSION: Final = _version
 del _version, _version_match

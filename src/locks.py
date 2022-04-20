@@ -57,7 +57,7 @@ def user_pending_callbacks(user: _USER_LIKE) -> set:
 async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
     call_time = time()
     flood_lock = user_flood_lock(user)
-    seconds = seconds + 1
+    seconds += 1
     async with flood_lock:
         lock_got_time = time()
         time_left = seconds - (lock_got_time - call_time)

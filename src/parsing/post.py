@@ -96,7 +96,7 @@ class Post:
         :param display_media: -1=disable, 0=enable
         :param silent: whether to send with notification sound
         """
-        for tries in range(3):
+        for _ in range(3):
             if not self.post_formatter.parsed:
                 await self.post_formatter.parse_html()
 
@@ -143,9 +143,8 @@ class Post:
                     if msg_count_new != msg_count_prev:
                         logger.debug(log_header + ', disallowed files sent as album and retrying')
                         continue
-                logger.error(log_header + f', dropped all media and retrying...')
+                logger.error(f'{log_header}, dropped all media and retrying...')
                 self.post_formatter.media.invalidate_all()
-                continue
 
     async def test_format(self, user_id: int):
         if user_id != env.MANAGER:

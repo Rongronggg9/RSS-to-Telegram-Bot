@@ -7,9 +7,9 @@ version = {}
 with open(convert_path('src/version.py')) as f:
     exec(f.read(), version)
 
-replacePackagePath = partial(re.compile(rf'^src').sub, 'rsstt')
+replacePackagePath = partial(re.compile('^src').sub, 'rsstt')
 
-source_packages = find_packages(include=['src', f'src.*'])
+source_packages = find_packages(include=['src', 'src.*'])
 proj_packages = [replacePackagePath(name) for name in source_packages]
 
 setup(

@@ -30,7 +30,7 @@ def split_entities(pos: int, entities: Sequence[TypeMessageEntity]) -> tuple[lis
                 after_entity.offset = pos
                 after_entity.length = end - pos
                 after.append(after_entity)
-        elif entity.offset >= pos:
+        else:
             after.append(copy_entity(entity))
     return before, after
 
@@ -76,8 +76,8 @@ def text_and_format_entities_split(plain_text: str,
         curr_length_limit = min(curr_length_limit, len(pending_text))
         # note: Telegram only allows up to 10000-Byte formatting entities per message
         # here the limit is set to 9500 Bytes to avoid possible problems
-        if (len(pending_text) == curr_length_limit
-                and not (len(pending_entities) > 100 or len(b''.join(x._bytes() for x in pending_entities)) >= 9500)):
+        if len(pending_text) == curr_length_limit and len(pending_entities) <= 100 and len(
+                b''.join(x._bytes() for x in pending_entities)) < 9500:
             if surrogate_len_sum > 0:
                 for entity in pending_entities:
                     entity.offset -= surrogate_len_sum

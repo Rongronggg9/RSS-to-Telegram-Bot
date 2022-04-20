@@ -9,7 +9,7 @@ from .message import MessageDispatcher
 
 
 def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post':
-    entry_parsed = parse_entry(entry)
+    entry_parsed = parse_entry(entry, feed_link)
     return Post(entry_parsed.content, entry_parsed.title, feed_title, entry_parsed.link, entry_parsed.author,
                 feed_link=feed_link, enclosures=entry_parsed.enclosures)
 

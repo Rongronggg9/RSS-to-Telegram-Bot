@@ -164,7 +164,7 @@ TELEGRAPH_TAGS_ALLOW_ATTR: Final = {
 
 class TelegraphIfy:
     def __init__(self, xml: str = None, title: str = None, link: str = None, feed_title: str = None,
-                 author: str = None):
+                 author: str = None, feed_link: str = None):
         self.retries = 0
 
         if not apis:
@@ -175,6 +175,7 @@ class TelegraphIfy:
         self.link = link
         self.feed_title = feed_title
         self.author = author
+        self.feed_link = feed_link
 
         self.telegraph_author = None
         self.telegraph_author_url = None
@@ -257,8 +258,7 @@ class TelegraphIfy:
                     if not attr_content:
                         tag.replaceWithChildren()
                         continue
-                    if self.link:
-                        attr_content = resolve_relative_link(self.link, attr_content)
+                    attr_content = resolve_relative_link(self.feed_link, attr_content)
                     if not isAbsoluteHttpLink(attr_content):
                         tag.replaceWithChildren()
                         continue

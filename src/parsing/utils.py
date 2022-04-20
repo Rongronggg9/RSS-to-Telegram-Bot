@@ -48,9 +48,9 @@ with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-
     emoji_dict = json.load(emojify_json)
 
 
-def resolve_relative_link(base: str, url: str) -> str:
+def resolve_relative_link(base: Optional[str], url: Optional[str]) -> str:
     if not (base and url) or isAbsoluteHttpLink(url) or not isAbsoluteHttpLink(base):
-        return url
+        return url or ''
     return urljoin(base, url)
 
 
@@ -96,7 +96,7 @@ def html_space_stripper(s: str, enable_emojify: bool = False) -> str:
     return emojify(s) if enable_emojify else s
 
 
-def parse_entry(entry):
+def parse_entry(entry, feed_link: Optional[str] = None):
     class EntryParsed:
         content: str = ''
         link: Optional[str] = None
@@ -136,7 +136,7 @@ def parse_entry(entry):
                 enclosure_url = link.get('href')
                 if not enclosure_url:
                     continue
-                enclosure_url = resolve_relative_link(EntryParsed.link, enclosure_url)
+                enclosure_url = resolve_relative_link(feed_link, enclosure_url)
                 EntryParsed.enclosures.append(Enclosure(url=enclosure_url,
                                                         length=link.get('length'),
                                                         _type=link.get('type')))

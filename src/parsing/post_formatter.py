@@ -543,7 +543,8 @@ class PostFormatter:
                                                             title=self.title,
                                                             link=self.link,
                                                             feed_title=self.feed_title,
-                                                            author=self.author).telegraph_ify()
+                                                            author=self.author,
+                                                            feed_link=self.feed_link).telegraph_ify()
             return self.telegraph_link
         except exceptions.TelegraphError as e:
             if str(e) == 'CONTENT_TOO_BIG':

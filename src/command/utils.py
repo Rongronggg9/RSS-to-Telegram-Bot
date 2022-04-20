@@ -509,12 +509,14 @@ def command_gatekeeper(func: Optional[Callable] = None,
             try:
                 if isinstance(e, FloodError):
                     # blocking other commands to be executed and messages to be sent
+                    resend_flag = True
                     if hasattr(e, 'seconds') and e.seconds is not None:
+                        resend_flag = e.seconds <= 10
                         await locks.user_flood_wait(chat_id, e.seconds)  # acquire a flood wait
                     async with locks.user_flood_lock(chat_id):
                         pass  # wait for flood wait (if another request has acquired a flood wait)
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['flood_wait_prompt'])
-                    await env.bot(e.request)  # resend
+                    await env.bot(e.request) if resend_flag else None  # resend
                 # usually occurred because the user hits the same button during auto flood wait
                 elif isinstance(e, MessageNotModifiedError):
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['edit_conflict_prompt'])

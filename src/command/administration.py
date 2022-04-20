@@ -50,7 +50,7 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
         all_feeds = await db.Feed.filter(state=1)
         for feed in all_feeds:
             env.loop.create_task(inner.utils.update_interval(feed))
-        logger.info(f"Flushed the interval of all feeds")
+        logger.info("Flushed the interval of all feeds")
 
     await event.respond(f'<b>{i18n[lang]["option_updated"]}</b>\n'
                         f'<code>{key}</code> = <code>{value}</code>',
@@ -102,7 +102,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         )
 
     except Exception as e:
-        logger.warning(f"Sending failed:", exc_info=e)
+        logger.warning("Sending failed:", exc_info=e)
         await event.respond('ERROR: ' + i18n[lang]['internal_error'])
         return
 
@@ -129,7 +129,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
     else:
         state = None
         args = parse_command(event.raw_text, strip_target_chat=False)
-        if len(args) < 2 or not (args[1].lstrip('-').isdecimal() or args[1].startswith('@')):
+        if len(args) < 2 or (not args[1].lstrip('-').isdecimal() and not args[1].startswith('@')):
             await event.respond(i18n[lang]['cmd_user_info_usage_prompt_html'], parse_mode='html')
             return
         user_entity_like = int(args[1]) if args[1].lstrip('-').isdecimal() else args[1].lstrip('@')

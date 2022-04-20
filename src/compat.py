@@ -7,7 +7,7 @@ import functools
 from cachetools.keys import hashkey
 
 _version_info = sys.version_info
-if not (_version_info[0] == 3 and _version_info[1] >= 7):
+if _version_info < (3, 7):
     raise RuntimeError("This bot requires Python 3.7 or later")
 
 import ssl

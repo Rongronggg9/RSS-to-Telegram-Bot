@@ -58,7 +58,7 @@ while API_KEYs:
         break
     except ApiIdPublishedFloodError:
         if not API_KEYs:
-            logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred.')
+            logger.warning('API_ID_PUBLISHED_FLOOD_ERROR occurred.')
             break
         logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
         sleep(sleep_for)
@@ -234,12 +234,12 @@ async def post():
 def main():
     logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
                 f"MANAGER: {env.MANAGER}\n"
-                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY if env.TELEGRAM_PROXY else 'not set'}\n"
+                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"
                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
                 f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
-                f"UVLOOP: {f'Enable' if uvloop is not None else 'Disable'}\n"
-                f"MULTIUSER: {f'Enable' if env.MULTIUSER else 'Disable'}")
+                f"UVLOOP: {'Enable' if uvloop is not None else 'Disable'}\n"
+                f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}")
     loop.run_until_complete(pre())
 
     scheduler = AsyncIOScheduler(event_loop=loop)

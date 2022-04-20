@@ -30,7 +30,7 @@ async def get_sub_info(sub: db.Sub,
                        additional_guide: bool = False) -> str:
     if not isinstance(sub.feed, db.Feed):
         await sub.fetch_related('feed')
-    info = (
+    return (
             f"<b>{i18n[lang]['subscription_info']}</b>\n\n"
             f"{i18n[lang]['feed_title']}: {sub.feed.title}\n"
             f"{i18n[lang]['feed_url']}: {sub.feed.link}"
@@ -43,7 +43,6 @@ async def get_sub_info(sub: db.Sub,
             + (f"\n\n{i18n[lang]['read_formatting_settings_guidebook_html']}"
                if additional_guide else '')
     )
-    return info
 
 
 # noinspection DuplicatedCode
@@ -189,7 +188,7 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
             Button.inline(f'< {i18n[lang]["back"]}', data=f'get_set_page|{page}{tail}'),
         ) if not is_user else
         (
-            Button.inline(f'{i18n[lang]["cancel"]}', data=f'cancel'),
+            Button.inline(f'{i18n[lang]["cancel"]}', data='cancel'),
         ),
     )
     return tuple(filter(None, buttons))
@@ -209,17 +208,17 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
 
     columns = 4
     buttons_in_minute_and_hour_count = sum(
-        1 for interval in chain(
+        interval >= minimal_interval for interval in chain(
             range(1, 5),
             range(5, 61, 5),
             range(2 * 60, 24 * 60, 60)
-        ) if interval >= minimal_interval
+        )
     )
     buttons_in_day_count = columns - buttons_in_minute_and_hour_count % columns
 
     buttons = (
             ((
-                 Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang][f'use_user_default_button'],
+                 Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
                                data=f'set={sub_or_user.id},interval,default|{page}{tail}'),
              ) if not is_user else None,)
             +
@@ -256,7 +255,7 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
                                               if not tail
                                               else f'/set_interval {sub_or_user.user_id} {sub_or_user.id} ')
                                              if not is_user else
-                                             (f'/set_interval default '
+                                             ('/set_interval default '
                                               if not tail
                                               else f'/set_interval {sub_or_user.id} default ')),
                                       same_peer=True),
@@ -283,7 +282,7 @@ async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
 
     buttons = (
             ((
-                 Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang][f'use_user_default_button'],
+                 Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
                                data=f'set={sub_or_user.id},length_limit,default|{page}{tail}'),
              ) if not is_user else None,)
             +

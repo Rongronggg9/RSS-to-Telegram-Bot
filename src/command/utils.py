@@ -35,8 +35,7 @@ def parse_command(command: str, max_split: int = 0, strip_target_chat: bool = Tr
         if len(temp) >= 2 and temp[1].startswith(('@', '-100')):
             del temp[1]
         command = ' '.join(temp)
-    ret = splitByWhitespace(command, maxsplit=max_split)
-    return ret
+    return splitByWhitespace(command, maxsplit=max_split)
 
 
 async def parse_command_get_sub_or_user_and_param(command: str,
@@ -558,11 +557,9 @@ class NewFileMessage(events.NewMessage):
         if not document:
             return
         if self.filename_pattern:
-            filename = None
-            for attr in document.attributes:
-                if isinstance(attr, types.DocumentAttributeFilename):
-                    filename = attr.file_name
-                    break
+            filename = next(
+                (attr.file_name for attr in document.attributes if isinstance(attr, types.DocumentAttributeFilename)),
+                None)
             if not self.filename_pattern(filename or ''):
                 return
         return super().filter(event)

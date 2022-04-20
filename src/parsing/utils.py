@@ -124,11 +124,11 @@ def parse_entry(entry, feed_link: Optional[str] = None):
     EntryParsed.link = entry.get('link') or entry.get('guid')
     author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
     author = html_space_stripper(author) if author else None
-    EntryParsed.author = author if author else None  # reject empty string
+    EntryParsed.author = author or None  # reject empty string
     # hmm, some entries do have no title, should we really set up a feed hospital?
     title = entry.get('title')
     title = html_space_stripper(title, enable_emojify=True) if title else None
-    EntryParsed.title = title if title else None  # reject empty string
+    EntryParsed.title = title or None  # reject empty string
     if isinstance(entry.get('links'), list):
         EntryParsed.enclosures = []
         for link in entry['links']:

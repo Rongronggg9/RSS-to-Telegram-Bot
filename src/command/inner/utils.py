@@ -19,7 +19,7 @@ emptyButton = Button.inline(' ', data='null')
 
 
 def parse_hashtags(text: str) -> list[str]:
-    if text.find('#') != -1:
+    if '#' in text:
         return re.findall(r'(?<=#)[^\s#]+', text)
     return re.findall(r'\S+', text)
 
@@ -27,7 +27,7 @@ def parse_hashtags(text: str) -> list[str]:
 def construct_hashtags(tags: Union[Iterable[str], str]) -> str:
     if isinstance(tags, str):
         tags = parse_hashtags(tags)
-    return ' '.join('#' + tag for tag in tags)
+    return ' '.join(f'#{tag}' for tag in tags)
 
 
 def get_hash(string: AnyStr) -> str:
@@ -37,10 +37,7 @@ def get_hash(string: AnyStr) -> str:
 
 
 def filter_urls(urls: Optional[Iterable[str]]) -> tuple[str, ...]:
-    if not urls:
-        return tuple()
-
-    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls))
+    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls)) if urls else tuple()
 
 
 # copied from command.utils
@@ -53,7 +50,7 @@ def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: in
     days = days + hours // 24 + minutes // (24 * 60) + seconds // (24 * 60 * 60)
     hours = (hours + minutes // 60 + seconds // (60 * 60)) % 24
     minutes = (minutes + seconds // 60) % 60
-    seconds = seconds % 60
+    seconds %= 60
     return (
             (f'{days}d' if days > 0 or long else '')
             + (f'{hours}h' if hours > 0 or long else '')
@@ -124,9 +121,7 @@ async def get_sub_list_by_page(user_id: int, page_number: int, size: int, desc: 
         return 0, 0, [], 0
 
     page_count = (sub_count - 1) // size + 1
-    if page_number > page_count:
-        # raise IndexError(f'Page {page} does not exist.')
-        page_number = page_count
+    page_number = min(page_number, page_count)
 
     offset = (page_number - 1) * size
     page = await db.Sub.filter(user=user_id, *args, **kwargs) \
@@ -146,12 +141,12 @@ def get_page_buttons(page_number: int,
                      tail: str = '') -> list[Button]:
     page_number = min(page_number, page_count)
     page_info = f'{page_number} / {page_count}' + (f' ({total_count})' if total_count else '')
-    page_buttons = [
+    return [
         Button.inline(f'< {i18n[lang]["previous_page"]}', data=f'{get_page_callback}|{page_number - 1}{tail}')
         if page_number > 1
         else emptyButton,
 
-        Button.inline(page_info + ' | ' + i18n[lang]['cancel'], data='cancel')
+        Button.inline(f'{page_info} | {i18n[lang]["cancel"]}', data='cancel')
         if display_cancel
         else Button.inline(page_info, data='null'),
 
@@ -159,7 +154,6 @@ def get_page_buttons(page_number: int,
         if page_number < page_count
         else emptyButton,
     ]
-    return page_buttons
 
 
 async def get_sub_choosing_buttons(user_id: int,
@@ -347,9 +341,8 @@ async def activate_or_deactivate_sub(user_id: int, sub: Union[db.Sub, int], acti
     feed = sub.feed
     if activate and feed.state != 1:
         await activate_feed(feed)
-    else:
-        if _update_interval:
-            await update_interval(feed)
+    elif _update_interval:
+        await update_interval(feed)
 
     return sub
 

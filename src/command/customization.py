@@ -373,7 +373,7 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
         ),
         buttons=(Button.inline(i18n[lang]['other_settings_button'],
                                data=(
-                                       (f'set={sub_or_user.id}' if isinstance(sub_or_user, db.Sub) else f'set_default')
+                                       (f'set={sub_or_user.id}' if isinstance(sub_or_user, db.Sub) else 'set_default')
                                        + callback_tail)
                                ),),
         parse_mode='html', link_preview=False)

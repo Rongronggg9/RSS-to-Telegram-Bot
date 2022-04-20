@@ -73,16 +73,14 @@ class __EffectiveOptions:
         value_type = type(self.__default_options[key])
 
         if value is None:
-            if value_type is str:
-                return ""
-            return None
+            return "" if value_type is str else None
 
         try:
             return value_type(value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
             if ignore_type_error:
                 return self.__default_options[key]
-            raise TypeError(f"Option value must be of type {value_type}")
+            raise TypeError(f"Option value must be of type {value_type}") from e
 
     def get(self, key: str) -> Union[str, int]:
         """

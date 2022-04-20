@@ -33,18 +33,19 @@ class _I18N:
         return cls.__instance
 
     def __init__(self):
-        if not self.__initialized:
-            self.__l10n_d: CIMultiDict[_L10N] = CIMultiDict()
-            self.__iso_639_d: CIMultiDict[str] = CIMultiDict()
-            for lang in ALL_LANGUAGES:
-                l10n = _L10N(lang)
-                iso_639_code = l10n['iso_639_code']
-                self.__l10n_d[lang] = l10n
-                if iso_639_code:
-                    self.__iso_639_d[iso_639_code] = lang
+        if self.__initialized:
+            return
+        self.__l10n_d: CIMultiDict[_L10N] = CIMultiDict()
+        self.__iso_639_d: CIMultiDict[str] = CIMultiDict()
+        for lang in ALL_LANGUAGES:
+            l10n = _L10N(lang)
+            iso_639_code = l10n['iso_639_code']
+            self.__l10n_d[lang] = l10n
+            if iso_639_code:
+                self.__iso_639_d[iso_639_code] = lang
 
-            self.__initialized = True
-            self.set_help_msg_html()
+        self.__initialized = True
+        self.set_help_msg_html()
 
     def __getitem__(self, lang_code: Optional[str]) -> "_L10N":
         if not lang_code or not isinstance(lang_code, str):
@@ -100,7 +101,7 @@ class _L10N:
     def __init__(self, lang_code: str):
         self.__lang_code: str = lang_code
         self.__l10n_lang: CIMultiDict[str]
-        with open(path.join(I18N_PATH, lang_code + '.json'), encoding='utf-8') as f:
+        with open(path.join(I18N_PATH, f'{lang_code}.json'), encoding='utf-8') as f:
             l10n_d = load(f)
         l10n_d_flatten = {}
         assert isinstance(l10n_d, dict)

@@ -141,8 +141,8 @@ class Message:
                             for medium in self.media:
                                 _, fm, _ = await env.bot._file_to_media(medium)
                                 media.append(types.InputSingleMedia(fm, message=''))
-                            media[-1].message = self.plain_text if self.plain_text else ''
-                            media[-1].entities = self.format_entities if self.format_entities else None
+                            media[-1].message = self.plain_text or ''
+                            media[-1].entities = self.format_entities or None
                             entity = await env.bot.get_input_entity(self.user_id)
                             reply_to = get_message_id(reply_to)
                             request = functions.messages.SendMultiMediaRequest(entity,
@@ -151,8 +151,7 @@ class Message:
                                                                                silent=self.silent)
                             result = await env.bot(request)
                             random_ids = [m.random_id for m in media]
-                            ret = env.bot._get_response_message(random_ids, result, entity)
-                            return ret
+                            return env.bot._get_response_message(random_ids, result, entity)
                         # non-album
                         return await env.bot.send_message(entity=self.user_id,
                                                           message=self.plain_text,

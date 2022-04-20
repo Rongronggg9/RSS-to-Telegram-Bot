@@ -52,8 +52,8 @@ while API_KEYs:
     sleep_for += 10
     API_ID, API_HASH = API_KEYs.popitem()
     try:
-        bot = TelegramClient(path.join(env.config_folder_path, 'bot'),
-                             API_ID, API_HASH, proxy=env.TELEGRAM_PROXY_DICT, request_retries=2,
+        bot = TelegramClient(path.join(env.config_folder_path, 'bot'), API_ID, API_HASH,
+                             proxy=env.TELEGRAM_PROXY_DICT, request_retries=2, flood_sleep_threshold=60,
                              raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
         break
     except ApiIdPublishedFloodError:

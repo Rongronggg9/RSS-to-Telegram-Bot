@@ -348,14 +348,14 @@ class Medium(AbstractMedium):
             self.type_fallback_medium = self.typeFallbackTo(fallback_urls)
             if await self.type_fallback_medium.validate():
                 logger.debug(
-                            f"Medium {self.original_urls[0]}"
-                            + (f' ({self.info})' if self.info else '')
-                            + f" type fallback to '{self.type_fallback_medium.type}'"
-                            + (
-                                ''
-                                if self.typeFallbackAllowSelfUrls
-                                else f'({self.type_fallback_medium.original_urls[0]})'
-                            )
+                    f"Medium {self.original_urls[0]}"
+                    + (f' ({self.info})' if self.info else '')
+                    + f" type fallback to '{self.type_fallback_medium.type}'"
+                    + (
+                        ''
+                        if self.typeFallbackAllowSelfUrls
+                        else f'({self.type_fallback_medium.original_urls[0]})'
+                    )
                 )
                 self.need_type_fallback = True
                 # self.type_fallback_medium.type = self.type

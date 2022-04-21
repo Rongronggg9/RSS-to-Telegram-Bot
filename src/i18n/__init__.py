@@ -55,9 +55,12 @@ class _I18N:
     def get_all_l10n_string(self, key: str, html_escaped: bool = False,
                             only_iso_639: bool = False) -> tuple[str, ...]:
         languages = self.__iso_639_d.keys() if only_iso_639 else ALL_LANGUAGES
-        res = tuple(self[lang_code].html_escaped(key) for lang_code in languages if
-                    self[lang_code].key_exist(key)) if html_escaped else tuple(
-            self[lang_code][key] for lang_code in languages if self[lang_code].key_exist(key))
+        all_l10n = tuple(self[lang_code] for lang_code in languages)
+        res = tuple(
+            l10n.html_escaped(key) if html_escaped else l10n[key]
+            for l10n in all_l10n
+            if l10n.key_exist(key)
+        )
 
         return res or (key,)
 

@@ -210,15 +210,19 @@ IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'
 IMG_RELAY_SERVER: Final = (
-                                  ('' if _img_relay_server.startswith('http') else 'https://') + _img_relay_server
-                          ) + ('' if _img_relay_server.endswith(('/', '=')) else '/')
+        ('' if _img_relay_server.startswith('http') else 'https://')
+        + _img_relay_server
+        + ('' if _img_relay_server.endswith(('/', '=')) else '/')
+)
 del _img_relay_server
 
 # ----- images.weserv.nl config -----
 _images_weserv_nl = os.environ.get('IMAGES_WESERV_NL') or 'https://images.weserv.nl/'
 IMAGES_WESERV_NL: Final = (
-                                  ('' if _images_weserv_nl.startswith('http') else 'https://') + _images_weserv_nl
-                          ) + ('' if _images_weserv_nl.endswith('/') else '/')
+        ('' if _images_weserv_nl.startswith('http') else 'https://')
+        + _images_weserv_nl
+        + ('' if _images_weserv_nl.endswith('/') else '/')
+)
 del _images_weserv_nl
 
 # ----- db config -----

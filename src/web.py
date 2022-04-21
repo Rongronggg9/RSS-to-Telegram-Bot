@@ -162,7 +162,7 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
             body = await response.content.read(max_size)
         if decode and body:
             xml_header = body.split(b'\n', 1)[0]
-            if xml_header.find(b'<?xml') == 0 and xml_header.find(b'?>') != -1:
+            if xml_header.startswith(b'<?xml') and b'?>' in xml_header and b'encoding' in xml_header:
                 try:
                     encoding = BeautifulSoup(xml_header, 'lxml-xml').original_encoding
                     return body.decode(encoding=encoding, errors='replace')

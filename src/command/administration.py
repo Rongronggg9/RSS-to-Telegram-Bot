@@ -162,7 +162,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
         user.state = state
         await user.save()
     state = user.state if user_id != env.MANAGER else None
-    sub_count = await inner.utils.count_sub(user_id) if not user_created else 0
+    sub_count = 0 if user_created else await inner.utils.count_sub(user_id)
 
     msg_text = (
             f"<b>{i18n[lang]['user_info']}</b>\n\n"

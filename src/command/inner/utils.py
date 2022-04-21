@@ -248,7 +248,7 @@ async def update_interval(feed: Union[db.Feed, db.Sub, int]):
 
     feed_update_flag = False
     if new_interval != curr_interval or (set_to_default and feed.interval is not None):
-        feed.interval = new_interval if not set_to_default else None
+        feed.interval = None if set_to_default else new_interval
         feed_update_flag = True
     if feed.state != 1:
         feed.state = 1

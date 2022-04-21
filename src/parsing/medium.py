@@ -651,7 +651,6 @@ class Media:
                 return medium
         return None
 
-
     async def fallback_all(self) -> bool:
         if not self._media:
             return False

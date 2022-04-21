@@ -121,7 +121,6 @@ async def callback_set(event: events.CallbackQuery.Event,
         return
 
     await event.edit(i18n[lang]['action_invalid'])
-    return
 
 
 @command_gatekeeper(only_manager=False)
@@ -136,7 +135,6 @@ async def cmd_set_default(event: Union[events.NewMessage.Event, Message],
     msg = i18n[lang]['set_user_default_description'] + '\n\n' + i18n[lang]['read_formatting_settings_guidebook_html']
     buttons = await inner.customization.get_customization_buttons(user, lang=lang, tail=callback_tail)
     await event.respond(msg, buttons=buttons, parse_mode='html', link_preview=False)
-    return
 
 
 @command_gatekeeper(only_manager=False)

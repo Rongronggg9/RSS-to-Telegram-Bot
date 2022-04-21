@@ -811,7 +811,7 @@ class Media:
 
     @property
     def valid_count(self):
-        return sum(medium.valid and not medium.drop_silently for medium in self._media)
+        return sum(medium.valid is True and not medium.drop_silently for medium in self._media)
 
     @property
     def invalid_count(self):

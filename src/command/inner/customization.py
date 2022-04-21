@@ -109,9 +109,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['monitor_interval']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if interval_d else '')
                 + formatting_time(minutes=interval or db.EffectiveOptions.default_interval),
-                data=f'set_default=interval{tail}'
-                if is_user
-                else f'set={sub_or_user.id},interval|{page}{tail}',
+                data=(
+                    f'set_default=interval{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},interval|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -119,9 +121,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['notification']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if notify_d else '')
                 + i18n[lang]['notification_normal' if notify else 'notification_muted'],
-                data=f'set_default=notify{tail}'
-                if is_user
-                else f'set={sub_or_user.id},notify|{page}{tail}',
+                data=(
+                    f'set_default=notify{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},notify|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -129,9 +133,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['send_mode']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if send_mode_d else '')
                 + i18n[lang][f'send_mode_{send_mode}'],
-                data=f'set_default=send_mode{tail}'
-                if is_user
-                else f'set={sub_or_user.id},send_mode|{page}{tail}',
+                data=(
+                    f'set_default=send_mode{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},send_mode|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -143,9 +149,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                     if length_limit
                     else i18n[lang]['length_limit_unlimited']
                 ),
-                data=f'set_default=length_limit{tail}'
-                if is_user
-                else f'set={sub_or_user.id},length_limit|{page}{tail}',
+                data=(
+                    f'set_default=length_limit{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},length_limit|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -153,9 +161,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['display_media']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_media_d else '')
                 + i18n[lang][f'display_media_{display_media}'],
-                data=f'set_default=display_media{tail}'
-                if is_user
-                else f'set={sub_or_user.id},display_media|{page}{tail}',
+                data=(
+                    f'set_default=display_media{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},display_media|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -163,9 +173,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['display_title']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_title_d else '')
                 + i18n[lang][f'display_title_{display_title}'],
-                data=f'set_default=display_title{tail}'
-                if is_user
-                else f'set={sub_or_user.id},display_title|{page}{tail}',
+                data=(
+                    f'set_default=display_title{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},display_title|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -173,9 +185,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['display_via']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_via_d else '')
                 + i18n[lang][f'display_via_{display_via}'],
-                data=f'set_default=display_via{tail}'
-                if is_user
-                else f'set={sub_or_user.id},display_via|{page}{tail}',
+                data=(
+                    f'set_default=display_via{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},display_via|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -183,9 +197,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['display_author']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_author_d else '')
                 + i18n[lang][f'display_author_{display_author}'],
-                data=f'set_default=display_author{tail}'
-                if is_user
-                else f'set={sub_or_user.id},display_author|{page}{tail}',
+                data=(
+                    f'set_default=display_author{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},display_author|{page}{tail}'
+                ),
             ),
         ),
         (
@@ -193,17 +209,21 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 f"{i18n[lang]['link_preview']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if link_preview_d else '')
                 + i18n[lang][f'link_preview_{link_preview}'],
-                data=f'set_default=link_preview{tail}'
-                if is_user
-                else f'set={sub_or_user.id},link_preview|{page}{tail}',
+                data=(
+                    f'set_default=link_preview{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},link_preview|{page}{tail}'
+                ),
             ),
             Button.inline(
                 f"{i18n[lang]['style']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if style_d else '')
                 + i18n[lang][f'style_{style}'],
-                data=f'set_default=style{tail}'
-                if is_user
-                else f'set={sub_or_user.id},style|{page}{tail}',
+                data=(
+                    f'set_default=style{tail}'
+                    if is_user
+                    else f'set={sub_or_user.id},style|{page}{tail}'
+                ),
             ),
         ),
         None
@@ -211,16 +231,20 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
         else (
             Button.switch_inline(
                 f"{i18n[lang]['set_custom_title_button']}",
-                query=f'/set_title {sub_or_user.user_id} {sub_or_user.id} '
-                if tail
-                else f'/set_title {sub_or_user.id} ',
+                query=(
+                    f'/set_title {sub_or_user.user_id} {sub_or_user.id} '
+                    if tail
+                    else f'/set_title {sub_or_user.id} '
+                ),
                 same_peer=True,
             ),
             Button.switch_inline(
                 f"{i18n[lang]['set_custom_hashtags_button']}",
-                query=f'/set_hashtags {sub_or_user.user_id} {sub_or_user.id} '
-                if tail
-                else f'/set_hashtags {sub_or_user.id} ',
+                query=(
+                    f'/set_hashtags {sub_or_user.user_id} {sub_or_user.id} '
+                    if tail
+                    else f'/set_hashtags {sub_or_user.id} '
+                ),
                 same_peer=True,
             ),
         ),

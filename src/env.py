@@ -114,14 +114,14 @@ if _version == 'dirty':
 _version_match = re.match(r'^v?\d+\.\d+(\.\w+(\.\w+)?)?', _version)
 if _version_match:
     try:
-        if StrictVersion(_version_match.group(0).lstrip('v')) < StrictVersion(__version__):
+        if StrictVersion(_version_match[0].lstrip('v')) < StrictVersion(__version__):
             _version = _version[_version_match.end():]
             _version = re.sub(r'(?<!\d{4})-\d+-(?!\d{2})', '', _version, count=1)
-            _version = 'v' + __version__ + '-' + _version
+            _version = f'v{__version__}-{_version}'
     except ValueError:
-        _version = 'v' + __version__
+        _version = f'v{__version__}'
 else:
-    _version = 'v' + __version__ + ('-' + _version if _version != 'dirty' else '')
+    _version = f'v{__version__}' + (f'-{_version}' if _version != 'dirty' else '')
 
 VERSION: Final = _version
 del _version, _version_match
@@ -200,12 +200,7 @@ else:
 
 R_PROXY: Final = os.environ.get('R_PROXY') or DEFAULT_PROXY
 
-if R_PROXY:
-    REQUESTS_PROXIES: Final = {
-        'all': R_PROXY
-    }
-else:
-    REQUESTS_PROXIES: Final = {}
+REQUESTS_PROXIES: Final = {'all': R_PROXY} if R_PROXY else {}
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
@@ -214,16 +209,20 @@ IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'
-IMG_RELAY_SERVER: Final = ('https://' if not _img_relay_server.startswith('http') else '') \
-                          + _img_relay_server \
-                          + ('' if _img_relay_server.endswith(('/', '=')) else '/')
+IMG_RELAY_SERVER: Final = (
+        ('' if _img_relay_server.startswith('http') else 'https://')
+        + _img_relay_server
+        + ('' if _img_relay_server.endswith(('/', '=')) else '/')
+)
 del _img_relay_server
 
 # ----- images.weserv.nl config -----
 _images_weserv_nl = os.environ.get('IMAGES_WESERV_NL') or 'https://images.weserv.nl/'
-IMAGES_WESERV_NL: Final = ('https://' if not _images_weserv_nl.startswith('http') else '') \
-                          + _images_weserv_nl \
-                          + ('' if _images_weserv_nl.endswith('/') else '/')
+IMAGES_WESERV_NL: Final = (
+        ('' if _images_weserv_nl.startswith('http') else 'https://')
+        + _images_weserv_nl
+        + ('' if _images_weserv_nl.endswith('/') else '/')
+)
 del _images_weserv_nl
 
 # ----- db config -----
@@ -235,10 +234,12 @@ del _database_url
 # ----- misc config -----
 TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
-colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
-                     datefmt='%Y-%m-%d-%H:%M:%S',
-                     level=colorlog.INFO if not DEBUG else colorlog.DEBUG,
-                     force=True)
+colorlog.basicConfig(
+    format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
+    datefmt='%Y-%m-%d-%H:%M:%S',
+    level=colorlog.DEBUG if DEBUG else colorlog.INFO,
+    force=True,
+)
 
 # ----- environment config -----
 RAILWAY_STATIC_URL: Final = os.environ.get('RAILWAY_STATIC_URL')

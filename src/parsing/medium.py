@@ -347,12 +347,16 @@ class Medium(AbstractMedium):
             # create type fallback medium
             self.type_fallback_medium = self.typeFallbackTo(fallback_urls)
             if await self.type_fallback_medium.validate():
-                logger.debug(f"Medium {self.original_urls[0]}"
-                             + (f' ({self.info})' if self.info else '')
-                             + f" type fallback to '{self.type_fallback_medium.type}'"
-                             + (f'({self.type_fallback_medium.original_urls[0]})'
-                                if not self.typeFallbackAllowSelfUrls
-                                else ''))
+                logger.debug(
+                    f"Medium {self.original_urls[0]}"
+                    + (f' ({self.info})' if self.info else '')
+                    + f" type fallback to '{self.type_fallback_medium.type}'"
+                    + (
+                        ''
+                        if self.typeFallbackAllowSelfUrls
+                        else f'({self.type_fallback_medium.original_urls[0]})'
+                    )
+                )
                 self.need_type_fallback = True
                 # self.type_fallback_medium.type = self.type
                 # self.type_fallback_medium.original_urls = self.original_urls
@@ -567,9 +571,7 @@ class UploadedImage(AbstractMedium):
 
     @property
     def drop_silently(self):
-        if self.valid is None:
-            return False
-        return not self.valid
+        return False if self.valid is None else not self.valid
 
     @drop_silently.setter
     def drop_silently(self, value):
@@ -617,7 +619,7 @@ class UploadedImage(AbstractMedium):
                 self.uploaded_file = await env.bot.upload_file(self.file)
                 self.valid = True
             except (BadRequestError, ValueError) as e:
-                logger.debug(f'Failed to upload file', exc_info=e)
+                logger.debug('Failed to upload file', exc_info=e)
                 self.valid = False
         return self.valid
 
@@ -636,21 +638,24 @@ class Media:
         self._media.append(medium)
 
     def url_exists(self, url: str, loose: bool = False) -> Optional[Medium]:
-        if loose:
-            url_obj = urlparse(url)
-            url_part = url_obj.netloc + url_obj.path
-            for medium in self._media:
-                if not isinstance(medium, Medium):
-                    continue
-                for original_url in medium.original_urls:
-                    if url_part in original_url:
-                        return medium
-            return None
+        if not loose:
+            return next(
+                (
+                    medium
+                    for medium in self._media
+                    if isinstance(medium, Medium) and url in medium.original_urls
+                ),
+                None,
+            )
+        url_obj = urlparse(url)
+        url_part = url_obj.netloc + url_obj.path
         for medium in self._media:
-            if isinstance(medium, Medium) and url in medium.original_urls:
-                return medium
+            if not isinstance(medium, Medium):
+                continue
+            for original_url in medium.original_urls:
+                if url_part in original_url:
+                    return medium
         return None
-
 
     async def fallback_all(self) -> bool:
         if not self._media:
@@ -675,27 +680,29 @@ class Media:
             return
         await asyncio.gather(*(medium.validate(flush=flush) for medium in self._media if not medium.drop_silently))
 
-    async def upload_all(self, chat_id: Optional[int]) \
-            -> tuple[
-                list[
+    async def upload_all(
+            self, chat_id: Optional[int]
+    ) -> tuple[
+        list[
+            tuple[
+                Union[
                     tuple[
                         Union[
-                            tuple[
-                                Union[
-                                    TypeMessageMedia,  # uploaded media
-                                    Medium  # origin media (if chat_id is None)
-                                ], ...
-                            ],  # uploaded media list of the media group
-                            Union[
-                                TypeMessageMedia,  # uploaded media
-                                Medium  # origin media (if chat_id is None)
-                            ]
+                            TypeMessageMedia,  # uploaded media
+                            Medium,  # origin media (if chat_id is None)
                         ],
-                        TypeMessage,  # message type
-                    ]
+                        ...,
+                    ],  # uploaded media list of the media group
+                    Union[
+                        TypeMessageMedia,  # uploaded media
+                        Medium,  # origin media (if chat_id is None)
+                    ],
                 ],
-                Optional[HtmlTree]
-            ]:
+                TypeMessage,  # message type
+            ]
+        ],
+        Optional[HtmlTree],
+    ]:
         """
         Upload all media to telegram.
         :param chat_id: chat_id to upload to. If None, the origin media will be returned.
@@ -760,7 +767,7 @@ class Media:
                 + ((files,) if self.allow_files_sent_as_album else tuple())
         )
         disallow_in_group = (
-                (tuple() if not self.consider_videos_as_gifs else (videos,))
+                ((videos,) if self.consider_videos_as_gifs else tuple())
                 + (gifs,)
                 + (tuple() if self.allow_files_sent_as_album else (files,))
         )
@@ -782,8 +789,7 @@ class Media:
         for link in link_nodes:
             if not link:
                 continue
-            html_nodes.append(link)
-            html_nodes.append(Br())
+            html_nodes.extend((link, Br()))
         if html_nodes:
             html_nodes.pop()
             html_nodes.insert(0, Text('Invalid media:\n'))
@@ -796,27 +802,31 @@ class Media:
         return sum(1 for _ in media[0])
 
     def __len__(self) -> int:
-        return sum(1 for medium in self._media if not medium.drop_silently)
+        return sum(not medium.drop_silently for medium in self._media)
 
     def __bool__(self) -> bool:
         return any(not medium.drop_silently for medium in self._media)
 
     @property
     def valid_count(self):
-        return sum(1 for medium in self._media if medium.valid and not medium.drop_silently)
+        return sum(medium.valid is True and not medium.drop_silently for medium in self._media)
 
     @property
     def invalid_count(self):
-        return sum(1 for medium in self._media if medium.valid is False and not medium.drop_silently)
+        return sum(medium.valid is False and not medium.drop_silently for medium in self._media)
 
     @property
     def pending_count(self):
-        return sum(1 for medium in self._media if medium.valid is None and not medium.drop_silently)
+        return sum(medium.valid is None and not medium.drop_silently for medium in self._media)
 
     @property
     def need_type_fallback_count(self):
-        return sum(1 for medium in self._media if medium.need_type_fallback and medium.type_fallback_medium is not None
-                   and not medium.drop_silently)
+        return sum(
+            medium.need_type_fallback
+            and medium.type_fallback_medium is not None
+            and not medium.drop_silently
+            for medium in self._media
+        )
 
     def stat(self):
         class MediaStat:

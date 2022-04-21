@@ -54,12 +54,14 @@ class _I18N:
 
     def get_all_l10n_string(self, key: str, html_escaped: bool = False,
                             only_iso_639: bool = False) -> tuple[str, ...]:
-        languages = ALL_LANGUAGES if not only_iso_639 else self.__iso_639_d.keys()
-        res = (
-            tuple(self[lang_code][key] for lang_code in languages if self[lang_code].key_exist(key))
-            if not html_escaped else
-            tuple(self[lang_code].html_escaped(key) for lang_code in languages if self[lang_code].key_exist(key))
+        languages = self.__iso_639_d.keys() if only_iso_639 else ALL_LANGUAGES
+        all_l10n = tuple(self[lang_code] for lang_code in languages)
+        res = tuple(
+            l10n.html_escaped(key) if html_escaped else l10n[key]
+            for l10n in all_l10n
+            if l10n.key_exist(key)
         )
+
         return res or (key,)
 
     def get_fallback_l10n(self, lang_code: Optional[str] = None) -> "_L10N":
@@ -124,9 +126,9 @@ class _L10N:
         if self.key_exist(key):
             return self.__l10n_lang[key]
         if self.__lang_code != FALLBACK_LANGUAGE:
-            return _I18N().get_fallback_l10n(
-                self.__lang_code if not self.__l10n_lang['iso_639_code'] else None  # get ISO 639 fallback if needed
-            )[key]
+            # get ISO 639 fallback if needed
+            return _I18N().get_fallback_l10n(None if self.__l10n_lang['iso_639_code'] else self.__lang_code)[key]
+
         return key
 
     def html_escaped(self, key: str):

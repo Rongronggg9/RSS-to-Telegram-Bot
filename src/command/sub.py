@@ -90,7 +90,7 @@ async def cmd_or_callback_unsub_all(event: Union[events.NewMessage.Event, Messag
         await event.respond(
             file=backup_file,
             attributes=(
-                types.DocumentAttributeFilename(f"RSStT_unsub_all_backup.opml"),
+                types.DocumentAttributeFilename("RSStT_unsub_all_backup.opml"),
             )
         )
 

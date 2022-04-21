@@ -162,7 +162,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
         user.state = state
         await user.save()
     state = user.state if user_id != env.MANAGER else None
-    sub_count = await inner.utils.count_sub(user_id) if not user_created else 0
+    sub_count = 0 if user_created else await inner.utils.count_sub(user_id)
 
     msg_text = (
             f"<b>{i18n[lang]['user_info']}</b>\n\n"
@@ -182,5 +182,5 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
         (Button.inline(f"{i18n[lang]['set_user_state_as']} \"{i18n[lang]['user_state_1']}\"",
                        data=f"set_user={user_id},1") if user.state != 1 else inner.utils.emptyButton,),
     ) if user_id != env.MANAGER else None
-    await event.respond(msg_text, parse_mode='html', buttons=buttons) if not is_callback \
-        else await event.edit(msg_text, parse_mode='html', buttons=buttons)
+    await event.edit(msg_text, parse_mode='html', buttons=buttons) if is_callback \
+        else await event.respond(msg_text, parse_mode='html', buttons=buttons)

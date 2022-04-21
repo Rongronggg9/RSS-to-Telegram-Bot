@@ -35,8 +35,8 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
                                                              get_page_callback='get_set_page',
                                                              tail=callback_tail)
 
-    await event.respond(msg, buttons=buttons) if not is_callback else \
-        await event.edit(msg, buttons=buttons)
+    await event.edit(msg, buttons=buttons) if is_callback \
+        else await event.respond(msg, buttons=buttons)
 
 
 @command_gatekeeper(only_manager=False)
@@ -67,9 +67,9 @@ async def callback_set(event: events.CallbackQuery.Event,
         return
 
     sub_or_user: Union[db.Sub, db.User] = (
-        await db.Sub.get_or_none(id=sub_id, user=chat_id).prefetch_related('feed', 'user')
-        if not set_user_default
-        else await db.User.get_or_none(id=chat_id)
+        await db.User.get_or_none(id=chat_id)
+        if set_user_default
+        else await db.Sub.get_or_none(id=sub_id, user=chat_id).prefetch_related('feed', 'user')
     )
     if sub_or_user is None:
         await event.edit(i18n[lang]['subscription_not_exist'])
@@ -95,9 +95,15 @@ async def callback_set(event: events.CallbackQuery.Event,
         elif action is not None and action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES:
             await inner.customization.set_exhaustive_option(sub_or_user, action)
 
-        info = await inner.customization.get_sub_info(sub_or_user, lang, additional_guide=True) \
-            if not set_user_default else \
-            i18n[lang]['set_user_default_description'] + '\n\n' + i18n[lang]['read_formatting_settings_guidebook_html']
+        info = (
+            i18n[lang]['set_user_default_description']
+            + '\n\n'
+            + i18n[lang]['read_formatting_settings_guidebook_html']
+            if set_user_default
+            else await inner.customization.get_sub_info(
+                sub_or_user, lang, additional_guide=True
+            )
+        )
         buttons = await inner.customization.get_customization_buttons(sub_or_user, lang=lang, page=page,
                                                                       tail=callback_tail)
         await event.edit(info, buttons=buttons, parse_mode='html', link_preview=False)
@@ -121,7 +127,6 @@ async def callback_set(event: events.CallbackQuery.Event,
         return
 
     await event.edit(i18n[lang]['action_invalid'])
-    return
 
 
 @command_gatekeeper(only_manager=False)
@@ -136,7 +141,6 @@ async def cmd_set_default(event: Union[events.NewMessage.Event, Message],
     msg = i18n[lang]['set_user_default_description'] + '\n\n' + i18n[lang]['read_formatting_settings_guidebook_html']
     buttons = await inner.customization.get_customization_buttons(user, lang=lang, tail=callback_tail)
     await event.respond(msg, buttons=buttons, parse_mode='html', link_preview=False)
-    return
 
 
 @command_gatekeeper(only_manager=False)
@@ -234,7 +238,7 @@ async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQ
     callback_tail = get_callback_tail(event, chat_id)
     event_is_msg = not isinstance(event, events.CallbackQuery.Event)
     if page is None:
-        page = int(parse_callback_data_with_page(event.data)[1]) if not event_is_msg else 1
+        page = 1 if event_is_msg else int(parse_callback_data_with_page(event.data)[1])
     have_subs = await inner.utils.have_subs(chat_id)
     if not have_subs:
         no_subscription_msg = i18n[lang]['no_subscription']

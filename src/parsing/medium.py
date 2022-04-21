@@ -142,14 +142,15 @@ class AbstractMedium(ABC):
         media_fallback_count = 0
         err_list = []
         flood_lock = locks.user_flood_lock(chat_id)
+        user_media_upload_semaphore = locks.user_media_upload_semaphore(chat_id)
         while True:
             peer = await env.bot.get_input_entity(chat_id)
             try:
-                async with flood_lock:
+                async with locks.ContextWithTimeout(flood_lock, timeout=90):
                     pass  # wait for flood wait
 
-                async with locks.user_media_upload_semaphore(chat_id):
-                    async with self.uploading_lock:
+                async with locks.ContextWithTimeout(user_media_upload_semaphore, timeout=90):
+                    async with locks.ContextWithTimeout(self.uploading_lock, timeout=90):
                         medium_to_upload = self.type_fallback_chain()
                         if medium_to_upload is None:
                             return None, None
@@ -197,6 +198,10 @@ class AbstractMedium(ABC):
                                     return None, None
                                 continue
 
+            except locks.ContextTimeoutError:
+                logger.error(f'Medium dropped due to lock acquisition timeout ({chat_id}): '
+                             f'{self.original_urls[0]}')
+                return None, None
             except (FloodWaitError, SlowModeWaitError) as e:
                 # telethon has retried for us, but we release locks and retry again here to see if it will be better
                 if error_tries >= 1:
@@ -205,13 +210,14 @@ class AbstractMedium(ABC):
                     return None, None
 
                 error_tries += 1
-                await locks.user_flood_wait(chat_id, seconds=e.seconds)  # acquire a flood wait
+                await locks.user_flood_wait_background(chat_id, seconds=e.seconds)  # acquire a flood wait
             except ServerError as e:
                 # telethon has retried for us, so we just retry once more
                 if error_tries >= 1:
                     logger.error(f'Medium dropped due to Telegram internal server error '
                                  f'({chat_id}, {type(e).__name__}): '
                                  f'{self.original_urls[0]}')
+                    return None, None
 
                 error_tries += 1
 

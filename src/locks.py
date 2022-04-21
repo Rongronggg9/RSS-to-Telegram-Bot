@@ -3,6 +3,7 @@ Shared locks.
 """
 from __future__ import annotations
 from typing import Union
+from contextlib import AbstractAsyncContextManager
 
 import asyncio
 from time import time
@@ -10,12 +11,30 @@ from collections import defaultdict
 from functools import partial
 from urllib.parse import urlparse
 
-from . import log
+from . import log, env
+from .errors_collection import ContextTimeoutError
 
 _USER_LIKE = Union[int, str]
 
 logger = log.getLogger('RSStT.locks')
 logger.setLevel(log.logger_level_muted)
+
+
+# ----- context with timeout -----
+# noinspection PyProtocol
+class ContextWithTimeout(AbstractAsyncContextManager):
+    def __init__(self, context: AbstractAsyncContextManager, timeout: int):
+        self.context = context
+        self.timeout = timeout
+
+    async def __aenter__(self):
+        try:
+            return await asyncio.wait_for(self.context.__aenter__(), self.timeout)
+        except asyncio.TimeoutError as e:
+            raise ContextTimeoutError from e
+
+    async def __aexit__(self, *args, **kwargs):
+        return await self.context.__aexit__(*args, **kwargs)
 
 
 # ----- user locks -----
@@ -54,8 +73,9 @@ def user_pending_callbacks(user: _USER_LIKE) -> set:
     return _user_bucket[user].pending_callbacks
 
 
-async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
-    call_time = time()
+async def user_flood_wait(user: _USER_LIKE, seconds: int, call_time: float = None) -> bool:
+    if call_time is None:
+        call_time = time()
     flood_lock = user_flood_lock(user)
     seconds += 1
     async with flood_lock:
@@ -71,6 +91,12 @@ async def user_flood_wait(user: _USER_LIKE, seconds: int) -> bool:
             return True
         logger.info(f'Skipped flood wait for {user} because the wait had been finished before the lock was acquired')
         return False
+
+
+async def user_flood_wait_background(user: _USER_LIKE, seconds: int) -> asyncio.Task:
+    task = env.loop.create_task(user_flood_wait(user=user, seconds=seconds, call_time=time()))
+    await asyncio.sleep(1)  # allowing other tasks (especially the above one) to run.
+    return task
 
 
 # ----- web locks -----

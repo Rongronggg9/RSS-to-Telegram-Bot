@@ -131,11 +131,12 @@ class Message:
         msg_lock, flood_lock = locks.user_msg_locks(self.user_id)
         while True:
             try:
-                async with flood_lock:
+                async with locks.ContextWithTimeout(flood_lock, timeout=120):
                     pass  # wait for flood wait
 
-                async with msg_lock:  # acquire a msg lock
-                    async with self.__overall_semaphore:  # only acquire overall semaphore when sending
+                async with locks.ContextWithTimeout(msg_lock, timeout=120):  # acquire a msg lock
+                    # only acquire overall semaphore when sending
+                    async with locks.ContextWithTimeout(self.__overall_semaphore, timeout=120):
                         if self.media_type == MEDIA_GROUP:
                             media = []
                             for medium in self.media:
@@ -161,6 +162,9 @@ class Message:
                                                           reply_to=reply_to,
                                                           link_preview=self.link_preview,
                                                           silent=self.silent)
+            except locks.ContextTimeoutError:
+                logger.error(f'Msg dropped due to lock acquisition timeout ({self.user_id})')
+                return None
             except (FloodWaitError, SlowModeWaitError) as e:
                 # telethon has retried for us, but we release locks and retry again here to see if it will be better
                 if self.retries >= 1:
@@ -168,7 +172,7 @@ class Message:
                     return None
 
                 self.retries += 1
-                await locks.user_flood_wait(self.user_id, seconds=e.seconds)  # acquire a flood wait
+                await locks.user_flood_wait_background(self.user_id, seconds=e.seconds)  # acquire a flood wait
             except ServerError as e:
                 # telethon has retried for us, so we just retry once more
                 if self.retries >= 1:

@@ -143,14 +143,15 @@ class AbstractMedium(ABC):
         err_list = []
         flood_lock = locks.user_flood_lock(chat_id)
         user_media_upload_semaphore = locks.user_media_upload_semaphore(chat_id)
+        ctm = locks.ContextTimeoutManager(timeout=300)
         while True:
             peer = await env.bot.get_input_entity(chat_id)
             try:
-                async with locks.ContextWithTimeout(flood_lock, timeout=90):
+                async with ctm(flood_lock):
                     pass  # wait for flood wait
 
-                async with locks.ContextWithTimeout(user_media_upload_semaphore, timeout=90):
-                    async with locks.ContextWithTimeout(self.uploading_lock, timeout=90):
+                async with ctm(user_media_upload_semaphore):
+                    async with ctm(self.uploading_lock):
                         medium_to_upload = self.type_fallback_chain()
                         if medium_to_upload is None:
                             return None, None

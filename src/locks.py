@@ -23,7 +23,7 @@ logger.setLevel(log.logger_level_muted)
 # ----- context with timeout -----
 # noinspection PyProtocol
 class ContextWithTimeout(AbstractAsyncContextManager):
-    def __init__(self, context: AbstractAsyncContextManager, timeout: int):
+    def __init__(self, context: AbstractAsyncContextManager, timeout: float):
         self.context = context
         self.timeout = timeout
 
@@ -35,6 +35,19 @@ class ContextWithTimeout(AbstractAsyncContextManager):
 
     async def __aexit__(self, *args, **kwargs):
         return await self.context.__aexit__(*args, **kwargs)
+
+
+class ContextTimeoutManager:
+    def __init__(self, timeout: int):
+        self.call_time = time()
+        self.timeout = timeout
+
+    def __call__(self, context: AbstractAsyncContextManager):
+        curr_time = time()
+        left_time = self.timeout - (curr_time - self.call_time)
+        if left_time <= 0:
+            raise ContextTimeoutError
+        return ContextWithTimeout(context, left_time)
 
 
 # ----- user locks -----

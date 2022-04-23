@@ -99,11 +99,11 @@ class AbstractMedium(ABC):
         pass
 
     @abstractmethod
-    async def validate(self, flush: bool = False) -> bool:
+    async def validate(self, flush: bool = False, reason: Union[Exception, str] = None) -> bool:
         pass
 
     @abstractmethod
-    async def fallback(self) -> bool:
+    async def fallback(self, reason: Union[Exception, str] = None) -> bool:
         pass
 
     @abstractmethod
@@ -121,6 +121,11 @@ class AbstractMedium(ABC):
 
     @abstractmethod
     async def change_server(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
+    def info(self) -> str:
         pass
 
     async def upload(self, chat_id: int, force_upload: bool = False) \
@@ -165,7 +170,10 @@ class AbstractMedium(ABC):
                                 return None, None
                             tries += 1
                             if tries > max_tries:
+                                logger.debug('Medium dropped due to too many upload retries: '
+                                             f'{self.info}, {self.original_urls[0]}')
                                 self.valid = False
+                                self.need_type_fallback = False
                                 return None, None
                             try:
                                 async with flood_lock:
@@ -180,7 +188,7 @@ class AbstractMedium(ABC):
                             # errors caused by invalid img/video(s)
                             except InvalidMediaErrors as e:
                                 err_list.append(e)
-                                if await self.fallback():
+                                if await self.fallback(reason=e):
                                     media_fallback_count += 1
                                 else:
                                     self.valid = False
@@ -192,7 +200,7 @@ class AbstractMedium(ABC):
                                 err_list.append(e)
                                 if await self.change_server():
                                     server_change_count += 1
-                                elif await self.fallback():
+                                elif await self.fallback(reason=e):
                                     media_fallback_count += 1
                                 else:
                                     self.valid = False
@@ -201,13 +209,13 @@ class AbstractMedium(ABC):
 
             except locks.ContextTimeoutError:
                 logger.error(f'Medium dropped due to lock acquisition timeout ({chat_id}): '
-                             f'{self.original_urls[0]}')
+                             f'{self.info}, {self.original_urls[0]}')
                 return None, None
             except (FloodWaitError, SlowModeWaitError) as e:
                 # telethon has retried for us, but we release locks and retry again here to see if it will be better
                 if error_tries >= 1:
                     logger.error(f'Medium dropped due to too many flood control retries ({chat_id}): '
-                                 f'{self.original_urls[0]}')
+                                 f'{self.info}, {self.original_urls[0]}')
                     return None, None
 
                 error_tries += 1
@@ -216,8 +224,8 @@ class AbstractMedium(ABC):
                 # telethon has retried for us, so we just retry once more
                 if error_tries >= 1:
                     logger.error(f'Medium dropped due to Telegram internal server error '
-                                 f'({chat_id}, {type(e).__name__}): '
-                                 f'{self.original_urls[0]}')
+                                 f'({chat_id}, {e.message if type(e) is ServerError else type(e).__name__}): '
+                                 f'{self.info}, {self.original_urls[0]}')
                     return None, None
 
                 error_tries += 1
@@ -268,7 +276,7 @@ class Medium(AbstractMedium):
             return Link(self.type, param=self.original_urls[0])
         return Text([Text(f'{self.type} ('), Code(url), Text(')')])
 
-    async def validate(self, flush: bool = False) -> bool:
+    async def validate(self, flush: bool = False, reason: Union[Exception, str] = None) -> bool:
         if self.valid is not None and not flush:  # already validated
             return self.valid
 
@@ -345,23 +353,26 @@ class Medium(AbstractMedium):
                     return True
 
             self.valid = False
-            return await self.type_fallback()
+            return await self.type_fallback(reason=reason)
 
-    async def type_fallback(self) -> bool:
+    async def type_fallback(self, reason: Union[Exception, str] = None) -> bool:
         fallback_urls = self.type_fallback_urls + (list(self.original_urls) if self.typeFallbackAllowSelfUrls else [])
         self.valid = False
-        if self.type_fallback_medium is None and fallback_urls and self.typeFallbackTo:
+        if not self.need_type_fallback and self.type_fallback_medium is None and fallback_urls and self.typeFallbackTo:
             # create type fallback medium
             self.type_fallback_medium = self.typeFallbackTo(fallback_urls)
             if await self.type_fallback_medium.validate():
                 logger.debug(
-                    f"Medium {self.original_urls[0]}"
-                    + (f' ({self.info})' if self.info else '')
-                    + f" type fallback to '{self.type_fallback_medium.type}'"
+                    f"Medium ({self.info}, {self.original_urls[0]}) type fallback to "
                     + (
-                        ''
+                        f'({self.type_fallback_medium.type})'
                         if self.typeFallbackAllowSelfUrls
-                        else f'({self.type_fallback_medium.original_urls[0]})'
+                        else f'({self.type_fallback_medium.info}, {self.type_fallback_medium.original_urls[0]})'
+                    )
+                    + (
+                        f': {type(reason).__name__} ({reason})'
+                        if isinstance(reason, Exception)
+                        else (f': {reason}' if reason else '')
                     )
                 )
                 self.need_type_fallback = True
@@ -369,22 +380,28 @@ class Medium(AbstractMedium):
                 # self.type_fallback_medium.original_urls = self.original_urls
                 return True
         elif self.need_type_fallback and self.type_fallback_medium is not None:
-            return await self.type_fallback_medium.fallback()
-        logger.debug(f'Dropped medium {self.original_urls[0]}'
-                     + (f' ({self.info})' if self.info else '')
-                     + ': invalid or fetch failed')
+            if await self.type_fallback_medium.fallback(reason=reason):
+                return True
+        self.need_type_fallback = False
+        logger.debug(
+            f'Dropped medium {self.original_urls[0]} ({self.info}): '
+            + (
+                f'{type(reason).__name__} ({reason})'
+                if isinstance(reason, Exception)
+                else reason or 'invalid or fetch failed'
+            )
+        )
         return False
 
-    async def fallback(self) -> bool:
+    async def fallback(self, reason: Union[Exception, str] = None) -> bool:
         if self.need_type_fallback:
-            if not await self.type_fallback_medium.fallback():
-                self.need_type_fallback = False
-                self.valid = False
+            await self.type_fallback(reason=reason)
             return True
         urls_len = len(self.urls)
         formerly_valid = self.valid
-        if formerly_valid:
-            await self.validate(flush=True)
+        if formerly_valid is False:
+            return False
+        await self.validate(flush=True)
         return (self.valid != formerly_valid
                 or (self.valid and urls_len != len(self.urls))
                 or self.need_type_fallback)
@@ -421,18 +438,16 @@ class Medium(AbstractMedium):
         )
 
     @property
-    def info(self):
+    def info(self) -> str:
         return (
-                (f'{self.size / 1024 / 1024:.2f}MB'
-                 if self.size not in {-1, None}
-                 else '')
-                + (', '
-                   if (self.size not in {-1, None} and (self.width not in {-1, None} or self.height not in {-1, None}))
+                f'{self.type}, '
+                + (f'{self.size / 1024 / 1024:.2f}MB, '
+                   if self.size not in {-1, None}
                    else '')
                 + (f'{self.width}x{self.height}'
                    if self.width not in {-1, None} and self.height not in {-1, None}
                    else '')
-        )
+        ).rstrip(', ')
 
 
 class File(Medium):
@@ -567,7 +582,7 @@ class UploadedImage(AbstractMedium):
 
     def telegramize(self) -> Optional[InputMediaUploadedPhoto]:
         if self.valid is None:
-            raise RuntimeError('Validate() must be called before telegramize()')
+            raise RuntimeError('validate() must be called before telegramize()')
         if self.uploaded_file:
             return InputMediaUploadedPhoto(self.uploaded_file)
         return None
@@ -592,15 +607,23 @@ class UploadedImage(AbstractMedium):
     def get_link_html_node(self) -> None:
         return None
 
-    async def fallback(self) -> bool:
+    async def fallback(self, reason: Union[Exception, str] = None) -> bool:
         if self.valid:
             self.valid = False
+            logger.debug(
+                f'Dropped uploaded medium ({self.info})'
+                + (
+                    f': {type(reason).__name__} ({reason})'
+                    if isinstance(reason, Exception)
+                    else (f': {reason}' if reason else '')
+                )
+            )
             return True
         return False
 
     change_server = fallback
 
-    async def validate(self, flush: bool = False):
+    async def validate(self, flush: bool = False, *_, **__) -> bool:
         if flush and self.valid:
             self.valid = False
             return False
@@ -626,9 +649,13 @@ class UploadedImage(AbstractMedium):
                 self.uploaded_file = await env.bot.upload_file(self.file)
                 self.valid = True
             except (BadRequestError, ValueError) as e:
-                logger.debug('Failed to upload file', exc_info=e)
+                logger.debug(f'Failed to upload file ({self.info})', exc_info=e)
                 self.valid = False
         return self.valid
+
+    @property
+    def info(self) -> str:
+        return f'{len(self.file) / 1024 / 1024:.2f}MB' if self.file else 'Pending'
 
 
 class Media:

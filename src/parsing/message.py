@@ -129,15 +129,14 @@ class Message:
     async def send(self, reply_to: Union[int, types.Message, None] = None) \
             -> Optional[Union[types.Message, list[types.Message]]]:
         msg_lock, flood_lock = locks.user_msg_locks(self.user_id)
-        ctm = locks.ContextTimeoutManager(timeout=300)
         while True:
             try:
-                async with ctm(flood_lock):
+                async with flood_lock:
                     pass  # wait for flood wait
 
-                async with ctm(msg_lock):  # acquire a msg lock
+                async with msg_lock:  # acquire a msg lock
                     # only acquire overall semaphore when sending
-                    async with ctm(self.__overall_semaphore):
+                    async with self.__overall_semaphore:
                         if self.media_type == MEDIA_GROUP:
                             media = []
                             for medium in self.media:
@@ -163,9 +162,9 @@ class Message:
                                                           reply_to=reply_to,
                                                           link_preview=self.link_preview,
                                                           silent=self.silent)
-            except locks.ContextTimeoutError:
-                logger.error(f'Msg dropped due to lock acquisition timeout ({self.user_id})')
-                return None
+            # except locks.ContextTimeoutError:
+            #     logger.error(f'Msg dropped due to lock acquisition timeout ({self.user_id})')
+            #     return None
             except (FloodWaitError, SlowModeWaitError) as e:
                 # telethon has retried for us, but we release locks and retry again here to see if it will be better
                 if self.retries >= 1:

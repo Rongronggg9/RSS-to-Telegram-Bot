@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Optional
 
+import asyncio
+
 from .. import db, env
 from ..errors_collection import MediaSendFailErrors
 from .utils import parse_entry, logger, Enclosure

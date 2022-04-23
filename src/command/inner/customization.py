@@ -264,7 +264,7 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
 
     minimal_interval: int = db.EffectiveOptions.minimal_interval
 
-    if (sub_or_user.user_id if not is_user else sub_or_user.id) == env.MANAGER:
+    if (sub_or_user.id if is_user else sub_or_user.user_id) == env.MANAGER:
         minimal_interval = min(minimal_interval, 1)
 
     columns = 4
@@ -278,32 +278,32 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
     buttons_in_day_count = columns - buttons_in_minute_and_hour_count % columns
 
     buttons = (
-            ((
-                 Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
-                               data=f'set={sub_or_user.id},interval,default|{page}{tail}'),
-             ) if not is_user else None,)
+            (None if is_user else (
+                Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
+                              data=f'set={sub_or_user.id},interval,default|{page}{tail}'),
+            ),)
             +
             arrange_grid(
                 to_arrange=chain(
                     (
                         Button.inline('1h' if interval == 60 else f'{interval}min',
-                                      data=f'set={sub_or_user.id},interval,{interval}|{page}{tail}'
-                                      if not is_user else
-                                      f'set_default=interval,{interval}{tail}')
+                                      data=f'set_default=interval,{interval}{tail}'
+                                      if is_user else
+                                      f'set={sub_or_user.id},interval,{interval}|{page}{tail}')
                         for interval in chain(range(1, 5), range(5, 61, 5)) if interval >= minimal_interval
                     ),
                     (
                         Button.inline(f'{interval}h',
-                                      data=f'set={sub_or_user.id},interval,{interval * 60}|{page}{tail}'
-                                      if not is_user else
-                                      f'set_default=interval,{interval * 60}{tail}')
+                                      data=f'set_default=interval,{interval * 60}{tail}'
+                                      if is_user else
+                                      f'set={sub_or_user.id},interval,{interval * 60}|{page}{tail}')
                         for interval in range(2, 24) if interval * 60 >= minimal_interval
                     ),
                     (
                         Button.inline(f'{interval}d',
-                                      data=f'set={sub_or_user.id},interval,{interval * 60 * 24}|{page}{tail}'
-                                      if not is_user else
-                                      f'set_default=interval,{interval * 60 * 24}{tail}')
+                                      data=f'set_default=interval,{interval * 60 * 24}{tail}'
+                                      if is_user else
+                                      f'set={sub_or_user.id},interval,{interval * 60 * 24}|{page}{tail}')
                         for interval in range(1, buttons_in_day_count + 1) if interval * 60 * 24 >= minimal_interval
                     )
                 ),
@@ -312,21 +312,21 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
             +
             ((
                  Button.switch_inline(f"{i18n[lang]['set_custom_interval_button']}",
-                                      query=((f'/set_interval {sub_or_user.id} '
-                                              if not tail
-                                              else f'/set_interval {sub_or_user.user_id} {sub_or_user.id} ')
-                                             if not is_user else
-                                             ('/set_interval default '
-                                              if not tail
-                                              else f'/set_interval {sub_or_user.id} default ')),
+                                      query=((f'/set_interval {sub_or_user.id} default '
+                                              if tail
+                                              else '/set_interval default ')
+                                             if is_user else
+                                             (f'/set_interval {sub_or_user.user_id} {sub_or_user.id} '
+                                              if tail
+                                              else f'/set_interval {sub_or_user.id} ')),
                                       same_peer=True),
              ),)
             +
             ((
                  Button.inline(f'< {i18n[lang]["back"]}',
-                               data=f'set={sub_or_user.id}|{page}{tail}'
-                               if not is_user else
-                               f'set_default{tail}'),
+                               data=f'set_default{tail}'
+                               if is_user else
+                               f'set={sub_or_user.id}|{page}{tail}'),
              ),)
     )
     return tuple(filter(None, buttons))
@@ -342,24 +342,24 @@ async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
     length_limit_range = list(range(256, 4096 + 1, 256))
 
     buttons = (
-            ((
-                 Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
-                               data=f'set={sub_or_user.id},length_limit,default|{page}{tail}'),
-             ) if not is_user else None,)
+            (None if is_user else (
+                Button.inline(FALLBACK_TO_USER_DEFAULT_EMOJI + i18n[lang]['use_user_default_button'],
+                              data=f'set={sub_or_user.id},length_limit,default|{page}{tail}'),
+            ),)
             +
             ((
                  Button.inline(i18n[lang]['length_limit_unlimited'],
-                               data=f'set={sub_or_user.id},length_limit,0|{page}{tail}'
-                               if not is_user else
-                               f'set_default=length_limit,0{tail}'),
+                               data=f'set_default=length_limit,0{tail}'
+                               if is_user else
+                               f'set={sub_or_user.id},length_limit,0|{page}{tail}'),
              ),)
             +
             arrange_grid(
                 to_arrange=(
                     Button.inline(str(length_limit),
-                                  data=f'set={sub_or_user.id},length_limit,{length_limit}|{page}{tail}'
-                                  if not is_user else
-                                  f'set_default=length_limit,{length_limit}{tail}')
+                                  data=f'set_default=length_limit,{length_limit}{tail}'
+                                  if is_user else
+                                  f'set={sub_or_user.id},length_limit,{length_limit}|{page}{tail}')
                     for length_limit in length_limit_range
                 ),
                 columns=4
@@ -367,9 +367,9 @@ async def get_set_length_limit_buttons(sub_or_user: Union[db.Sub, db.User],
             +
             ((
                  Button.inline(f'< {i18n[lang]["back"]}',
-                               data=f'set={sub_or_user.id}|{page}{tail}'
-                               if not is_user else
-                               f'set_default{tail}'),
+                               data=f'set_default{tail}'
+                               if is_user else
+                               f'set={sub_or_user.id}|{page}{tail}'),
              ),)
     )
     return tuple(filter(None, buttons))

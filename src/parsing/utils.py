@@ -49,7 +49,7 @@ with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-
 
 
 def resolve_relative_link(base: Optional[str], url: Optional[str]) -> str:
-    if not (base and url) or isAbsoluteHttpLink(url) or not isAbsoluteHttpLink(base):
+    if not base or not url or isAbsoluteHttpLink(url) or not isAbsoluteHttpLink(base):
         return url or ''
     return urljoin(base, url)
 

@@ -74,7 +74,7 @@ logger = log.getLogger('RSStT.web')
 
 _feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 
-contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=").+?(?=")').search, flags=re.I)
+contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=")[^"]+(?=")').search, flags=re.I)
 
 
 class WebError(Exception):

@@ -14,7 +14,7 @@ from ..parsing.post import get_post_from_entry
 from .utils import command_gatekeeper, parse_command, logger, parse_customization_callback_data
 from . import inner
 
-parseKeyValuePair = re.compile(r'^/(?:\S+)\s+([^\s=]+)(?:\s*=\s*|\s+)?((?<=[\s=]).+)?$')
+parseKeyValuePair = re.compile(r'^/\S+\s+([^\s=]+)(?:\s*=\s*|\s+)?(.+)?$')
 
 
 @command_gatekeeper(only_manager=True)

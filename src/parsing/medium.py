@@ -871,7 +871,7 @@ def construct_images_weserv_nl_url(url: str,
     }
     filtered_params = {k: v for k, v in params.items() if v is not None}
     query_string = urlencode(filtered_params)
-    return env.IMAGES_WESERV_NL + '?' + query_string
+    return f'{env.IMAGES_WESERV_NL}?{query_string}'
 
 
 def construct_images_weserv_nl_url_convert_to_jpg(url: str) -> str:

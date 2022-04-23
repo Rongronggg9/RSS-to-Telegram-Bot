@@ -148,7 +148,7 @@ class AbstractMedium(ABC):
         err_list = []
         flood_lock = locks.user_flood_lock(chat_id)
         user_media_upload_semaphore = locks.user_media_upload_semaphore(chat_id)
-        ctm = locks.ContextTimeoutManager(timeout=300)
+        ctm = locks.ContextTimeoutManager(timeout=7 * 60)
         while True:
             peer = await env.bot.get_input_entity(chat_id)
             try:

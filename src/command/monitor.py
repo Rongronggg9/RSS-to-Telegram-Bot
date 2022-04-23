@@ -250,9 +250,16 @@ async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapp
             logger.error(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
             await env.bot.send_message(env.MANAGER, 'A parsing error message cannot be sent, please check the logs.')
         return
-    await asyncio.gather(
-        *(__send(sub, post) for sub in subs)
+    res = await asyncio.gather(
+        *(asyncio.wait_for(__send(sub, post), 8.5 * 60) for sub in subs),
+        return_exceptions=True
     )
+    for sub, exc in zip(subs, res):
+        if not isinstance(exc, Exception):
+            continue
+        if not isinstance(exc, asyncio.TimeoutError):  # should not happen, but just in case
+            raise exc
+        logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}) due to timeout')
 
 
 async def __send(sub: db.Sub, post: Union[str, Post]):

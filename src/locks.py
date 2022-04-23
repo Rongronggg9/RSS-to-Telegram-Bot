@@ -38,13 +38,16 @@ class ContextWithTimeout(AbstractAsyncContextManager):
 
 
 class ContextTimeoutManager:
-    def __init__(self, timeout: int):
+    def __init__(self, timeout: float = None):
         self.call_time = time()
         self.timeout = timeout
 
-    def __call__(self, context: AbstractAsyncContextManager):
+    def __call__(self, context: AbstractAsyncContextManager, timeout: float = None):
+        timeout = self.timeout if timeout is None else timeout
+        if timeout is None:
+            raise RuntimeError('`timeout` must be set either when creating the instance or in the call')
         curr_time = time()
-        left_time = self.timeout - (curr_time - self.call_time)
+        left_time = timeout - (curr_time - self.call_time)
         if left_time <= 0:
             raise ContextTimeoutError
         return ContextWithTimeout(context, left_time)

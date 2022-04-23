@@ -98,7 +98,7 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
             row_labels[i] = fill(label, wrap_length)
 
         auto_set_column_width_flag = True
-        for tries in range(2):
+        for _ in range(2):
             try:
                 # draw table
                 table = ax.table(cellText=cell_texts,

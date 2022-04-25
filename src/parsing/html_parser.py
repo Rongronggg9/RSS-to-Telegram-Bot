@@ -82,7 +82,7 @@ class Parser:
             return None
 
         tag = soup.name
-        if tag is None:
+        if tag is None or 'sr-only' in soup.get('class', []):  # skip tags with no name or sr-only class
             return None
 
         if tag == 'table':

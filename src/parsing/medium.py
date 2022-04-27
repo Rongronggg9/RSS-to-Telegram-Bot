@@ -288,6 +288,12 @@ class Medium(AbstractMedium):
                 url = self.urls.pop(0)
                 if not isAbsoluteHttpLink(url):  # bypass non-http links
                     continue
+                if url.startswith(env.IMAGES_WESERV_NL) and min(self.max_width, self.max_height) != -1:
+                    # images from images.weserv.nl are considered always valid
+                    # but if the dimension of the image has not been extracted yet, let it continue
+                    self.chosen_url = url
+                    self._server_change_count = 0
+                    return True
                 medium_info = await web.get_medium_info(url)
                 if medium_info is None:
                     continue
@@ -352,6 +358,10 @@ class Medium(AbstractMedium):
                         await self.change_server()
                     return True
 
+                if env.TRAFFIC_SAVING and not self.valid and min(self.max_width, self.max_height) != -1 and self.urls:
+                    self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
+                    continue
+
             self.valid = False
             return await self.type_fallback(reason=reason)
 
@@ -411,11 +421,12 @@ class Medium(AbstractMedium):
             return False
         self._server_change_count += 1
         self.chosen_url = env.IMG_RELAY_SERVER + self.chosen_url
-        # noinspection PyBroadException
-        try:
-            await web.get(url=self.chosen_url, semaphore=False, max_size=0)  # let the img relay sever cache the img
-        except Exception:
-            pass
+        if not env.TRAFFIC_SAVING:
+            # noinspection PyBroadException
+            try:
+                await web.get(url=self.chosen_url, semaphore=False, max_size=0)  # let the img relay sever cache the img
+            except Exception:
+                pass
         return True
 
     def __bool__(self):

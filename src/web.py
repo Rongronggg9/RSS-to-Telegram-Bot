@@ -33,7 +33,7 @@ from .i18n import i18n
 SOI: Final = b'\xff\xd8'
 EOI: Final = b'\xff\xd9'
 
-IMAGE_MAX_FETCH_SIZE: Final = 1024 * 5
+IMAGE_MAX_FETCH_SIZE: Final = 1024 * (1 if env.TRAFFIC_SAVING else 5)
 IMAGE_ITER_CHUNK_SIZE: Final = 128
 IMAGE_READ_BUFFER_SIZE: Final = 1
 

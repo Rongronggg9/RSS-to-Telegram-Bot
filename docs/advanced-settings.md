@@ -31,8 +31,8 @@
 |------------------------|-------------------------------------------------------|--------------------------------|-----------------------------|
 | `T_PROXY`              | Proxy used to connect to the Telegram API [^3]        | `socks5://172.17.0.1:1080`     |                             |
 | `R_PROXY`              | Proxy used to fetch feeds [^3]                        | `socks5://172.17.0.1:1080`     |                             |
-| `PROXY_BYPASS_PRIVATE` | Pypass proxy for private IPs or not?                  | `1`                            | `0`                         |
-| `PROXY_BYPASS_DOMAINS` | Pypass proxy for listed domains                       | `example.com;example.net` [^2] |                             |
+| `PROXY_BYPASS_PRIVATE` | Bypass proxy for private IPs or not?                  | `1`                            | `0`                         |
+| `PROXY_BYPASS_DOMAINS` | Bypass proxy for listed domains                       | `example.com;example.net` [^2] |                             |
 | `USER_AGENT`           | User-Agent                                            | `Mozilla/5.0`                  | `RSStT/$VERSION RSS Reader` |
 | `IPV6_PRIOR`           | Enforce fetching feeds over IPv6 firstly or not? [^4] | `1`                            | `0`                         |
 | `TRAFFIC_SAVING`       | Enable network traffic saving mode or not? [^5]       | `1`                            | `0`                         |

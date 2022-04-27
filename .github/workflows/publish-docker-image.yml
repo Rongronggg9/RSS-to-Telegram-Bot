@@ -56,5 +56,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:buildcache,mode=max
+          cache-from: type=gha,scope=docker-release
+          cache-to: type=gha,scope=docker-release,mode=max

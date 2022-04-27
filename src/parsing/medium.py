@@ -288,9 +288,14 @@ class Medium(AbstractMedium):
                 url = self.urls.pop(0)
                 if not isAbsoluteHttpLink(url):  # bypass non-http links
                     continue
-                if url.startswith(env.IMAGES_WESERV_NL) and min(self.max_width, self.max_height) != -1:
-                    # images from images.weserv.nl are considered always valid
-                    # but if the dimension of the image has not been extracted yet, let it continue
+                if (
+                        # let Telegram DC to determine the validity of media
+                        env.LAZY_MEDIA_VALIDATION
+                        # images from images.weserv.nl are considered always valid
+                        # but if the dimension of the image has not been extracted yet, let it continue
+                        or (url.startswith(env.IMAGES_WESERV_NL) and min(self.max_width, self.max_height) != -1)
+                ):
+                    self.valid = True
                     self.chosen_url = url
                     self._server_change_count = 0
                     return True

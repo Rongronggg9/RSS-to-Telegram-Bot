@@ -27,15 +27,16 @@
 
 ### Network settings
 
-| Key                    | Description                                           | Example                        | Default                     |
-|------------------------|-------------------------------------------------------|--------------------------------|-----------------------------|
-| `T_PROXY`              | Proxy used to connect to the Telegram API [^3]        | `socks5://172.17.0.1:1080`     |                             |
-| `R_PROXY`              | Proxy used to fetch feeds [^3]                        | `socks5://172.17.0.1:1080`     |                             |
-| `PROXY_BYPASS_PRIVATE` | Bypass proxy for private IPs or not?                  | `1`                            | `0`                         |
-| `PROXY_BYPASS_DOMAINS` | Bypass proxy for listed domains                       | `example.com;example.net` [^2] |                             |
-| `USER_AGENT`           | User-Agent                                            | `Mozilla/5.0`                  | `RSStT/$VERSION RSS Reader` |
-| `IPV6_PRIOR`           | Enforce fetching feeds over IPv6 firstly or not? [^4] | `1`                            | `0`                         |
-| `TRAFFIC_SAVING`       | Enable network traffic saving mode or not? [^5]       | `1`                            | `0`                         |
+| Key                     | Description                                           | Example                        | Default                     |
+|-------------------------|-------------------------------------------------------|--------------------------------|-----------------------------|
+| `T_PROXY`               | Proxy used to connect to the Telegram API [^3]        | `socks5://172.17.0.1:1080`     |                             |
+| `R_PROXY`               | Proxy used to fetch feeds [^3]                        | `socks5://172.17.0.1:1080`     |                             |
+| `PROXY_BYPASS_PRIVATE`  | Bypass proxy for private IPs or not?                  | `1`                            | `0`                         |
+| `PROXY_BYPASS_DOMAINS`  | Bypass proxy for listed domains                       | `example.com;example.net` [^2] |                             |
+| `USER_AGENT`            | User-Agent                                            | `Mozilla/5.0`                  | `RSStT/$VERSION RSS Reader` |
+| `IPV6_PRIOR`            | Enforce fetching feeds over IPv6 firstly or not? [^4] | `1`                            | `0`                         |
+| `TRAFFIC_SAVING`        | Enable network traffic saving mode or not? [^5]       | `1`                            | `0`                         |
+| `LAZY_MEDIA_VALIDATION` | Let Telegram DC to validate media or not? [^6]        | `1`                            | `0`                         |
 
 ### Misc settings
 
@@ -45,7 +46,7 @@
 | `CRON_SECOND`      | Run the feed monitoring task at the n-th second of each minute? (0-59) | `30`                                          | `0`                                                    |
 | `IMG_RELAY_SERVER` | Media relay server URL                                                 | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/`        |
 | `IMAGES_WESERV_NL` | images.weserv.nl URL                                                   | `https://t0.nl/`                              | `https://images.weserv.nl/`                            |
-| `DATABASE_URL`     | Database URL [^6]                                                      | `postgres://user:pass@example.com:5432/table` | `sqlite://$PATH_TO_CONFIG/db.sqlite3?journal_mode=OFF` |
+| `DATABASE_URL`     | Database URL [^7]                                                      | `postgres://user:pass@example.com:5432/table` | `sqlite://$PATH_TO_CONFIG/db.sqlite3?journal_mode=OFF` |
 | `TABLE_TO_IMAGE`   | Convert tables to image (causing high CPU usage) or just drop them?    | `1`                                           | `0`                                                    |
 | `DEBUG`            | Enable debug logging or not?                                           | `1`                                           | `0`                                                    |
 
@@ -55,14 +56,15 @@
 
 | Key                | Description                           | Example | Default |
 |--------------------|---------------------------------------|---------|---------|
-| `default_interval` | Default feed monitoring interval [^7] | `5`     | `10`    |
-| `minimal_interval` | Minimal feed monitoring interval [^8] | `10`    | `5`     |
+| `default_interval` | Default feed monitoring interval [^8] | `5`     | `10`    |
+| `minimal_interval` | Minimal feed monitoring interval [^9] | `10`    | `5`     |
 
 [^1]: Refresh the page every time you get a new token. If you have a lot of subscriptions, make sure to get at least 5 tokens.
 [^2]: Can be a list, separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`
 [^3]: If you would like to use a proxy in a docker container, but your proxy is in your host machine, the hostname should be `172.17.0.1` (Linux) or `host.docker.internal` (macOS/Windows). Note: your proxy program should also listen to it.
 [^4]: Use with caution. Enabling it will enforce the bot to try to fetch feeds over IPv6 (fallback to IPv4 if failed), which may be helpful if your IPv4 address gets banned by some feed providers. If it is disabled (by default), the bot will still try to fetch feeds over IPv4 and IPv6, but there is no clear priority. You should firstly ensure that the bot has IPv6 connectivity, especially if run in docker.
-[^5]: May cause image validating and sending slightly unreliable. Meanwhile, effectively disable webpage title detection for `<iframe>` tags, instead, the title will always be URL hostname.
-[^6]: Ref: [https://tortoise-orm.readthedocs.io/en/latest/databases.html](). Note that Railway.app will automatically fill this env variable.
-[^7]: After a user subscribes to a feed, the default monitoring interval is applied.
-[^8]: The minimal monitoring interval a user can set for a subscription. Note that the bot manager will not be limited by this value.
+[^5]: Use with caution. May cause media validating and sending slightly unreliable. Meanwhile, effectively disable webpage title detection for `<iframe>` tags, instead, the title will always be URL hostname.
+[^6]: Use with caution. Help cut down network traffic further. If enabled, RSStT no longer fetches media and validates it. Effectively disable long-pic detection and partially disable icon detection.
+[^7]: Ref: [https://tortoise-orm.readthedocs.io/en/latest/databases.html](). Note that Railway.app will automatically fill this env variable.
+[^8]: After a user subscribes to a feed, the default monitoring interval is applied.
+[^9]: The minimal monitoring interval a user can set for a subscription. Note that the bot manager will not be limited by this value.

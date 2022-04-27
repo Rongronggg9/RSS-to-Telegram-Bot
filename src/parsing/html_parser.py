@@ -238,7 +238,7 @@ class Parser:
             if not src:
                 return None
             src = resolve_relative_link(self.feed_link, src)
-            title = await web.get_page_title(src)
+            title = urlparse(src).hostname if env.TRAFFIC_SAVING else await web.get_page_title(src)
             return Text([Br(2), Link(f'iframe ({title})', param=src), Br(2)])
 
         if tag == 'ol' or tag == 'ul':

@@ -233,6 +233,7 @@ del _database_url
 
 # ----- misc config -----
 TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
+TRAFFIC_SAVING: Final = __bool_parser(os.environ.get('TRAFFIC_SAVING'))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 colorlog.basicConfig(
     format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',

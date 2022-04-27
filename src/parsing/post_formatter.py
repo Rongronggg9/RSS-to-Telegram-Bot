@@ -19,7 +19,7 @@ from . import utils, tgraph
 from .splitter import get_plain_text_length
 from .html_parser import parse
 from .html_node import *
-from .medium import Media, Image, Video, Audio, File, construct_images_weserv_nl_url
+from .medium import Media, Image, Video, Audio, File, Animation, construct_images_weserv_nl_url
 
 AUTO: Final = 0
 DISABLE: Final = -1
@@ -519,11 +519,11 @@ class PostFormatter:
                     continue  # the link is not an HTTP link and is already appearing in the post
                 elif not enclosure.type:
                     medium = File(enclosure.url)
-                elif enclosure.type.find('webp') != -1 or enclosure.type.find('svg') != -1:
+                elif any(keyword in enclosure.type for keyword in ('webp', 'svg')):
                     medium = Image(enclosure.url)
                     medium.url = construct_images_weserv_nl_url(enclosure.url)
                 elif enclosure.type.startswith('image/gif'):
-                    medium = Audio(enclosure.url)
+                    medium = Animation(enclosure.url)
                 elif enclosure.type.startswith('audio'):
                     medium = Audio(enclosure.url)
                 elif enclosure.type.startswith('video'):

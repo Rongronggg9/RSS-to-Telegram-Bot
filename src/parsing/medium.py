@@ -300,7 +300,7 @@ class Medium(AbstractMedium):
                 self.size, self.width, self.height, self.content_type = medium_info
                 if self.type == IMAGE and self.size <= self.maxSize and min(self.width, self.height) == -1 \
                         and self.content_type and self.content_type.startswith('image') \
-                        and self.content_type.find('webp') == -1 and self.content_type.find('svg') == -1 \
+                        and all(keyword not in self.content_type for keyword in ('webp', 'svg', 'application')) \
                         and not url.startswith(env.IMAGES_WESERV_NL):
                     # enforcing dimension detection for images
                     self.width, self.height = await detect_image_dimension_via_images_weserv_nl(url)
@@ -316,9 +316,7 @@ class Medium(AbstractMedium):
                     # force convert WEBP/SVG to PNG
                     if (
                             self.content_type
-                            and (self.content_type.find('webp') != -1
-                                 or self.content_type.startswith('application')
-                                 or self.content_type.find('svg') != -1)
+                            and any(keyword in self.content_type for keyword in ('webp', 'svg', 'application'))
                     ):
                         # immediately fall back to 'images.weserv.nl'
                         self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]

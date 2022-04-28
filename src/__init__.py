@@ -111,7 +111,7 @@ async def pre():
     bot.add_event_handler(command.sub.cmd_sub,
                           events.NewMessage(pattern=r'(?P<command>/add|/sub)(@\w+)?'
                                                     + target_matcher +
-                                                    r'(\s+(?P<url>.*))?\s*$'))
+                                                    r'(\s+(?P<url>\S+))*'))
     bot.add_event_handler(command.sub.cmd_sub,
                           command.utils.PrivateMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_sub,
@@ -119,7 +119,7 @@ async def pre():
     bot.add_event_handler(command.sub.cmd_unsub,
                           events.NewMessage(pattern=r'(?P<command>/remove|/unsub)(@\w+)?'
                                                     + target_matcher +
-                                                    r'(\s+(?P<url>.*))?\s*$'))
+                                                    r'(\s+(?P<url>\S+))*'))
     bot.add_event_handler(command.sub.cmd_or_callback_unsub_all,
                           events.NewMessage(pattern=r'(?P<command>/remove_all|/unsub_all)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,

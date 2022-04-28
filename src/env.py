@@ -242,6 +242,8 @@ colorlog.basicConfig(
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,
     force=True,
 )
+if DEBUG:
+    logger.debug('DEBUG mode enabled')
 
 # ----- environment config -----
 RAILWAY_STATIC_URL: Final = os.environ.get('RAILWAY_STATIC_URL')

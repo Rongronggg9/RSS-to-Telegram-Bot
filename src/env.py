@@ -117,11 +117,11 @@ if _version_match:
         if StrictVersion(_version_match[0].lstrip('v')) < StrictVersion(__version__):
             _version = _version[_version_match.end():]
             _version = re.sub(r'(?<!\d{4})-\d+-(?!\d{2})', '', _version, count=1)
-            _version = f'v{__version__}-{_version}'
+            _version = f'v{__version__}-{_version}' if _version else f'v{__version__}'
     except ValueError:
         _version = f'v{__version__}'
 else:
-    _version = f'v{__version__}' + (f'-{_version}' if _version != 'dirty' else '')
+    _version = f'v{__version__}' + (f'-{_version}' if _version and _version != 'dirty' else '')
 
 VERSION: Final = _version
 del _version, _version_match

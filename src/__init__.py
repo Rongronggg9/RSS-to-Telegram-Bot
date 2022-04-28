@@ -139,7 +139,7 @@ async def pre():
     bot.add_event_handler(command.customization.cmd_set_hashtags,
                           events.NewMessage(pattern=r'(?P<command>/set_hashtags)(@\w+)?' + target_matcher))
     bot.add_event_handler(command.opml.opml_import,
-                          command.utils.NewFileMessage(pattern='.*?' + bare_target_matcher + '?',
+                          command.utils.NewFileMessage(pattern=f'.*?{bare_target_matcher}?',
                                                        filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.misc.cmd_start,
                           events.NewMessage(pattern='/start'))
@@ -240,6 +240,8 @@ def main():
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"UVLOOP: {'Enable' if uvloop is not None else 'Disable'}\n"
                 f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}")
+    if env.DEBUG:
+        logger.info("DEBUG: Enable")
     loop.run_until_complete(pre())
 
     scheduler = AsyncIOScheduler(event_loop=loop)

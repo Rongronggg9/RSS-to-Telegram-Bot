@@ -361,9 +361,8 @@ class Medium(AbstractMedium):
                         await self.change_server()
                     return True
 
-                if env.TRAFFIC_SAVING and not self.valid and min(self.max_width, self.max_height) != -1 and self.urls:
+                if env.TRAFFIC_SAVING and min(self.max_width, self.max_height) != -1 and self.urls:
                     self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
-                    continue
 
             self.valid = False
             return await self.type_fallback(reason=reason)

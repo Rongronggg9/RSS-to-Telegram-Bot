@@ -1,5 +1,5 @@
 # telegram and telegraph
-cryptg==0.2.post4
+cryptg==0.3
 telethon[cryptg]==1.24.0
 aiographfix==0.2.2
 

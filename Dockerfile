@@ -3,19 +3,27 @@ FROM python:3.10-slim AS builder
 WORKDIR /app
 
 RUN \
+    set -ex && \
     apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        git \
+    apt-get install -yq --no-install-recommends \
+        gcc g++ libc6-dev git curl \
     && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+ARG TARGETPLATFORM
+RUN \
+    set -ex && \
+    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        curl https://sh.rustup.rs -sSf | sh -s -- -y ; \
+    else \
+        mkdir -p /root/.cargo/bin ; \
+    fi
 
 # initialize venv
 RUN python -m venv /opt/venv
 
-# activate venv
-ENV PATH="/opt/venv/bin:$PATH"
+# activate venv and rustup
+ENV PATH="/opt/venv/bin:/root/.cargo/bin:$PATH"
 
 # upgrade venv deps
 RUN pip install --no-cache-dir --upgrade \
@@ -34,6 +42,7 @@ ARG RAILWAY_GIT_COMMIT_SHA
 ARG RAILWAY_GIT_BRANCH
 
 RUN \
+    set -ex && \
     echo "$(expr substr "$RAILWAY_GIT_COMMIT_SHA" 1 7)@$RAILWAY_GIT_BRANCH" | tee .version ; \
     if test $(expr length "$(cat .version)") -le 3; then echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; fi ; \
     if test $(expr length "$(cat .version)") -le 3; then echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; fi ; \
@@ -43,15 +52,15 @@ RUN \
 
 #----------------------------------------
 
-FROM python:3.10-slim
+FROM python:3.10-slim as app
 
 # install fonts
 RUN \
+    set -ex && \
     apt-get update && \
-    apt-get install -y --no-install-recommends \
+    apt-get install -yq --no-install-recommends \
         fonts-wqy-microhei \
     && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # install wkhtmltopdf  # hmmm, wkhtmltopdf works strangely...

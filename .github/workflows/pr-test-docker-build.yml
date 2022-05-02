@@ -7,7 +7,10 @@ on:
 
 jobs:
   build:
-    name: Test Docker build for PR
+    strategy:
+      matrix:
+        platform: [ 'linux/amd64', 'linux/arm64' ]
+    name: ${{ matrix.platform }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -24,5 +27,5 @@ jobs:
         with:
           push: false
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=docker-release

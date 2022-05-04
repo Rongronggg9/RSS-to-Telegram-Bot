@@ -12,7 +12,7 @@ lxml==4.8.0
 fuzzywuzzy==0.18.0
 emoji==1.7.0
 minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)
-matplotlib==3.5.1
+matplotlib==3.5.2
 
 # db
 asyncpg==0.25.0  # asyncpg@git+https://github.com/Rongronggg9/asyncpg.git@fix/pep-621

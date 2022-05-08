@@ -1,40 +1,55 @@
+FROM python:3.10-slim-bullseye AS rustup-installer
+
+ARG TARGETPLATFORM
+RUN \
+    set -ex && \
+    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        apt-get update && \
+        apt-get install -yq --no-install-recommends \
+            curl \
+        && \
+        curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+        apt-get purge -yq --auto-remove \
+            curl \
+        && \
+        rm -rf /var/lib/apt/lists/* ; \
+    else \
+        mkdir -p /root/.cargo/bin ; \
+    fi
+
+#-----------------------------------------------------------------------------------------------------------------------
+
 FROM python:3.10-slim-bullseye AS dep-builder
 
 RUN \
     set -ex && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        gcc g++ libc6-dev curl \
+        gcc g++ libc6-dev \
     && \
     rm -rf /var/lib/apt/lists/*
 
-ARG TARGETPLATFORM
+# initialize venv
 RUN \
     set -ex && \
-    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        curl https://sh.rustup.rs -sSf | sh -s -- -y ; \
-    else \
-        mkdir -p /root/.cargo/bin ; \
-    fi
+    python -m venv --copies /opt/venv && \
+    export PATH=/opt/venv/bin:$PATH && \
+    pip install --use-feature=fast-deps --no-cache-dir --upgrade \
+        pip setuptools wheel
 
-# initialize venv
-RUN python -m venv /opt/venv
+COPY --from=rustup-installer /root/.cargo /root/.cargo
 
 # activate venv and rustup
 ENV PATH="/opt/venv/bin:/root/.cargo/bin:$PATH"
-
-# upgrade venv deps
-RUN pip install --no-cache-dir --upgrade \
-        pip \
-        setuptools \
-        wheel
 
 COPY requirements.txt .
 
 RUN \
     set -ex && \
-    pip install --no-cache-dir -r requirements.txt && \
-    rm -rf /root/.cargo
+    pip install --use-feature=fast-deps --no-cache-dir \
+        -r requirements.txt \
+    && \
+    rm -rf /root/.cargo /opt/venv/src  # remove caches
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -60,10 +75,10 @@ RUN \
     set -ex && \
     echo "$(expr substr "$RAILWAY_GIT_COMMIT_SHA" 1 7)@$RAILWAY_GIT_BRANCH" | tee .version && \
     if test $(expr length "$(cat .version)") -le 3; then \
-      echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; \
+        echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; \
     fi && \
     if test $(expr length "$(cat .version)") -le 3; then \
-      echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; \
+        echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; \
     fi && \
     mkdir /app-minimal && \
     cp -r .version LICENSE src telegramRSSbot.py /app-minimal && \

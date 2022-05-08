@@ -290,6 +290,13 @@ class PostFormatter:
         if message_type == NORMAL_MESSAGE and display_media == ONLY_MEDIA_NO_CONTENT and self.media:
             message_type = LINK_MESSAGE
 
+        # ---- re-enable title if needed ----
+        if (
+                title_type == NO_POST_TITLE and self.title
+                and display_title == AUTO and message_type in {TELEGRAPH_MESSAGE, LINK_MESSAGE}
+        ):
+            title_type = POST_TITLE_NO_LINK
+
         # ---- determine need_media ----
         need_media = (
                 self.media

@@ -105,60 +105,60 @@ async def pre():
         ),
     )
 
-    bare_target_matcher = r'(?P<target>@\w{5,}|-100\d+|\+\d+)'
+    bare_target_matcher = r'(?P<target>@\w{5,}|(-100|\+)\d+)'
     target_matcher = rf'(\s+{bare_target_matcher})?'
+    _command_matcher = r'(?P<command>{}(?=[\s@]|$))(@\w+)?'
+    construct_command_matcher = _command_matcher.format
+    construct_remote_command_matcher = partial((_command_matcher + '{target}').format, target=target_matcher)
+    urls_matcher = r'(\s+(?P<url>\S+))*'
     # command handler
     bot.add_event_handler(command.sub.cmd_sub,
-                          events.NewMessage(pattern=r'(?P<command>/add|/sub)(@\w+)?'
-                                                    + target_matcher +
-                                                    r'(\s+(?P<url>\S+))*'))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/add|/sub') + urls_matcher))
     bot.add_event_handler(command.sub.cmd_sub,
                           command.utils.PrivateMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_sub,
                           command.utils.ReplyMessage(pattern=r'https?://'))
     bot.add_event_handler(command.sub.cmd_unsub,
-                          events.NewMessage(pattern=r'(?P<command>/remove|/unsub)(@\w+)?'
-                                                    + target_matcher +
-                                                    r'(\s+(?P<url>\S+))*'))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/remove|/unsub') + urls_matcher))
     bot.add_event_handler(command.sub.cmd_or_callback_unsub_all,
-                          events.NewMessage(pattern=r'(?P<command>/remove_all|/unsub_all)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/remove_all|/unsub_all')))
     bot.add_event_handler(command.sub.cmd_list_or_callback_get_list_page,
-                          events.NewMessage(pattern=r'(?P<command>/list)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/list')))
     bot.add_event_handler(command.opml.cmd_import,
-                          events.NewMessage(pattern=r'(?P<command>/import)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/import')))
     bot.add_event_handler(command.opml.cmd_export,
-                          events.NewMessage(pattern=r'(?P<command>/export)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/export')))
     bot.add_event_handler(command.customization.cmd_set_or_callback_get_set_page,
-                          events.NewMessage(pattern=r'(?P<command>/set(?!_))(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/set')))
     bot.add_event_handler(command.customization.cmd_set_default,
-                          events.NewMessage(pattern=r'(?P<command>/set_default)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/set_default')))
     bot.add_event_handler(command.customization.cmd_set_title,
-                          events.NewMessage(pattern=r'(?P<command>/set_title)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/set_title')))
     bot.add_event_handler(command.customization.cmd_set_interval,
-                          events.NewMessage(pattern=r'(?P<command>/set_interval)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/set_interval')))
     bot.add_event_handler(command.customization.cmd_set_hashtags,
-                          events.NewMessage(pattern=r'(?P<command>/set_hashtags)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/set_hashtags')))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(pattern=rf'.*?{bare_target_matcher}?',
                                                        filename_pattern=r'^.*\.opml$'))
     bot.add_event_handler(command.misc.cmd_start,
-                          events.NewMessage(pattern='/start'))
+                          events.NewMessage(pattern=construct_command_matcher('/start')))
     bot.add_event_handler(command.misc.cmd_or_callback_help,
-                          events.NewMessage(pattern='/help'))
+                          events.NewMessage(pattern=construct_command_matcher('/help')))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=True),
-                          events.NewMessage(pattern=r'(?P<command>/activate_subs)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/activate_subs')))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=False),
-                          events.NewMessage(pattern=r'(?P<command>/deactivate_subs)(@\w+)?' + target_matcher))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/deactivate_subs')))
     bot.add_event_handler(command.misc.cmd_lang,
-                          events.NewMessage(pattern='/lang'))
+                          events.NewMessage(pattern=construct_command_matcher('/lang')))
     bot.add_event_handler(command.misc.cmd_version,
-                          events.NewMessage(pattern='/version'))
+                          events.NewMessage(pattern=construct_command_matcher('/version')))
     bot.add_event_handler(command.administration.cmd_test,
-                          events.NewMessage(pattern='/test'))
+                          events.NewMessage(pattern=construct_command_matcher('/test')))
     bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
-                          events.NewMessage(pattern='/user_info'))
+                          events.NewMessage(pattern=construct_command_matcher('/user_info')))
     bot.add_event_handler(command.administration.cmd_set_option,
-                          events.NewMessage(pattern='/set_option'))
+                          events.NewMessage(pattern=construct_command_matcher('/set_option')))
 
     callback_target_matcher = r'(%(?P<target>\+?\d+))?'
     # callback query handler

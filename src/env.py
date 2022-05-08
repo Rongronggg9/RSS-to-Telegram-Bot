@@ -14,6 +14,7 @@ from python_socks import parse_proxy_url
 from dotenv import load_dotenv
 from pathlib import Path
 from distutils.version import StrictVersion
+from functools import partial
 
 from .version import __version__
 
@@ -39,9 +40,12 @@ def __list_parser(var: Optional[str]) -> list[str]:
 
 
 # ----- setup logging -----
-colorlog.basicConfig(format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
-                     datefmt='%Y-%m-%d-%H:%M:%S',
-                     level=colorlog.INFO)
+__configure_logging = partial(
+    colorlog.basicConfig,
+    format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
+    datefmt='%Y-%m-%d-%H:%M:%S'
+)
+__configure_logging(level=colorlog.DEBUG if __bool_parser(os.environ.get('DEBUG')) else colorlog.INFO)
 logger = colorlog.getLogger('RSStT.env')
 
 # ----- determine the environment -----
@@ -236,11 +240,9 @@ TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
 TRAFFIC_SAVING: Final = __bool_parser(os.environ.get('TRAFFIC_SAVING'))
 LAZY_MEDIA_VALIDATION: Final = __bool_parser(os.environ.get('LAZY_MEDIA_VALIDATION'))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
-colorlog.basicConfig(
-    format='%(log_color)s%(asctime)s:%(levelname)s:%(name)s - %(message)s',
-    datefmt='%Y-%m-%d-%H:%M:%S',
+__configure_logging(  # config twice to make .env file work
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,
-    force=True,
+    force=True
 )
 if DEBUG:
     logger.debug('DEBUG mode enabled')

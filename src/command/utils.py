@@ -383,7 +383,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
             target_chat_id = (pattern_match and pattern_match.groupdict().get('target')) or ''
             target_chat_id: Union[str, int, None] = target_chat_id.decode() \
                 if isinstance(target_chat_id, bytes) else target_chat_id
-            if target_chat_id.startswith('-100') and target_chat_id.lstrip('-').isdecimal():
+            if target_chat_id.startswith(('-100', '+')) and target_chat_id.lstrip('+-').isdecimal():
                 target_chat_id = int(target_chat_id)
             elif target_chat_id.isdecimal():
                 target_chat_id = -(1000000000000 + int(target_chat_id))
@@ -429,11 +429,19 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     try:
                         input_chat = await env.bot.get_input_entity(target_chat_id)
                         chat = await env.bot.get_entity(input_chat)
-                        chat_id = get_peer_id(chat)
+                        chat_id = get_peer_id(chat, add_mark=True)
                         if not isinstance(chat, types.Channel):
-                            raise TypeError  # only allow operating channel/group in private chats
+                            # only allow operating channel/group in private chats
+                            if sender_id != env.MANAGER or not env.MANAGER_PRIVILEGED:
+                                raise TypeError
                         await user_and_chat_permission_check()
-                    except (TypeError, ValueError):
+                    except (TypeError, ValueError) as e:
+                        if isinstance(e, TypeError):
+                            logger.warning(f'Refused {describe_user()} to use {command} '
+                                           f'because only a privileged bot manager can manipulate ordinary users')
+                        else:
+                            logger.warning(f'Refused {describe_user()} to use {command} '
+                                           f'because the target chat was not found')
                         await respond_or_answer(event, i18n[lang]['channel_or_group_not_found'])
                         raise events.StopPropagation
                 else:
@@ -442,7 +450,12 @@ def command_gatekeeper(func: Optional[Callable] = None,
                                                types.InputPeerChannel,
                                                types.InputPeerChat]] = await event.get_input_chat()
                     chat: Optional[Union[types.Chat, types.Channel]] = await event.get_chat()
-                chat_title = chat and chat.title
+
+                chat_title = chat and (
+                    chat.first_name + (f' {chat.last_name}' if chat.last_name else '')
+                    if isinstance(chat, types.User)
+                    else chat.title
+                )
 
                 if isinstance(input_chat, types.InputPeerChat):
                     if allow_in_old_fashioned_groups:
@@ -454,6 +467,11 @@ def command_gatekeeper(func: Optional[Callable] = None,
                     await event.respond(guide_msg, buttons=guide_buttons)
                     logger.warning(f'Refused {describe_user()} to use {command} '
                                    f'because a group migration to supergroup is needed')
+                    raise events.StopPropagation
+
+                if sender_id == env.MANAGER and env.MANAGER_PRIVILEGED:
+                    participant_type = 'PrivilegedBotManager'
+                    await execute()
                     raise events.StopPropagation
 
                 # check if self is in the group/chanel and if is an admin
@@ -718,10 +736,12 @@ def get_group_migration_help_msg(lang: Optional[str] = None) \
 def get_callback_tail(event: Union[events.NewMessage.Event, Message,
                                    events.CallbackQuery.Event],
                       chat_id: int) -> str:
-    if 0 > chat_id != event.chat_id and event.is_private:
-        chat_id_str, _ = resolve_id(chat_id)
-        return f'%{chat_id_str}'
-    return ''
+    if not event.is_private or event.chat.id == chat_id:
+        return ''
+    ori_chat_id, peer_type = resolve_id(chat_id)
+    if peer_type is types.PeerChat:
+        raise ValueError('Old-fashioned group chat is not supported')
+    return f'%{ori_chat_id}' if ori_chat_id < 0 else f'%+{ori_chat_id}'
 
 
 async def check_sub_limit(event: Union[events.NewMessage.Event, Message], user_id: int, lang: Optional[str] = None):

@@ -40,24 +40,25 @@
 
 ### Misc settings
 
-| Key                | Description                                                            | Example                                       | Default                                                |
-|--------------------|------------------------------------------------------------------------|-----------------------------------------------|--------------------------------------------------------|
-| `MULTIUSER`        | Enable multi-user feature or not?                                      | `0`                                           | `1`                                                    |
-| `CRON_SECOND`      | Run the feed monitoring task at the n-th second of each minute? (0-59) | `30`                                          | `0`                                                    |
-| `IMG_RELAY_SERVER` | Media relay server URL                                                 | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/`        |
-| `IMAGES_WESERV_NL` | images.weserv.nl URL                                                   | `https://t0.nl/`                              | `https://images.weserv.nl/`                            |
-| `DATABASE_URL`     | Database URL [^7]                                                      | `postgres://user:pass@example.com:5432/table` | `sqlite://$PATH_TO_CONFIG/db.sqlite3?journal_mode=OFF` |
-| `TABLE_TO_IMAGE`   | Convert tables to image (causing high CPU usage) or just drop them?    | `1`                                           | `0`                                                    |
-| `DEBUG`            | Enable debug logging or not?                                           | `1`                                           | `0`                                                    |
+| Key                  | Description                                                               | Example                                       | Default                                                |
+|----------------------|---------------------------------------------------------------------------|-----------------------------------------------|--------------------------------------------------------|
+| `MULTIUSER`          | Enable multi-user feature or not?                                         | `0`                                           | `1`                                                    |
+| `CRON_SECOND`        | Run the feed monitoring task at the n-th second of each minute? (0-59)    | `30`                                          | `0`                                                    |
+| `IMG_RELAY_SERVER`   | Media relay server URL                                                    | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/`        |
+| `IMAGES_WESERV_NL`   | images.weserv.nl URL                                                      | `https://t0.nl/`                              | `https://images.weserv.nl/`                            |
+| `DATABASE_URL`       | Database URL [^7]                                                         | `postgres://user:pass@example.com:5432/table` | `sqlite://$PATH_TO_CONFIG/db.sqlite3?journal_mode=OFF` |
+| `TABLE_TO_IMAGE`     | Convert tables to image (causing high CPU usage) or just drop them?       | `1`                                           | `0`                                                    |
+| `DEBUG`              | Enable debug logging or not?                                              | `1`                                           | `0`                                                    |
+| `MANAGER_PRIVILEGED` | Allow the bot manager to manipulate any users' subscriptions or not? [^8] | `1`                                           | `0`                                                    |
 
 ## Manager options
 
 > Manager options are options stored in the database. The bot manager can change it by using the `/set_option` command.
 
-| Key                | Description                           | Example | Default |
-|--------------------|---------------------------------------|---------|---------|
-| `default_interval` | Default feed monitoring interval [^8] | `5`     | `10`    |
-| `minimal_interval` | Minimal feed monitoring interval [^9] | `10`    | `5`     |
+| Key                | Description                            | Example | Default |
+|--------------------|----------------------------------------|---------|---------|
+| `default_interval` | Default feed monitoring interval [^9]  | `5`     | `10`    |
+| `minimal_interval` | Minimal feed monitoring interval [^10] | `10`    | `5`     |
 
 [^1]: Refresh the page every time you get a new token. If you have a lot of subscriptions, make sure to get at least 5 tokens.
 [^2]: Can be a list, separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`
@@ -66,5 +67,6 @@
 [^5]: Use with caution. May cause media validating and sending slightly unreliable. Meanwhile, effectively disable webpage title detection for `<iframe>` tags, instead, the title will always be URL hostname.
 [^6]: Use with caution. Help cut down network traffic further. If enabled, RSStT no longer fetches media and validates it. Effectively disable long-pic detection and partially disable icon detection.
 [^7]: Ref: [https://tortoise-orm.readthedocs.io/en/latest/databases.html](). Note that Railway.app will automatically fill this env variable.
-[^8]: After a user subscribes to a feed, the default monitoring interval is applied.
-[^9]: The minimal monitoring interval a user can set for a subscription. Note that the bot manager will not be limited by this value.
+[^8]: Use with caution. If enabled, the bot manager can bypass the permission check before manipulating any users'/channels'/groups' subscriptions. The command format is like `/sub @username`, `/sub +9999999999` (ordinary user) or `/sub -1009999999999` (channel/group). Should only be used temporarily and be disabled after finishing the manipulation. This option is considered safe for bot users since the bot manager can always manipulate their subscriptions by manipulating the database manually.
+[^9]: After a user subscribes to a feed, the default monitoring interval is applied.
+[^10]: The minimal monitoring interval a user can set for a subscription. Note that the bot manager will not be limited by this value.

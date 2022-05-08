@@ -105,7 +105,7 @@ async def pre():
         ),
     )
 
-    bare_target_matcher = r'(?P<target>@\w{5,}|-100\d+)'
+    bare_target_matcher = r'(?P<target>@\w{5,}|-100\d+|\+\d+)'
     target_matcher = rf'(\s+{bare_target_matcher})?'
     # command handler
     bot.add_event_handler(command.sub.cmd_sub,
@@ -160,7 +160,7 @@ async def pre():
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern='/set_option'))
 
-    callback_target_matcher = r'(%(?P<target>\d+))?'
+    callback_target_matcher = r'(%(?P<target>\+?\d+))?'
     # callback query handler
     bot.add_event_handler(command.misc.callback_del_buttons,  # delete buttons
                           events.CallbackQuery(pattern='^del_buttons$'))
@@ -240,6 +240,10 @@ def main():
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"UVLOOP: {'Enable' if uvloop is not None else 'Disable'}\n"
                 f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}")
+    if env.MANAGER_PRIVILEGED:
+        logger.warning('Bot manager privileged mode is enabled! '
+                       'Use with caution and should be disabled in production!')
+
     loop.run_until_complete(pre())
 
     scheduler = AsyncIOScheduler(event_loop=loop)

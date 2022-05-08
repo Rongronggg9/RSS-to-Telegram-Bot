@@ -1,12 +1,10 @@
-FROM python:3.10-slim AS builder
-
-WORKDIR /app
+FROM python:3.10-slim-bullseye AS dep-builder
 
 RUN \
     set -ex && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        gcc g++ libc6-dev git curl \
+        gcc g++ libc6-dev curl \
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -31,9 +29,26 @@ RUN pip install --no-cache-dir --upgrade \
         setuptools \
         wheel
 
-COPY requirements.txt /app
+COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN \
+    set -ex && \
+    pip install --no-cache-dir -r requirements.txt && \
+    rm -rf /root/.cargo
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+FROM python:3.10-slim-bullseye as app-builder
+
+WORKDIR /app
+
+RUN \
+    set -ex && \
+    apt-get update && \
+    apt-get install -yq --no-install-recommends \
+        git \
+    && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY . /app
 
@@ -43,16 +58,25 @@ ARG RAILWAY_GIT_BRANCH
 
 RUN \
     set -ex && \
-    echo "$(expr substr "$RAILWAY_GIT_COMMIT_SHA" 1 7)@$RAILWAY_GIT_BRANCH" | tee .version ; \
-    if test $(expr length "$(cat .version)") -le 3; then echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; fi ; \
-    if test $(expr length "$(cat .version)") -le 3; then echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; fi ; \
-    rm -rf .git .github config docs && \
-    ls -la ; \
-    cat .version
+    echo "$(expr substr "$RAILWAY_GIT_COMMIT_SHA" 1 7)@$RAILWAY_GIT_BRANCH" | tee .version && \
+    if test $(expr length "$(cat .version)") -le 3; then \
+      echo "$(git describe --tags --always)@$(git branch --show-current)" | tee .version ; \
+    fi && \
+    if test $(expr length "$(cat .version)") -le 3; then \
+      echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; \
+    fi && \
+    mkdir /app-minimal && \
+    cp -r .version LICENSE src telegramRSSbot.py /app-minimal && \
+    cd / && \
+    rm -rf /app && \
+    rm -f /app-minimal/*.md && \
+    ls -la /app-minimal && \
+    du -hd1 /app-minimal && \
+    cat /app-minimal/.version
 
-#----------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.10-slim as app
+FROM python:3.10-slim-bullseye as app
 
 # install fonts
 RUN \
@@ -72,13 +96,12 @@ RUN \
 
 WORKDIR /app
 
-COPY --from=builder /opt/venv /opt/venv
-
-COPY --from=builder /app /app
-
 # activate venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 ENV PYTHONUNBUFFERED=1
+
+COPY --from=dep-builder /opt/venv /opt/venv
+COPY --from=app-builder /app-minimal /app
 
 CMD ["python", "-u", "telegramRSSbot.py"]

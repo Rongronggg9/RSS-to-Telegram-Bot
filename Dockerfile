@@ -1,24 +1,3 @@
-FROM python:3.10-slim-bullseye AS rustup-installer
-
-ARG TARGETPLATFORM
-RUN \
-    set -ex && \
-    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        apt-get update && \
-        apt-get install -yq --no-install-recommends \
-            curl \
-        && \
-        curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-        apt-get purge -yq --auto-remove \
-            curl \
-        && \
-        rm -rf /var/lib/apt/lists/* ; \
-    else \
-        mkdir -p /root/.cargo/bin ; \
-    fi
-
-#-----------------------------------------------------------------------------------------------------------------------
-
 FROM python:3.10-slim-bullseye AS dep-builder
 
 RUN \
@@ -37,19 +16,26 @@ RUN \
     pip install --use-feature=fast-deps --no-cache-dir --upgrade \
         pip setuptools wheel
 
-COPY --from=rustup-installer /root/.cargo /root/.cargo
+# https://hub.docker.com/_/rust
+COPY --from=rust:1-slim-bullseye /usr/local/cargo /usr/local/cargo
+COPY --from=rust:1-slim-bullseye /usr/local/rustup /usr/local/rustup
 
 # activate venv and rustup
-ENV PATH="/opt/venv/bin:/root/.cargo/bin:$PATH"
+ENV PATH="/opt/venv/bin:/usr/local/cargo/bin:$PATH" \
+    CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup
 
 COPY requirements.txt .
 
 RUN \
     set -ex && \
+    rustup --version && \
+    cargo --version && \
+    rustc --version && \
     pip install --use-feature=fast-deps --no-cache-dir \
         -r requirements.txt \
     && \
-    rm -rf /root/.cargo /opt/venv/src  # remove caches
+    rm -rf /opt/venv/src
 
 #-----------------------------------------------------------------------------------------------------------------------
 

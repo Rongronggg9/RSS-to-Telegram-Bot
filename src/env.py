@@ -167,6 +167,8 @@ except Exception as e:
     logger.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
 
+MANAGER_PRIVILEGED: Final = __bool_parser(os.environ.get('MANAGER_PRIVILEGED'))
+
 TELEGRAPH_TOKEN: Final = __list_parser(os.environ.get('TELEGRAPH_TOKEN'))
 
 MULTIUSER: Final = __bool_parser(os.environ.get('MULTIUSER'), default_value=True)

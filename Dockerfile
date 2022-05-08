@@ -1,55 +1,77 @@
-FROM python:3.10-slim-bullseye AS dep-builder
-
-RUN \
-    set -ex && \
-    apt-get update && \
-    apt-get install -yq --no-install-recommends \
-        gcc g++ libc6-dev \
-    && \
-    rm -rf /var/lib/apt/lists/*
+FROM python:3.10-bullseye AS venv-initializer
 
 # initialize venv
 RUN \
     set -ex && \
     python -m venv --copies /opt/venv && \
     export PATH=/opt/venv/bin:$PATH && \
-    pip install --use-feature=fast-deps --no-cache-dir --upgrade \
+    pip install --no-cache-dir --upgrade \
         pip setuptools wheel
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+FROM debian:bullseye AS dep-parser
+
+WORKDIR /ver
+
+COPY requirements.txt .
+
+RUN \
+    set -ex && \
+    grep 'cryptg' requirements.txt | tee cryptg.ver && \
+    sed '/cryptg/d' requirements.txt > requirements-no-cryptg.txt
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+FROM python:3.10-bullseye AS cryptg-builder
+# cryptg has no dependencies, so we can just build it in a separate stage and concatenate the results with dep-builder
 
 # https://hub.docker.com/_/rust
 COPY --from=rust:1-slim-bullseye /usr/local/cargo /usr/local/cargo
 COPY --from=rust:1-slim-bullseye /usr/local/rustup /usr/local/rustup
+
+COPY --from=venv-initializer /opt/venv /opt/venv
 
 # activate venv and rustup
 ENV PATH="/opt/venv/bin:/usr/local/cargo/bin:$PATH" \
     CARGO_HOME=/usr/local/cargo \
     RUSTUP_HOME=/usr/local/rustup
 
-COPY requirements.txt .
+COPY --from=dep-parser /ver/cryptg.ver /ver/cryptg.ver
 
 RUN \
     set -ex && \
     rustup --version && \
     cargo --version && \
     rustc --version && \
-    pip install --use-feature=fast-deps --no-cache-dir \
-        -r requirements.txt \
+    pip install --no-cache-dir \
+        $(cat /ver/cryptg.ver) \
     && \
     rm -rf /opt/venv/src
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.10-slim-bullseye as app-builder
+FROM python:3.10-bullseye AS dep-builder
 
-WORKDIR /app
+COPY --from=venv-initializer /opt/venv /opt/venv
+
+# activate venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY --from=dep-parser /ver/requirements-no-cryptg.txt /ver/requirements-no-cryptg.txt
 
 RUN \
     set -ex && \
-    apt-get update && \
-    apt-get install -yq --no-install-recommends \
-        git \
+    pip install --no-cache-dir \
+        -r /ver/requirements-no-cryptg.txt \
     && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /opt/venv/src
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+FROM python:3.10-bullseye as app-builder
+
+WORKDIR /app
 
 COPY . /app
 
@@ -102,7 +124,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 ENV PYTHONUNBUFFERED=1
 
+COPY --from=cryptg-builder /opt/venv /opt/venv
 COPY --from=dep-builder /opt/venv /opt/venv
 COPY --from=app-builder /app-minimal /app
+
+# verify cryptg installation
+RUN python -c 'import logging; logging.basicConfig(level=logging.DEBUG); import telethon; import cryptg'
 
 CMD ["python", "-u", "telegramRSSbot.py"]

@@ -1,69 +1,19 @@
-FROM python:3.10-bullseye AS venv-initializer
+FROM python:3.10-bullseye AS dep-builder
 
-# initialize venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 RUN \
     set -ex && \
     python -m venv --copies /opt/venv && \
-    export PATH=/opt/venv/bin:$PATH && \
     pip install --no-cache-dir --upgrade \
         pip setuptools wheel
-
-#-----------------------------------------------------------------------------------------------------------------------
-
-FROM debian:bullseye AS dep-parser
-
-WORKDIR /ver
 
 COPY requirements.txt .
 
 RUN \
     set -ex && \
-    grep 'cryptg' requirements.txt | tee cryptg.ver && \
-    sed '/cryptg/d' requirements.txt > requirements-no-cryptg.txt
-
-#-----------------------------------------------------------------------------------------------------------------------
-
-FROM python:3.10-bullseye AS cryptg-builder
-# cryptg has no dependencies, so we can just build it in a separate stage and concatenate the results with dep-builder
-
-# https://hub.docker.com/_/rust
-COPY --from=rust:1-slim-bullseye /usr/local/cargo /usr/local/cargo
-COPY --from=rust:1-slim-bullseye /usr/local/rustup /usr/local/rustup
-
-COPY --from=venv-initializer /opt/venv /opt/venv
-
-# activate venv and rustup
-ENV PATH="/opt/venv/bin:/usr/local/cargo/bin:$PATH" \
-    CARGO_HOME=/usr/local/cargo \
-    RUSTUP_HOME=/usr/local/rustup
-
-COPY --from=dep-parser /ver/cryptg.ver /ver/cryptg.ver
-
-RUN \
-    set -ex && \
-    rustup --version && \
-    cargo --version && \
-    rustc --version && \
     pip install --no-cache-dir \
-        $(cat /ver/cryptg.ver) \
-    && \
-    rm -rf /opt/venv/src
-
-#-----------------------------------------------------------------------------------------------------------------------
-
-FROM python:3.10-bullseye AS dep-builder
-
-COPY --from=venv-initializer /opt/venv /opt/venv
-
-# activate venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-COPY --from=dep-parser /ver/requirements-no-cryptg.txt /ver/requirements-no-cryptg.txt
-
-RUN \
-    set -ex && \
-    pip install --no-cache-dir \
-        -r /ver/requirements-no-cryptg.txt \
+        -r requirements.txt \
     && \
     rm -rf /opt/venv/src
 
@@ -101,6 +51,11 @@ RUN \
 
 FROM python:3.10-slim-bullseye as app
 
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
 # install fonts
 RUN \
     set -ex && \
@@ -110,21 +65,6 @@ RUN \
     && \
     rm -rf /var/lib/apt/lists/*
 
-# install wkhtmltopdf  # hmmm, wkhtmltopdf works strangely...
-#RUN \
-#    apt-get update && apt-get -y install wget && \
-#    wget "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_$(dpkg --print-architecture).deb" -O /tmp/wkhtmltopdf.deb && \
-#    dpkg -i /tmp/wkhtmltopdf.deb && apt-get -f install && \
-#    rm -f /tmp/wkhtmltopdf.deb && apt-get purge wget --auto-remove
-
-WORKDIR /app
-
-# activate venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-ENV PYTHONUNBUFFERED=1
-
-COPY --from=cryptg-builder /opt/venv /opt/venv
 COPY --from=dep-builder /opt/venv /opt/venv
 COPY --from=app-builder /app-minimal /app
 

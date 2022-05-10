@@ -695,7 +695,8 @@ class Media:
                 None,
             )
         url_obj = urlparse(url)
-        url_part = url_obj.netloc + url_obj.path
+        # magnet:?xt=... -> (scheme='magnet', netloc='', path='', params='', query='xt=...', fragment='')
+        url_part = (url_obj.netloc + url_obj.path) or url
         for medium in self._media:
             if not isinstance(medium, Medium):
                 continue

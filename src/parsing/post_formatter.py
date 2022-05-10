@@ -522,8 +522,12 @@ class PostFormatter:
                     dup_medium.original_urls = (enclosure.url,) + dup_medium.original_urls
                     dup_medium.chosen_url = enclosure.url
                     continue
-                if not utils.isAbsoluteHttpLink(enclosure.url) and parsed.parser.soup.findAll('a', href=enclosure.url):
-                    continue  # the link is not an HTTP link and is already appearing in the post
+                if not utils.isAbsoluteHttpLink(enclosure.url):
+                    if parsed.parser.soup.findAll('a', href=enclosure.url):
+                        continue  # the link is not an HTTP link and is already appearing in the post
+                    else:
+                        medium = File(enclosure.url)
+                        medium.valid = False
                 elif not enclosure.type:
                     medium = File(enclosure.url)
                 elif any(keyword in enclosure.type for keyword in ('webp', 'svg')):

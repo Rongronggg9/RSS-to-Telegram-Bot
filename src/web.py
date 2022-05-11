@@ -15,7 +15,6 @@ from bs4 import BeautifulSoup
 from io import BytesIO, SEEK_END
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
-from aiohttp_retry import RetryClient, ExponentialRetry
 from dns.asyncresolver import resolve
 from dns.exception import DNSException
 from ssl import SSLError
@@ -29,6 +28,7 @@ from asyncstdlib.functools import lru_cache
 
 from . import env, log, locks
 from .i18n import i18n
+from .errors_collection import RetryInIpv4
 
 SOI: Final = b'\xff\xd8'
 EOI: Final = b'\xff\xd9'
@@ -63,10 +63,11 @@ EXCEPTIONS_SHOULD_RETRY: Final = (asyncio.TimeoutError,
                                   # aiohttp.ClientResponseError,
                                   # aiohttp.ClientConnectionError,
                                   aiohttp.ServerConnectionError,
+                                  RetryInIpv4,
                                   TimeoutError,
                                   ConnectionError)
 
-RETRY_OPTION: Final = ExponentialRetry(attempts=2, start_timeout=1, exceptions=set(EXCEPTIONS_SHOULD_RETRY))
+MAX_TRIES: Final = 2
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -192,16 +193,13 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     """
     if not timeout:
         timeout = 12
-    wait_for_timeout = (timeout * 2 + 5) * (2 if env.IPV6_PRIOR else 1)
-    return await asyncio.wait_for(
-        _get(
-            url=url, timeout=timeout, semaphore=semaphore, headers=headers,
-            resp_callback=partial(__norm_callback, decode=decode, max_size=max_size,
-                                  intended_content_type=intended_content_type),
-            read_bufsize=min(max_size, DEFAULT_READ_BUFFER_SIZE) if max_size is not None else DEFAULT_READ_BUFFER_SIZE,
-            read_until_eof=max_size is None
-        ),
-        wait_for_timeout)
+    return await _get(
+        url=url, timeout=timeout, semaphore=semaphore, headers=headers,
+        resp_callback=partial(__norm_callback,
+                              decode=decode, max_size=max_size, intended_content_type=intended_content_type),
+        read_bufsize=min(max_size, DEFAULT_READ_BUFFER_SIZE) if max_size is not None else DEFAULT_READ_BUFFER_SIZE,
+        read_until_eof=max_size is None
+    )
 
 
 async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = None,
@@ -212,8 +210,10 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
         else (semaphore or nullcontext())
     v6_rr_set = None
     try:
-        v6_rr_set = (await resolve(host, 'AAAA', lifetime=1)).rrset if env.IPV6_PRIOR else None
+        v6_rr_set = (await asyncio.wait_for(resolve(host, 'AAAA', lifetime=1), 1.1)).rrset if env.IPV6_PRIOR else None
     except DNSException:
+        pass
+    except asyncio.TimeoutError:
         pass
     except Exception as e:
         logger.debug(f'Error occurred when querying {url} AAAA:', exc_info=e)
@@ -223,13 +223,28 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
     if headers:
         _headers.update(headers)
 
+    async def _fetch():
+        async with aiohttp.ClientSession(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
+                                         headers=_headers) as session:
+            async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
+                status = response.status
+                content = None
+                if status == 200:
+                    content = await resp_callback(response)
+                return WebResponse(url=url,
+                                   content=content,
+                                   headers=response.headers,
+                                   status=status,
+                                   reason=response.reason)
+
     tries = 0
     retry_in_v4_flag = False
+    max_tries = MAX_TRIES * (1 if socket_family == 0 else 2)
     while True:
         tries += 1
-        assert tries <= 2, 'Too many tries'
+        assert tries <= max_tries, 'Too many tries'
 
-        if retry_in_v4_flag:
+        if retry_in_v4_flag or tries > MAX_TRIES:
             socket_family = AF_INET
         ssl_context = ssl_create_default_context()
         proxy_connector = (
@@ -241,33 +256,27 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
         try:
             async with locks.overall_web_semaphore:
                 async with semaphore_to_use:
-                    async with RetryClient(retry_options=RETRY_OPTION, connector=proxy_connector,
-                                           timeout=aiohttp.ClientTimeout(total=timeout), headers=_headers) as session:
-                        async with session.get(url,
-                                               read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
-                            status = response.status
-                            content = None
-                            if status == 200:
-                                content = await resp_callback(response)
-                            elif socket_family == AF_INET6 and tries == 1 \
-                                    and status in (400,  # Bad Request (some feed providers return 400 for banned IPs)
-                                                   403,  # Forbidden
-                                                   429,  # Too Many Requests
-                                                   451):  # Unavailable For Legal Reasons
-                                retry_in_v4_flag = True
-                                continue
-                            return WebResponse(url=url,
-                                               content=content,
-                                               headers=response.headers,
-                                               status=status,
-                                               reason=response.reason)
+                    ret = await asyncio.wait_for(_fetch(), timeout + 0.1)
+                    if socket_family == AF_INET6 and tries < max_tries \
+                            and ret.status in {400,  # Bad Request (some feed providers return 400 for banned IPs)
+                                               403,  # Forbidden
+                                               429,  # Too Many Requests
+                                               451}:  # Unavailable For Legal Reasons
+                        raise RetryInIpv4(ret.status, ret.reason)
+                    return ret
         except EXCEPTIONS_SHOULD_RETRY as e:
-            if socket_family != AF_INET6 or tries > 1:
+            if isinstance(e, RetryInIpv4):
+                retry_in_v4_flag = True
+            elif socket_family == AF_INET6 and tries > MAX_TRIES:
+                retry_in_v4_flag = True
+                err_msg = str(e).strip()
+                e = RetryInIpv4(reason=f'{type(e).__name__}' + (f': {err_msg}' if err_msg else ''))
+            elif tries >= MAX_TRIES:
                 raise e
             err_msg = str(e).strip()
             logger.debug(f'Fetch failed ({type(e).__name__}' + (f': {err_msg}' if err_msg else '')
-                         + f') using IPv6, retrying using IPv4: {url}')
-            retry_in_v4_flag = True
+                         + f'), retrying: {url}')
+            await asyncio.sleep(0.1)
             continue
 
 

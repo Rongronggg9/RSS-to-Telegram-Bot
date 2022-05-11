@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union
 
 import asyncio
-
+from aiohttp import ClientError
 from telethon.errors import (
     UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError, InputUserDeactivatedError,
     PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, PhotoCropSizeSmallError,
@@ -30,3 +30,10 @@ InvalidMediaErrors: tuple = (PhotoInvalidDimensionsError, PhotoSaveFileInvalidEr
                              VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError)
 ExternalMediaFetchFailedErrors: tuple = (WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError)
 MediaSendFailErrors = InvalidMediaErrors + ExternalMediaFetchFailedErrors
+
+
+class RetryInIpv4(ClientError):
+    def __init__(self, code: int = None, reason: str = None):
+        self.code = code
+        self.reason = reason
+        super().__init__(f'{code} {reason}' if code and reason else (code or reason or ''))

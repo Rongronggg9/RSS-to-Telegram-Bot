@@ -55,10 +55,13 @@
 
 > Manager options are options stored in the database. The bot manager can change it by using the `/set_option` command.
 
-| Key                | Description                            | Example | Default |
-|--------------------|----------------------------------------|---------|---------|
-| `default_interval` | Default feed monitoring interval [^9]  | `5`     | `10`    |
-| `minimal_interval` | Minimal feed monitoring interval [^10] | `10`    | `5`     |
+| Key                          | Description                                              | Example                         | Default          |
+|------------------------------|----------------------------------------------------------|---------------------------------|------------------|
+| `default_interval`           | Default feed monitoring interval [^9]                    | `5`                             | `10`             |
+| `minimal_interval`           | Minimal feed monitoring interval [^10]                   | `10`                            | `5`              |
+| `user_sub_limit`             | Subscription number limit for ordinary user [^11]        | `150`                           | `-1` (unlimited) |
+| `channel_or_group_sub_limit` | Subscription number limit for channel or group [^11]     | `150`                           | `-1` (unlimited) |
+| `sub_limit_reached_message`  | Additional message attached to the limit reached warning | `https://t.me/RSStT_Channel/58` |                  |
 
 [^1]: Refresh the page every time you get a new token. If you have a lot of subscriptions, make sure to get at least 5 tokens.
 [^2]: Can be a list, separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`
@@ -70,3 +73,4 @@
 [^8]: Use with caution. If enabled, the bot manager can bypass the permission check before manipulating any users'/channels'/groups' subscriptions. The command format is like `/sub @username`, `/sub +9999999999` (ordinary user) or `/sub -1009999999999` (channel/group). Should only be used temporarily and be disabled after finishing the manipulation. This option is considered safe for bot users since the bot manager can always manipulate their subscriptions by manipulating the database manually.
 [^9]: After a user subscribes to a feed, the default monitoring interval is applied.
 [^10]: The minimal monitoring interval a user can set for a subscription. Note that the bot manager will not be limited by this value.
+[^11]: Once reached the limit, no more subscriptions can be created. However, existing subscriptions will not be removed even if reaching the limit. As a bot manager, you can enable `MANAGER_PRIVILEGED` mode to manually unsubscribe their subscriptions.

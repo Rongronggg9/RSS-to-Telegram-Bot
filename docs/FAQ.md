@@ -22,12 +22,17 @@
 
 ### **Q**: I want my bot to serve me only. What should I do?
 
-Set the env variable `MULTIUSER` to `0`.  
+**A**: Set the env variable `MULTIUSER` to `0`.  
 If you need to use the bot in a channel, read the next question.  
 Using the bot in a group is possible even if you don't have the multi-user mode enabled, as long as you are a non-anonymous administrator of the group. If you are an anonymous administrator of the group, read the next question.
 
 ### **Q**: I want my bot to serve the users/channels/groups I specify only. What should I do?
 
-Firstly, set the env variable `MULTIUSER` to `0`. This will make guests unable to use the bot.  
+**A**: Firstly, set the env variable `MULTIUSER` to `0`. This will make guests unable to use the bot.  
 If you want to allow a certain user to use the bot, send `/user_info user_id` or `/user_info @username` to the bot and promote their to "User".  
 If you want to allow a certain channel/group to use the bot, you should promote both the channel/group itself and at least one of its administrators to "User". Only the promoted administrators can operate the bot in the channel/group.
+
+### **Q**: why did the bot automatically leave my channel/group?
+
+**A**: Once the bot finds itself lacking the permission to send messages (not granted or being blocked), it will immediately unsubscribe all subscriptions in this chat. Meanwhile, if this chat is a channel or group and the bot is still a member of it, it will leave the channel/group.
+Make sure to grant the bot enough permission (sending messages) in channel/group.

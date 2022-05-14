@@ -92,16 +92,19 @@ class Parser:
             rows_content = []
             for row in rows:
                 columns = row.findAll(('td', 'th'))
-                if len(columns) != 1:
+                if len(rows) > 1 and len(columns) > 1:  # allow single-row or single-column tables
                     if env.TABLE_TO_IMAGE:
                         self.media.add(UploadedImage(convert_table_to_png(str(soup))))
                     return None
-                row_content = await self._parse_item(columns[0])
-                if row_content:
-                    if row_content.get_html().endswith('\n'):
-                        rows_content.append(row_content)
-                        continue
-                    rows_content.extend((row_content, Br()))
+                for i, column in enumerate(columns):  # transpose single-row tables into single-column tables
+                    row_content = await self._parse_item(column)
+                    if row_content:
+                        if row_content.get_html().endswith('\n'):
+                            rows_content.append(row_content)
+                            continue
+                        rows_content.extend((row_content, Br()))
+                        if i < len(columns) - 1:
+                            rows_content.append(Br())
             return Text(rows_content) or None
 
         if tag == 'p' or tag == 'section':

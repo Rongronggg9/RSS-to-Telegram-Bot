@@ -9,6 +9,7 @@
 [![Code quality](https://img.shields.io/codefactor/grade/github/Rongronggg9/RSS-to-Telegram-Bot?logo=codefactor)](https://www.codefactor.io/repository/github/rongronggg9/rss-to-telegram-bot)
 [![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Rongronggg9/RSS-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/fork)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot?ref=badge_shield)
 
 [![PyPI](https://img.shields.io/pypi/v/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
 [![PyPI publish status](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20to%20PyPI?label=publish&logo=pypi&logoColor=white)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-pypi.yml)
@@ -106,3 +107,6 @@ Want to preview what the messages sent by RSStT look like? Here is a [list of ch
 This project is licensed under [AGPLv3](LICENSE). Closed-source distribution or bot-hosting are strictly prohibited. If you modify the code and distribute or host it, make sure any users who can use your bot can get the source code (by editing the repo URL in [`src/i18n/__init__.py`](src/i18n/__init__.py)).
 
 The repository is formerly a fork of [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot). They have been entirely different projects since the early days of this project.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot?ref=badge_large)

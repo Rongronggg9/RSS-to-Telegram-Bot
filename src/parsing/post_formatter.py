@@ -5,15 +5,7 @@ from typing_extensions import Final
 import asyncio
 from aiographfix.utils import exceptions
 from aiohttp import ClientError
-
-# python-Levenshtein cannot handle UTF-8 input properly, mute the annoying warning from fuzzywuzzy
-import warnings
-
-warnings.original_warn = warnings.warn
-warnings.warn = lambda *args, **kwargs: None
-from fuzzywuzzy import fuzz
-
-warnings.warn = warnings.original_warn
+from rapidfuzz import fuzz
 
 from . import utils, tgraph
 from .splitter import get_plain_text_length
@@ -197,7 +189,7 @@ class PostFormatter:
                     title_tbc = utils.stripAnySpace(title_tbc)
                     self.__title_similarity = fuzz.partial_ratio(title_tbc, plain_text[0:len(self.title) + 10])
                     logger.debug(f'{self.title} ({self.link}) '
-                                 f'is {self.__title_similarity}% likely to be of no title.')
+                                 f'is {self.__title_similarity:0.2f}% likely to be of no title.')
 
         if display_via in {FEED_TITLE_AND_LINK_AS_POST_TITLE, NO_FEED_TITLE_BUT_LINK_AS_POST_TITLE} and self.link:
             title_type = POST_TITLE_W_LINK

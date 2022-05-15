@@ -72,13 +72,11 @@ class Text:
         else:
             result = self.content
 
-        if plain:
-            return result.replace('\n', '')
-
-        if self.attr and self.param:
-            return f'<{self.tag} {self.attr}="{self.param}">{result}</{self.tag}>'
-        if self.tag:
-            return f'<{self.tag}>{result}</{self.tag}>'
+        if not plain:
+            if self.attr and self.param:
+                return f'<{self.tag} {self.attr}="{self.param}">{result}</{self.tag}>'
+            if self.tag:
+                return f'<{self.tag}>{result}</{self.tag}>'
         return result
 
     def split_html(self, length_limit_head: int, head_count: int = -1, length_limit_tail: int = 4096) -> list:

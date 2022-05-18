@@ -6,7 +6,7 @@ aiographfix==0.2.2
 # feed parsing
 feedparser==6.0.8
 listparser==0.18
-pillow==9.1.0
+pillow==9.1.1
 beautifulsoup4==4.11.1
 lxml==4.8.0
 rapidfuzz==2.0.11

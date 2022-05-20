@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union, Optional, AnyStr, Any
+from typing import Union, Optional, AnyStr
 from typing_extensions import Final
 from collections.abc import Callable
 from .compat import nullcontext, ssl_create_default_context
@@ -114,7 +114,7 @@ class WebError(Exception):
 @define
 class WebResponse:
     url: str  # redirected url
-    content: Any
+    content: Optional[AnyStr]
     headers: CIMultiDictProxy[str]
     status: int
     reason: Optional[str]
@@ -123,7 +123,7 @@ class WebResponse:
 @define
 class WebFeed:
     url: str  # redirected url
-    content: Optional[str] = None
+    content: Optional[AnyStr] = None
     headers: Optional[CIMultiDictProxy[str]] = None
     status: int = -1
     reason: Optional[str] = None
@@ -292,7 +292,7 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
         _headers['Accept'] = FEED_ACCEPT
 
     try:
-        resp = await get(url, timeout, web_semaphore, decode=True, headers=_headers)
+        resp = await get(url, timeout, web_semaphore, decode=False, headers=_headers)
         rss_content = resp.content
         ret.content = rss_content
         ret.url = resp.url
@@ -314,13 +314,14 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             ret.error = WebError(error_name='status code error', status=status_caption, url=url, log_level=log_level)
             return ret
 
-        if len(rss_content) <= 524288:
-            rss_d = feedparser.parse(rss_content, sanitize_html=False)
-        else:  # feed too large, run in another thread to avoid blocking the bot
-            rss_d = await asyncio.get_event_loop().run_in_executor(_feedparser_thread_pool,
-                                                                   partial(feedparser.parse,
-                                                                           rss_content,
-                                                                           sanitize_html=False))
+        with BytesIO(rss_content) as rss_content_io:
+            parser = partial(feedparser.parse, rss_content_io, response_headers=resp.headers, sanitize_html=False)
+            rss_d = (
+                parser()
+                if len(rss_content) <= 64 * 1024
+                # feed too large, run in another thread to avoid blocking the bot
+                else await env.loop.run_in_executor(_feedparser_thread_pool, parser)
+            )
 
         if 'title' not in rss_d.feed:
             ret.error = WebError(error_name='feed invalid', url=url, log_level=log_level)
@@ -449,11 +450,11 @@ async def get_page_title(url: str, allow_hostname=True, allow_path: bool = False
     r = None
     # noinspection PyBroadException
     try:
-        r = await get(url=url, timeout=2, decode=True, intended_content_type='text/html', max_size=2 * 1024)
+        r = await get(url=url, timeout=2, decode=False, intended_content_type='text/html', max_size=2 * 1024)
         if r.status != 200 or not r.content:
             raise ValueError('not an HTML page')
-        if len(r.content) <= 27:  # len of `<html><head><title></title>`
-            raise ValueError('invalid HTML')
+        # if len(r.content) <= 27:  # len of `<html><head><title></title>`
+        #     raise ValueError('invalid HTML')
         title = BeautifulSoup(r.content, 'lxml').title.text
         return title.strip()
     except Exception:

@@ -660,6 +660,8 @@ class UploadedImage(AbstractMedium):
                 if isinstance(self.file, BytesIO):
                     self.file.seek(0)
                 self.uploaded_file = await env.bot.upload_file(self.file)
+                if isinstance(self.file, BytesIO):
+                    self.file.close()
                 self.valid = True
             except (BadRequestError, ValueError) as e:
                 logger.debug(f'Failed to upload file ({self.info})', exc_info=e)

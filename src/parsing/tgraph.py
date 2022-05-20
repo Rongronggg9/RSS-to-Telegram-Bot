@@ -212,7 +212,8 @@ class TelegraphIfy:
                                 if env.TABLE_TO_IMAGE:
                                     table_img = await convert_table_to_png(str(tag))
                                     if table_img:
-                                        url_l = await apis.get_account().upload(BytesIO(table_img), full=False)
+                                        with BytesIO(table_img) as buffer:
+                                            url_l = await apis.get_account().upload(buffer, full=False)
                                         url = url_l[0] if url_l else None
                                         if url:
                                             tag.replaceWith(soup.new_tag('img', src=url))

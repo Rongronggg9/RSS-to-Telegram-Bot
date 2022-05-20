@@ -361,64 +361,64 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
         return -1, -1
     is_jpeg = None
     already_read = 0
-    buffer = BytesIO()
     eof_flag = False
     exit_flag = False
-    while not exit_flag:
-        curr_chunk_length = 0
-        preloaded_length = content.total_bytes - already_read
-        while preloaded_length > IMAGE_READ_BUFFER_SIZE or curr_chunk_length < IMAGE_ITER_CHUNK_SIZE:
-            # get almost all preloaded bytes, but leaving some to avoid next automatic preloading
-            chunk = await content.read(max(preloaded_length - IMAGE_READ_BUFFER_SIZE, IMAGE_READ_BUFFER_SIZE))
-            if chunk == b'':  # EOF
-                eof_flag = True
-                break
-            if is_jpeg is None:
-                is_jpeg = chunk.startswith(SOI)
-            already_read += len(chunk)
-            curr_chunk_length += len(chunk)
-            buffer.seek(0, SEEK_END)
-            buffer.write(chunk)
+    with BytesIO() as buffer:
+        while not exit_flag:
+            curr_chunk_length = 0
             preloaded_length = content.total_bytes - already_read
-
-        if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
-            response.close()  # immediately close the connection to block any incoming data or retransmission
-            exit_flag = True
-
-        # noinspection PyBroadException
-        try:
-            image = PIL.Image.open(buffer)
-            width, height = image.size
-            return width, height
-        except UnidentifiedImageError:
-            return -1, -1  # not a format that PIL can handle
-        except Exception:
-            if is_jpeg:
-                file_header = buffer.getvalue()
-                find_start_pos = 0
-                for _ in range(3):
-                    pointer = -1
-                    for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
-                        p = file_header.find(marker, find_start_pos)
-                        if p != -1:
-                            pointer = p
-                            break
-                    if pointer != -1 and pointer + 9 <= len(file_header):
-                        if file_header.count(EOI, 0, pointer) != file_header.count(SOI, 0, pointer) - 1:
-                            # we are currently entering the thumbnail in Exif, bypassing...
-                            # (why the specifications makers made Exif so freaky?)
-                            eoi_pos = file_header.find(EOI, pointer)
-                            if eoi_pos == -1:
-                                break  # no EOI found, we could never leave the thumbnail...
-                            find_start_pos = eoi_pos + len(EOI)
-                            continue
-                        width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
-                        height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
-                        if min(width, height) <= 0:
-                            find_start_pos = pointer + 1
-                            continue
-                        return width, height
+            while preloaded_length > IMAGE_READ_BUFFER_SIZE or curr_chunk_length < IMAGE_ITER_CHUNK_SIZE:
+                # get almost all preloaded bytes, but leaving some to avoid next automatic preloading
+                chunk = await content.read(max(preloaded_length - IMAGE_READ_BUFFER_SIZE, IMAGE_READ_BUFFER_SIZE))
+                if chunk == b'':  # EOF
+                    eof_flag = True
                     break
+                if is_jpeg is None:
+                    is_jpeg = chunk.startswith(SOI)
+                already_read += len(chunk)
+                curr_chunk_length += len(chunk)
+                buffer.seek(0, SEEK_END)
+                buffer.write(chunk)
+                preloaded_length = content.total_bytes - already_read
+
+            if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
+                response.close()  # immediately close the connection to block any incoming data or retransmission
+                exit_flag = True
+
+            # noinspection PyBroadException
+            try:
+                image = PIL.Image.open(buffer)
+                width, height = image.size
+                return width, height
+            except UnidentifiedImageError:
+                return -1, -1  # not a format that PIL can handle
+            except Exception:
+                if is_jpeg:
+                    file_header = buffer.getvalue()
+                    find_start_pos = 0
+                    for _ in range(3):
+                        pointer = -1
+                        for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
+                            p = file_header.find(marker, find_start_pos)
+                            if p != -1:
+                                pointer = p
+                                break
+                        if pointer != -1 and pointer + 9 <= len(file_header):
+                            if file_header.count(EOI, 0, pointer) != file_header.count(SOI, 0, pointer) - 1:
+                                # we are currently entering the thumbnail in Exif, bypassing...
+                                # (why the specifications makers made Exif so freaky?)
+                                eoi_pos = file_header.find(EOI, pointer)
+                                if eoi_pos == -1:
+                                    break  # no EOI found, we could never leave the thumbnail...
+                                find_start_pos = eoi_pos + len(EOI)
+                                continue
+                            width = int(file_header[pointer + 7:pointer + 9].hex(), 16)
+                            height = int(file_header[pointer + 5:pointer + 7].hex(), 16)
+                            if min(width, height) <= 0:
+                                find_start_pos = pointer + 1
+                                continue
+                            return width, height
+                        break
     return -1, -1
 
 

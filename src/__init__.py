@@ -27,54 +27,58 @@ from .parsing import tgraph
 # log
 logger = log.getLogger('RSStT')
 
-# initializing bot
 loop = env.loop
-
 bot: Optional[TelegramClient] = None
-if not env.API_ID or not env.API_HASH:
-    logger.info('API_ID and/or API_HASH not set, use sample APIs instead. API_ID_PUBLISHED_FLOOD_ERROR may occur.')
-    API_KEYs = {api_id: env.SAMPLE_APIS[api_id]
-                for api_id in sample(tuple(env.SAMPLE_APIS.keys()), len(env.SAMPLE_APIS))}
-else:
-    API_KEYs = {env.API_ID: env.API_HASH}
+pre_tasks = []
 
-# pre tasks
-pre_tasks = [loop.create_task(db.init())]
 
-if env.PORT:
-    # enable redirect server for Railway, Heroku, etc
-    from . import redirect_server
+def init():
+    global bot
 
-    pre_tasks.append(loop.create_task(redirect_server.run(port=env.PORT)))
+    if not env.API_ID or not env.API_HASH:
+        logger.info('API_ID and/or API_HASH not set, use sample APIs instead. API_ID_PUBLISHED_FLOOD_ERROR may occur.')
+        api_keys = {api_id: env.SAMPLE_APIS[api_id]
+                    for api_id in sample(tuple(env.SAMPLE_APIS.keys()), len(env.SAMPLE_APIS))}
+    else:
+        api_keys = {env.API_ID: env.API_HASH}
 
-sleep_for = 0
-while API_KEYs:
-    sleep_for += 10
-    API_ID, API_HASH = API_KEYs.popitem()
-    try:
-        bot = TelegramClient(path.join(env.config_folder_path, 'bot'), API_ID, API_HASH,
-                             proxy=env.TELEGRAM_PROXY_DICT, request_retries=2, flood_sleep_threshold=60,
-                             raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
-        break
-    except ApiIdPublishedFloodError:
-        if not API_KEYs:
-            logger.warning('API_ID_PUBLISHED_FLOOD_ERROR occurred.')
+    # pre tasks
+    pre_tasks.append(loop.create_task(db.init()))
+
+    if env.PORT:
+        # enable redirect server for Railway, Heroku, etc
+        from . import redirect_server
+
+        pre_tasks.append(loop.create_task(redirect_server.run(port=env.PORT)))
+
+    sleep_for = 0
+    while api_keys:
+        sleep_for += 10
+        api_id, api_hash = api_keys.popitem()
+        try:
+            bot = TelegramClient(path.join(env.config_folder_path, 'bot'), api_id, api_hash,
+                                 proxy=env.TELEGRAM_PROXY_DICT, request_retries=2, flood_sleep_threshold=60,
+                                 raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
             break
-        logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
-        sleep(sleep_for)
-    except Exception as e:
-        logger.critical('Unknown error occurred during login:', exc_info=e)
-        break
+        except ApiIdPublishedFloodError:
+            if not api_keys:
+                logger.warning('API_ID_PUBLISHED_FLOOD_ERROR occurred.')
+                break
+            logger.warning(f'API_ID_PUBLISHED_FLOOD_ERROR occurred. Sleep for {sleep_for}s and retry.')
+            sleep(sleep_for)
+        except Exception as e:
+            logger.critical('Unknown error occurred during login:', exc_info=e)
+            break
 
-if bot is None:
-    logger.critical('LOGIN FAILED!')
-    loop.run_until_complete(db.close())
-    exit(1)
+    if bot is None:
+        logger.critical('LOGIN FAILED!')
+        loop.run_until_complete(db.close())
+        exit(1)
 
-env.bot = bot
-env.bot_peer = loop.run_until_complete(bot.get_me(input_peer=False))
-env.bot_input_peer = loop.run_until_complete(bot.get_me(input_peer=True))
-env.bot_id = env.bot_peer.id
+    env.bot = bot
+    env.bot_peer = loop.run_until_complete(bot.get_me(input_peer=False))
+    env.bot_input_peer = loop.run_until_complete(bot.get_me(input_peer=True))
+    env.bot_id = env.bot_peer.id
 
 
 async def pre():
@@ -232,6 +236,8 @@ async def post():
 
 
 def main():
+    init()
+
     logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
                 f"MANAGER: {env.MANAGER}\n"
                 f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"

@@ -301,7 +301,11 @@ class Medium(AbstractMedium):
                     return True
                 medium_info = await web.get_medium_info(url)
                 if medium_info is None:
-                    continue
+                    if url.startswith(env.IMAGES_WESERV_NL) or url.startswith(env.IMG_RELAY_SERVER):
+                        continue
+                    medium_info = await web.get_medium_info(env.IMG_RELAY_SERVER + url)
+                    if medium_info is None:
+                        continue
                 self.size, self.width, self.height, self.content_type = medium_info
                 if self.type == IMAGE and self.size <= self.maxSize and min(self.width, self.height) == -1 \
                         and self.content_type and self.content_type.startswith('image') \

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union, Optional
+from typing import Union, Optional, AnyStr
 from collections.abc import Sequence
 
 import re
@@ -323,24 +323,26 @@ FeedAHrefMatcher = re.compile(r'/(feed|rss|atom)(\.(xml|rss|atom))?$', re.I)
 FeedATextMatcher = re.compile(r'([^a-zA-Z]|^)(rss|atom)([^a-zA-Z]|$)', re.I)
 
 
-def feed_sniffer(url: str, html: str) -> Optional[str]:
+def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
     if url in FeedSnifferCache:
         return FeedSnifferCache[url]
-    if len(html) < 69:  # len of `<html><head></head><body></body></html>` + `<link rel="alternate" href="">`
-        return None  # too short to sniff
+    # if len(html) < 69:  # len of `<html><head></head><body></body></html>` + `<link rel="alternate" href="">`
+    #     return None  # too short to sniff
 
     soup = BeautifulSoup(html, 'lxml')
-    links = soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher, 'href': True})
-    if not links:
-        links = soup.find_all(name='link', attrs={'rel': 'alternate', 'href': FeedLinkHrefMatcher})
-    if not links:
-        links = soup.find_all(name='a', attrs={'class': FeedATextMatcher})
-    if not links:
-        links = soup.find_all(name='a', attrs={'title': FeedATextMatcher})
-    if not links:
-        links = soup.find_all(name='a', attrs={'href': FeedAHrefMatcher})
-    if not links:
-        links = soup.find_all(name='a', string=FeedATextMatcher)
+    links = (
+            soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher, 'href': True})
+            or
+            soup.find_all(name='link', attrs={'rel': 'alternate', 'href': FeedLinkHrefMatcher})
+            or
+            soup.find_all(name='a', attrs={'class': FeedATextMatcher})
+            or
+            soup.find_all(name='a', attrs={'title': FeedATextMatcher})
+            or
+            soup.find_all(name='a', attrs={'href': FeedAHrefMatcher})
+            or
+            soup.find_all(name='a', string=FeedATextMatcher)
+    )
     if links:
         feed_url = urljoin(url, links[0]['href'])
         FeedSnifferCache[url] = feed_url

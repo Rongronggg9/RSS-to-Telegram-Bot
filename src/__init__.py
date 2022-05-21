@@ -1,14 +1,8 @@
 from __future__ import annotations
 
+from . import env  # the event loop is initialized in env, so import it first
+
 import asyncio
-
-try:
-    import uvloop
-
-    uvloop.install()
-except ImportError:  # uvloop does not support Windows
-    uvloop = None
-
 from functools import partial
 from time import sleep
 from typing import Optional
@@ -20,7 +14,7 @@ from telethon.tl import types
 from random import sample
 from os import path
 
-from . import env, log, db, command
+from . import log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
 
@@ -249,7 +243,7 @@ def main():
                 f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
                 f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
-                f"UVLOOP: {'Enable' if uvloop is not None else 'Disable'}\n"
+                f"UVLOOP: {'Enable' if env.uvloop_enabled else 'Disable'}\n"
                 f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}")
     if env.MANAGER_PRIVILEGED:
         logger.warning('Bot manager privileged mode is enabled! '

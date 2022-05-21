@@ -10,7 +10,8 @@ jobs:
     strategy:
       matrix:
         platform: [ 'linux/amd64', 'linux/arm64' ]
-    name: ${{ matrix.platform }}
+        fpe: [ 0, 1 ]
+    name: ${{ matrix.platform }} - FPE=${{ matrix.fpe }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -27,5 +28,6 @@ jobs:
         with:
           push: false
           context: .
+          build-args: FEEDPARSER_ENHANCED=${{ matrix.fpe }}
           platforms: ${{ matrix.platform }}
           cache-from: type=gha,scope=docker-release

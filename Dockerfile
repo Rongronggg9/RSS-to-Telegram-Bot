@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye AS dep-builder
+FROM python:3.10-bullseye AS dep-builder-common
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -16,6 +16,26 @@ RUN \
         -r requirements.txt \
     && \
     rm -rf /opt/venv/src
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+FROM python:3.10-bullseye AS dep-builder
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY --from=dep-builder-common /opt/venv /opt/venv
+COPY requirements.txt .
+
+ARG FEEDPARSER_ENHANCED=0
+RUN \
+    set -ex && \
+    if [ "$FEEDPARSER_ENHANCED" = 1 ]; then \
+        pip uninstall -y feedparser && \
+        sed -i 's/^feedparser[^#]*#\s*//g' requirements.txt ; \
+        pip install --no-cache-dir \
+            -r requirements.txt \
+        ; \
+    fi;
 
 #-----------------------------------------------------------------------------------------------------------------------
 

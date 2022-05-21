@@ -69,7 +69,7 @@ def init():
 
     if bot is None:
         logger.critical('LOGIN FAILED!')
-        loop.run_until_complete(db.close())
+        loop.run_until_complete(asyncio.gather(db.close(), tgraph.close()))
         exit(1)
 
     env.bot = bot
@@ -81,30 +81,6 @@ def init():
 async def pre():
     # wait for pre tasks
     await asyncio.gather(*pre_tasks)
-
-    # noinspection PyTypeChecker
-    manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
-
-    set_bot_commands_tasks = (
-        loop.create_task(
-            command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
-                                           lang_code='',
-                                           commands=get_commands_list())
-        ),
-        *(
-            loop.create_task(
-                command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
-                                               lang_code=i18n[lang]['iso_639_code'],
-                                               commands=get_commands_list(lang=lang))
-            )
-            for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
-        ),
-        loop.create_task(
-            command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
-                                           lang_code='',
-                                           commands=get_commands_list(lang=manager_lang, manager=True))
-        ),
-    )
 
     bare_target_matcher = r'(?P<target>@\w{5,}|(-100|\+)\d+)'
     target_matcher = rf'(\s+{bare_target_matcher})?'
@@ -221,6 +197,32 @@ async def pre():
     bot.add_event_handler(command.misc.cmd_start,
                           command.utils.GroupMigratedAction())
 
+
+async def lazy():
+    # noinspection PyTypeChecker
+    manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
+
+    set_bot_commands_tasks = (
+        loop.create_task(
+            command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
+                                           lang_code='',
+                                           commands=get_commands_list())
+        ),
+        *(
+            loop.create_task(
+                command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
+                                               lang_code=i18n[lang]['iso_639_code'],
+                                               commands=get_commands_list(lang=lang))
+            )
+            for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
+        ),
+        loop.create_task(
+            command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
+                                           lang_code='',
+                                           commands=get_commands_list(lang=manager_lang, manager=True))
+        ),
+    )
+
     # get set_bot_commands tasks result
     try:
         await asyncio.gather(*set_bot_commands_tasks)
@@ -248,6 +250,8 @@ def main():
     if env.MANAGER_PRIVILEGED:
         logger.warning('Bot manager privileged mode is enabled! '
                        'Use with caution and should be disabled in production!')
+
+    loop.create_task(lazy())
 
     scheduler = AsyncIOScheduler(event_loop=loop)
     scheduler.add_job(func=command.monitor.run_monitor_task,

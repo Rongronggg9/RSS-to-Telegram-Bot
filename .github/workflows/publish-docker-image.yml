@@ -34,8 +34,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram
-          flavor: |
-            latest=false
+          flavor: latest=false
           tags: |
             type=ref,event=branch
             type=pep440,pattern={{version}}
@@ -52,6 +51,26 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=docker-release
           cache-to: type=gha,scope=docker-release,mode=max
+      - name: Set Docker meta (feedparser-enhanced)
+        if: ${{ endsWith(github.ref, 'dev') }}
+        id: meta-fpe
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram
+          flavor: latest=false
+          tags: type=raw,value=feedparser-enhanced,enable=true
+      - name: Push to Docker Hub (feedparser-enhanced)
+        if: ${{ endsWith(github.ref, 'dev') }}
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          build-args: FEEDPARSER_ENHANCED=1
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta-fpe.outputs.tags }}
+          labels: ${{ steps.meta-fpe.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:feedparser-enhanced
+          cache-to: type=inline,ref=${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:feedparser-enhanced
 
   description:
     name: Update repository description on Docker Hub

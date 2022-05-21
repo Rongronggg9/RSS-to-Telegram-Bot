@@ -6,7 +6,7 @@ try:
     import uvloop
 
     uvloop.install()
-except ImportError:  # uvloop do not support Windows
+except ImportError:  # uvloop does not support Windows
     uvloop = None
 
 from functools import partial
@@ -43,7 +43,10 @@ def init():
         api_keys = {env.API_ID: env.API_HASH}
 
     # pre tasks
-    pre_tasks.append(loop.create_task(db.init()))
+    pre_tasks.extend((
+        loop.create_task(db.init()),
+        loop.create_task(tgraph.init()),
+    ))
 
     if env.PORT:
         # enable redirect server for Railway, Heroku, etc
@@ -232,11 +235,13 @@ async def pre():
 
 
 async def post():
-    await db.close()
+    await asyncio.gather(db.close(), tgraph.close())
 
 
 def main():
     init()
+
+    loop.run_until_complete(pre())
 
     logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
                 f"MANAGER: {env.MANAGER}\n"
@@ -249,8 +254,6 @@ def main():
     if env.MANAGER_PRIVILEGED:
         logger.warning('Bot manager privileged mode is enabled! '
                        'Use with caution and should be disabled in production!')
-
-    loop.run_until_complete(pre())
 
     scheduler = AsyncIOScheduler(event_loop=loop)
     scheduler.add_job(func=command.monitor.run_monitor_task,

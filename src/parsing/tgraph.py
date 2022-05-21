@@ -23,6 +23,25 @@ else:
 
 logger = log.getLogger('RSStT.tgraph')
 
+apis: Optional[APIs] = None
+
+
+async def init():
+    global apis
+    if env.TELEGRAPH_TOKEN:
+        apis = APIs(env.TELEGRAPH_TOKEN)
+        await apis.init()
+        if not apis.valid:
+            logger.error('Set up Telegraph failed, fallback to non-Telegraph mode.')
+            apis = None
+
+
+async def close():
+    global apis
+    if apis:
+        await apis.close()
+        apis = None
+
 
 class Telegraph(aiograph.Telegraph):
     def __init__(self, token=None):
@@ -71,7 +90,6 @@ class APIs:
         self.tokens = tokens
         self._accounts: list[Telegraph] = []
         self._curr_id = 0
-        env.loop.run_until_complete(self.init())
 
     async def init(self):
         for token in self.tokens:
@@ -96,6 +114,10 @@ class APIs:
             except Exception as e:
                 logger.warning('Cannot set up one of Telegraph accounts: ' + str(e), exc_info=e)
 
+    async def close(self):
+        for account in self._accounts:
+            await account.close()
+
     @property
     def valid(self):
         return bool(self._accounts)
@@ -112,13 +134,6 @@ class APIs:
         self._curr_id = curr_id + 1 if 0 <= curr_id + 1 < len(self._accounts) else 0
         return self._accounts[curr_id]
 
-
-apis = None
-if env.TELEGRAPH_TOKEN:
-    apis = APIs(env.TELEGRAPH_TOKEN)
-    if not apis.valid:
-        logger.error('Cannot set up Telegraph, fallback to non-Telegraph mode.')
-        apis = None
 
 TELEGRAPH_ALLOWED_TAGS: Final = {
     'a', 'aside', 'b', 'blockquote', 'br', 'code', 'em', 'figcaption', 'figure',

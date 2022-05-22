@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from . import pool  # the process pool need to be initialized once the event loop is ready to reduce memory consumption
+
+pool.init()
+
 from . import env  # the event loop is initialized in env, so import it first
+
+pool.set_pool(env.loop)
 
 import asyncio
 from functools import partial
@@ -69,7 +75,7 @@ def init():
 
     if bot is None:
         logger.critical('LOGIN FAILED!')
-        loop.run_until_complete(asyncio.gather(db.close(), tgraph.close()))
+        loop.run_until_complete(post())
         exit(1)
 
     env.bot = bot
@@ -232,6 +238,7 @@ async def lazy():
 
 async def post():
     await asyncio.gather(db.close(), tgraph.close())
+    pool.shutdown()
 
 
 def main():
@@ -262,6 +269,8 @@ def main():
 
     try:
         bot.run_until_disconnected()
+    except KeyboardInterrupt:
+        pass
     finally:
         loop.run_until_complete(post())
 

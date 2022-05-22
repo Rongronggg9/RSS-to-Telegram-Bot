@@ -4,7 +4,7 @@ telethon==1.24.0
 aiographfix==0.2.2
 
 # feed parsing
-feedparser==6.0.9  # feedparser@git+https://github.com/Rongronggg9/feedparser.git@develop
+feedparser==6.0.10  # feedparser@git+https://github.com/Rongronggg9/feedparser.git@develop
 listparser==0.18
 pillow==9.1.1
 beautifulsoup4==4.11.1

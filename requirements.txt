@@ -16,7 +16,7 @@ matplotlib==3.5.2
 
 # db
 asyncpg==0.25.0  # asyncpg@git+https://github.com/Rongronggg9/asyncpg.git@fix/pep-621
-tortoise-orm[accel]==0.19.0
+tortoise-orm[accel]==0.19.1
 aerich==0.6.3
 
 # network

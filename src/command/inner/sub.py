@@ -6,7 +6,7 @@ import re
 import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4.element import Tag, SoupStrainer
 from urllib.parse import urljoin
 from cachetools import TTLCache
 from os import path
@@ -329,9 +329,9 @@ def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
     # if len(html) < 69:  # len of `<html><head></head><body></body></html>` + `<link rel="alternate" href="">`
     #     return None  # too short to sniff
 
-    soup = BeautifulSoup(html, 'lxml')
+    soup = BeautifulSoup(html, 'lxml', parse_only=SoupStrainer(name=('a', 'link'), attrs={'href': True}))
     links = (
-            soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher, 'href': True})
+            soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher})
             or
             soup.find_all(name='link', attrs={'rel': 'alternate', 'href': FeedLinkHrefMatcher})
             or

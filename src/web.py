@@ -13,7 +13,6 @@ import PIL.ImageFile
 from PIL import UnidentifiedImageError
 from bs4 import BeautifulSoup
 from io import BytesIO, SEEK_END
-from concurrent.futures import ThreadPoolExecutor
 from aiohttp_socks import ProxyConnector
 from dns.asyncresolver import resolve
 from dns.exception import DNSException
@@ -27,6 +26,7 @@ from functools import partial
 from asyncstdlib.functools import lru_cache
 
 from . import env, log, locks
+from .pool import run_async
 from .i18n import i18n
 from .errors_collection import RetryInIpv4
 
@@ -72,8 +72,6 @@ MAX_TRIES: Final = 2
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 logger = log.getLogger('RSStT.web')
-
-_feedparser_thread_pool = ThreadPoolExecutor(1, 'feedparser_')
 
 contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=")[^"]+(?=")').search, flags=re.I)
 
@@ -315,12 +313,14 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             return ret
 
         with BytesIO(rss_content) as rss_content_io:
-            parser = partial(feedparser.parse, rss_content_io, response_headers=resp.headers, sanitize_html=False)
+            parser = partial(feedparser.parse,
+                             rss_content_io,
+                             response_headers={k.lower(): v for k, v in resp.headers.items()}, sanitize_html=False)
             rss_d = (
                 parser()
-                if len(rss_content) <= 64 * 1024
+                if len(rss_content) <= 32 * 1024
                 # feed too large, run in another thread to avoid blocking the bot
-                else await env.loop.run_in_executor(_feedparser_thread_pool, parser)
+                else await run_async(parser)
             )
 
         if 'title' not in rss_d.feed:

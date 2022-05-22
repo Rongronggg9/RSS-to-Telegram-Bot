@@ -8,16 +8,13 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 from matplotlib import pyplot as plt
 from matplotlib.font_manager import FontManager
-from concurrent.futures import ThreadPoolExecutor
 from cjkwrap import fill
 from warnings import filterwarnings
 from cachetools import TTLCache
 
-from .. import env
+from ..pool import run_async
 from .utils import logger
 from ..compat import cached_async
-
-_matplotlib_thread_pool = ThreadPoolExecutor(1, 'matplotlib_')
 
 MPL_TTF_LIST = FontManager().ttflist
 MPL_SANS_FONTS: Final = (
@@ -196,4 +193,4 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
 
 @cached_async(TTLCache(maxsize=32, ttl=180))
 async def convert_table_to_png(table_html: str) -> Optional[bytes]:
-    return await env.loop.run_in_executor(_matplotlib_thread_pool, _convert_table_to_png, table_html)
+    return await run_async(_convert_table_to_png, table_html)

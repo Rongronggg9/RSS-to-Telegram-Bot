@@ -278,6 +278,16 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
             continue
 
 
+# bozo_exception is un-pickle-able, preventing rss_d from returning from ProcessPoolExecutor, so remove it
+def _feed_post_process_wrapper(func: Callable, *args, **kwargs):
+    rss_d = func(*args, **kwargs)
+
+    if rss_d.get('bozo_exception'):
+        del rss_d['bozo_exception']
+
+    return rss_d
+
+
 async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
                    headers: Optional[dict] = None, verbose: bool = True) -> WebFeed:
     ret = WebFeed(url=url)
@@ -313,7 +323,8 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             return ret
 
         with BytesIO(rss_content) as rss_content_io:
-            parser = partial(feedparser.parse,
+            parser = partial(_feed_post_process_wrapper,
+                             feedparser.parse,
                              rss_content_io,
                              response_headers={k.lower(): v for k, v in resp.headers.items()}, sanitize_html=False)
             rss_d = (

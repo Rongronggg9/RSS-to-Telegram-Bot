@@ -4,6 +4,7 @@ from __future__ import annotations
 import sys
 import functools
 
+from aiohttp import ClientResponse
 from cachetools.keys import hashkey
 
 _version_info = sys.version_info
@@ -34,8 +35,18 @@ else:
         async def __aenter__(self):
             return self.enter_result
 
-        async def __aexit__(self, *excinfo):
+        async def __aexit__(self, exc_type, exc_value, traceback):
             pass
+
+
+class AiohttpUvloopTransportHotfix(AbstractAsyncContextManager):
+    def __init__(self, response: ClientResponse):
+        self.transport = response.connection and response.connection.transport
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        if self.transport:
+            self.transport.abort()
+
 
 # default cipher list in Python 3.9
 _ciphers_py39 = (

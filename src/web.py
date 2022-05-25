@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union, Optional, AnyStr
 from typing_extensions import Final
 from collections.abc import Callable
-from .compat import nullcontext, ssl_create_default_context
+from .compat import nullcontext, ssl_create_default_context, AiohttpUvloopTransportHotfix
 
 import re
 import asyncio
@@ -225,15 +225,16 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
         async with aiohttp.ClientSession(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
                                          headers=_headers) as session:
             async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
-                status = response.status
-                content = None
-                if status == 200:
-                    content = await resp_callback(response)
-                return WebResponse(url=url,
-                                   content=content,
-                                   headers=response.headers,
-                                   status=status,
-                                   reason=response.reason)
+                async with AiohttpUvloopTransportHotfix(response):
+                    status = response.status
+                    content = None
+                    if status == 200:
+                        content = await resp_callback(response)
+                    return WebResponse(url=url,
+                                       content=content,
+                                       headers=response.headers,
+                                       status=status,
+                                       reason=response.reason)
 
     tries = 0
     retry_in_v4_flag = False

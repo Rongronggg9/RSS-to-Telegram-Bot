@@ -32,13 +32,12 @@ async def run_async(func, *args):
     return await LOOP.run_in_executor(aioExecutor, func, *args)
 
 
-def init():
+def init(loop: AbstractEventLoop):
+    global LOOP
+
     if CPU_COUNT > 1:
         [aioExecutor.submit(sleep, 0.01 * (i + 1)) for i in range(PROCESS_COUNT - 1)]
 
-
-def set_pool(loop: AbstractEventLoop):
-    global LOOP
     LOOP = loop
 
 

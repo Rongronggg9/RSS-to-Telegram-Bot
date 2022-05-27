@@ -242,6 +242,7 @@ TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
 TRAFFIC_SAVING: Final = __bool_parser(os.environ.get('TRAFFIC_SAVING'))
 LAZY_MEDIA_VALIDATION: Final = __bool_parser(os.environ.get('LAZY_MEDIA_VALIDATION'))
 NO_UVLOOP: Final = __bool_parser(os.environ.get('NO_UVLOOP'))
+NO_MULTIPROCESSING: Final = __bool_parser(os.environ.get('NO_MULTIPROCESSING'))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 __configure_logging(  # config twice to make .env file work
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,

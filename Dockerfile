@@ -72,7 +72,8 @@ RUN \
 FROM python:3.10-slim-bullseye as app
 
 ENV PATH="/opt/venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    MALLOC_MMAP_THRESHOLD_=131072
 
 WORKDIR /app
 

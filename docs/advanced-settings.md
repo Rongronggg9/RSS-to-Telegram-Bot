@@ -50,19 +50,20 @@
 | `TABLE_TO_IMAGE`     | Convert tables to image (causing higher CPU load) or just drop them?      | `1`                                           | `0`                                                    |
 | `MANAGER_PRIVILEGED` | Allow the bot manager to manipulate any users' subscriptions or not? [^8] | `1`                                           | `0`                                                    |
 | `NO_UVLOOP`          | Never enable `uvloop` (even if it is found) or not?                       | `1`                                           | `0`                                                    |
+| `NO_MULTIPROCESSING` | Limit the process count to `1` or not (up to `min(3, CPU_COUNT)`)? [^9]   | `1`                                           | `0`                                                    |
 | `DEBUG`              | Enable debug logging or not?                                              | `1`                                           | `0`                                                    |
 
 ## Manager options
 
 > Manager options are options stored in the database. The bot manager can change it by using the `/set_option` command.
 
-| Key                          | Description                                              | Example                         | Default          |
-|------------------------------|----------------------------------------------------------|---------------------------------|------------------|
-| `default_interval`           | Default feed monitoring interval [^9]                    | `5`                             | `10`             |
-| `minimal_interval`           | Minimal feed monitoring interval [^10]                   | `10`                            | `5`              |
-| `user_sub_limit`             | Subscription number limit for ordinary user [^11]        | `150`                           | `-1` (unlimited) |
-| `channel_or_group_sub_limit` | Subscription number limit for channel or group [^11]     | `150`                           | `-1` (unlimited) |
-| `sub_limit_reached_message`  | Additional message attached to the limit reached warning | `https://t.me/RSStT_Channel/58` |                  |
+| Key                          | Description                                                | Example                         | Default          |
+|------------------------------|------------------------------------------------------------|---------------------------------|------------------|
+| `default_interval`           | Default feed monitoring interval [^10]                     | `15`                            | `10`             |
+| `minimal_interval`           | Minimal feed monitoring interval [^11] [^12]               | `10`                            | `5`              |
+| `user_sub_limit`             | Subscription number limit for ordinary user [^13] [^12]    | `150`                           | `-1` (unlimited) |
+| `channel_or_group_sub_limit` | Subscription number limit for channel or group [^13] [^12] | `150`                           | `-1` (unlimited) |
+| `sub_limit_reached_message`  | Additional message attached to the limit reached warning   | `https://t.me/RSStT_Channel/58` |                  |
 
 [^1]: Refresh the page every time you get a new token. If you have a lot of subscriptions, make sure to get at least 5 tokens.
 [^2]: Can be a list, separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`
@@ -72,6 +73,8 @@
 [^6]: Use with caution. Help cut down network traffic further. If enabled, RSStT no longer fetches media and validates it. Effectively disable long-pic detection and partially disable icon detection.
 [^7]: Ref: [https://tortoise-orm.readthedocs.io/en/latest/databases.html](). Note that Railway.app will automatically fill this env variable.
 [^8]: Use with caution. If enabled, the bot manager can bypass the permission check before manipulating any users'/channels'/groups' subscriptions. The command format is like `/sub @username`, `/sub +9999999999` (ordinary user) or `/sub -1009999999999` (channel/group). Should only be used temporarily and be disabled after finishing the manipulation. This option is considered safe for bot users since the bot manager can always manipulate their subscriptions by manipulating the database manually.
-[^9]: After a user subscribes to a feed, the default monitoring interval is applied.
-[^10]: The minimal monitoring interval a user can set for a subscription. Note that the bot manager will not be limited by this value.
-[^11]: Once reached the limit, no more subscriptions can be created. However, existing subscriptions will not be removed even if reaching the limit. As a bot manager, you can enable `MANAGER_PRIVILEGED` mode to manually unsubscribe their subscriptions.
+[^9]: Only valid when there are more than 1 CPU cores, otherwise the process count is always `1`. Using multiprocessing helps improve the performance on multicore CPUs but consumes more memory. Enable it to disable multiprocessing if you are concerned about memory consumption.
+[^10]: After a user subscribes to a feed, the default monitoring interval is applied.
+[^11]: The minimal monitoring interval a user can set for a subscription.
+[^12]: The bot manager will not be limited by this value.
+[^13]: Once reached the limit, no more subscriptions can be created. However, existing subscriptions will not be removed even if reaching the limit. As a bot manager, you can enable `MANAGER_PRIVILEGED` mode to manually unsubscribe their subscriptions.

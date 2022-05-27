@@ -13,7 +13,7 @@ from telethon.tl.patched import Message, MessageService
 from telethon.tl.functions.bots import SetBotCommandsRequest
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import FloodError, MessageNotModifiedError, UserNotParticipantError, QueryIdInvalidError, \
-    EntitiesTooLongError, MessageTooLongError, BadRequestError
+    EntitiesTooLongError, MessageTooLongError, BadRequestError, ChatIdInvalidError
 
 from .. import env, log, db, locks, errors_collection
 from ..i18n import i18n, ALL_LANGUAGES
@@ -435,7 +435,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                             if sender_id != env.MANAGER or not env.MANAGER_PRIVILEGED:
                                 raise TypeError
                         await user_and_chat_permission_check()
-                    except (TypeError, ValueError) as e:
+                    except (TypeError, ValueError, ChatIdInvalidError) as e:
                         if isinstance(e, TypeError):
                             logger.warning(f'Refused {describe_user()} to use {command} '
                                            f'because only a privileged bot manager can manipulate ordinary users')

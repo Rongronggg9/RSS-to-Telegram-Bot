@@ -250,7 +250,8 @@ def main():
                 f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
                 f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
                 f"UVLOOP: {'Enable' if env.uvloop_enabled else 'Disable'}\n"
-                f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}")
+                f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}\n"
+                f"CPU: {pool.PROCESS_COUNT} (usable) / {pool.AVAIL_CPU_COUNT} (available) / {pool.CPU_COUNT} (total)")
     if env.MANAGER_PRIVILEGED:
         logger.warning('Bot manager privileged mode is enabled! '
                        'Use with caution and should be disabled in production!')

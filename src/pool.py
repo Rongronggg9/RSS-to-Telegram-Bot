@@ -11,7 +11,8 @@ from time import sleep
 from signal import signal, SIGINT
 
 CPU_COUNT = os.cpu_count()
-PROCESS_COUNT = min(CPU_COUNT, 3)
+AVAIL_CPU_COUNT = len(os.sched_getaffinity(0))
+PROCESS_COUNT = min(AVAIL_CPU_COUNT, 3)
 LOOP: Optional[AbstractEventLoop] = None
 
 del os

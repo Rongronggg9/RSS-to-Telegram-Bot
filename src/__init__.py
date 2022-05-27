@@ -16,6 +16,7 @@ from telethon.errors import ApiIdPublishedFloodError, RPCError
 from telethon.tl import types
 from random import sample
 from os import path
+from signal import signal, SIGTERM
 
 from . import log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
@@ -239,35 +240,37 @@ async def post():
 
 
 def main():
-    init()
-
-    loop.run_until_complete(pre())
-
-    logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
-                f"MANAGER: {env.MANAGER}\n"
-                f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"
-                f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
-                f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
-                f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
-                f"UVLOOP: {'Enable' if env.uvloop_enabled else 'Disable'}\n"
-                f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}\n"
-                f"CPU: {pool.PROCESS_COUNT} (usable) / {pool.AVAIL_CPU_COUNT} (available) / {pool.CPU_COUNT} (total)")
-    if env.MANAGER_PRIVILEGED:
-        logger.warning('Bot manager privileged mode is enabled! '
-                       'Use with caution and should be disabled in production!')
-
-    loop.create_task(lazy())
-
-    scheduler = AsyncIOScheduler(event_loop=loop)
-    scheduler.add_job(func=command.monitor.run_monitor_task,
-                      trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
-                      max_instances=10,
-                      misfire_grace_time=10)
-    scheduler.start()
-
     try:
+        signal(SIGTERM, lambda *_, **__: exit(1))  # graceful exit handler
+
+        init()
+
+        loop.run_until_complete(pre())
+
+        logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
+                    f"MANAGER: {env.MANAGER}\n"
+                    f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"
+                    f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
+                    f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
+                    f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
+                    f"UVLOOP: {'Enable' if env.uvloop_enabled else 'Disable'}\n"
+                    f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}\n"
+                    f"CPU: {pool.PROCESS_COUNT} (usable) / {pool.AVAIL_CPU_COUNT} (available) / {pool.CPU_COUNT} (total)")
+        if env.MANAGER_PRIVILEGED:
+            logger.warning('Bot manager privileged mode is enabled! '
+                           'Use with caution and should be disabled in production!')
+
+        loop.create_task(lazy())
+
+        scheduler = AsyncIOScheduler(event_loop=loop)
+        scheduler.add_job(func=command.monitor.run_monitor_task,
+                          trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
+                          max_instances=10,
+                          misfire_grace_time=10)
+        scheduler.start()
+
         bot.run_until_disconnected()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         pass
     finally:
         loop.run_until_complete(post())

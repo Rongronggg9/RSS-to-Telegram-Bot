@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from time import sleep
-from signal import signal, SIGINT
+from signal import signal, SIGINT, SIGTERM
 
 from . import env
 
@@ -19,7 +19,11 @@ aioExecutor = (
     ThreadPoolExecutor(max_workers=1)
     if PROCESS_COUNT == 1
     else ProcessPoolExecutor(max_workers=PROCESS_COUNT - 1,
-                             initializer=lambda: signal(SIGINT, lambda *_, **__: exit(1)))
+                             initializer=lambda: (
+                                     signal(SIGINT, lambda *_, **__: exit(1))
+                                     and
+                                     signal(SIGTERM, lambda *_, **__: exit(1))
+                             ))
 )
 
 

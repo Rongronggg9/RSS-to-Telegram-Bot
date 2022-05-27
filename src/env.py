@@ -232,7 +232,7 @@ IMAGES_WESERV_NL: Final = (
 del _images_weserv_nl
 
 # ----- db config -----
-_database_url = os.environ.get('DATABASE_URL') or f'sqlite://{config_folder_path}/db.sqlite3?journal_mode=OFF'
+_database_url = os.environ.get('DATABASE_URL') or f'sqlite://{config_folder_path}/db.sqlite3'
 DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
                        else _database_url)
 del _database_url

@@ -62,6 +62,7 @@ EXCEPTIONS_SHOULD_RETRY: Final = (asyncio.TimeoutError,
                                   # aiohttp.ClientPayloadError,
                                   # aiohttp.ClientResponseError,
                                   # aiohttp.ClientConnectionError,
+                                  aiohttp.ClientConnectorError,  # connection refused, etc
                                   aiohttp.ServerConnectionError,
                                   RetryInIpv4,
                                   TimeoutError,

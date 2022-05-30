@@ -34,7 +34,7 @@ python-dotenv==0.20.0
 multidict==6.0.2
 attrs==21.4.0
 asyncstdlib==3.10.4
-cachetools==5.1.0
+cachetools==5.2.0
 CJKwrap==2.2
 typing-extensions==4.2.0
 uvloop==0.16.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

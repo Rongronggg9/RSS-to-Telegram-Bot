@@ -1,5 +1,5 @@
 """
-Various pools.
+Asyncio helper functions.
 """
 from __future__ import annotations
 

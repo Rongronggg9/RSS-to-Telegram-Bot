@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from . import env  # the event loop and basic configurations are initialized in env, so import it first
-from . import pool  # the process pool need to be initialized once the event loop is ready to reduce memory consumption
+from . import aio_helper
 
-pool.init()
+# the process pool need to be initialized once the event loop is ready to reduce memory consumption
+aio_helper.init()
 
 import asyncio
 from functools import partial

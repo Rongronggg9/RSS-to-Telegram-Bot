@@ -26,7 +26,7 @@ from functools import partial
 from asyncstdlib.functools import lru_cache
 
 from . import env, log, locks
-from .pool import run_async
+from .aio_helper import run_async
 from .i18n import i18n
 from .errors_collection import RetryInIpv4
 

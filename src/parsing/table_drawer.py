@@ -12,7 +12,7 @@ from cjkwrap import fill
 from warnings import filterwarnings
 from cachetools import TTLCache
 
-from ..pool import run_async
+from ..aio_helper import run_async
 from .utils import logger
 from ..compat import cached_async
 

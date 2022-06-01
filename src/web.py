@@ -240,9 +240,8 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
     tries = 0
     retry_in_v4_flag = False
     max_tries = MAX_TRIES * (1 if socket_family == 0 else 2)
-    while True:
+    while tries < max_tries:
         tries += 1
-        assert tries <= max_tries, 'Too many tries'
 
         if retry_in_v4_flag or tries > MAX_TRIES:
             socket_family = AF_INET
@@ -267,7 +266,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
         except EXCEPTIONS_SHOULD_RETRY as e:
             if isinstance(e, RetryInIpv4):
                 retry_in_v4_flag = True
-            elif socket_family == AF_INET6 and tries > MAX_TRIES:
+            elif socket_family == AF_INET6 and tries >= MAX_TRIES:
                 retry_in_v4_flag = True
                 err_msg = str(e).strip()
                 e = RetryInIpv4(reason=f'{type(e).__name__}' + (f': {err_msg}' if err_msg else ''))

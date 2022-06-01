@@ -201,7 +201,8 @@ class TelegraphIfy:
         self.task = env.loop.create_task(self.generate_page())
 
     async def generate_page(self):
-        soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml', condition=len(self.html) > 64 * 1024)
+        soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
+                                         prefer_pool='thread', condition=len(self.html) > 64 * 1024)
 
         for tag in soup.find_all(recursive=True):
             try:

@@ -193,4 +193,4 @@ def _convert_table_to_png(table_html: str) -> Optional[bytes]:
 
 @cached_async(TTLCache(maxsize=32, ttl=180))
 async def convert_table_to_png(table_html: str) -> Optional[bytes]:
-    return await run_async(_convert_table_to_png, table_html)
+    return await run_async(_convert_table_to_png, table_html, prefer_pool='process')

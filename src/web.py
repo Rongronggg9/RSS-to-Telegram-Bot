@@ -454,7 +454,8 @@ async def get_page_title(url: str, allow_hostname=True, allow_path: bool = False
             raise ValueError('not an HTML page')
         # if len(r.content) <= 27:  # len of `<html><head><title></title>`
         #     raise ValueError('invalid HTML')
-        soup = await run_async_on_demand(BeautifulSoup, r.content, 'lxml', condition=len(r.content) > 64 * 1024)
+        soup = await run_async_on_demand(BeautifulSoup, r.content, 'lxml',
+                                         prefer_pool='thread', condition=len(r.content) > 64 * 1024)
         title = soup.title.text
         return title.strip()
     except Exception:

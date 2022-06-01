@@ -332,7 +332,7 @@ async def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
 
     soup = await run_async_on_demand(BeautifulSoup, html, 'lxml',
                                      parse_only=SoupStrainer(name=('a', 'link'), attrs={'href': True}),
-                                     condition=len(html) > 64 * 1024)
+                                     prefer_pool='thread', condition=len(html) > 64 * 1024)
     links = (
             soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher})
             or

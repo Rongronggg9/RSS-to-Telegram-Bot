@@ -82,7 +82,7 @@ async def run_async(func: Callable, *args, prefer_pool: POOL_TYPE = None, **kwar
     else:
         executor = _get_executor()
 
-    if rotate_deque_flag and executor is __aioExecutorsDeque[0]:
+    if rotate_deque_flag and __aioExecutorsDeque and executor is __aioExecutorsDeque[0]:
         __aioExecutorsDeque.rotate(1)
 
     return (

@@ -8,7 +8,7 @@ feedparser==6.0.10  # feedparser@git+https://github.com/Rongronggg9/feedparser.g
 listparser==0.18
 pillow==9.1.1
 beautifulsoup4==4.11.1
-lxml==4.8.0
+lxml==4.9.0
 rapidfuzz==2.0.11
 emoji==1.7.0
 minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)

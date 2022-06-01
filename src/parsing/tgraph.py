@@ -14,6 +14,7 @@ from aiohttp_socks import ProxyConnector
 
 from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
+from ..aio_helper import run_async_on_demand
 
 convert_table_to_png: Optional[Awaitable]
 if env.TABLE_TO_IMAGE:
@@ -178,14 +179,14 @@ TELEGRAPH_TAGS_ALLOW_ATTR: Final = {
 
 
 class TelegraphIfy:
-    def __init__(self, xml: str = None, title: str = None, link: str = None, feed_title: str = None,
+    def __init__(self, html: str = None, title: str = None, link: str = None, feed_title: str = None,
                  author: str = None, feed_link: str = None):
         self.retries = 0
 
         if not apis:
             raise aiograph.exceptions.TelegraphError('Telegraph token no set!')
 
-        self.xml = emojify(xml)
+        self.html = emojify(html)
         self.title = title
         self.link = link
         self.feed_title = feed_title
@@ -200,7 +201,7 @@ class TelegraphIfy:
         self.task = env.loop.create_task(self.generate_page())
 
     async def generate_page(self):
-        soup = BeautifulSoup(self.xml, 'lxml')
+        soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml', condition=len(self.html) > 64 * 1024)
 
         for tag in soup.find_all(recursive=True):
             try:

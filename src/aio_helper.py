@@ -2,8 +2,10 @@
 Asyncio helper functions.
 """
 from __future__ import annotations
+from typing import Callable, Union
 
 import os
+from functools import partial
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from time import sleep
 from signal import signal, SIGINT, SIGTERM
@@ -27,11 +29,23 @@ aioExecutor = (
 )
 
 
-async def run_async(func, *args):
+async def run_async_on_demand(func: Callable, *args, condition: Union[Callable, bool] = None, **kwargs):
+    return (
+        await run_async(func, *args, **kwargs)
+        if condition and (condition is True or condition(*args, **kwargs)) else
+        func(*args, **kwargs)
+    )
+
+
+async def run_async(func: Callable, *args, **kwargs):
     """
     Run a CPU-consuming function asynchronously.
     """
-    return await env.loop.run_in_executor(aioExecutor, func, *args)
+    return (
+        await env.loop.run_in_executor(aioExecutor, partial(func, *args, **kwargs))
+        if kwargs else
+        await env.loop.run_in_executor(aioExecutor, func, *args)
+    )
 
 
 def init():

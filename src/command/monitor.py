@@ -236,7 +236,7 @@ async def __monitor(feed: db.Feed) -> str:
 async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapping):
     link = entry.get('link')
     try:
-        post = get_post_from_entry(entry, feed.title, feed.link)
+        post = await get_post_from_entry(entry, feed.title, feed.link)
     except Exception as e:
         logger.error(f'Failed to parse the post {link} (feed: {feed.link}) from entry:', exc_info=e)
         try:

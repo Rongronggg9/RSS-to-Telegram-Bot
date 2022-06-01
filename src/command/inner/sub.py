@@ -12,6 +12,7 @@ from cachetools import TTLCache
 from os import path
 
 from ... import db, web
+from ...aio_helper import run_async_on_demand
 from ...i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html, \
     check_sub_limit
@@ -57,7 +58,7 @@ async def sub(user_id: int,
             if rss_d is None:
                 # try sniffing a feed for the web page
                 if not bypass_feed_sniff and wf.status == 200 and wf.content:
-                    sniffed_feed_url = feed_sniffer(feed_url, wf.content)
+                    sniffed_feed_url = await feed_sniffer(feed_url, wf.content)
                     if sniffed_feed_url:
                         sniff_ret = await sub(user_id, sniffed_feed_url, lang=lang, bypass_feed_sniff=True)
                         if sniff_ret['sub']:
@@ -323,13 +324,15 @@ FeedAHrefMatcher = re.compile(r'/(feed|rss|atom)(\.(xml|rss|atom))?$', re.I)
 FeedATextMatcher = re.compile(r'([^a-zA-Z]|^)(rss|atom)([^a-zA-Z]|$)', re.I)
 
 
-def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
+async def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
     if url in FeedSnifferCache:
         return FeedSnifferCache[url]
     # if len(html) < 69:  # len of `<html><head></head><body></body></html>` + `<link rel="alternate" href="">`
     #     return None  # too short to sniff
 
-    soup = BeautifulSoup(html, 'lxml', parse_only=SoupStrainer(name=('a', 'link'), attrs={'href': True}))
+    soup = await run_async_on_demand(BeautifulSoup, html, 'lxml',
+                                     parse_only=SoupStrainer(name=('a', 'link'), attrs={'href': True}),
+                                     condition=len(html) > 64 * 1024)
     links = (
             soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher})
             or

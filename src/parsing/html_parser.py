@@ -12,6 +12,7 @@ from .. import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
+from ..aio_helper import run_async_on_demand
 
 convert_table_to_png: Optional[Awaitable]
 if env.TABLE_TO_IMAGE:
@@ -36,13 +37,14 @@ class Parser:
         :param feed_link: feed link (use for resolve relative urls)
         """
         self.html = html
-        self.soup = BeautifulSoup(self.html, 'lxml')
-        self.media: Media = Media()
+        self.soup: Optional[BeautifulSoup] = None
+        self.media = Media()
         self.html_tree = HtmlTree('')
         self.feed_link = feed_link
         self.parsed = False
 
     async def parse(self):
+        self.soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml', condition=len(self.html) > 64 * 1024)
         self.html_tree = HtmlTree(await self._parse_item(self.soup))
         self.parsed = True
 

@@ -108,7 +108,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
 
 
 async def __send(uid, entry, feed_title, link):
-    post = get_post_from_entry(entry, feed_title, link)
+    post = await get_post_from_entry(entry, feed_title, link)
     logger.debug(f"Sending {entry.get('title', 'Untitled')} ({entry.get('link', 'No link')})...")
     await post.test_format(uid)
 

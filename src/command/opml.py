@@ -2,12 +2,16 @@ from __future__ import annotations
 from typing import Union, Optional
 
 import listparser
+from io import StringIO
 from datetime import datetime
+from functools import partial
 from telethon import events, Button
 from telethon.tl import types
 from telethon.tl.patched import Message
 
 from .. import env, db
+from ..compat import bozo_exception_removal_wrapper
+from ..aio_helper import run_async_on_demand
 from ..i18n import i18n
 from . import inner
 from .utils import command_gatekeeper, logger, send_success_and_failure_msg, get_callback_tail, check_sub_limit
@@ -66,7 +70,7 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
     if event.is_group and reply_message.sender_id != env.bot_id:
         return  # must reply to the bot in a group to import opml
     try:
-        opml_file = await event.download_media(file=bytes)
+        opml_file: bytes = await event.download_media(file=bytes)
     except Exception as e:
         await event.reply('ERROR: ' + i18n[lang]['fetch_file_failed'])
         logger.warning(f'Failed to get opml file from {chat_id}: ', exc_info=e)
@@ -75,7 +79,13 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
     reply: Message = await event.reply(i18n[lang]['processing'] + '\n' + i18n[lang]['opml_import_processing'])
     logger.info(f'Got an opml file from {chat_id}')
 
-    opml_d = listparser.parse(opml_file.decode())
+    opml_s = opml_file.decode()
+    with StringIO(opml_s) as opml_io:
+        opml_d = await run_async_on_demand(
+            partial(bozo_exception_removal_wrapper,
+                    listparser.parse, opml_io),
+            condition=len(opml_s) > 64 * 1024
+        )
     if not opml_d.feeds:
         await reply.edit('ERROR: ' + i18n[lang]['opml_parse_error'])
         return

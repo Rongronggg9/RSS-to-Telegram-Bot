@@ -237,7 +237,7 @@ async def lazy():
 
 async def post():
     await asyncio.gather(db.close(), tgraph.close())
-    pool.shutdown()
+    aio_helper.shutdown()
 
 
 def main():
@@ -248,15 +248,19 @@ def main():
 
         loop.run_until_complete(pre())
 
-        logger.info(f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
-                    f"MANAGER: {env.MANAGER}\n"
-                    f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"
-                    f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
-                    f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
-                    f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
-                    f"UVLOOP: {'Enable' if env.uvloop_enabled else 'Disable'}\n"
-                    f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}\n"
-                    f"CPU: {pool.PROCESS_COUNT} (usable) / {pool.AVAIL_CPU_COUNT} (available) / {pool.CPU_COUNT} (total)")
+        logger.info(
+            f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
+            f"MANAGER: {env.MANAGER}\n"
+            f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"
+            f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
+            f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"
+            f"TELEGRAPH: {f'Enable ({tgraph.apis.count} accounts)' if tgraph.apis else 'Disable'}\n"
+            f"UVLOOP: {'Enable' if env.uvloop_enabled else 'Disable'}\n"
+            f"MULTIUSER: {'Enable' if env.MULTIUSER else 'Disable'}\n"
+            f"CPU: {aio_helper.PROCESS_COUNT} (usable) / "
+            f"{aio_helper.AVAIL_CPU_COUNT} (available) / "
+            f"{aio_helper.CPU_COUNT} (total)"
+        )
         if env.MANAGER_PRIVILEGED:
             logger.warning('Bot manager privileged mode is enabled! '
                            'Use with caution and should be disabled in production!')

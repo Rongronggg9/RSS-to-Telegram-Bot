@@ -1,5 +1,6 @@
-"""Containing something make the bot compatible with Python 3.7 ~ 3.10"""
+"""Containing something makes the bot compatible with Python 3.7 ~ 3.10, ThreadPoolExecutor/ProcessPoolExecutor."""
 from __future__ import annotations
+from typing import Callable
 
 import sys
 import functools
@@ -120,3 +121,15 @@ def cached_async(cache, key=hashkey):
         return functools.update_wrapper(wrapper, func)
 
     return decorator
+
+
+def bozo_exception_removal_wrapper(func: Callable, *args, **kwargs):
+    """
+    bozo_exception is un-pickle-able, preventing ret from returning from ProcessPoolExecutor, so remove it
+    """
+    ret = func(*args, **kwargs)
+
+    if ret.get('bozo_exception'):
+        del ret['bozo_exception']
+
+    return ret

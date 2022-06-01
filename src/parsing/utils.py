@@ -3,9 +3,8 @@ from typing import Optional, Sequence, Union
 
 import re
 import json
-from bs4 import BeautifulSoup
 from bs4.element import Tag
-from minify_html import minify
+from minify_html import minify as _minify
 from html import unescape
 from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
@@ -15,6 +14,7 @@ from urllib.parse import urljoin
 from os import path
 
 from .. import log
+from ..aio_helper import run_async_on_demand
 
 logger = log.getLogger('RSStT.parsing')
 
@@ -27,6 +27,13 @@ replaceInvalidSpace = partial(
 )
 isAbsoluteHttpLink = re.compile(r'^https?://').match
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
+
+minify = partial(_minify,
+                 do_not_minify_doctype=True,
+                 keep_closing_tags=True,
+                 keep_spaces_between_attributes=True,
+                 ensure_spec_compliant_unquoted_attribute_values=True,
+                 remove_processing_instructions=True)
 
 
 class Enclosure:
@@ -75,16 +82,9 @@ def is_emoticon(tag: Tag) -> bool:
             or src.startswith('data:'))
 
 
-def html_validator(html: str) -> str:
+async def html_validator(html: str) -> str:
     html = stripBr(html)
-    # validate invalid HTML first, since minify_html is not so robust
-    html = BeautifulSoup(html, 'lxml').decode()
-    html = minify(html,
-                  do_not_minify_doctype=True,
-                  keep_closing_tags=True,
-                  keep_spaces_between_attributes=True,
-                  ensure_spec_compliant_unquoted_attribute_values=True,
-                  remove_processing_instructions=True)
+    html = await run_async_on_demand(minify, html, condition=len(html) > 512 * 1024)
     html = replaceInvalidSpace(html)
     return html
 
@@ -96,7 +96,7 @@ def html_space_stripper(s: str, enable_emojify: bool = False) -> str:
     return emojify(s) if enable_emojify else s
 
 
-def parse_entry(entry, feed_link: Optional[str] = None):
+async def parse_entry(entry, feed_link: Optional[str] = None):
     class EntryParsed:
         content: str = ''
         link: Optional[str] = None
@@ -120,7 +120,7 @@ def parse_entry(entry, feed_link: Optional[str] = None):
                 content = content[0]
         content = content.get('value', '')
 
-    EntryParsed.content = html_validator(content)
+    EntryParsed.content = await html_validator(content)
     EntryParsed.link = entry.get('link') or entry.get('guid')
     author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
     author = html_space_stripper(author) if author else None

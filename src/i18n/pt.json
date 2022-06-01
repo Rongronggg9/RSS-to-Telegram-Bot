@@ -1,9 +1,9 @@
 {
     "l10n_info": {
-        "lang_code": "pr-br",
+        "lang_code": "pt",
         "iso_639_code": "pt",
-        "language_name": "Português Brasil",
-        "lang_native_name": "Português Brasil",
+        "language_name": "Portuguese",
+        "lang_native_name": "Português",
         "select_lang_prompt": "Por favor, selecione um idioma.",
         "welcome_prompt": "Bem-vindo ao RSS do Telegram Bot.",
         "rsstt_slogan": "RSS para Telegram Bot, um robot de telegrama RSS que se preocupa com a sua experiência de leitura."
@@ -221,9 +221,9 @@
         "cmd_description_deactivate_subs": "",
         "cmd_description_version": "",
         "cmd_description_lang": "",
-        "cmd_description_help": "",
-        "cmd_description_test": "",
-        "cmd_description_set_option": "",
+        "cmd_description_help": "Ver ajuda",
+        "cmd_description_test": "Teste (somente gerenciador de bot)",
+        "cmd_description_set_option": "Definir opções de bot (somente gerenciador de bot)",
         "cmd_description_user_info": "",
         "usage_in_channel_or_group_prompt_html": ""
     }

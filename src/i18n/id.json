@@ -6,12 +6,12 @@
         "lang_native_name": "Bahasa Indonesia",
         "select_lang_prompt": "Silakan pilih bahasa.",
         "welcome_prompt": "Selamat datang di Bot RSS ke Telegram.",
-        "rsstt_slogan": ""
+        "rsstt_slogan": "RSS ke Telegram Bot, bot RSS Telegram yang peduli dengan pengalaman membaca Anda."
     },
     "l10n_sub_status": {
-        "no_subscription": "",
-        "already_subscribed": "",
-        "subscription_not_exist": ""
+        "no_subscription": "Anda tidak punya langganan",
+        "already_subscribed": "Sudah berlangganan",
+        "subscription_not_exist": "Langganan tidak ada"
     },
     "l10n_error_reasons": {
         "feed_invalid": "Feed RSS tidak valid",
@@ -19,10 +19,10 @@
         "network_error": "Kesalahan jaringan",
         "internal_error": "Kesalahan internal",
         "status_code_error": "Kesalahan kode status HTTP",
-        "uncaught_internal_error": "",
-        "operation_timeout_error": "",
+        "uncaught_internal_error": "Ada kesalahan internal",
+        "operation_timeout_error": "Batas waktu operasi",
         "action_invalid": "Tindakan tidak valid",
-        "sub_limit_reached": "",
+        "sub_limit_reached": "Batas jumlah langganan tercapai",
         "flood_wait_prompt": "Anda mengoperasikan bot terlalu cepat hingga bot melewati batas Telegram. Harap memperlambat.",
         "edit_conflict_prompt": "Anda mengoperasikan bot terlalu sering sehingga terjadi konflik operasi. Harap melambat.",
         "callback_already_running_prompt": "Anda sedang menjalankan perintah lain. Silakan coba lagi setelah itu selesai.",

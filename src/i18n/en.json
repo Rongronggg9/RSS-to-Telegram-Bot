@@ -61,13 +61,13 @@
         "group": "Group"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "Please reply to this message with the URL of an RSS feed. \nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
+        "sub_reply_feed_url_prompt_html": "Please reply to this message with the URL of an RSS feed.\nOr, you may use <code>/sub url1 url2 url3 …</code> to subscribe in bulk.",
         "sub_usage_in_channel_html": "Please use <code>/sub url1 url2 url3 …</code> to subscribe.",
         "sub_successful": "Subscribed successfully",
         "sub_failed": "Failed to subscribe"
     },
     "l10n_cmd_unsub": {
-        "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe from. \nOr, you may use <code>/unsub url1 url2 url3 …</code> to unsubscribe in bulk.",
+        "unsub_choose_sub_prompt_html": "Please choose a subscription you'd like to unsubscribe from.\nOr, you may use <code>/unsub url1 url2 url3 …</code> to unsubscribe in bulk.",
         "unsub_successful": "Unsubscribed successfully",
         "unsub_failed": "Failed to unsubscribe"
     },

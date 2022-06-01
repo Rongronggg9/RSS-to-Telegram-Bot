@@ -1,7 +1,7 @@
 {
     "l10n_info": {
         "lang_code": "ru",
-        "iso_639_code": "",
+        "iso_639_code": "ru",
         "language_name": "Russian",
         "lang_native_name": "Русский",
         "select_lang_prompt": "Пожалуйста, выберите язык.",

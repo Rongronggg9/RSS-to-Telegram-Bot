@@ -84,7 +84,7 @@ def is_emoticon(tag: Tag) -> bool:
 
 async def html_validator(html: str) -> str:
     html = stripBr(html)
-    html = await run_async_on_demand(minify, html, condition=len(html) > 512 * 1024)
+    html = await run_async_on_demand(minify, html, prefer_pool='thread', condition=len(html) > 512 * 1024)
     html = replaceInvalidSpace(html)
     return html
 

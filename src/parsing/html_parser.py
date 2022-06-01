@@ -44,7 +44,8 @@ class Parser:
         self.parsed = False
 
     async def parse(self):
-        self.soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml', condition=len(self.html) > 64 * 1024)
+        self.soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
+                                              prefer_pool='thread', condition=len(self.html) > 64 * 1024)
         self.html_tree = HtmlTree(await self._parse_item(self.soup))
         self.parsed = True
 

@@ -33,7 +33,7 @@ APScheduler==3.9.1
 python-dotenv==0.20.0
 multidict==6.0.2
 attrs==21.4.0
-asyncstdlib==3.10.4
+asyncstdlib==3.10.5
 cachetools==5.2.0
 CJKwrap==2.2
 typing-extensions==4.2.0

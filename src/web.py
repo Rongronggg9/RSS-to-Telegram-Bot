@@ -254,8 +254,8 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
         )
 
         try:
-            async with locks.overall_web_semaphore:
-                async with semaphore_to_use:
+            async with semaphore_to_use:
+                async with locks.overall_web_semaphore:
                     ret = await asyncio.wait_for(_fetch(), timeout + 0.1)
                     if socket_family == AF_INET6 and tries < max_tries \
                             and ret.status in {400,  # Bad Request (some feed providers return 400 for banned IPs)

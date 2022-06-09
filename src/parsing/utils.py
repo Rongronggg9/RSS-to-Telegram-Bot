@@ -3,6 +3,7 @@ from typing import Optional, Sequence, Union
 
 import re
 import json
+from bs4 import BeautifulSoup
 from bs4.element import Tag
 from minify_html import minify as _minify
 from html import unescape
@@ -18,7 +19,7 @@ from ..aio_helper import run_async_on_demand
 
 logger = log.getLogger('RSStT.parsing')
 
-stripBr = partial(re.compile(r'\s*<br\s*/?>\s*').sub, '<br/>')
+stripBr = partial(re.compile(r'\s*<br\s*/?\s*>\s*').sub, '<br>')
 stripLineEnd = partial(re.compile(r'[ 　\t\r\u2028\u2029]+\n').sub, '\n')  # use firstly
 stripNewline = partial(re.compile(r'[\f\n\u2028\u2029]{3,}').sub, '\n\n')  # use secondly
 stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
@@ -29,11 +30,11 @@ isAbsoluteHttpLink = re.compile(r'^https?://').match
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 
 minify = partial(_minify,
+                 # https://docs.rs/minify-html/latest/minify_html/struct.Cfg.html
                  do_not_minify_doctype=True,
-                 keep_closing_tags=True,
-                 keep_spaces_between_attributes=True,
                  ensure_spec_compliant_unquoted_attribute_values=True,
-                 remove_processing_instructions=True)
+                 keep_closing_tags=True,
+                 keep_spaces_between_attributes=True)
 
 
 class Enclosure:
@@ -83,8 +84,14 @@ def is_emoticon(tag: Tag) -> bool:
 
 
 async def html_validator(html: str) -> str:
-    html = stripBr(html)
+    # fix malformed HTML first, since minify-html is not so robust
+    # (resulting in RecursionError or unexpected format while html_parser parsing the minified HTML)
+    # https://github.com/wilsonzlin/minify-html/issues/86
+    soup = await run_async_on_demand(BeautifulSoup, html, 'lxml', prefer_pool='thread', condition=len(html) > 64 * 1024)
+    html = str(soup)
+    # minify HTML to strip useless whitespaces
     html = await run_async_on_demand(minify, html, prefer_pool='thread', condition=len(html) > 512 * 1024)
+    html = stripBr(html)
     html = replaceInvalidSpace(html)
     return html
 

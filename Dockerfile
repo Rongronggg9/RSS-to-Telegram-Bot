@@ -71,20 +71,19 @@ RUN \
 
 FROM python:3.10-slim-bullseye as app
 
-ENV PATH="/opt/venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1 \
-    MALLOC_MMAP_THRESHOLD_=131072
-
 WORKDIR /app
 
-# install fonts
 RUN \
     set -ex && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        fonts-wqy-microhei dumb-init \
+        fonts-wqy-microhei dumb-init libjemalloc2 \
     && \
     rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    LD_PRELOAD=libjemalloc.so.2
 
 COPY --from=dep-builder /opt/venv /opt/venv
 COPY --from=app-builder /app-minimal /app

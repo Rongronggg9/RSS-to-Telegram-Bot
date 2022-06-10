@@ -81,9 +81,14 @@ RUN \
     && \
     rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/opt/venv/bin:$PATH" \
+ENV \
+    PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    LD_PRELOAD=libjemalloc.so.2
+    LD_PRELOAD=libjemalloc.so.2 \
+    MALLOC_CONF=background_thread:true,max_background_threads:1,metadata_thp:auto,dirty_decay_ms:80000,muzzy_decay_ms:80000
+    # jemalloc tuning, Ref:
+    # https://github.com/home-assistant/core/pull/70899
+    # https://github.com/jemalloc/jemalloc/blob/5.2.1/TUNING.md
 
 COPY --from=dep-builder /opt/venv /opt/venv
 COPY --from=app-builder /app-minimal /app

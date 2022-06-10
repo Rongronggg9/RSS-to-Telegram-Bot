@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Union, Optional
 
 import listparser
-from io import StringIO
 from datetime import datetime
 from functools import partial
 from telethon import events, Button
@@ -79,15 +78,14 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
     reply: Message = await event.reply(i18n[lang]['processing'] + '\n' + i18n[lang]['opml_import_processing'])
     logger.info(f'Got an opml file from {chat_id}')
 
-    opml_s = opml_file.decode()
-    with StringIO(opml_s) as opml_io:
-        opml_d = await run_async_on_demand(
-            partial(bozo_exception_removal_wrapper,
-                    listparser.parse, opml_io),
-            condition=len(opml_s) > 64 * 1024
-        )
+    opml_d = await run_async_on_demand(
+        partial(bozo_exception_removal_wrapper,
+                listparser.parse, opml_file),
+        condition=len(opml_file) > 64 * 1024
+    )
     if not opml_d.feeds:
         await reply.edit('ERROR: ' + i18n[lang]['opml_parse_error'])
+        logger.warning(f'Failed to parse opml file from {chat_id}')
         return
 
     import_result = await inner.sub.subs(chat_id,

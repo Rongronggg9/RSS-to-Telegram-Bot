@@ -326,7 +326,7 @@ async def cmd_set_title(event: Union[events.NewMessage.Event, Message],
     sub, title = await parse_command_get_sub_or_user_and_param(event.raw_text, chat_id, max_split=2)
     title = title.strip() if title else None
     if not sub:
-        await event.respond(i18n[lang]['permission_denied_no_direct_use'])
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'] % '/set')
         return
     if not title and not sub.title:
         await event.respond(i18n[lang]['cmd_set_title_usage_prompt_html'], parse_mode='html')
@@ -357,7 +357,7 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
     interval = int(interval) if interval and interval.isdigit() and int(interval) >= 1 else None
     minimal_interval = db.EffectiveOptions.minimal_interval
     if not sub_or_user:
-        await event.respond(i18n[lang]['permission_denied_no_direct_use'])
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'] % '/set')
         return
     if not interval:
         await event.respond(i18n[lang]['cmd_set_interval_usage_prompt_html'], parse_mode='html')
@@ -394,7 +394,7 @@ async def cmd_set_hashtags(event: Union[events.NewMessage.Event, Message],
     sub, hashtags = await parse_command_get_sub_or_user_and_param(event.raw_text, chat_id, max_split=2)
     hashtags = inner.utils.parse_hashtags(hashtags) if hashtags else None
     if not sub:
-        await event.respond(i18n[lang]['permission_denied_no_direct_use'])
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'] % '/set')
         return
     if not hashtags and not sub.tags:
         await event.respond(i18n[lang]['cmd_set_hashtags_usage_prompt_html'], parse_mode='html')

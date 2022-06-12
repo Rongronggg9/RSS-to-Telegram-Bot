@@ -22,7 +22,7 @@
         "uncaught_internal_error": "Uncaught internal error",
         "operation_timeout_error": "Operation timeout",
         "action_invalid": "Action invalid",
-        "sub_limit_reached": "Subscription number limit reached",
+        "sub_limit_reached": "Subscription quantity limit reached",
         "flood_wait_prompt": "You are operating too frequently that the bot has exceeded the rate limit of Telegram. Please slow down.",
         "edit_conflict_prompt": "You are operating too frequently that operation conflicts. Please slow down.",
         "callback_already_running_prompt": "You have requested another command. Please retry after it finishes.",
@@ -38,10 +38,10 @@
         "permission_denied_bot_not_member": "The bot is no longer in this group/channel, thus won't work here.",
         "permission_denied_switch_pm": "Continue in the private chat with the bot…",
         "permission_denied_input_command": "Please input a command to continue…",
-        "permission_denied_no_direct_use": "This command should not be used directly. Use /set instead.",
+        "permission_denied_no_direct_use": "This command should not be used directly. Use %s instead.",
         "promote_to_admin_prompt": "If you are an anonymous admin of this group, please promote the bot to an admin (no permission needed) to empower the bot to verify your identity.",
         "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\"\n2. Change \"Chat history for new members\" to \"Visible\"\n3. Save chat history visibility setting\n4. Save all settings\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again\n6. Now you should be able to use the bot",
-        "sub_limit_reached_prompt": "The number of your subscriptions has reached the limit (%d/%d) applied by the bot manager. Please remove (/unsub) some subscriptions before adding new ones."
+        "sub_limit_reached_prompt": "The quantity of your subscriptions has reached the limit (%d/%d) applied by the bot manager. Please remove (/unsub) some subscriptions before adding new ones."
     },
     "l10n_misc": {
         "choose_sub_prompt": "Please choose a subscription",
@@ -82,7 +82,7 @@
         "import_for_channel_or_group_prompt": "If you want to import subscriptions for your channel/group, please fill in the caption with the channel/group's ID (must start with '-100') or @username.",
         "send_opml_reply_placeholder": "The OPML file to be imported (extension name must be .opml)",
         "fetch_file_failed": "Failed to fetch the file",
-        "opml_import_processing": "If the number of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
+        "opml_import_processing": "If the quantity of feeds is large or feed servers are slow, it can be a long wait. Sit back and relax.",
         "opml_parse_error": "OPML parsing error",
         "keep_subs_title_button": "Keep the custom titles of imported subscriptions",
         "delete_subs_title_button": "Delete the custom titles of imported subscriptions"
@@ -197,6 +197,9 @@
         "user_not_found": "The user was not found. Use their user ID instead.",
         "user_info": "User info",
         "sub_count": "Subscription count",
+        "sub_limit": "Subscription quantity limit",
+        "sub_limit_unlimited": "unlimited",
+        "sub_limit_default": "default",
         "participant_count": "Participant count",
         "user_state": "User state",
         "user_state_-1": "Banned",
@@ -205,7 +208,10 @@
         "user_state_description_0": "can use the bot only if multi-user mode is enabled",
         "user_state_1": "User",
         "user_state_description_1": "can use the bot",
-        "set_user_state_as": "Set user state as"
+        "set_user_state_as": "Set user state as",
+        "reset_sub_limit_to_default": "Reset subscription quantity limit to default",
+        "set_sub_limit_to": "Set subscription quantity limit to...",
+        "cmd_set_sub_limit_prompt_html": "Command usage: <code>/set_sub_limit user_id subscription_quantity_limit</code>\n\nNote: <code>subscription_quantity_limit</code> must be a integer, <code>-1</code> for unlimited."
     },
     "l10n_cmd_descriptions": {
         "commands": "Commands",

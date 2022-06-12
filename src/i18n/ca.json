@@ -197,6 +197,9 @@
         "user_not_found": "",
         "user_info": "",
         "sub_count": "",
+        "sub_limit": "",
+        "sub_limit_unlimited": "",
+        "sub_limit_default": "",
         "participant_count": "",
         "user_state": "",
         "user_state_-1": "",
@@ -205,7 +208,10 @@
         "user_state_description_0": "",
         "user_state_1": "",
         "user_state_description_1": "",
-        "set_user_state_as": ""
+        "set_user_state_as": "",
+        "reset_sub_limit_to_default": "",
+        "set_sub_limit_to": "",
+        "cmd_set_sub_limit_prompt_html": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "Ordres",

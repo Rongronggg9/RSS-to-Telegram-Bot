@@ -38,7 +38,7 @@
         "permission_denied_bot_not_member": "本 bot 已经不在本群/频道里，不会在此工作。",
         "permission_denied_switch_pm": "在和 bot 的私聊中继续…",
         "permission_denied_input_command": "请输入命令以继续…",
-        "permission_denied_no_direct_use": "不应直接使用此命令。请改用 /set 。",
+        "permission_denied_no_direct_use": "不应直接使用此命令。请改用 %s 。",
         "promote_to_admin_prompt": "如果你是本群组的匿名管理员，请将 bot 提升为管理员 (不需要任何权限)，这样 bot 才能验证你的身份。",
         "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作: \n1. 转到群组信息，点击「管理群组」\n2. 将「历史记录对新成员」设置为「可见」\n3. 保存历史记录可见性设置\n4. 保存所有设置\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」\n6. 现在你应该可以使用这个 bot 了",
         "sub_limit_reached_prompt": "订阅数量已经达到了 bot 管理员应用的限制 (%d/%d)。在添加新的订阅前，请退订 (/unsub) 一些订阅。"
@@ -197,6 +197,9 @@
         "user_not_found": "未找到用户，请使用用户 ID。",
         "user_info": "用户信息",
         "sub_count": "订阅数量",
+        "sub_limit": "订阅数量限制",
+        "sub_limit_unlimited": "无限",
+        "sub_limit_default": "默认",
         "participant_count": "成员数量",
         "user_state": "用户状态",
         "user_state_-1": "已封禁",
@@ -205,7 +208,10 @@
         "user_state_description_0": "只能在开启多用户模式时使用 bot",
         "user_state_1": "用户",
         "user_state_description_1": "可以使用 bot",
-        "set_user_state_as": "将用户状态设置为"
+        "set_user_state_as": "将用户状态设置为",
+        "reset_sub_limit_to_default": "重置订阅数量限制为默认值",
+        "set_sub_limit_to": "将订阅数量限制设置为...",
+        "cmd_set_sub_limit_prompt_html": "命令用法: <code>/set_sub_limit 用户ID 订阅数量限制</code>\n\n注: <code>订阅数量限制</code> 必须是整数，<code>-1</code> 代表无限。"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",

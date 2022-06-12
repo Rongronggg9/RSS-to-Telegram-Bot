@@ -38,7 +38,7 @@
         "permission_denied_bot_not_member": "Bot již není v této skupině/kanálu, a proto zde nebude fungovat.",
         "permission_denied_switch_pm": "Pokračujte s botem v soukromém chatu…",
         "permission_denied_input_command": "Pro pokračování zadejte příkaz…",
-        "permission_denied_no_direct_use": "Tento příkaz by neměl být používán přímo. Místo toho použijte příkaz /set.",
+        "permission_denied_no_direct_use": "Tento příkaz by neměl být používán přímo. Místo toho použijte příkaz %s.",
         "promote_to_admin_prompt": "Pokud jste anonymní správce této skupiny, povyšte bota na správce (není třeba povolení), aby mohl ověřit vaši totožnost.",
         "group_upgrade_needed_prompt": "",
         "sub_limit_reached_prompt": ""
@@ -197,6 +197,9 @@
         "user_not_found": "",
         "user_info": "",
         "sub_count": "",
+        "sub_limit": "",
+        "sub_limit_unlimited": "",
+        "sub_limit_default": "",
         "participant_count": "",
         "user_state": "",
         "user_state_-1": "",
@@ -205,7 +208,10 @@
         "user_state_description_0": "",
         "user_state_1": "",
         "user_state_description_1": "",
-        "set_user_state_as": ""
+        "set_user_state_as": "",
+        "reset_sub_limit_to_default": "",
+        "set_sub_limit_to": "",
+        "cmd_set_sub_limit_prompt_html": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "",

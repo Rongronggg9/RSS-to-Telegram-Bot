@@ -745,7 +745,7 @@ def get_callback_tail(event: Union[events.NewMessage.Event, Message,
 
 
 async def check_sub_limit(event: Union[events.NewMessage.Event, Message], user_id: int, lang: Optional[str] = None):
-    limit_reached, curr_count, limit = await inner.utils.check_sub_limit(user_id)
+    limit_reached, curr_count, limit, _ = await inner.utils.check_sub_limit(user_id)
     if limit_reached:
         logger.warning(f'Refused user {user_id} to add new subscriptions due to limit reached ({curr_count}/{limit})')
         msg = i18n[lang]['sub_limit_reached_prompt'] % (curr_count, limit)

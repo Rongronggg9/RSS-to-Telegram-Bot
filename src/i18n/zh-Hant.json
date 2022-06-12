@@ -38,7 +38,7 @@
         "permission_denied_bot_not_member": "該機器人不再在此群組/頻道中，因此不會在這里工作。",
         "permission_denied_switch_pm": "在與機器人的私人聊天中繼續…",
         "permission_denied_input_command": "請輸入命令以繼續…",
-        "permission_denied_no_direct_use": "不應直接使用此命令。請改用 /set。",
+        "permission_denied_no_direct_use": "不應直接使用此命令。請改用 %s 。",
         "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升爲管理員 (無需權限)，以授權機器人驗證您的身份。",
         "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級爲超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改爲「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改爲「隱藏」\n6. 現在您應該能夠使用機器人了",
         "sub_limit_reached_prompt": "訂閱的數量已經到達機器人管理員實施的限額 (%d/%d)。在進一步新增訂閱前，請先退訂 (/unsub) 一些訂閱。"
@@ -197,6 +197,9 @@
         "user_not_found": "未能找尋到用戶，請使用用戶 ID。",
         "user_info": "用戶資訊",
         "sub_count": "訂閱數目",
+        "sub_limit": "訂閱限額",
+        "sub_limit_unlimited": "無限額",
+        "sub_limit_default": "預設",
         "participant_count": "成員數目",
         "user_state": "用戶狀態",
         "user_state_-1": "被封鎖",
@@ -205,7 +208,10 @@
         "user_state_description_0": "只在多用戶模式啓用時可使用機器人",
         "user_state_1": "用戶",
         "user_state_description_1": "可使用機器人",
-        "set_user_state_as": "更改用戶狀態爲"
+        "set_user_state_as": "更改用戶狀態爲",
+        "reset_sub_limit_to_default": "重設訂閱限額爲預設值",
+        "set_sub_limit_to": "設置訂閱限額爲…",
+        "cmd_set_sub_limit_prompt_html": "命令用法: <code>/set_sub_limit 用戶ID 訂閱限額</code>\n\n注: <code>訂閱限額</code> 必須是正整數，<code>-1</code> 表示無限額。"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",

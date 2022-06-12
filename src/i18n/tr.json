@@ -38,7 +38,7 @@
         "permission_denied_bot_not_member": "Bot artık bu grupta/kanalda değil, dolayısıyla burada çalışmayacak.",
         "permission_denied_switch_pm": "Botla özel sohbete devam edin…",
         "permission_denied_input_command": "Devam etmek için lütfen bir komut girin…",
-        "permission_denied_no_direct_use": "Bu komut doğrudan kullanılmamalıdır. Bunun yerine /set kullanın.",
+        "permission_denied_no_direct_use": "Bu komut doğrudan kullanılmamalıdır. Bunun yerine %s kullanın.",
         "promote_to_admin_prompt": "Bu grubun anonim bir yöneticisiyseniz, botu kimliğinizi doğrulamasını sağlamak için lütfen botu bir yöneticiye (izne gerek yok) yükseltin.",
         "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız",
         "sub_limit_reached_prompt": "Aboneliklerinizin sayısı, bot yöneticisi tarafından uygulanan sınıra (%d/%d) ulaştı. Lütfen yenilerini eklemeden önce bazı abonelikleri kaldırın (/unsub)."
@@ -197,6 +197,9 @@
         "user_not_found": "Kullanıcı bulunamadı. Bunun yerine kullanıcı kimliğini kullanın.",
         "user_info": "Kullanıcı bilgisi",
         "sub_count": "Abonelik sayısı",
+        "sub_limit": "",
+        "sub_limit_unlimited": "",
+        "sub_limit_default": "",
         "participant_count": "Katılımcı sayısı",
         "user_state": "Kullanıcı durumu",
         "user_state_-1": "Yasaklı",
@@ -205,7 +208,10 @@
         "user_state_description_0": "Botu yalnızca çok kullanıcılı mod etkinleştirilmişse kullanabilir",
         "user_state_1": "Kullanıcı",
         "user_state_description_1": "botu kullanabilir",
-        "set_user_state_as": "Kullanıcı durumunu şöyle ayarla"
+        "set_user_state_as": "Kullanıcı durumunu şöyle ayarla",
+        "reset_sub_limit_to_default": "",
+        "set_sub_limit_to": "",
+        "cmd_set_sub_limit_prompt_html": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "Komutlar",

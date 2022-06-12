@@ -38,7 +38,7 @@
         "permission_denied_bot_not_member": "呢個機械人已經唔喺呢個谷/台入面，唔會喺度運轉。",
         "permission_denied_switch_pm": "喺同機械人嘅私人傾偈度繼續…",
         "permission_denied_input_command": "唔該輸入命令來繼續…",
-        "permission_denied_no_direct_use": "呢個命令唔應該直接使用。唔該改用 /set 。",
+        "permission_denied_no_direct_use": "呢個命令唔應該直接使用。唔該改用 %s 。",
         "promote_to_admin_prompt": "如果你係呢個谷嘅匿名管理員，唔該將機械人升做管理員 (乜權限都唔洗)，咁機械人先可以驗證你嘅身份。",
         "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇",
         "sub_limit_reached_prompt": "訂閲嘅數目達到咗機械人管理員定低嘅限額 (%d/%d)。喺加新嘅訂閲之前，唔該刪緊啲訂閲 (/unsub) 先。"
@@ -197,6 +197,9 @@
         "user_not_found": "揾唔到用户，唔該用用户 ID 代替。",
         "user_info": "用户資料",
         "sub_count": "訂閲計數",
+        "sub_limit": "訂閲限額",
+        "sub_limit_unlimited": "無限",
+        "sub_limit_default": "預設值",
         "participant_count": "成員計數",
         "user_state": "用户狀態",
         "user_state_-1": "畀杯葛咗",
@@ -204,8 +207,11 @@
         "user_state_0": "訪客",
         "user_state_description_0": "只有喺多用户模式開咗嘅時候先用到機械人",
         "user_state_1": "用户",
-        "user_state_description_1": "用唔到機械人",
-        "set_user_state_as": "將用户狀態改做"
+        "user_state_description_1": "用到機械人",
+        "set_user_state_as": "將用户狀態改做",
+        "reset_sub_limit_to_default": "重設訂閲限額去預設值",
+        "set_sub_limit_to": "自訂訂閲限額為…",
+        "cmd_set_sub_limit_prompt_html": "命令用法: <code>/set_sub_limit 用户ID 訂閲限額</code>\n\n注: <code>訂閲限額</code> 一定要係整數，<code>-1</code> 代表無限。"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",

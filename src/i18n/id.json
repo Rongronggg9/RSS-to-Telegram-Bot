@@ -38,7 +38,7 @@
         "permission_denied_bot_not_member": "Bot ini tidak lagi berada di grup/channel ini, sehingga bot tidak bekerja di sini.",
         "permission_denied_switch_pm": "Lanjutkan di obrolan pribadi dengan bot…",
         "permission_denied_input_command": "Silakan masukkan perintah untuk melanjutkan…",
-        "permission_denied_no_direct_use": "Perintah ini tidak digunakan langsung. Gunakan /set.",
+        "permission_denied_no_direct_use": "Perintah ini tidak digunakan langsung. Gunakan %s.",
         "promote_to_admin_prompt": "Jika Anda adalah admin anonim pada grup ini, harap promosikan bot ini menjadi admin (tak perlu izin) agar bot dapat memverifikasi identitas Anda.",
         "group_upgrade_needed_prompt": "",
         "sub_limit_reached_prompt": ""
@@ -197,6 +197,9 @@
         "user_not_found": "",
         "user_info": "",
         "sub_count": "",
+        "sub_limit": "",
+        "sub_limit_unlimited": "",
+        "sub_limit_default": "",
         "participant_count": "",
         "user_state": "",
         "user_state_-1": "",
@@ -205,7 +208,10 @@
         "user_state_description_0": "",
         "user_state_1": "",
         "user_state_description_1": "",
-        "set_user_state_as": ""
+        "set_user_state_as": "",
+        "reset_sub_limit_to_default": "",
+        "set_sub_limit_to": "",
+        "cmd_set_sub_limit_prompt_html": ""
     },
     "l10n_cmd_descriptions": {
         "commands": "",

@@ -139,7 +139,7 @@ async def subs(user_id: int,
     if not feed_urls:
         return None
 
-    limit_reached, count, limit = await check_sub_limit(user_id)
+    limit_reached, count, limit, _ = await check_sub_limit(user_id)
     if limit > 0:
         remaining = limit - count if not limit_reached else 0
         remaining_feed_urls = feed_urls[:remaining]

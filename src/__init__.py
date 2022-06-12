@@ -139,6 +139,8 @@ async def pre():
                           events.NewMessage(pattern=construct_command_matcher('/test')))
     bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
                           events.NewMessage(pattern=construct_command_matcher('/user_info')))
+    bot.add_event_handler(command.administration.cmd_set_sub_limit,
+                          events.NewMessage(pattern=construct_command_matcher('/set_sub_limit')))
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern=construct_command_matcher('/set_option')))
 
@@ -193,6 +195,8 @@ async def pre():
                                                        rf'{callback_target_matcher}$'))
     bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
                           events.CallbackQuery(pattern=r'^set_user=-?\d+,(-1|0|1)$'))
+    bot.add_event_handler(command.administration.callback_reset_sub_limit,
+                          events.CallbackQuery(pattern=r'^reset_sub_limit=-?\d+$'))
     # inline query handler
     bot.add_event_handler(command.misc.inline_command_constructor,
                           events.InlineQuery())

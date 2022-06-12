@@ -117,22 +117,28 @@ async def __send(uid, entry, feed_title, link):
 async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
                                              *_,
                                              lang: Optional[str] = None,
+                                             user_id: Optional[int] = None,
                                              **__):
     """
     command = `/user_info user_id` or `/user_info @username` or `/user_info`
     callback data = set_user={user_id},{state}
     """
     is_callback = isinstance(event, events.CallbackQuery.Event)
-    if is_callback:
-        user_entity_like, state, _, _ = parse_customization_callback_data(event.data)
-        state = int(state)
+    if not user_id:
+        if is_callback:
+            user_entity_like, state, _, _ = parse_customization_callback_data(event.data)
+            state = int(state)
+        else:
+            state = None
+            args = parse_command(event.raw_text, strip_target_chat=False)
+            if len(args) < 2 or (not args[1].lstrip('-').isdecimal() and not args[1].startswith('@')):
+                await event.respond(i18n[lang]['cmd_user_info_usage_prompt_html'], parse_mode='html')
+                return
+            user_entity_like = int(args[1]) if args[1].lstrip('-').isdecimal() else args[1].lstrip('@')
     else:
         state = None
-        args = parse_command(event.raw_text, strip_target_chat=False)
-        if len(args) < 2 or (not args[1].lstrip('-').isdecimal() and not args[1].startswith('@')):
-            await event.respond(i18n[lang]['cmd_user_info_usage_prompt_html'], parse_mode='html')
-            return
-        user_entity_like = int(args[1]) if args[1].lstrip('-').isdecimal() else args[1].lstrip('@')
+        user_entity_like = user_id
+
     try:
         entity = await env.bot.get_entity(user_entity_like)
         if isinstance(entity, types.User):
@@ -162,7 +168,15 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
         user.state = state
         await user.save()
     state = user.state if user_id != env.MANAGER else None
-    sub_count = 0 if user_created else await inner.utils.count_sub(user_id)
+    default_sub_limit = (db.EffectiveOptions.user_sub_limit
+                         if user_id > 0
+                         else db.EffectiveOptions.channel_or_group_sub_limit)
+    if user_created:
+        sub_count = 0
+        sub_limit = default_sub_limit
+        is_default_limit = True
+    else:
+        _, sub_count, sub_limit, is_default_limit = await inner.utils.check_sub_limit(user_id, force_count_current=True)
 
     msg_text = (
             f"<b>{i18n[lang]['user_info']}</b>\n\n"
@@ -170,6 +184,8 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
             + (f"{user_type} " if user_type else '') + f"<code>{user_id}</code>\n"
             + (f"@{username}\n" if username else '')
             + f"\n{i18n[lang]['sub_count']}: {sub_count}"
+            + f"\n{i18n[lang]['sub_limit']}: {sub_limit if sub_limit > 0 else i18n[lang]['sub_limit_unlimited']}"
+            + (f" ({i18n[lang]['sub_limit_default']})" if is_default_limit else '')
             + (f"\n{i18n[lang]['participant_count']}: {participant_count}" if participant_count else '')
             + (f"\n\n{i18n[lang]['user_state']}: {i18n[lang][f'user_state_{state}']} "
                f"({i18n[lang][f'user_state_description_{state}']})" if state is not None else '')
@@ -181,6 +197,46 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
                        data=f"set_user={user_id},0") if user.state != 0 else inner.utils.emptyButton,),
         (Button.inline(f"{i18n[lang]['set_user_state_as']} \"{i18n[lang]['user_state_1']}\"",
                        data=f"set_user={user_id},1") if user.state != 1 else inner.utils.emptyButton,),
+        (Button.inline(f"{i18n[lang]['reset_sub_limit_to_default']} "
+                       f"({default_sub_limit if default_sub_limit > 0 else i18n[lang]['sub_limit_unlimited']})",
+                       data=f"reset_sub_limit={user_id}") if not is_default_limit else inner.utils.emptyButton,),
+        (Button.switch_inline(i18n[lang]['set_sub_limit_to'], query=f'/set_sub_limit {user_id} ', same_peer=True),),
     ) if user_id != env.MANAGER else None
     await event.edit(msg_text, parse_mode='html', buttons=buttons) if is_callback \
         else await event.respond(msg_text, parse_mode='html', buttons=buttons)
+
+
+@command_gatekeeper(only_manager=True)
+async def callback_reset_sub_limit(event: events.CallbackQuery.Event, *_, lang: Optional[str] = None, **__):
+    """
+    callback data = reset_sub_limit={user_id}
+    """
+    user_id = int(parse_customization_callback_data(event.data)[0])
+    user = await db.User.get_or_none(id=user_id)
+    if user:
+        user.sub_limit = None
+        await user.save()
+    await cmd_user_info_or_callback_set_user.__wrapped__(event, user_id=user_id, lang=lang)
+    return
+
+
+@command_gatekeeper(only_manager=True)
+async def cmd_set_sub_limit(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
+    """
+    command = `/set_sub_limit user_id sub_limit`
+    """
+    args = parse_command(event.raw_text)
+    if len(args) < 2 or not args[1].lstrip('-').isdecimal():
+        await event.respond(i18n[lang]['permission_denied_no_direct_use'] % '/user_info')
+        return
+    if len(args) < 3 or not args[2].lstrip('-').isdecimal():
+        await event.respond(i18n[lang]['cmd_set_sub_limit_prompt_html'], parse_mode='html')
+        return
+    user_id, sub_limit = int(args[1]), int(args[2])
+    sub_limit = max(sub_limit, -1)
+    user, user_created = await db.User.get_or_create(id=user_id, defaults={'lang': 'null', 'sub_limit': sub_limit})
+    if not user_created:
+        user.sub_limit = sub_limit
+        await user.save()
+    await cmd_user_info_or_callback_set_user.__wrapped__(event, user_id=user_id, lang=lang)
+    return

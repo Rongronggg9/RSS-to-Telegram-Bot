@@ -16,7 +16,7 @@ from . import env
 
 CPU_COUNT = os.cpu_count()
 AVAIL_CPU_COUNT = len(os.sched_getaffinity(0))
-PROCESS_COUNT = 1 if env.NO_MULTIPROCESSING else min(AVAIL_CPU_COUNT, 3)
+PROCESS_COUNT = min(AVAIL_CPU_COUNT, 3) if env.MULTIPROCESSING else 1
 
 THREAD_POOL_WEIGHT = 1
 PROCESS_POOL_WEIGHT = PROCESS_COUNT - 1

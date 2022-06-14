@@ -50,7 +50,7 @@
 | `TABLE_TO_IMAGE`     | Convert tables to image (causing higher CPU load) or just drop them?      | `1`                                           | `0`                                             |
 | `MANAGER_PRIVILEGED` | Allow the bot manager to manipulate any users' subscriptions or not? [^8] | `1`                                           | `0`                                             |
 | `NO_UVLOOP`          | Never enable `uvloop` (even if it is found) or not?                       | `1`                                           | `0`                                             |
-| `NO_MULTIPROCESSING` | Limit the process count to `1` or not (up to `min(3, CPU_COUNT)`)? [^9]   | `1`                                           | `0`                                             |
+| `MULTIPROCESSING`    | Enable multiprocessing (up to `min(3, CPU_COUNT)`) or not? [^9]           | `1`                                           | `0`                                             |
 | `DEBUG`              | Enable debug logging or not?                                              | `1`                                           | `0`                                             |
 
 ## Manager options
@@ -73,7 +73,7 @@
 [^6]: Use with caution. Help cut down network traffic further. If enabled, RSStT no longer fetches media and validates it. Effectively disable long-pic detection and partially disable icon detection.
 [^7]: Ref: [https://tortoise-orm.readthedocs.io/en/latest/databases.html](). Note that Railway.app will automatically fill this env variable.
 [^8]: Use with caution. If enabled, the bot manager can bypass the permission check before manipulating any users'/channels'/groups' subscriptions. The command format is like `/sub @username`, `/sub +9999999999` (ordinary user) or `/sub -1009999999999` (channel/group). Should only be used temporarily and be disabled after finishing the manipulation. This option is considered safe for bot users since the bot manager can always manipulate their subscriptions by manipulating the database manually.
-[^9]: Only valid when there are more than 1 CPU cores, otherwise the process count is always `1`. Using multiprocessing helps improve the performance on multicore CPUs but consumes more memory. Enable it to disable multiprocessing if you are concerned about memory consumption.
+[^9]: Only valid when there are more than 1 CPU core, otherwise the process count is always `1`. Enabling multiprocessing may help improve the performance on multicore CPUs if there are tons of subscriptions but consumes more memory. If your VPS comes with multiple cores but the performance of each is poor, you may want to enable this feature.
 [^10]: After a user subscribes to a feed, the default monitoring interval is applied.
 [^11]: The minimal monitoring interval a user can set for a subscription.
 [^12]: The bot manager will not be limited by this value.

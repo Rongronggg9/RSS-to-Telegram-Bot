@@ -45,6 +45,6 @@ services:
       #- LAZY_MEDIA_VALIDATION=1  # default: 0
       #- MANAGER_PRIVILEGED=1  # default: 0
       #- NO_UVLOOP=1  # default: 0
-      #- NO_MULTIPROCESSING=1  # default: 0
+      #- MULTIPROCESSING=1  # default: 0
       #- DEBUG=1  # debug logging, default: 0
 # ↑------ Advanced settings ------↑ #

@@ -28,24 +28,26 @@ You can contribute by helping us to translate the bot to your language.
 Recommended for those who are not familiar with Git or GitHub. You may both improve existing translations or start a new translation for your language.
 
 <a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
-<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/multi-auto.svg" width = "500" alt="" /></a>
+<a href="https://hosted.weblate.org/engage/glossary/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/multi-auto.svg" width = "500" alt="" /></a>
 
 https://hosted.weblate.org/projects/rss-to-telegram-bot/
 
 ## Translators
-| Language                               | Translator(s)        | Status                    |
-|----------------------------------------|----------------------|---------------------------|
-| [en] / English                         | [@Rongronggg9]       | [![en_s]][en_w]           |
-| [zh-Hans] / Simplified Chinese / 简体中文  | [@Rongronggg9]       | [![zh_Hans_s]][zh_Hans_w] |
-| [zh-Hant] / Traditional Chinese / 正體中文 | [@Rongronggg9]       | [![zh_Hant_s]][zh_Hant_w] |
-| [yue] / Cantonese / 廣東話                | [@Rongronggg9]       | [![yue_s]][yue_w]         |
-| [it] / Italian / Italiano              | [@Alfy] ([@AlfyT96]) | [![it_s]][it_w]           |
-| [ca] / Catalan / Català                | [@maite.guix]        | [![ca_s]][ca_w]           |
-| [tr] / Turkish / Türkçe                | [@wiseweb-works]     | [![tr_s]][tr_w]           |
-| [fr] / French / français               | [@Edanas]            | [![fr_s]][fr_w]           |
-| [id] / Indonesian / Bahasa Indonesia   | [@liimee]            | [![id_s]][id_w]           |
-| [pt] / Portuguese / Português          | [@luchezi]           | [![pt_s]][pt_w]           |
-| [cs] / Czech / čeština                 | [@Mikyner]           | [![cs_s]][cs_w]           |
+| Language                               | Translator(s)               | Status                    |
+|----------------------------------------|-----------------------------|---------------------------|
+| [en] / English                         | [@Rongronggg9]              | [![en_s]][en_w]           |
+| [zh-Hans] / Simplified Chinese / 简体中文  | [@Rongronggg9]              | [![zh_Hans_s]][zh_Hans_w] |
+| [zh-Hant] / Traditional Chinese / 正體中文 | [@Rongronggg9]              | [![zh_Hant_s]][zh_Hant_w] |
+| [yue] / Cantonese / 廣東話                | [@Rongronggg9]              | [![yue_s]][yue_w]         |
+| [it] / Italian / Italiano              | [@Alfy] ([@AlfyT96])        | [![it_s]][it_w]           |
+| [ca] / Catalan / Català                | [@maite.guix]               | [![ca_s]][ca_w]           |
+| [tr] / Turkish / Türkçe                | [@wiseweb-works]            | [![tr_s]][tr_w]           |
+| [fr] / French / français               | [@Edanas]                   | [![fr_s]][fr_w]           |
+| [id] / Indonesian / Bahasa Indonesia   | [@liimee], [@rezaalmanda]   | [![id_s]][id_w]           |
+| [pt] / Portuguese / Português          | [@luchezi], [@higorluchez]  | [![pt_s]][pt_w]           |
+| [cs] / Czech / čeština                 | [@Mikyner]                  | [![cs_s]][cs_w]           |
+| [ru] / Russian / Русский               | [@AHOHNMYC], [@nutrilonrng] | [![ru_s]][ru_w]           |
+| [pl] / Polish / Polski                 | [@marcin93]                 | [![pl_s]][pl_w]           |
 
 [i18n]: ../src/i18n
 
@@ -60,18 +62,22 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [id]: ../src/i18n/id.json
 [pt]: ../src/i18n/pt.json
 [cs]: ../src/i18n/cs.json
+[ru]: ../src/i18n/ru.json
+[pl]: ../src/i18n/pl.json
 
-[en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/svg-badge.svg
-[zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/svg-badge.svg
-[zh_Hant_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hant/svg-badge.svg
-[yue_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/yue/svg-badge.svg
-[it_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/it/svg-badge.svg
-[ca_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ca/svg-badge.svg
-[tr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/tr/svg-badge.svg
-[fr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/fr/svg-badge.svg
-[id_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/id/svg-badge.svg
-[pt_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pt/svg-badge.svg
-[cs_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/cs/svg-badge.svg
+[en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/glossary/svg-badge.svg
+[zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/glossary/svg-badge.svg
+[zh_Hant_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hant/glossary/svg-badge.svg
+[yue_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/yue/glossary/svg-badge.svg
+[it_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/it/glossary/svg-badge.svg
+[ca_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ca/glossary/svg-badge.svg
+[tr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/tr/glossary/svg-badge.svg
+[fr_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/fr/glossary/svg-badge.svg
+[id_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/id/glossary/svg-badge.svg
+[pt_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pt/glossary/svg-badge.svg
+[cs_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/cs/glossary/svg-badge.svg
+[ru_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ru/glossary/svg-badge.svg
+[pl_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pl/glossary/svg-badge.svg
 
 [en_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/en/
 [zh_Hans_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/zh_Hans/
@@ -84,6 +90,8 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [id_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/id/
 [pt_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/pt/
 [cs_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/cs/
+[ru_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/ru/
+[pl_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/pl/
 
 [@Rongronggg9]: https://github.com/Rongronggg9
 [@Alfy]: https://hosted.weblate.org/user/Alfy/
@@ -92,8 +100,13 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [@wiseweb-works]: https://hosted.weblate.org/user/wiseweb-works/
 [@Edanas]: https://hosted.weblate.org/user/Edanas/
 [@liimee]: https://hosted.weblate.org/user/liimee/
+[@rezaalmanda]: https://hosted.weblate.org/user/rezaalmanda/
 [@luchezi]: https://hosted.weblate.org/user/luchezi/
+[@higorluchez]: https://hosted.weblate.org/user/higorluchez/
 [@Mikyner]: https://hosted.weblate.org/user/Mikyner/
+[@AHOHNMYC]: https://hosted.weblate.org/user/AHOHNMYC/
+[@nutrilonrng]: https://hosted.weblate.org/user/nutrilonrng/
+[@marcin93]: https://hosted.weblate.org/user/marcin93/
 
 [^1]: Shorter is better. Usually, it's the same as `iso_639_code`. However, if a language does have multiple common variants and of which no one can be a common standard, consider using an extended [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) instead. Please make sure the language code is [IANA-registered](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) and not deprecated or not about to be deprecated.
 

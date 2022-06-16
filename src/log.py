@@ -105,13 +105,6 @@ class _APSCFilter(logging.Filter):
         return True
 
 
-apsc_filter = _APSCFilter()
-getLogger('apscheduler').setLevel(colorlog.WARNING)
-getLogger('apscheduler.executors.default').setLevel(colorlog.INFO)
-getLogger('apscheduler.scheduler').addFilter(apsc_filter)
-getLogger('apscheduler.executors.default').addFilter(apsc_filter)
-
-
 class AiohttpAccessFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.msg % record.args
@@ -120,5 +113,12 @@ class AiohttpAccessFilter(logging.Filter):
         return True
 
 
-aiohttp_access_filter = AiohttpAccessFilter()
-getLogger('aiohttp.access').addFilter(aiohttp_access_filter)
+def init():
+    apsc_filter = _APSCFilter()
+    getLogger('apscheduler').setLevel(colorlog.WARNING)
+    getLogger('apscheduler.executors.default').setLevel(colorlog.INFO)
+    getLogger('apscheduler.scheduler').addFilter(apsc_filter)
+    getLogger('apscheduler.executors.default').addFilter(apsc_filter)
+
+    aiohttp_access_filter = AiohttpAccessFilter()
+    getLogger('aiohttp.access').addFilter(aiohttp_access_filter)

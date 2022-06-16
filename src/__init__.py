@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from . import env  # the event loop and basic configurations are initialized in env, so import it first
+# the event loop and basic configurations are initialized in env, so import it first
+# some logger configurations are set in log, so import it second to make them effective in child processes
+from . import env, log
 from . import aio_helper
 
 # the process pool need to be initialized once the event loop is ready to reduce memory consumption
 aio_helper.init()
+
+# register main-process-only log handlers
+log.init()
 
 import os
 import signal

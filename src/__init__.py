@@ -6,6 +6,8 @@ from . import aio_helper
 # the process pool need to be initialized once the event loop is ready to reduce memory consumption
 aio_helper.init()
 
+import os
+import signal
 import asyncio
 from functools import partial
 from time import sleep
@@ -16,8 +18,6 @@ from telethon import TelegramClient, events
 from telethon.errors import ApiIdPublishedFloodError, RPCError
 from telethon.tl import types
 from random import sample
-from os import path
-from signal import signal, SIGTERM
 
 from . import log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
@@ -58,7 +58,7 @@ def init():
         sleep_for += 10
         api_id, api_hash = api_keys.popitem()
         try:
-            bot = TelegramClient(path.join(env.config_folder_path, 'bot'), api_id, api_hash,
+            bot = TelegramClient(os.path.join(env.config_folder_path, 'bot'), api_id, api_hash,
                                  proxy=env.TELEGRAM_PROXY_DICT, request_retries=2, flood_sleep_threshold=60,
                                  raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
             break
@@ -240,13 +240,18 @@ async def lazy():
 
 
 async def post():
-    await asyncio.gather(db.close(), tgraph.close())
-    aio_helper.shutdown()
+    try:
+        loop.call_later(10, lambda: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
+        logger.info('Exiting gracefully...')
+        await asyncio.gather(db.close(), tgraph.close())
+        aio_helper.shutdown()
+    except Exception as e:
+        logger.error('Error when exiting gracefully: ', exc_info=e)
 
 
 def main():
     try:
-        signal(SIGTERM, lambda *_, **__: exit(1))  # graceful exit handler
+        signal.signal(signal.SIGTERM, lambda *_, **__: exit(1))  # graceful exit handler
 
         init()
 

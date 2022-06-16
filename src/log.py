@@ -6,7 +6,6 @@ import logging
 import colorlog
 import os
 import signal
-from tortoise import Tortoise
 
 from . import env
 
@@ -40,20 +39,16 @@ async def exit_handler(prerequisite: Awaitable = None):
                 await asyncio.wait_for(prerequisite, timeout=10)
             except asyncio.TimeoutError:
                 _logger.critical('Failed to gracefully exit: prerequisite timed out')
-        try:
-            if env.bot and env.bot.is_connected():
-                await env.bot.disconnect()
-        finally:
-            await Tortoise.close_connections()  # necessary, otherwise the connection will block the shutdown
     except Exception as e:
         _logger.critical('Failed to gracefully exit:', exc_info=e)
-        os.kill(os.getpid(), signal.SIGTERM)
-    exit(1)
+    finally:
+        exit(1)
 
 
 def shutdown(prerequisite: Awaitable = None):
     if not env.loop.is_running():
         exit(1)
+    env.loop.call_later(20, lambda: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
     asyncio.gather(env.loop.create_task(exit_handler(prerequisite)), return_exceptions=True)
 
 
@@ -67,7 +62,7 @@ class _Watchdog:
         _logger.critical(msg)
         coro = None
         if env.bot is not None:
-            coro = env.bot.send_message(env.MANAGER, f'WATCHDOG: {msg}')
+            coro = env.loop.create_task(env.bot.send_message(env.MANAGER, f'WATCHDOG: {msg}'))
         shutdown(prerequisite=coro)
 
     def fine(self, delay: int = 15 * 60):

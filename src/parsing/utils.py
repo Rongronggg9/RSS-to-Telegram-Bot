@@ -13,6 +13,7 @@ from telethon.helpers import add_surrogate
 from functools import partial
 from urllib.parse import urljoin
 from os import path
+from itertools import chain
 
 from .. import log
 from ..aio_helper import run_async_on_demand
@@ -83,17 +84,25 @@ def is_emoticon(tag: Tag) -> bool:
             or src.startswith('data:'))
 
 
-async def html_validator(html: str) -> str:
+def _html_validator(html: str) -> str:
     # fix malformed HTML first, since minify-html is not so robust
     # (resulting in RecursionError or unexpected format while html_parser parsing the minified HTML)
     # https://github.com/wilsonzlin/minify-html/issues/86
-    soup = await run_async_on_demand(BeautifulSoup, html, 'lxml', prefer_pool='thread', condition=len(html) > 64 * 1024)
+    soup = BeautifulSoup(html, 'lxml')
+    for tag in chain(soup.find_all('script'), soup.find_all(attrs={'class': 'sr-only'})):
+        # remove unwanted tags
+        tag.decompose()
     html = str(soup)
-    # minify HTML to strip useless whitespaces
-    html = await run_async_on_demand(minify, html, prefer_pool='thread', condition=len(html) > 512 * 1024)
+    soup.decompose()
+    del soup
+    html = minify(html)
     html = stripBr(html)
     html = replaceInvalidSpace(html)
     return html
+
+
+async def html_validator(html: str) -> str:
+    return await run_async_on_demand(_html_validator, html, condition=len(html) > 64 * 1024)
 
 
 def html_space_stripper(s: str, enable_emojify: bool = False) -> str:

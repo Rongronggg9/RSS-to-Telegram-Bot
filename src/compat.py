@@ -107,10 +107,10 @@ def cached_async(cache, key=hashkey):
 
             async def wrapper(*args, **kwargs):
                 k = key(*args, **kwargs)
-                with suppress(KeyError):
+                with suppress(KeyError):  # key not found
                     return cache[k]
                 v = await func(*args, **kwargs)
-                with suppress(ValueError):
+                with suppress(ValueError):  # value too large
                     cache[k] = v
                 return v
 

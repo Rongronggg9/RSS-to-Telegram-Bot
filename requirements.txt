@@ -11,7 +11,7 @@ beautifulsoup4==4.11.1
 lxml==4.9.0
 rapidfuzz==2.0.13
 emoji==1.7.0
-minify-html>=0.6.10, <=0.8.0  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)
+minify-html>=0.6.10, <=0.9.2  # 0.6.10 for Python 3.7 (however, minify-html<0.7.0 comes with no arm64 support)
 matplotlib==3.5.2
 
 # db

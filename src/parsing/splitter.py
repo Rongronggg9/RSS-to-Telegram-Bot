@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Optional
 from collections.abc import Sequence
 
-import contextlib
+from contextlib import suppress
 from telethon.extensions.html import parse
 from telethon.helpers import strip_text
 from telethon.tl.types import TypeMessageEntity
@@ -85,7 +85,7 @@ def text_and_format_entities_split(plain_text: str,
             chunks.append((pending_text, pending_entities))
             break
         for curr_length_limit in range(curr_length_limit, 0, -100):
-            with contextlib.suppress(OverflowError):
+            with suppress(OverflowError):
                 for sep in ('\n', '。', '. ', '；', '; ', '，', ', ', '？', '? ', '！', '! ', '：', ': ', '\t',
                             ' ', '\xa0', ''):
                     sep_pos = pending_text.rfind(sep, int(curr_length_limit * 0.5), curr_length_limit)

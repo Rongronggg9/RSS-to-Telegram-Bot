@@ -3,7 +3,7 @@ from typing import Optional, Sequence, Union
 
 import re
 import json
-import contextlib
+from contextlib import suppress
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from minify_html import minify as _minify
@@ -209,7 +209,7 @@ def compare_entity(a: TypeMessageEntity, b: TypeMessageEntity, ignore_position: 
     if ignore_position:
         for d in (a_dict, b_dict):
             for key in ('offset', 'length'):
-                with contextlib.suppress(KeyError):
+                with suppress(KeyError):
                     del d[key]
 
     return a_dict == b_dict

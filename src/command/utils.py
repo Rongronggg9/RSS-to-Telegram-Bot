@@ -3,7 +3,7 @@ from typing import Union, Optional, AnyStr, Any
 from collections.abc import Callable
 
 import asyncio
-import contextlib
+from contextlib import suppress
 import re
 from functools import partial, wraps
 from cachetools import TTLCache
@@ -121,11 +121,11 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
     :param args: additional params (only for NewMessage)
     :param kwargs: additional params (only for NewMessage)
     """
-    with contextlib.suppress(UserBlockedErrors):  # silently ignore
+    with suppress(UserBlockedErrors):  # silently ignore
         # noinspection PyProtectedMember
         if isinstance(event, events.CallbackQuery.Event) and not event._answered:
             # answering callback query is of a tolerant rate limit, no lock needed
-            with contextlib.suppress(QueryIdInvalidError):  # callback query expired, respond instead
+            with suppress(QueryIdInvalidError):  # callback query expired, respond instead
                 await event.answer(msg, alert=alert, cache_time=cache_time)
                 return  # return if answering successfully
         elif isinstance(event, events.InlineQuery.Event):
@@ -166,7 +166,7 @@ async def is_user_admin(chat_id: hints.EntityLike, user_id: hints.EntityLike) ->
     """
     is_admin = None
     participant_type = None
-    with contextlib.suppress(UserNotParticipantError, ValueError):
+    with suppress(UserNotParticipantError, ValueError):
         input_chat = await env.bot.get_input_entity(chat_id)
         input_user = await env.bot.get_input_entity(user_id)
         # noinspection PyTypeChecker
@@ -305,7 +305,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 await respond_or_answer(event, 'ERROR: ' + i18n[lang]['operation_timeout_error'])
             finally:
                 if callback_msg_id:
-                    with contextlib.suppress(KeyError):
+                    with suppress(KeyError):
                         pending_callbacks.remove(callback_msg_id)
 
         try:

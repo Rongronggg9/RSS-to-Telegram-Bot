@@ -7,7 +7,7 @@ from .compat import nullcontext, ssl_create_default_context, AiohttpUvloopTransp
 import re
 import asyncio
 import aiohttp
-import contextlib
+from contextlib import suppress
 import feedparser
 import PIL.Image
 import PIL.ImageFile
@@ -138,7 +138,7 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
 
     hostname = urlparse(url).hostname if parse else url
     if env.PROXY_BYPASS_PRIVATE:
-        with contextlib.suppress(ValueError):  # if not an IP, continue
+        with suppress(ValueError):  # if not an IP, continue
             ip_a = ip_address(hostname)
             is_private = any(ip_a in network for network in PRIVATE_NETWORKS)
             if is_private:
@@ -163,7 +163,7 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
         if decode and body:
             xml_header = body.split(b'\n', 1)[0]
             if xml_header.startswith(b'<?xml') and b'?>' in xml_header and b'encoding' in xml_header:
-                with contextlib.suppress(LookupError, RuntimeError):
+                with suppress(LookupError, RuntimeError):
                     encoding = BeautifulSoup(xml_header, 'lxml-xml').original_encoding
                     return body.decode(encoding=encoding, errors='replace')
             try:

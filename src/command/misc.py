@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, Union
 
-import contextlib
+from contextlib import suppress
 from telethon import events, types, Button
 from telethon.tl.patched import Message
 from telethon.errors import RPCError
@@ -77,7 +77,7 @@ async def callback_get_group_migration_help(event: events.CallbackQuery.Event,
     lang, _ = parse_callback_data_with_page(event.data)
     chat = await event.get_chat()
     if not isinstance(chat, types.Chat) or chat.migrated_to:  # already a supergroup
-        with contextlib.suppress(RPCError):
+        with suppress(RPCError):
             await event.delete()
         return
     msg, buttons = get_group_migration_help_msg(lang)

@@ -4,7 +4,7 @@ from typing_extensions import Final
 from collections.abc import Awaitable
 
 import asyncio
-import contextlib
+from contextlib import suppress
 import time
 import aiographfix as aiograph
 from io import BytesIO
@@ -206,7 +206,7 @@ class TelegraphIfy:
                                          prefer_pool='thread', condition=len(self.html) > 64 * 1024)
 
         for tag in soup.find_all(recursive=True):
-            with contextlib.suppress(ValueError, AttributeError):
+            with suppress(ValueError, AttributeError):
                 # add linebreak after certain tags
                 if tag.name in TELEGRAPH_TAGS_INSERT_BR_AFTER:
                     tag.insert_after(soup.new_tag('br'))

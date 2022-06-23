@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable
 
 import sys
+import contextlib
 import functools
 
 from aiohttp import ClientResponse
@@ -107,15 +108,11 @@ def cached_async(cache, key=hashkey):
 
             async def wrapper(*args, **kwargs):
                 k = key(*args, **kwargs)
-                try:
+                with contextlib.suppress(KeyError):
                     return cache[k]
-                except KeyError:
-                    pass  # key not found
                 v = await func(*args, **kwargs)
-                try:
+                with contextlib.suppress(ValueError):
                     cache[k] = v
-                except ValueError:
-                    pass  # value too large
                 return v
 
         return functools.update_wrapper(wrapper, func)

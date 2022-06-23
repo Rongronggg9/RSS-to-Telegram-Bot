@@ -124,20 +124,19 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
     callback data = set_user={user_id},{state}
     """
     is_callback = isinstance(event, events.CallbackQuery.Event)
-    if not user_id:
-        if is_callback:
-            user_entity_like, state, _, _ = parse_customization_callback_data(event.data)
-            state = int(state)
-        else:
-            state = None
-            args = parse_command(event.raw_text, strip_target_chat=False)
-            if len(args) < 2 or (not args[1].lstrip('-').isdecimal() and not args[1].startswith('@')):
-                await event.respond(i18n[lang]['cmd_user_info_usage_prompt_html'], parse_mode='html')
-                return
-            user_entity_like = int(args[1]) if args[1].lstrip('-').isdecimal() else args[1].lstrip('@')
-    else:
+    if user_id:
         state = None
         user_entity_like = user_id
+    elif is_callback:
+        user_entity_like, state, _, _ = parse_customization_callback_data(event.data)
+        state = int(state)
+    else:
+        state = None
+        args = parse_command(event.raw_text, strip_target_chat=False)
+        if len(args) < 2 or (not args[1].lstrip('-').isdecimal() and not args[1].startswith('@')):
+            await event.respond(i18n[lang]['cmd_user_info_usage_prompt_html'], parse_mode='html')
+            return
+        user_entity_like = int(args[1]) if args[1].lstrip('-').isdecimal() else args[1].lstrip('@')
 
     try:
         entity = await env.bot.get_entity(user_entity_like)
@@ -197,9 +196,10 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
                        data=f"set_user={user_id},0") if user.state != 0 else inner.utils.emptyButton,),
         (Button.inline(f"{i18n[lang]['set_user_state_as']} \"{i18n[lang]['user_state_1']}\"",
                        data=f"set_user={user_id},1") if user.state != 1 else inner.utils.emptyButton,),
-        (Button.inline(f"{i18n[lang]['reset_sub_limit_to_default']} "
+        (inner.utils.emptyButton if is_default_limit else
+         Button.inline(f"{i18n[lang]['reset_sub_limit_to_default']} "
                        f"({default_sub_limit if default_sub_limit > 0 else i18n[lang]['sub_limit_unlimited']})",
-                       data=f"reset_sub_limit={user_id}") if not is_default_limit else inner.utils.emptyButton,),
+                       data=f"reset_sub_limit={user_id}"),),
         (Button.switch_inline(i18n[lang]['set_sub_limit_to'], query=f'/set_sub_limit {user_id} ', same_peer=True),),
     ) if user_id != env.MANAGER else None
     await event.edit(msg_text, parse_mode='html', buttons=buttons) if is_callback \

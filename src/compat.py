@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Callable
 
 import sys
-import contextlib
 import functools
 
 from aiohttp import ClientResponse
@@ -14,7 +13,7 @@ if _version_info < (3, 7):
     raise RuntimeError("This bot requires Python 3.7 or later")
 
 import ssl
-from contextlib import AbstractContextManager, AbstractAsyncContextManager
+from contextlib import AbstractContextManager, AbstractAsyncContextManager, suppress
 
 # backport `contextlib.nullcontext` for Python 3.7 ~ 3.9
 if _version_info[1] >= 10:
@@ -108,10 +107,10 @@ def cached_async(cache, key=hashkey):
 
             async def wrapper(*args, **kwargs):
                 k = key(*args, **kwargs)
-                with contextlib.suppress(KeyError):
+                with suppress(KeyError):
                     return cache[k]
                 v = await func(*args, **kwargs)
-                with contextlib.suppress(ValueError):
+                with suppress(ValueError):
                     cache[k] = v
                 return v
 

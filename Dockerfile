@@ -77,7 +77,7 @@ RUN \
     set -ex && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        fonts-wqy-microhei dumb-init libjemalloc2 \
+        fonts-wqy-microhei libjemalloc2 \
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -95,7 +95,5 @@ COPY --from=app-builder /app-minimal /app
 
 # verify cryptg installation
 RUN python -c 'import logging; logging.basicConfig(level=logging.DEBUG); import telethon; import cryptg'
-
-ENTRYPOINT ["dumb-init", "--"]
 
 CMD ["python", "-u", "telegramRSSbot.py"]

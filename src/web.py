@@ -10,6 +10,7 @@ import aiohttp
 import feedparser
 import PIL.Image
 import PIL.ImageFile
+from contextlib import suppress
 from PIL import UnidentifiedImageError
 from bs4 import BeautifulSoup
 from io import BytesIO, SEEK_END
@@ -137,13 +138,11 @@ def proxy_filter(url: str, parse: bool = True) -> bool:
 
     hostname = urlparse(url).hostname if parse else url
     if env.PROXY_BYPASS_PRIVATE:
-        try:
+        with suppress(ValueError):  # if not an IP, continue
             ip_a = ip_address(hostname)
             is_private = any(ip_a in network for network in PRIVATE_NETWORKS)
             if is_private:
                 return False
-        except ValueError:
-            pass  # not an IP, continue
     if env.PROXY_BYPASS_DOMAINS:
         is_bypassed = any(hostname.endswith(domain) and (hostname == domain or hostname[-len(domain) - 1] == '.')
                           for domain in env.PROXY_BYPASS_DOMAINS)
@@ -164,11 +163,9 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
         if decode and body:
             xml_header = body.split(b'\n', 1)[0]
             if xml_header.startswith(b'<?xml') and b'?>' in xml_header and b'encoding' in xml_header:
-                try:
+                with suppress(LookupError, RuntimeError):
                     encoding = BeautifulSoup(xml_header, 'lxml-xml').original_encoding
                     return body.decode(encoding=encoding, errors='replace')
-                except (LookupError, RuntimeError):
-                    pass
             try:
                 encoding = response.get_encoding()
                 return body.decode(encoding=encoding, errors='replace')
@@ -229,9 +226,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
             async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
                 async with AiohttpUvloopTransportHotfix(response):
                     status = response.status
-                    content = None
-                    if status == 200:
-                        content = await resp_callback(response)
+                    content = await resp_callback(response) if status == 200 else None
                     return WebResponse(url=url,
                                        content=content,
                                        headers=response.headers,

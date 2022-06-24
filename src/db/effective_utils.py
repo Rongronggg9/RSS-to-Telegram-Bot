@@ -3,6 +3,7 @@ from typing import Optional, Any, NoReturn, Union
 from typing_extensions import Final
 from collections.abc import Callable
 
+from contextlib import suppress
 from math import ceil
 from random import shuffle
 
@@ -201,14 +202,12 @@ class EffectiveTasks:
         :param feed_id: the id of the feed in the task
         :param _preserve_in_all_tasks: for internal use
         """
-        try:
+        with suppress(KeyError):
             old_interval = cls.__all_tasks[feed_id]
             cls.__task_buckets[old_interval].__delete(feed_id)
 
             if not _preserve_in_all_tasks:
                 del cls.__all_tasks[feed_id]
-        except KeyError:
-            pass
 
     @classmethod
     def exist(cls, feed_id: int) -> bool:

@@ -183,8 +183,8 @@ async def callback_reset_all_confirm(event: events.CallbackQuery.Event,
         await event.edit(
             i18n[lang]['reset_all_confirm_prompt'],
             buttons=[
-                [Button.inline(i18n[lang]['reset_all_confirm'], data='reset_all' + callback_tail)],
-                [Button.inline(i18n[lang]['reset_all_cancel'], data='set_default' + callback_tail)]
+                [Button.inline(i18n[lang]['reset_all_confirm'], data=f'reset_all{callback_tail}')],
+                [Button.inline(i18n[lang]['reset_all_cancel'], data=f'set_default{callback_tail}')]
             ]
         )
         return

@@ -102,7 +102,7 @@ async def cmd_or_callback_unsub_all(event: Union[events.NewMessage.Event, Messag
         await event.respond(
             i18n[lang]['unsub_all_confirm_prompt'],
             buttons=[
-                [Button.inline(i18n[lang]['unsub_all_confirm'], data='unsub_all' + callback_tail)],
+                [Button.inline(i18n[lang]['unsub_all_confirm'], data=f'unsub_all{callback_tail}')],
                 [Button.inline(i18n[lang]['unsub_all_cancel'], data='cancel')]
             ]
         )

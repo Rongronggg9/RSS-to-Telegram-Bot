@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 import asyncio
 import re
+from contextlib import suppress
 from functools import partial, wraps
 from cachetools import TTLCache
 from telethon import events, Button, hints
@@ -120,15 +121,13 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
     :param args: additional params (only for NewMessage)
     :param kwargs: additional params (only for NewMessage)
     """
-    try:
+    with suppress(UserBlockedErrors):  # silently ignore
         # noinspection PyProtectedMember
         if isinstance(event, events.CallbackQuery.Event) and not event._answered:
             # answering callback query is of a tolerant rate limit, no lock needed
-            try:
+            with suppress(QueryIdInvalidError):  # callback query expired, respond instead
                 await event.answer(msg, alert=alert, cache_time=cache_time)
                 return  # return if answering successfully
-            except QueryIdInvalidError:  # callback query expired
-                pass  # respond instead
         elif isinstance(event, events.InlineQuery.Event):
             # noinspection PyProtectedMember
             if event._answered:
@@ -143,8 +142,6 @@ async def respond_or_answer(event: Union[events.NewMessage.Event, Message,
             msg, *args, **kwargs,
             reply_to=event.message if isinstance(event, events.NewMessage.Event) and event.is_group else None
         )
-    except UserBlockedErrors:
-        pass  # silently ignore
 
 
 async def is_self_admin(chat_id: hints.EntityLike) -> Optional[bool]:
@@ -169,7 +166,7 @@ async def is_user_admin(chat_id: hints.EntityLike, user_id: hints.EntityLike) ->
     """
     is_admin = None
     participant_type = None
-    try:
+    with suppress(UserNotParticipantError, ValueError):
         input_chat = await env.bot.get_input_entity(chat_id)
         input_user = await env.bot.get_input_entity(user_id)
         # noinspection PyTypeChecker
@@ -178,8 +175,6 @@ async def is_user_admin(chat_id: hints.EntityLike, user_id: hints.EntityLike) ->
         is_admin = isinstance(participant.participant,
                               (types.ChannelParticipantAdmin, types.ChannelParticipantCreator))
         participant_type = type(participant.participant).__name__
-    except (UserNotParticipantError, ValueError):
-        pass
     return is_admin, participant_type
 
 
@@ -310,10 +305,8 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 await respond_or_answer(event, 'ERROR: ' + i18n[lang]['operation_timeout_error'])
             finally:
                 if callback_msg_id:
-                    try:
+                    with suppress(KeyError):
                         pending_callbacks.remove(callback_msg_id)
-                    except KeyError:
-                        pass
 
         try:
             command = (event.raw_text

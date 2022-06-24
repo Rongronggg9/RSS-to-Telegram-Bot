@@ -198,7 +198,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
                        data=f"set_user={user_id},1") if user.state != 1 else inner.utils.emptyButton,),
         (Button.inline(f"{i18n[lang]['reset_sub_limit_to_default']} "
                        f"({default_sub_limit if default_sub_limit > 0 else i18n[lang]['sub_limit_unlimited']})",
-                       data=f"reset_sub_limit={user_id}"),),
+                       data=f"reset_sub_limit={user_id}") if not is_default_limit else inner.utils.emptyButton,),
         (Button.switch_inline(i18n[lang]['set_sub_limit_to'], query=f'/set_sub_limit {user_id} ', same_peer=True),),
     ) if user_id != env.MANAGER else None
     await event.edit(msg_text, parse_mode='html', buttons=buttons) if is_callback \

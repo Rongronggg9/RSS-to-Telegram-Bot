@@ -4,11 +4,11 @@ from typing_extensions import Final
 from collections.abc import Awaitable
 
 import asyncio
-from contextlib import suppress
 import time
 import aiographfix as aiograph
 from io import BytesIO
 from bs4 import BeautifulSoup
+from contextlib import suppress
 from aiohttp import ClientTimeout, ClientError
 from aiohttp_retry import RetryClient
 from aiohttp_socks import ProxyConnector

@@ -7,10 +7,10 @@ from .compat import nullcontext, ssl_create_default_context, AiohttpUvloopTransp
 import re
 import asyncio
 import aiohttp
-from contextlib import suppress
 import feedparser
 import PIL.Image
 import PIL.ImageFile
+from contextlib import suppress
 from PIL import UnidentifiedImageError
 from bs4 import BeautifulSoup
 from io import BytesIO, SEEK_END

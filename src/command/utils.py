@@ -3,8 +3,8 @@ from typing import Union, Optional, AnyStr, Any
 from collections.abc import Callable
 
 import asyncio
-from contextlib import suppress
 import re
+from contextlib import suppress
 from functools import partial, wraps
 from cachetools import TTLCache
 from telethon import events, Button, hints

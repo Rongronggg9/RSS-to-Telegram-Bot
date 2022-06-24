@@ -13,7 +13,7 @@ if _version_info < (3, 7):
     raise RuntimeError("This bot requires Python 3.7 or later")
 
 import ssl
-from contextlib import AbstractContextManager, AbstractAsyncContextManager
+from contextlib import AbstractContextManager, AbstractAsyncContextManager, suppress
 
 # backport `contextlib.nullcontext` for Python 3.7 ~ 3.9
 if _version_info[1] >= 10:
@@ -107,15 +107,11 @@ def cached_async(cache, key=hashkey):
 
             async def wrapper(*args, **kwargs):
                 k = key(*args, **kwargs)
-                try:
+                with suppress(KeyError):  # key not found
                     return cache[k]
-                except KeyError:
-                    pass  # key not found
                 v = await func(*args, **kwargs)
-                try:
+                with suppress(ValueError):  # value too large
                     cache[k] = v
-                except ValueError:
-                    pass  # value too large
                 return v
 
         return functools.update_wrapper(wrapper, func)

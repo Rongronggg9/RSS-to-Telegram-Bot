@@ -15,3 +15,4 @@
 - IT之家 (全文): [@ithome_full](https://t.me/ithome_full)
 - Capoo Subscription: [@capoo_sub](https://t.me/capoo_sub)
 - 加零 Subscription: [@jia0_sub](https://t.me/jia0_sub)
+- 重庆轨道交通微博观察: [@crtweibowatch](https://t.me/crtweibowatch)

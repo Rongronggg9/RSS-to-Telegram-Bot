@@ -14,7 +14,7 @@
         "subscription_not_exist": "Подписка не существует"
     },
     "l10n_error_reasons": {
-        "feed_invalid": "Лента RSS сломана",
+        "feed_invalid": "Лента сайта нарушена",
         "url_invalid": "Неверная ссылка",
         "network_error": "Ошибка сети",
         "internal_error": "Внутренняя ошибка",

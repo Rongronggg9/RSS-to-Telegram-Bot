@@ -1,10 +1,10 @@
 {
     "l10n_info": {
         "lang_code": "pl",
-        "iso_639_code": "",
-        "language_name": "Polski",
+        "iso_639_code": "pl",
+        "language_name": "Polish",
         "lang_native_name": "Polski",
-        "select_lang_prompt": "Wybierz język",
+        "select_lang_prompt": "Wybierz język.",
         "welcome_prompt": "Witamy w RSS to Telegram Bot.",
         "rsstt_slogan": ""
     },

@@ -210,7 +210,7 @@
         "user_state_description_1": "can use the bot",
         "set_user_state_as": "Set user state as",
         "reset_sub_limit_to_default": "Reset subscription quantity limit to default",
-        "set_sub_limit_to": "Set subscription quantity limit to...",
+        "set_sub_limit_to": "Set subscription quantity limit to…",
         "cmd_set_sub_limit_prompt_html": "Command usage: <code>/set_sub_limit user_id subscription_quantity_limit</code>\n\nNote: <code>subscription_quantity_limit</code> must be a integer, <code>-1</code> for unlimited."
     },
     "l10n_cmd_descriptions": {

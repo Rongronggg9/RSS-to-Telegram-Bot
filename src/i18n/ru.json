@@ -197,9 +197,9 @@
         "user_not_found": "Пользователь не найден. Попробуй поискать по ID.",
         "user_info": "Информация о пользователе",
         "sub_count": "Количество подписок",
-        "sub_limit": "",
-        "sub_limit_unlimited": "",
-        "sub_limit_default": "",
+        "sub_limit": "Предел количества подписок",
+        "sub_limit_unlimited": "неограниченно",
+        "sub_limit_default": "по умолчанию",
         "participant_count": "Количество участников",
         "user_state": "Состояние пользователя",
         "user_state_-1": "Забанен",
@@ -209,8 +209,8 @@
         "user_state_1": "Пользователь",
         "user_state_description_1": "может использовать бота",
         "set_user_state_as": "Установить состояние пользователя",
-        "reset_sub_limit_to_default": "",
-        "set_sub_limit_to": "",
+        "reset_sub_limit_to_default": "Сбросить предел количества подписок на значение по умолчанию",
+        "set_sub_limit_to": "Установить предел количества подписок на…",
         "cmd_set_sub_limit_prompt_html": ""
     },
     "l10n_cmd_descriptions": {

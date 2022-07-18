@@ -21,6 +21,7 @@ NEED_PRE_FILL = {
 COMMANDS = ('sub', 'unsub', 'unsub_all', 'list', 'set', 'set_default', 'import', 'export', 'activate_subs',
             'deactivate_subs', 'version', 'help', 'lang')
 MANAGER_COMMANDS = ('test', 'set_option', 'user_info')
+REQUIRED_KEYS = {istr('lang_code'), istr('lang_native_name'), istr('select_lang_prompt')}
 
 
 class _I18N:
@@ -33,6 +34,8 @@ class _I18N:
         return cls.__instance
 
     def __init__(self):
+        global ALL_LANGUAGES
+
         if self.__initialized:
             return
         self.__l10n_d: CIMultiDict[_L10N] = CIMultiDict()
@@ -40,6 +43,9 @@ class _I18N:
         for lang in ALL_LANGUAGES:
             l10n = _L10N(lang)
             iso_639_code = l10n['iso_639_code']
+            if not all(l10n.key_exist(key) for key in REQUIRED_KEYS):
+                ALL_LANGUAGES = tuple(filter(lambda l: l != lang, ALL_LANGUAGES))
+                continue
             self.__l10n_d[lang] = l10n
             if iso_639_code:
                 self.__iso_639_d[iso_639_code] = lang

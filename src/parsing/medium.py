@@ -283,6 +283,8 @@ class Medium(AbstractMedium):
         if self.drop_silently:
             return False
 
+        invalid_reasons = []
+
         async with self.validating_lock:
             while self.urls:
                 url = self.urls.pop(0)
@@ -302,9 +304,11 @@ class Medium(AbstractMedium):
                 medium_info = await web.get_medium_info(url)
                 if medium_info is None:
                     if url.startswith(env.IMAGES_WESERV_NL) or url.startswith(env.IMG_RELAY_SERVER):
+                        invalid_reasons.append('fetch failed')
                         continue
                     medium_info = await web.get_medium_info(env.IMG_RELAY_SERVER + url)
                     if medium_info is None:
+                        invalid_reasons.append('both original and relayed image fetch failed')
                         continue
                 self.size, self.width, self.height, self.content_type = medium_info
                 if self.type == IMAGE and self.size <= self.maxSize and min(self.width, self.height) == -1 \
@@ -329,9 +333,15 @@ class Medium(AbstractMedium):
                     ):
                         # immediately fall back to 'images.weserv.nl'
                         self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
+                        invalid_reasons.append('force convert WEBP/SVG to PNG')
                         continue
                     # always invalid
-                    if self.width + self.height > 10000 or self.size > self.maxSize:
+                    if self.width + self.height > 10000:
+                        invalid_reasons.append('width + height > 10000')
+                        self.valid = False
+                    # always invalid
+                    elif self.size > self.maxSize:
+                        invalid_reasons.append(f'size > {self.maxSize}')
                         self.valid = False
                     # Telegram accepts 0.05 < w/h < 20. But after downsized, it will be ugly. Narrow the range down
                     elif 0.4 <= self.width / self.height <= 2.5:
@@ -346,11 +356,13 @@ class Medium(AbstractMedium):
                         self.valid = True
                     # let long images fall back to file
                     else:
+                        invalid_reasons.append('long image')
                         self.valid = False
                         self.urls = []  # clear the urls, force fall back to file
                 elif self.size <= self.maxSize:  # valid
                     self.valid = True
                 else:
+                    invalid_reasons.append(f'size > {self.maxSize}')
                     self.valid = False
 
                 # some images cannot be sent as file directly, if so, images.weserv.nl may help
@@ -369,7 +381,7 @@ class Medium(AbstractMedium):
                     self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
 
             self.valid = False
-            return await self.type_fallback(reason=reason)
+            return await self.type_fallback(reason=reason or ', '.join(invalid_reasons))
 
     async def type_fallback(self, reason: Union[Exception, str] = None) -> bool:
         fallback_urls = self.type_fallback_urls + (list(self.original_urls) if self.typeFallbackAllowSelfUrls else [])
@@ -417,7 +429,7 @@ class Medium(AbstractMedium):
         formerly_valid = self.valid
         if formerly_valid is False:
             return False
-        await self.validate(flush=True)
+        await self.validate(flush=True, reason=reason)
         return (self.valid != formerly_valid
                 or (self.valid and urls_len != len(self.urls))
                 or self.need_type_fallback)

@@ -117,8 +117,8 @@ async def user_flood_wait_background(user: _USER_LIKE, seconds: int) -> asyncio.
 
 # ----- web locks -----
 _hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = \
-    defaultdict(partial(asyncio.BoundedSemaphore, 8))
-overall_web_semaphore = asyncio.BoundedSemaphore(256)
+    defaultdict(partial(asyncio.BoundedSemaphore, 12))
+overall_web_semaphore = asyncio.BoundedSemaphore(768)
 
 
 def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:

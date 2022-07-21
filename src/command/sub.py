@@ -158,23 +158,13 @@ async def callback_unsub(event: events.CallbackQuery.Event,
     chat_id = chat_id or event.chat_id
     sub_id, page = parse_callback_data_with_page(event.data)
     sub_id = int(sub_id)
-    unsub_d = await inner.sub.unsub(chat_id, sub_id=sub_id)
 
-    msg = (
-            f'<b>{i18n[lang]["unsub_successful" if unsub_d["sub"] else "unsub_failed"]}</b>\n'
-            + (
-                f'<a href="{unsub_d["sub"].feed.link}">'
-                f'{escape_html(unsub_d["sub"].feed.title or unsub_d["sub"].title)}</a>'
-                if unsub_d['sub']
-                else f'{escape_html(unsub_d["url"])} ({unsub_d["msg"]})</a>'
-            )
-    )
+    unsub_result = await inner.sub.unsubs(chat_id, sub_ids=(sub_id,), lang=lang)
 
-    if unsub_d['sub']:  # successfully unsubed
+    if unsub_result['success_count']:  # successfully unsubed
         await callback_get_unsub_page.__wrapped__(event, lang=lang, page=page, chat_id=chat_id)
 
-    # await event.edit(msg, parse_mode='html')
-    await event.respond(msg, parse_mode='html')  # make unsubscribing multiple subscriptions more efficient
+    await send_success_and_failure_msg(event, **unsub_result, lang=lang, edit=False)
 
 
 @command_gatekeeper(only_manager=False)

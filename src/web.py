@@ -416,12 +416,12 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
     return -1, -1
 
 
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=1024)
 async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
     if url.startswith('data:'):
         return None
     try:
-        r = await _get(url, timeout=6, resp_callback=__medium_info_callback,
+        r = await _get(url, timeout=12, resp_callback=__medium_info_callback,
                        read_bufsize=IMAGE_READ_BUFFER_SIZE, read_until_eof=False)
         if r.status != 200:
             raise ValueError(f'status code is not 200, but {r.status}')

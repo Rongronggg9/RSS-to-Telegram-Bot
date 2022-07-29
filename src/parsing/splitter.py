@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 from contextlib import suppress
 from telethon.extensions.html import parse
-from telethon.helpers import strip_text
+from telethon.helpers import strip_text, add_surrogate, del_surrogate
 from telethon.tl.types import TypeMessageEntity
 
 from .utils import surrogate_len, copy_entity, copy_entities, merge_contiguous_entities, filter_entities_by_range
@@ -108,8 +108,8 @@ def text_and_format_entities_split(plain_text: str,
 
     stripped_chunks = []
     for text, entity in chunks:
-        text = strip_text(text, entity)
-        stripped_chunks.append((text, entity))
+        text = strip_text(add_surrogate(text), entity)
+        stripped_chunks.append((del_surrogate(text), entity))
 
     return stripped_chunks
 

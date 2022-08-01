@@ -317,9 +317,11 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
                 condition=len(rss_content) > 64 * 1024
             )
 
-        if 'title' not in rss_d.feed:
-            ret.error = WebError(error_name='feed invalid', url=url, log_level=log_level)
-            return ret
+        if not rss_d.feed.get('title'):  # why there is no feed hospital?
+            if not rss_d.entries and (rss_d.bozo or not (rss_d.feed.get('link') or rss_d.feed.get('description'))):
+                ret.error = WebError(error_name='feed invalid', url=url, log_level=log_level)
+                return ret
+            rss_d.feed.title = resp.url
 
         ret.rss_d = rss_d
     except aiohttp.InvalidURL:

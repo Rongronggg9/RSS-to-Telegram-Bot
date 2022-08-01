@@ -115,6 +115,7 @@ class WebError(Exception):
 @define
 class WebResponse:
     url: str  # redirected url
+    ori_url: str  # original url
     content: Optional[AnyStr]
     headers: CIMultiDictProxy[str]
     status: int
@@ -124,6 +125,7 @@ class WebResponse:
 @define
 class WebFeed:
     url: str  # redirected url
+    ori_url: str  # original url
     content: Optional[AnyStr] = None
     headers: Optional[CIMultiDictProxy[str]] = None
     status: int = -1
@@ -227,7 +229,8 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
                 async with AiohttpUvloopTransportHotfix(response):
                     status = response.status
                     content = await resp_callback(response) if status == 200 else None
-                    return WebResponse(url=url,
+                    return WebResponse(url=str(response.url),
+                                       ori_url=url,
                                        content=content,
                                        headers=response.headers,
                                        status=status,
@@ -277,7 +280,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
 
 async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
                    headers: Optional[dict] = None, verbose: bool = True) -> WebFeed:
-    ret = WebFeed(url=url)
+    ret = WebFeed(url=url, ori_url=url)
 
     log_level = log.WARNING if verbose else log.DEBUG
     _headers = {}
@@ -319,7 +322,7 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
 
         if not rss_d.feed.get('title'):  # why there is no feed hospital?
             if not rss_d.entries and (rss_d.bozo or not (rss_d.feed.get('link') or rss_d.feed.get('description'))):
-                ret.error = WebError(error_name='feed invalid', url=url, log_level=log_level)
+                ret.error = WebError(error_name='feed invalid', url=resp.url, log_level=log_level)
                 return ret
             rss_d.feed.title = resp.url
 

@@ -21,13 +21,71 @@ from ..aio_helper import run_async_on_demand
 
 logger = log.getLogger('RSStT.parsing')
 
-stripBr = partial(re.compile(r'\s*<br\s*/?\s*>\s*').sub, '<br>')
-stripLineEnd = partial(re.compile(r'[ 　\t\r\u2028\u2029]+\n').sub, '\n')  # use firstly
-stripNewline = partial(re.compile(r'[\f\n\u2028\u2029]{3,}').sub, '\n\n')  # use secondly
-stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
-replaceInvalidSpace = partial(
-    re.compile(r'[\xa0\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u200c\u200d]').sub, ' '
+# noinspection SpellCheckingInspection
+SPACES = (
+    # all characters here, except for \u200c, \u200d and \u2060, are converted to space on TDesktop, but Telegram
+    # Android preserves all
+    ' '  # '\x20', SPACE
+    '\xa0'  # NO-BREAK SPACE
+    '\u2002'  # EN SPACE
+    '\u2003'  # EM SPACE
+    '\u2004'  # THREE-PER-EM SPACE
+    '\u2005'  # FOUR-PER-EM SPACE
+    '\u2006'  # SIX-PER-EM SPACE
+    '\u2007'  # FIGURE SPACE
+    '\u2008'  # PUNCTUATION SPACE
+    '\u2009'  # THIN SPACE
+    '\u200a'  # HAIR SPACE
+    '\u200b'  # ZERO WIDTH SPACE, ZWSP
+    # '\u200c'  # ZERO WIDTH NON-JOINER, ZWNJ, important for emoji or some languages
+    # '\u200d'  # ZERO WIDTH JOINER, ZWJ, important for emoji or some languages
+    '\u202f'  # NARROW NO-BREAK SPACE
+    '\u205f'  # MEDIUM MATHEMATICAL SPACE, MMSP
+    # '\u2060'  # WORD JOINER
+    '\u3000'  # IDEOGRAPHIC SPACE
 )
+INVALID_CHARACTERS = (
+    # all characters here are converted to space server-side
+    '\x00'  # NULL
+    '\x01'  # START OF HEADING
+    '\x02'  # START OF TEXT
+    '\x03'  # END OF TEXT
+    '\x04'  # END OF TRANSMISSION
+    '\x05'  # ENQUIRY
+    '\x06'  # ACKNOWLEDGE
+    '\x07'  # BELL
+    '\x08'  # BACKSPACE
+    '\t'    # '\x09', # HORIZONTAL TAB
+    '\x0b'  # LINE TABULATION
+    '\x0c'  # FORM FEED
+    '\x0e'  # SHIFT OUT
+    '\x0f'  # SHIFT IN
+    '\x10'  # DATA LINK ESCAPE
+    '\x11'  # DEVICE CONTROL ONE
+    '\x12'  # DEVICE CONTROL TWO
+    '\x13'  # DEVICE CONTROL THREE
+    '\x14'  # DEVICE CONTROL FOUR
+    '\x15'  # NEGATIVE ACKNOWLEDGE
+    '\x16'  # SYNCHRONOUS IDLE
+    '\x17'  # END OF TRANSMISSION BLOCK
+    '\x18'  # CANCEL
+    '\x19'  # END OF MEDIUM
+    '\x1a'  # SUBSTITUTE
+    '\x1b'  # ESCAPE
+    '\x1c'  # FILE SEPARATOR
+    '\x1d'  # GROUP SEPARATOR
+    '\x1e'  # RECORD SEPARATOR
+    '\x1f'  # UNIT SEPARATOR
+    '\u2028'  # LINE SEPARATOR
+    '\u2029'  # PARAGRAPH SEPARATOR
+)
+
+replaceInvalidCharacter = partial(re.compile(rf'[{INVALID_CHARACTERS}]').sub, ' ')  # use initially
+replaceSpecialSpace = partial(re.compile(rf'[{SPACES[1:]}]').sub, ' ')  # use carefully
+stripBr = partial(re.compile(r'\s*<br\s*/?\s*>\s*').sub, '<br>')
+stripLineEnd = partial(re.compile(rf'[{SPACES}]+\n').sub, '\n')  # use firstly
+stripNewline = partial(re.compile(r'\n{3,}').sub, '\n\n')  # use secondly
+stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
 isAbsoluteHttpLink = re.compile(r'^https?://').match
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 
@@ -98,7 +156,7 @@ def _html_validator(html: str) -> str:
     del soup
     html = minify(html)
     html = stripBr(html)
-    html = replaceInvalidSpace(html)
+    html = replaceInvalidCharacter(html)
     return html
 
 
@@ -109,7 +167,7 @@ async def html_validator(html: str) -> str:
 def html_space_stripper(s: str, enable_emojify: bool = False) -> str:
     if not s:
         return s
-    s = stripAnySpace(replaceInvalidSpace(unescape(s))).strip()
+    s = stripAnySpace(replaceSpecialSpace(replaceInvalidCharacter(unescape(s)))).strip()
     return emojify(s) if enable_emojify else s
 
 

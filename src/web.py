@@ -321,10 +321,12 @@ async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Uni
             )
 
         if not rss_d.feed.get('title'):  # why there is no feed hospital?
-            if not rss_d.entries and (rss_d.bozo or not (rss_d.feed.get('link') or rss_d.feed.get('description'))):
+            # feed.description cannot be used to determine if this is likely to be a feed since HTML tag <body> may be
+            # considered to be the description of the "feed"
+            if not rss_d.entries and (rss_d.bozo or not (rss_d.feed.get('link') or rss_d.feed.get('updated'))):
                 ret.error = WebError(error_name='feed invalid', url=resp.url, log_level=log_level)
                 return ret
-            rss_d.feed.title = resp.url
+            rss_d.feed['title'] = resp.url  # instead of `rss_d.feed.title = resp.url`, which does not affect the dict
 
         ret.rss_d = rss_d
     except aiohttp.InvalidURL:

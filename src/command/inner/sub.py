@@ -311,10 +311,16 @@ async def migrate_to_new_url(feed: db.Feed, new_url: str) -> Union[bool, db.Feed
     new_url_feed.next_check_time = None
     await new_url_feed.save()
 
-    await feed.subs.all().update(feed=new_url_feed)  # migrate all subs to the new feed
+    # migrate all subs to the new feed
+    tasks_migrate = []
+    async for exist_sub in feed.subs:
+        if await db.Sub.filter(feed=new_url_feed, user=exist_sub.user).get_or_none():
+            continue  # sub already exists, skip it, delete cascade later
+        exist_sub.feed = new_url_feed
+        tasks_migrate.append(asyncio.create_task(exist_sub.save()))
 
-    await update_interval(new_url_feed)
-    await feed.delete()  # delete the old feed
+    await asyncio.gather(*tasks_migrate)
+    await asyncio.gather(update_interval(new_url_feed), feed.delete())
     return new_url_feed
 
 

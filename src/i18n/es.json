@@ -62,7 +62,7 @@
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Por favor, responde a este mensaje con la URL de un canal RSS.\nO puedes utilizar <code>/sub url1 url2 url3 …</code> para suscribirse en forma masiva.",
-        "sub_usage_in_channel_html": "Por favor, utiliza <código>/sub url1 url2 url3 …</código> para suscribirte.",
+        "sub_usage_in_channel_html": "Por favor, utiliza <code>/sub url1 url2 url3 …</code> para suscribirte.",
         "sub_successful": "Suscrito con éxito",
         "sub_failed": "Fallo al suscribirse"
     },

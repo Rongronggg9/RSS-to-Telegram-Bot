@@ -118,7 +118,7 @@
         "display_via": "Fonte",
         "display_via_-4": "Sem título de feed, URL simples no final",
         "display_via_-3": "Sem título de feed, link exibido como título de post",
-        "display_via_-2": "Desativar completamente",
+        "display_via_-2": "Desativado",
         "display_via_-1": "Sem título de feed, hiperlink no final",
         "display_via_0": "Título e link do feed",
         "display_via_1": "Título do feed e link exibidos como título da postagem",

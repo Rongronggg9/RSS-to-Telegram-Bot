@@ -103,7 +103,7 @@
         "send_mode_2": "Forçar mensagens do Telegram",
         "length_limit": "Limite de comprimento (somente modo automático)",
         "length_limit_unlimited": "Ilimitado",
-        "link_preview": "Pré-visualização de link",
+        "link_preview": "Prévia de link",
         "link_preview_-1": "Desabilitar",
         "link_preview_0": "Automático",
         "link_preview_1": "Habilitar",
@@ -231,6 +231,6 @@
         "cmd_description_test": "Teste (somente gerenciador de bot)",
         "cmd_description_set_option": "Definir opções de bot (somente gerenciador de bot)",
         "cmd_description_user_info": "Exibir/modificar informações do usuário (somente gerenciador de bots)",
-        "usage_in_channel_or_group_prompt_html": "<b>Utilização em canal/grupo:</b>\n1. Adicione o bot ao seu canal/grupo.\n2a. Enviar directamente comandos <b>no canal/grupo</b>.\n2b. Ou em alternativa, pode enviar comandos como <code>/sub @username https://exmaple.com</code> ou <code>/sub -10010000000000 https://exmaple.com</code> <b>no chat privado com o bot</b>.\n(<code>@username</code> é o canal/grupo's username, <code>@</code> é necessário; <code>-10010000000000</code> é o canal/grupo's ID, deve começar com <code>-100</code>)"
+        "usage_in_channel_or_group_prompt_html": "<b>Utilização em canal/grupo:</b>\n1. Adicione o bot ao seu canal/grupo.\n2a. Enviar diretamente comandos <b>no canal/grupo</b>.\n2b. Ou em alternativa, pode enviar comandos como <code>/sub @username https://exmaple.com</code> ou <code>/sub -10010000000000 https://exmaple.com</code> <b>no chat privado com o bot</b>.\n(<code>@username</code> é o canal/grupo's username, <code>@</code> é necessário; <code>-10010000000000</code> é o canal/grupo's ID, deve começar com <code>-100</code>)"
     }
 }

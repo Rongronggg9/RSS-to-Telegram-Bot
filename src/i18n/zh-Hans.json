@@ -40,7 +40,7 @@
         "permission_denied_input_command": "请输入命令以继续…",
         "permission_denied_no_direct_use": "不应直接使用此命令。请改用 %s 。",
         "promote_to_admin_prompt": "如果你是本群组的匿名管理员，请将 bot 提升为管理员 (不需要任何权限)，这样 bot 才能验证你的身份。",
-        "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作: \n1. 转到群组信息，点击「管理群组」\n2. 将「历史记录对新成员」设置为「可见」\n3. 保存历史记录可见性设置\n4. 保存所有设置\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」\n6. 现在你应该可以使用这个 bot 了",
+        "group_upgrade_needed_prompt": "哎呀，你的群组还没有被升级为一个超级群组。通常，Telegram 的服务器会在某个时候自动完成这个升级，但如果没有的话，你就不得不在使用这个 bot 之前手动升级它。\n请按以下步骤操作: \n1. 转到群组信息，点击「管理群组」。\n2. 将「历史记录对新成员」设置为「可见」。\n3. 保存历史记录可见性设置。\n4. 保存所有设置。\n5. (可选) 如果需要的话，你可以将「历史记录对新成员」重新设置为「不可见」。\n6. 现在你应该可以使用这个 bot 了。",
         "sub_limit_reached_prompt": "订阅数量已经达到了 bot 管理员应用的限制 (%d/%d)。在添加新的订阅前，请退订 (/unsub) 一些订阅。"
     },
     "l10n_misc": {
@@ -169,18 +169,18 @@
         "all_subs_are_deactivated": "所有订阅都已停用。"
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 订阅编号 标题</code>\n\n注: 省略 <code>标题</code> 以清除自定义标题 (只有以前设置过才可以清除，否则会收到此提示) 。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 订阅编号 标题</code>\n\n注: 省略 <code>标题</code> 以清除自定义标题 (只有以前设置过才可以清除，否则会收到此提示)。",
         "set_title_success": "订阅的自定义标题已更改为: ",
         "set_title_success_cleared": "订阅的自定义标题已清除。"
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 订阅编号 监视间隔</code>\n\n注: <code>监视间隔</code> 必须是以分钟为单位的正整数 (不包含单位) 。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 订阅编号 监视间隔</code>\n\n注: <code>监视间隔</code> 必须是以分钟为单位的正整数 (不包含单位)。",
         "set_interval_success_html": "订阅的监视间隔已更改为 <b>%d 分钟</b>。",
         "set_default_interval_success_html": "默认监视间隔已更改为 <b>%d 分钟</b>。",
         "set_interval_failure_too_small_html": "监视间隔必须大于 <b>%d 分钟</b>。"
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 订阅编号 #hashtag1 #hashtag2 …</code>\n\n注: 如果不提供 hashtag, 已有的 hashtag 就会被清除 (只有以前设置过才可以清除，否则会收到此提示) 。",
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 订阅编号 #hashtag1 #hashtag2 …</code>\n\n注: 如果不提供 hashtag, 已有的 hashtag 就会被清除 (只有以前设置过才可以清除，否则会收到此提示)。",
         "set_hashtags_success_html": "订阅的自定义 hashtag 已更改为: ",
         "set_hashtags_success_cleared": "订阅的自定义 hashtag 已清除。",
         "set_hashtags_failure_too_many": "Hashtag 太多，请移除一些后重试。"
@@ -231,6 +231,6 @@
         "cmd_description_test": "测试 (仅 bot 管理员)",
         "cmd_description_set_option": "更改 bot 配置 (仅 bot 管理员)",
         "cmd_description_user_info": "查看/修改用户信息 (仅 bot 管理员)",
-        "usage_in_channel_or_group_prompt_html": "<b>在频道/群组里的使用方式:</b>\n1. 将 bot 添加到频道/群组里。\n2a. 直接<b>在频道/群组里</b>发送命令。\n2b. 或者，你也可以<b>在和 bot 的私聊里</b>像这样发送命令: <code>/sub @username https://exmaple.com</code> 或 <code>/sub -10010000000000 https://exmaple.com</code>。\n(<code>@username</code> 是频道/群组的用户名，<code>@</code> 是不可缺少的；<code>-10010000000000</code> 是频道/群组的 ID，必须以 <code>-100</code> 开头)"
+        "usage_in_channel_or_group_prompt_html": "<b>在频道/群组里的使用方式:</b>\n1. 将 bot 添加到频道/群组里。\n2a. 直接<b>在频道/群组里</b>发送命令。\n2b. 或者，你也可以<b>在和 bot 的私聊里</b>像这样发送命令: <code>/sub @username https://example.com</code> 或 <code>/sub -10010000000000 https://example.com</code>。\n(<code>@username</code> 是频道/群组的用户名，<code>@</code> 是不可缺少的；<code>-10010000000000</code> 是频道/群组的 ID，必须以 <code>-100</code> 开头)"
     }
 }

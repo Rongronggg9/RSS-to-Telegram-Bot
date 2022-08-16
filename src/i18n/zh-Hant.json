@@ -40,7 +40,7 @@
         "permission_denied_input_command": "請輸入命令以繼續…",
         "permission_denied_no_direct_use": "不應直接使用此命令。請改用 %s 。",
         "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升爲管理員 (無需權限)，以授權機器人驗證您的身份。",
-        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級爲超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」\n2. 將「新成員的聊天記錄」更改爲「可見」\n3. 保存聊天記錄可見性設置\n4. 保存所有設置\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改爲「隱藏」\n6. 現在您應該能夠使用機器人了",
+        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級爲超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」。\n2. 將「新成員的聊天記錄」更改爲「可見」。\n3. 保存聊天記錄可見性設置。\n4. 保存所有設置。\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改爲「隱藏」。\n6. 現在您應該能夠使用機器人了。",
         "sub_limit_reached_prompt": "訂閱的數量已經到達機器人管理員實施的限額 (%d/%d)。在進一步新增訂閱前，請先退訂 (/unsub) 一些訂閱。"
     },
     "l10n_misc": {
@@ -169,18 +169,18 @@
         "all_subs_are_deactivated": "所有訂閱均已停用。"
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設置過才能清除，否則就會收到此提示) 。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設置過才能清除，否則就會收到此提示)。",
         "set_title_success": "訂閱的自定義標題已修改爲: ",
         "set_title_success_cleared": "訂閱的自定義標題已清除。"
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位爲分鐘 (無需包含單位) 。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位爲分鐘 (無需包含單位)。",
         "set_interval_success_html": "訂閱的監視間隔已修改爲 <b>%d 分鐘</b>。",
         "set_default_interval_success_html": "預設的監視間隔已修改爲 <b>%d 分鐘</b>。",
         "set_interval_failure_too_small_html": "監視間隔必須大於 <b>%d 分鐘</b>。"
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果沒有 hashtag 提供，已存在的 hashtag 就會被清除 (僅當先前設置過才能清除，否則就會收到此提示) 。",
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果沒有 hashtag 提供，已存在的 hashtag 就會被清除 (僅當先前設置過才能清除，否則就會收到此提示)。",
         "set_hashtags_success_html": "訂閱的自定義 hashtag 已修改爲: ",
         "set_hashtags_success_cleared": "訂閱的自定義 hashtag 已清除。",
         "set_hashtags_failure_too_many": "Hashtag 太多，請刪除一些后重試。"
@@ -231,6 +231,6 @@
         "cmd_description_test": "測試 (僅限機器人管理員)",
         "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)",
         "cmd_description_user_info": "查看/更改用戶資訊 (僅限機器人管理員)",
-        "usage_in_channel_or_group_prompt_html": "<b>在頻道/群組中的用法:</b>\n1. 將機器人新增至頻道/群組中。\n2a. 直接<b>在頻道/群組中</b>傳送命令。\n2b. 或者，您可以<b>在和機器人的私人聊天中</b>像這樣傳送命令: <code>/sub @username https://exmaple.com</code> 或者 <code>/sub -10010000000000 https://exmaple.com</code>。\n(<code>@username</code> 是頻道/群組的用戶名稱，<code>@</code> 是不可或缺的; <code>-10010000000000</code> 是頻道/群組的 ID，且必須以 <code>-100</code> 爲開頭)"
+        "usage_in_channel_or_group_prompt_html": "<b>在頻道/群組中的用法:</b>\n1. 將機器人新增至頻道/群組中。\n2a. 直接<b>在頻道/群組中</b>傳送命令。\n2b. 或者，您可以<b>在和機器人的私人聊天中</b>像這樣傳送命令: <code>/sub @username https://example.com</code> 或者 <code>/sub -10010000000000 https://example.com</code>。\n(<code>@username</code> 是頻道/群組的用戶名稱，<code>@</code> 是不可或缺的; <code>-10010000000000</code> 是頻道/群組的 ID，且必須以 <code>-100</code> 爲開頭)"
     }
 }

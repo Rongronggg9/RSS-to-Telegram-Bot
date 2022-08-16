@@ -40,7 +40,7 @@
         "permission_denied_input_command": "唔該輸入命令來繼續…",
         "permission_denied_no_direct_use": "呢個命令唔應該直接使用。唔該改用 %s 。",
         "promote_to_admin_prompt": "如果你係呢個谷嘅匿名管理員，唔該將機械人升做管理員 (乜權限都唔洗)，咁機械人先可以驗證你嘅身份。",
-        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」\n2. 將「新成員嘅傾偈紀錄」改為「睇到」\n3. 儲存新成員嘅傾偈紀錄設定\n4. 儲存晒所有設定\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」\n6. 而家你應該可以用呢個機械人喇",
+        "group_upgrade_needed_prompt": "弊！你嘅谷仲未係超級谷。一般來講，Telegram 嘅伺服器會喺某個時候自己搞掂呢個升級，但係如果佢冇咁做，除咗喺用呢個機械人之前自行升級呢個谷，就冇其他辦法。\n跟住我嚟：\n1. 入去谷嘅資料，撳「管理谷」。\n2. 將「新成員嘅傾偈紀錄」改為「睇到」。\n3. 儲存新成員嘅傾偈紀錄設定。\n4. 儲存晒所有設定。\n5. (可選) 如果你有需要，可以將「新成員嘅傾偈紀錄」改返「睇唔到」。\n6. 而家你應該可以用呢個機械人喇。",
         "sub_limit_reached_prompt": "訂閲嘅數目達到咗機械人管理員定低嘅限額 (%d/%d)。喺加新嘅訂閲之前，唔該刪緊啲訂閲 (/unsub) 先。"
     },
     "l10n_misc": {
@@ -169,18 +169,18 @@
         "all_subs_are_deactivated": "所有訂閲都閂晒。"
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 忽略 <code>標題</code> 來刪除自訂標題 (只有之前設定過先可以刪除，唔係就會收到呢條提示) 。",
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 忽略 <code>標題</code> 來刪除自訂標題 (只有之前設定過先可以刪除，唔係就會收到呢條提示)。",
         "set_title_success": "訂閱嘅自訂標題已經改做: ",
         "set_title_success_cleared": "訂閱嘅自訂標題已經刪咗。"
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 一定要係用分鐘做單位嘅正整數 (唔洗加埋單位) 。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 一定要係用分鐘做單位嘅正整數 (唔洗加埋單位)。",
         "set_interval_success_html": "訂閱嘅監視間隔已經改做 <b>%d 分鐘</b>。",
         "set_default_interval_success_html": "預設嘅監視間隔已經改做 <b>%d 分鐘</b>。",
         "set_interval_failure_too_small_html": "監視間隔一定要大過 <b>%d 分鐘</b>。"
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果唔畀 hashtag，已經喺度嘅 hashtag 會畀刪除 (只有之前設定過先可以刪除，唔係就會收到呢條提示) 。",
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果唔畀 hashtag，已經喺度嘅 hashtag 會畀刪除 (只有之前設定過先可以刪除，唔係就會收到呢條提示)。",
         "set_hashtags_success_html": "訂閱嘅自訂 hashtag 已經改做: ",
         "set_hashtags_success_cleared": "訂閱嘅自訂 hashtag 已經刪咗。",
         "set_hashtags_failure_too_many": "Hashtag 太多喇，唔該刪緊啲再來過。"
@@ -231,6 +231,6 @@
         "cmd_description_test": "測試 (僅機械人管理員)",
         "cmd_description_set_option": "改機械人選項 (僅機械人管理員)",
         "cmd_description_user_info": "睇/改用户資料 (僅機械人管理員)",
-        "usage_in_channel_or_group_prompt_html": "<b>喺台/谷入面嘅用法:</b>\n1. 將機械人加到台/谷入面。\n2a. 直接<b>喺台/谷入面</b>送出命令。\n2b. 或者，好似噉<b>喺同機械人嘅私人傾偈入面</b>送出命令: <code>/sub @username https://exmaple.com</code> 或者 <code>/sub -10010000000000 https://exmaple.com</code>。\n(<code>@username</code> 係台/谷嘅用户名，<code>@</code> 唔可以少；<code>-10010000000000</code> 係台/谷嘅 ID，一定要係 <code>-100</code> 打頭)"
+        "usage_in_channel_or_group_prompt_html": "<b>喺台/谷入面嘅用法:</b>\n1. 將機械人加到台/谷入面。\n2a. 直接<b>喺台/谷入面</b>送出命令。\n2b. 或者，好似噉<b>喺同機械人嘅私人傾偈入面</b>送出命令: <code>/sub @username https://example.com</code> 或者 <code>/sub -10010000000000 https://example.com</code>。\n(<code>@username</code> 係台/谷嘅用户名，<code>@</code> 唔可以少；<code>-10010000000000</code> 係台/谷嘅 ID，一定要係 <code>-100</code> 打頭)"
     }
 }

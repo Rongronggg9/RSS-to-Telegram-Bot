@@ -40,7 +40,7 @@
         "permission_denied_input_command": "Por favor, introduce un comando para continuar…",
         "permission_denied_no_direct_use": "Este comando no debe utilizarse directamente. Utilice %s en su lugar.",
         "promote_to_admin_prompt": "Si eres un administrador anónimo de este grupo, por favor asciende el bot a administrador (sin necesidad de permiso) para que el bot pueda verificar tu identidad.",
-        "group_upgrade_needed_prompt": "Vaya, tu grupo no ha sido actualizado a un supergrupo. Generalmente, el servidor de Telegram debería realizar esta actualización automáticamente en algún momento, pero si no es así, tienes que actualizarlo manualmente antes de poder usar el bot.\nPor favor, sigue estos pasos:\n1. Ve a la información del grupo y haz clic en \"Gestionar grupo\"\n2. Cambia \"Historial para nuevos miembros\" a \"Visible\"\n3. Guarde la configuración de visibilidad del historial de chat\n4. Guarde todos los ajustes\n5. (Opcional) Si es necesario, puede cambiar \"Historial para nuevos miembros\" a \"Oculto\" de nuevo\n6. Ahora deberías poder utilizar el bot",
+        "group_upgrade_needed_prompt": "Vaya, tu grupo no ha sido actualizado a un supergrupo. Generalmente, el servidor de Telegram debería realizar esta actualización automáticamente en algún momento, pero si no es así, tienes que actualizarlo manualmente antes de poder usar el bot.\nPor favor, sigue estos pasos:\n1. Ve a la información del grupo y haz clic en \"Gestionar grupo\".\n2. Cambia \"Historial para nuevos miembros\" a \"Visible\".\n3. Guarde la configuración de visibilidad del historial de chat.\n4. Guarde todos los ajustes.\n5. (Opcional) Si es necesario, puede cambiar \"Historial para nuevos miembros\" a \"Oculto\" de nuevo.\n6. Ahora deberías poder utilizar el bot.",
         "sub_limit_reached_prompt": "La cantidad de suscripciones ha alcanzado el límite (%d/%d) aplicado por el gestor del bot. Por favor, elimina (/unsub) algunas suscripciones antes de añadir nuevas."
     },
     "l10n_misc": {
@@ -127,8 +127,8 @@
         "display_title_0": "Automático",
         "display_title_1": "Activado",
         "style": "Estilo",
-        "style_0": "RSStT",
-        "style_1": "flowerss",
+        "style_0": "",
+        "style_1": "",
         "set_custom_title_button": "Título personalizado…",
         "set_custom_interval_button": "Intervalo personalizado (en minutos)…",
         "set_custom_hashtags_button": "Etiquetas personalizadas…",
@@ -231,6 +231,6 @@
         "cmd_description_test": "Probar (sólo gestor del bot)",
         "cmd_description_set_option": "Configurar las opciones del bot (sólo gestor del bot)",
         "cmd_description_user_info": "Ver/modificar la información de los usuarios (sólo gestor del bot)",
-        "usage_in_channel_or_group_prompt_html": "<b>Uso en canal/grupo:</b>\n1. Añade el bot a tu canal/grupo.\n2a. Envía los comandos directamente <b>en el canal/grupo</b>.\n2b. O bien, puedes enviar comandos como <code>/sub @nombredeusuario https://example.com</code> o <code>/sub -10010000000000 https://exmaple.com</code> <b>en el chat privado con el bot</b>.\n(<code>@nombredeusuario</code> es el nombre de usuario del canal/grupo, la <code>@</code> es necesaria; <code>-10010000000000</code> es el ID del canal/grupo, debe empezar por <code>-100</code>)"
+        "usage_in_channel_or_group_prompt_html": "<b>Uso en canal/grupo:</b>\n1. Añade el bot a tu canal/grupo.\n2a. Envía los comandos directamente <b>en el canal/grupo</b>.\n2b. O bien, puedes enviar comandos como <code>/sub @nombredeusuario https://example.com</code> o <code>/sub -10010000000000 https://example.com</code> <b>en el chat privado con el bot</b>.\n(<code>@nombredeusuario</code> es el nombre de usuario del canal/grupo, la <code>@</code> es necesaria; <code>-10010000000000</code> es el ID del canal/grupo, debe empezar por <code>-100</code>)"
     }
 }

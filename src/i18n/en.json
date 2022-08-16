@@ -40,7 +40,7 @@
         "permission_denied_input_command": "Please input a command to continue…",
         "permission_denied_no_direct_use": "This command should not be used directly. Use %s instead.",
         "promote_to_admin_prompt": "If you are an anonymous admin of this group, please promote the bot to an admin (no permission needed) to empower the bot to verify your identity.",
-        "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\"\n2. Change \"Chat history for new members\" to \"Visible\"\n3. Save chat history visibility setting\n4. Save all settings\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again\n6. Now you should be able to use the bot",
+        "group_upgrade_needed_prompt": "Oops, your group hasn't been upgraded to a supergroup. Generally, the Telegram server should automatically perform this upgrade at some time, but if not, you have to upgrade it manually before you can use the bot.\nPlease follow these steps:\n1. Goto the group info, then click \"Manage group\".\n2. Change \"Chat history for new members\" to \"Visible\".\n3. Save chat history visibility setting.\n4. Save all settings.\n5. (Optional) If needed, you can change \"Chat history for new members\" to \"Hidden\" again.\n6. Now you should be able to use the bot.",
         "sub_limit_reached_prompt": "The quantity of your subscriptions has reached the limit (%d/%d) applied by the bot manager. Please remove (/unsub) some subscriptions before adding new ones."
     },
     "l10n_misc": {
@@ -231,6 +231,6 @@
         "cmd_description_test": "Test (bot manager only)",
         "cmd_description_set_option": "Set bot options (bot manager only)",
         "cmd_description_user_info": "View/modify user info (bot manager only)",
-        "usage_in_channel_or_group_prompt_html": "<b>Usage in channel/group:</b>\n1. Add the bot to your channel/group.\n2a. Directly send commands <b>in the channel/group</b>.\n2b. Or alternatively, you can send commands like <code>/sub @username https://exmaple.com</code> or <code>/sub -10010000000000 https://exmaple.com</code> <b>in the private chat with the bot</b>.\n(<code>@username</code> is the channel/group's username, <code>@</code> is required; <code>-10010000000000</code> is the channel/group's ID, it must start with <code>-100</code>)"
+        "usage_in_channel_or_group_prompt_html": "<b>Usage in channel/group:</b>\n1. Add the bot to your channel/group.\n2a. Directly send commands <b>in the channel/group</b>.\n2b. Or alternatively, you can send commands like <code>/sub @username https://example.com</code> or <code>/sub -10010000000000 https://example.com</code> <b>in the private chat with the bot</b>.\n(<code>@username</code> is the channel/group's username, <code>@</code> is required; <code>-10010000000000</code> is the channel/group's ID, it must start with <code>-100</code>)"
     }
 }

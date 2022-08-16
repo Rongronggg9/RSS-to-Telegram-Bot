@@ -40,7 +40,7 @@
         "permission_denied_input_command": "Devam etmek için lütfen bir komut girin…",
         "permission_denied_no_direct_use": "Bu komut doğrudan kullanılmamalıdır. Bunun yerine %s kullanın.",
         "promote_to_admin_prompt": "Bu grubun anonim bir yöneticisiyseniz, botu kimliğinizi doğrulamasını sağlamak için lütfen botu bir yöneticiye (izne gerek yok) yükseltin.",
-        "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin\n3. Sohbet geçmişi görünürlük ayarını kaydet\n4. Tüm ayarları kaydet\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız",
+        "group_upgrade_needed_prompt": "Grubunuz bir süper gruba yükseltilmiş değil. Genellikle, Telegram sunucusu bu yükseltmeyi bir zaman otomatik olarak gerçekleştirmelidir, ancak değilse, botu kullanmadan önce manuel olarak yükseltmeniz gerekir.\nLütfen şu adımları izleyin:\n1. Grup bilgilerini tıklayın, ardından \"Grubu yönet\" e tıklayın.\n2. \"Yeni üyeler için sohbet geçmişini\" \"Görünür\" olarak değiştirin.\n3. Sohbet geçmişi görünürlük ayarını kaydet.\n4. Tüm ayarları kaydet.\n5. (İsteğe bağlı) Gerekirse, \"Yeni üyeler için sohbet geçmişi\"ni tekrar \"Gizli\" olarak değiştirebilirsiniz.\n6. Şimdi botu kullanabiliyor olmalısınız.",
         "sub_limit_reached_prompt": "Aboneliklerinizin miktarı, bot yöneticisi tarafından uygulanan sınıra (%d/%d) ulaştı. Lütfen yenilerini eklemeden önce bazı abonelikleri kaldırın (/unsub)."
     },
     "l10n_misc": {
@@ -231,6 +231,6 @@
         "cmd_description_test": "Test (yalnızca bot yöneticisi)",
         "cmd_description_set_option": "Bot seçeneklerini ayarla (yalnızca bot yöneticisi)",
         "cmd_description_user_info": "Kullanıcı bilgilerini görüntüle/değiştir (yalnızca bot yöneticisi)",
-        "usage_in_channel_or_group_prompt_html": "<b>Kanal/grupta kullanım:</b>\n1. Botu kanalınıza/grubunuza ekleyin.\n2a. Komutları doğrudan <b>kanala/gruba</b> gönderin.\n2b. Veya alternatif olarak, <b>botla özel sohbette</b> <code>/sub @username https://exmaple.com</code> veya <code>/sub -1001000000000000000000000000 gibi komutlar https://exmaple.com</code> gönderebilirsiniz.\n(<code>@username</code> kanalın/grubun kullanıcı adıdır, <code>@</code> gereklidir; <code>-10010000000000</code> kanalın/grubun kimliğidir, <code>-100</code> ile başlamalıdır)"
+        "usage_in_channel_or_group_prompt_html": "<b>Kanal/grupta kullanım:</b>\n1. Botu kanalınıza/grubunuza ekleyin.\n2a. Komutları doğrudan <b>kanala/gruba</b> gönderin.\n2b. Veya alternatif olarak, <b>botla özel sohbette</b> <code>/sub @username https://example.com</code> veya <code>/sub -1001000000000000000000000000 gibi komutlar https://example.com</code> gönderebilirsiniz.\n(<code>@username</code> kanalın/grubun kullanıcı adıdır, <code>@</code> gereklidir; <code>-10010000000000</code> kanalın/grubun kimliğidir, <code>-100</code> ile başlamalıdır)"
     }
 }

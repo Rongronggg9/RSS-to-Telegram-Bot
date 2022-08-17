@@ -60,6 +60,9 @@ __arg_parser = argparse.ArgumentParser(
     description='RSS to Telegram Bot, a Telegram RSS bot that cares about your reading experience.')
 __arg_parser.add_argument('-c', '--config', metavar='/path/to/config/folder', type=str, nargs=1,
                           help='path to the config folder')
+__arg_parser.add_argument('--dummy', type=str, action='append', nargs=1,
+                          help='dummy argument, can be repeated for multiple times. '
+                               'Useful to distinguish multiple bot instances on the same host with command line')
 cli_args = __arg_parser.parse_args()
 custom_config_path = cli_args.config[0] if cli_args.config else None
 

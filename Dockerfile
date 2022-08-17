@@ -97,4 +97,4 @@ COPY --from=app-builder /app-minimal /app
 # verify cryptg installation
 RUN python -c 'import logging; logging.basicConfig(level=logging.DEBUG); import telethon; import cryptg'
 
-CMD ["python", "-u", "telegramRSSbot.py"]
+ENTRYPOINT ["python", "-u", "telegramRSSbot.py"]

@@ -40,6 +40,8 @@ loop = env.loop
 bot: Optional[TelegramClient] = None
 pre_tasks = []
 
+scheduler = AsyncIOScheduler(event_loop=loop)
+
 
 def init():
     global bot
@@ -253,7 +255,8 @@ async def post():
     try:
         loop.call_later(10, lambda: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
         logger.info('Exiting gracefully...')
-        await asyncio.gather(db.close(), tgraph.close())
+        scheduler.shutdown(wait=False)
+        await asyncio.gather(bot.disconnect(), db.close(), tgraph.close())
         aio_helper.shutdown()
     except Exception as e:
         logger.error('Error when exiting gracefully: ', exc_info=e)
@@ -286,16 +289,15 @@ def main():
 
         loop.create_task(lazy())
 
-        scheduler = AsyncIOScheduler(event_loop=loop)
         scheduler.add_job(func=command.monitor.run_monitor_task,
                           trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
                           max_instances=10,
                           misfire_grace_time=10)
         scheduler.start()
 
-        bot.run_until_disconnected()
-    except (KeyboardInterrupt, SystemExit):
-        pass
+        loop.run_forever()
+    except (KeyboardInterrupt, SystemExit) as e:
+        logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
     finally:
         loop.run_until_complete(post())
 

@@ -7,19 +7,26 @@ You can contribute by helping us to translate the bot to your language.
 ## GitHub Pull Request
 
 1. Copy the [src/i18n/`en.json`][en] to [src/i18n/][i18n]`<lang_code>.json`.
-
-2. Ensure the following keys are correct:
-
-| key                | e.g. 1    | e.g. 2               | e.g. 3      | e.g. 4                |
-|--------------------|-----------|----------------------|-------------|-----------------------|
-| `lang_code`[^1]    | `en`      | `zh-Hans`            | `yue`[^2]   | `zh-Hant`             |
-| `iso_639_code`[^3] | `en`      | `zh`                 | `yue`       | [^4]                  |
-| `language_name`    | `English` | `Simplified Chinese` | `Cantonese` | `Traditional Chinese` |
-| `lang_native_name` | `English` | `简体中文`               | `廣東話`       | `正體中文`                |
-
+2. Ensure the following keys are correct.
 3. Translate other keys to your language.
-
 4. Commit your translation and create a Pull Request.
+
+| key                | e.g. 1     | e.g. 2               | e.g. 3      | e.g. 4                |
+|--------------------|------------|----------------------|-------------|-----------------------|
+| `lang_code`[^1]    | `en`       | `zh-Hans`            | `yue`[^2]   | `zh-Hant`             |
+| `iso_639_code`[^3] | `en`       | `zh`                 | `yue`       | [^4]                  |
+| `language_name`    | `English`  | `Simplified Chinese` | `Cantonese` | `Traditional Chinese` |
+| `lang_native_name` | `English`  | `简体中文`               | `廣東話`       | `正體中文`                |
+| `style_0`          | `RSStT`    |                      |             |                       |
+| `style_1`          | `flowerss` |                      |             |                       |
+
+[^1]: Shorter is better. Usually, it's the same as `iso_639_code`. However, if a language does have multiple common variants and of which no one can be a common standard, consider using an extended [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) instead. Please make sure the language code is [IANA-registered](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) and not deprecated or not about to be deprecated.
+
+[^2]: `yue` is a valid ISO 639-3 code, while `zh-yue` is non-standard.
+
+[^3]: Use for fallback. If your language has an ISO 639-1 code, use it. Otherwise, use an ISO 639-2/3 code. Ref: [List of ISO 639-1 codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
+
+[^4]: If a language has multiple variants, only the most widely-used one can set `iso_639_code`.
 
 ## Hosted Weblate
 
@@ -27,27 +34,29 @@ You can contribute by helping us to translate the bot to your language.
 
 Recommended for those who are not familiar with Git or GitHub. You may both improve existing translations or start a new translation for your language.
 
-<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
+<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/open-graph.png" width = "500" alt="" /></a>
 <a href="https://hosted.weblate.org/engage/glossary/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/multi-auto.svg" width = "500" alt="" /></a>
 
 https://hosted.weblate.org/projects/rss-to-telegram-bot/
 
 ## Translators
-| Language                               | Translator(s)               | Status                    |
-|----------------------------------------|-----------------------------|---------------------------|
-| [en] / English                         | [@Rongronggg9]              | [![en_s]][en_w]           |
-| [zh-Hans] / Simplified Chinese / 简体中文  | [@Rongronggg9]              | [![zh_Hans_s]][zh_Hans_w] |
-| [zh-Hant] / Traditional Chinese / 正體中文 | [@Rongronggg9]              | [![zh_Hant_s]][zh_Hant_w] |
-| [yue] / Cantonese / 廣東話                | [@Rongronggg9]              | [![yue_s]][yue_w]         |
-| [it] / Italian / Italiano              | [@Alfy] ([@AlfyT96])        | [![it_s]][it_w]           |
-| [ca] / Catalan / Català                | [@maite.guix]               | [![ca_s]][ca_w]           |
-| [tr] / Turkish / Türkçe                | [@wiseweb-works]            | [![tr_s]][tr_w]           |
-| [fr] / French / français               | [@Edanas]                   | [![fr_s]][fr_w]           |
-| [id] / Indonesian / Bahasa Indonesia   | [@liimee], [@rezaalmanda]   | [![id_s]][id_w]           |
-| [pt] / Portuguese / Português          | [@luchezi], [@higorluchez]  | [![pt_s]][pt_w]           |
-| [cs] / Czech / čeština                 | [@Mikyner]                  | [![cs_s]][cs_w]           |
-| [ru] / Russian / Русский               | [@AHOHNMYC], [@nutrilonrng] | [![ru_s]][ru_w]           |
-| [pl] / Polish / Polski                 | [@marcin93]                 | [![pl_s]][pl_w]           |
+| Language                               | Translator(s)                           | Status                    |
+|----------------------------------------|-----------------------------------------|---------------------------|
+| [en] / English                         | [@Rongronggg9]                          | [![en_s]][en_w]           |
+| [zh-Hans] / Simplified Chinese / 简体中文  | [@Rongronggg9]                          | [![zh_Hans_s]][zh_Hans_w] |
+| [zh-Hant] / Traditional Chinese / 正體中文 | [@Rongronggg9]                          | [![zh_Hant_s]][zh_Hant_w] |
+| [yue] / Cantonese / 廣東話                | [@Rongronggg9]                          | [![yue_s]][yue_w]         |
+| [it] / Italian / Italiano              | [@Alfy] ([@AlfyT96])                    | [![it_s]][it_w]           |
+| [ca] / Catalan / Català                | [@maite.guix]                           | [![ca_s]][ca_w]           |
+| [tr] / Turkish / Türkçe                | [@wiseweb-works]                        | [![tr_s]][tr_w]           |
+| [fr] / French / français               | [@Edanas], [@naelopode], [@Palente]     | [![fr_s]][fr_w]           |
+| [id] / Indonesian / Bahasa Indonesia   | [@liimee], [@rezaalmanda]               | [![id_s]][id_w]           |
+| [pt] / Portuguese / Português          | [@luchezi], [@higorluchez], [@lauravpf] | [![pt_s]][pt_w]           |
+| [cs] / Czech / čeština                 | [@Mikyner]                              | [![cs_s]][cs_w]           |
+| [ru] / Russian / Русский               | [@AHOHNMYC], [@nutrilonrng]             | [![ru_s]][ru_w]           |
+| [pl] / Polish / Polski                 | [@marcin93]                             | [![pl_s]][pl_w]           |
+| [es] / Spanish / Español               | [@OscarCMD]                             | [![es_s]][es_w]           |
+| [ja] / Japanese / 日本語                  | [@Misaka13514]                          | [![ja_s]][ja_w]           |
 
 [i18n]: ../src/i18n
 
@@ -64,6 +73,8 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [cs]: ../src/i18n/cs.json
 [ru]: ../src/i18n/ru.json
 [pl]: ../src/i18n/pl.json
+[es]: ../src/i18n/es.json
+[ja]: ../src/i18n/ja.json
 
 [en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/glossary/svg-badge.svg
 [zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/glossary/svg-badge.svg
@@ -78,6 +89,8 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [cs_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/cs/glossary/svg-badge.svg
 [ru_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ru/glossary/svg-badge.svg
 [pl_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pl/glossary/svg-badge.svg
+[es_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/es/glossary/svg-badge.svg
+[ja_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ja/glossary/svg-badge.svg
 
 [en_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/en/
 [zh_Hans_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/zh_Hans/
@@ -92,6 +105,8 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [cs_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/cs/
 [ru_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/ru/
 [pl_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/pl/
+[es_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/es/
+[ja_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/ja/
 
 [@Rongronggg9]: https://github.com/Rongronggg9
 [@Alfy]: https://hosted.weblate.org/user/Alfy/
@@ -107,11 +122,8 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [@AHOHNMYC]: https://hosted.weblate.org/user/AHOHNMYC/
 [@nutrilonrng]: https://hosted.weblate.org/user/nutrilonrng/
 [@marcin93]: https://hosted.weblate.org/user/marcin93/
-
-[^1]: Shorter is better. Usually, it's the same as `iso_639_code`. However, if a language does have multiple common variants and of which no one can be a common standard, consider using an extended [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) instead. Please make sure the language code is [IANA-registered](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) and not deprecated or not about to be deprecated.
-
-[^2]: `yue` is a valid ISO 639-3 code, while `zh-yue` is non-standard.
-
-[^3]: Use for fallback. If your language has an ISO 639-1 code, use it. Otherwise, use an ISO 639-2/3 code. Ref: [List of ISO 639-1 codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)
-
-[^4]: If a language has multiple variants, only the most widely-used one can set `iso_639_code`.
+[@naelopode]: https://hosted.weblate.org/user/naelopode/
+[@Palente]: https://hosted.weblate.org/user/Palente/
+[@lauravpf]: https://hosted.weblate.org/user/lauravpf/
+[@OscarCMD]: https://github.com/OscarCMD
+[@Misaka13514]: https://github.com/Misaka13514

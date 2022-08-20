@@ -1,0 +1,5 @@
+version: "1"
+rules:
+  - base: dev
+    upstream: Rongronggg9:dev # change `wei` to the owner of upstream repo
+    mergeMethod: merge # Optional, one of [none, merge, squash, rebase, hardreset], Default: none.

@@ -97,27 +97,25 @@ class Post:
         :param silent: whether to send with notification sound
         """
         for _ in range(3):
-            if not self.post_formatter.parsed:
-                await self.post_formatter.parse_html()
-
-            formatted_post, need_media, need_link_preview = \
-                await self.post_formatter.get_formatted_post(sub_title=sub_title,
-                                                             tags=tags,
-                                                             send_mode=send_mode,
-                                                             length_limit=length_limit,
-                                                             link_preview=link_preview,
-                                                             display_author=display_author,
-                                                             display_via=display_via,
-                                                             display_title=display_title,
-                                                             style=style,
-                                                             display_media=display_media)
-
-            message_dispatcher = MessageDispatcher(user_id=user_id,
-                                                   html=formatted_post,
-                                                   media=self.post_formatter.media if need_media else None,
-                                                   link_preview=need_link_preview,
-                                                   silent=silent)
             try:
+                formatted_post, need_media, need_link_preview = \
+                    await self.post_formatter.get_formatted_post(sub_title=sub_title,
+                                                                 tags=tags,
+                                                                 send_mode=send_mode,
+                                                                 length_limit=length_limit,
+                                                                 link_preview=link_preview,
+                                                                 display_author=display_author,
+                                                                 display_via=display_via,
+                                                                 display_title=display_title,
+                                                                 style=style,
+                                                                 display_media=display_media)
+
+                message_dispatcher = MessageDispatcher(user_id=user_id,
+                                                       html=formatted_post,
+                                                       media=self.post_formatter.media if need_media else None,
+                                                       link_preview=need_link_preview,
+                                                       silent=silent)
+
                 return await message_dispatcher.send_messages()
             except MediaSendFailErrors as e:
                 media = self.post_formatter.media
@@ -145,6 +143,8 @@ class Post:
                         continue
                 logger.error(f'{log_header}, dropped all media and retrying...')
                 self.post_formatter.media.invalidate_all()
+            except (SystemExit, KeyboardInterrupt) as e:
+                raise SystemExit(self.feed_link, self.feed_title, self.link, self.title) from e
 
     async def test_format(self, user_id: int):
         if user_id != env.MANAGER:

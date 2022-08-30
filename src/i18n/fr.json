@@ -72,7 +72,7 @@
         "unsub_failed": "Echec lors de la résiliation"
     },
     "l10n_cmd_unsub_all": {
-        "unsub_all_confirm_prompt": "Etes vous sure de vouloir résilier tout vos abonnements?",
+        "unsub_all_confirm_prompt": "Etes vous sure de vouloir résilier tout vos abonnements ?",
         "unsub_all_confirm": "Oui, résilier tout les abonnements",
         "unsub_all_cancel": "Non, annuler",
         "unsub_all_successful": "Résiliation de tout les abonnements réussi"
@@ -169,24 +169,24 @@
         "all_subs_are_deactivated": "Tout les abonnements sont désactivés."
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "Utilisation de la commande: <code>/set_title sub_id titre</code>\n\nNote: omettez <code>titre</code> pour effacer le titre personnalisé (uniquement s'il a déjà été défini).",
-        "set_title_success": "Le titre personnalisé de cet abonnement à été changé pour: ",
+        "cmd_set_title_usage_prompt_html": "Utilisation de la commande : <code>/set_title sub_id titre</code>\n\nNote : omettez <code>titre</code> pour effacer le titre personnalisé (uniquement s'il a déjà été défini).",
+        "set_title_success": "Le titre personnalisé de cet abonnement à été changé pour : ",
         "set_title_success_cleared": "Le titre personnalisé de l'abonnement à été effacé."
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "Usage de la commande <code>/set_interval sub_id monitor_interval</code>\n\nNote: <code>monitor_interval</code> doit être un nombre entier positif en minutes (il n'est pas nécessaire d'inclure l'unité).",
+        "cmd_set_interval_usage_prompt_html": "Usage de la commande <code>/set_interval sub_id monitor_interval</code>\n\nNote : <code>monitor_interval</code> doit être un nombre entier positif en minutes (il n'est pas nécessaire d'inclure l'unité).",
         "set_interval_success_html": "L'intervalle de surveillance de l'abonnement a été modifié à <b>%d minutes</b>.",
         "set_default_interval_success_html": "L'intervalle de surveillance par défaut a été modifié à <b>%d minutes</b>.",
         "set_interval_failure_too_small_html": "L'intervalle de surveillance doit être plus grand que <b>%d minutes</b>."
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "Utilisation de commande: <code>/set_hashtags abo_id #hashtag1 #hashtag2 …</code>\n\nNote: Si aucun hashtag n'est fournis, les hashtags existants seront effacés (seulement si il y en avait auparavant).",
+        "cmd_set_hashtags_usage_prompt_html": "Utilisation de commande : <code>/set_hashtags abo_id #hashtag1 #hashtag2 …</code>\n\nNote : Si aucun hashtag n'est fournis, les hashtags existants seront effacés (seulement si il y en avait auparavant).",
         "set_hashtags_success_html": "Les hashtags personnalisés de l'abonnement ont été changé pour : ",
         "set_hashtags_success_cleared": "Les hashtags personnalisés de l'abonnement ont été effacés.",
         "set_hashtags_failure_too_many": "Trop de hashtags. Veuillez supprimer certains hashtags et réessayer."
     },
     "l10n_administration": {
-        "cmd_test_usage_prompt_html": "Utilisation de la commande: <code>/test RSS_URL entry_start_number(optional) entry_end_number(optional)</code>",
+        "cmd_test_usage_prompt_html": "Utilisation de la commande : <code>/test RSS_URL entry_start_number(optional) entry_end_number(optional)</code>",
         "cmd_set_option_usage_prompt_html": "Usage de la commande : <code>/set_option valeur</code>",
         "current_options": "Option actuelle",
         "option_value_type": "Type de valeur",
@@ -211,7 +211,7 @@
         "set_user_state_as": "Défini l'état de l'utilisateur comme",
         "reset_sub_limit_to_default": "Réinitialiser la limite du nombre d'abonnement à la valeur par défaut",
         "set_sub_limit_to": "Définir la limite du nombre d'abonnement…",
-        "cmd_set_sub_limit_prompt_html": "Utilisation de la commande: <code>/set_sub_limit user_id subscription_quantity_limit</code>\n\nNote: <code>subscription_quantity_limit</code> doit être un nombre entier, <code>-1</code> pour retirer la limite."
+        "cmd_set_sub_limit_prompt_html": "Utilisation de la commande : <code>/set_sub_limit user_id subscription_quantity_limit</code>\n\nNote : <code>subscription_quantity_limit</code> doit être un nombre entier, <code>-1</code> pour retirer la limite."
     },
     "l10n_cmd_descriptions": {
         "commands": "Commandes",
@@ -231,6 +231,6 @@
         "cmd_description_test": "Test (responsable du bot uniquement)",
         "cmd_description_set_option": "Définir les paramètre du bot (responsable du bot uniquement)",
         "cmd_description_user_info": "Voir/modifier les informations de l'utilisateur (responsable du bot uniquement)",
-        "usage_in_channel_or_group_prompt_html": "<b>Utilisateur du canal/discussion:</b>\n1. Ajouter le bot au canal/discussion.\n2a. Envoyer directement les commandes <b>dans le canal/discussion</b>.\n2b. Ou encore, envoyer une commande tel que<code>/sub @username https://example.com</code> ou <code>/sub -10010000000000 https://example.com</code> <b>dans la discussion privée avec le bot</b>.\n(<code>@username</code> est le nom d'utilisateur du canal/discussion , <code>@</code> est nécessaire; <code>-10010000000000</code> est l'ID du canal/discussion, il doit commencer par <code>-100</code>)"
+        "usage_in_channel_or_group_prompt_html": "<b>Utilisateur du canal/discussion :</b>\n1. Ajouter le bot au canal/discussion.\n2a. Envoyer directement les commandes <b>dans le canal/discussion</b>.\n2b. Ou encore, envoyer une commande tel que<code>/sub @username https://example.com</code> ou <code>/sub -10010000000000 https://example.com</code> <b>dans la discussion privée avec le bot</b>.\n(<code>@username</code> est le nom d'utilisateur du canal/discussion , <code>@</code> est nécessaire ; <code>-10010000000000</code> est l'ID du canal/discussion, il doit commencer par <code>-100</code>)"
     }
 }

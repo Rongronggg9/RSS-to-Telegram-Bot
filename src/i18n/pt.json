@@ -156,7 +156,7 @@
         "default_emoji_header_description": "%s significa que a assinatura está usando suas configurações padrão. Você pode alterá-los usando /set_default."
     },
     "l10n_monitor_warn": {
-        "feed_deactivated_warn": "A tarefa de monitoramento falhou 100 vezes consecutivas. Sua assinatura do feed RSS foi desativada.\nPara reativá-lo, use o comando /activate_subs."
+        "feed_deactivated_warn": "A tarefa de monitoramento falhou 100 vezes consecutivas. Sua assinatura foi desativada.\nPara reativá-lo, use o comando /activate_subs."
     },
     "l10n_cmd_activate": {
         "choose_sub_to_be_activated": "As assinaturas abaixo estão desativadas, escolha uma para ativar.\nApós serem ativados, suas atualizações serão monitoradas.",

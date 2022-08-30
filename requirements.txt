@@ -28,7 +28,7 @@ dnspython[idna]==2.2.1
 url-normalize==1.4.3
 
 # utils
-colorlog==6.6.0
+colorlog==6.7.0
 APScheduler==3.9.1
 python-dotenv==0.20.0
 multidict==6.0.2

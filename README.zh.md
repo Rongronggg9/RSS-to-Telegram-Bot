@@ -75,9 +75,6 @@
 - 用户友好
 - HTTP 缓存
 
-<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/open-graph.png" width = "500" alt="" /></a>
-<a href="https://hosted.weblate.org/engage/glossary/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/glossary/multi-auto.svg" width = "500" alt="" /></a>
-
 ## 部署
 
 在[这里](docs/deployment-guide.md)阅读部署指南。
@@ -92,7 +89,7 @@
 
 你可以通过 [Hosted Weblate](https://hosted.weblate.org/projects/rss-to-telegram-bot/) 帮助翻译这个 bot。特别感谢他们为自由项目提供的免费托管服务！
 
-<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/-/open-graph.png" width = "500" alt="" /></a>
+<a href="https://hosted.weblate.org/engage/rss-to-telegram-bot/"><img src="https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/glossary/multi-auto.svg" width = "500" alt="" /></a>
 
 ## 使用公共 bot
 

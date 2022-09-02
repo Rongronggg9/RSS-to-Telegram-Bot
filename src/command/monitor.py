@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union
 from typing_extensions import Final
-from collections.abc import MutableMapping, Iterable
+from collections.abc import MutableMapping, Iterable, Sequence
 
 import gc
 import asyncio
@@ -130,6 +130,22 @@ async def run_monitor_task():
             logger.error(f'The TimeoutError of the feed ({feed.link}) in the task:', exc_info=error)
 
 
+def calculate_update(old_hashes: Sequence[str], entries: Sequence[dict]) -> tuple[list[str], list[dict]]:
+    # sequence matters so we cannot use a set
+    new_hashes = old_hashes.copy() if isinstance(old_hashes, list) else list(old_hashes)
+    updated_entries = []
+    for entry in reversed(entries):
+        guid = entry.get('guid') or entry.get('link') or entry.get('title')
+        if not guid:
+            continue  # feed hospital, please
+        h = get_hash(guid)
+        if h in old_hashes:
+            continue
+        new_hashes.insert(0, h)
+        updated_entries.insert(0, entry)
+    return new_hashes, updated_entries
+
+
 async def __monitor(feed: db.Feed) -> str:
     """
     Monitor the update of a feed.
@@ -197,28 +213,15 @@ async def __monitor(feed: db.Feed) -> str:
         feed.title = title
         await feed.save()
 
-    # sequence matters so we cannot use a set
-    old_hashes: list = feed.entry_hashes if isinstance(feed.entry_hashes, list) else []
-    updated_hashes = []
-    updated_entries = []
-    for entry in rss_d.entries:
-        guid = entry.get('guid') or entry.get('link')
-        if not guid:
-            continue  # IDK why there are some feeds containing entries w/o a link, should we set up a feed hospital?
-        h = get_hash(guid)
-        if h in old_hashes:
-            continue
-        updated_hashes.append(h)
-        updated_entries.append(entry)
+    new_hashes, updated_entries = calculate_update(feed.entry_hashes, rss_d.entries)
 
-    if not updated_hashes:  # not updated
+    if not updated_entries:  # not updated
         logger.debug(f'Fetched (not updated): {feed.link}')
         return NOT_UPDATED
 
     logger.debug(f'Updated: {feed.link}')
     length = max(len(rss_d.entries) * 2, 100)
-    new_hashes = updated_hashes + old_hashes[:length - len(updated_hashes)]
-    feed.entry_hashes = new_hashes
+    feed.entry_hashes = new_hashes[:length]
     http_caching_d = inner.utils.get_http_caching_headers(wf.headers)
     feed.etag = http_caching_d['ETag']
     feed.last_modified = http_caching_d['Last-Modified']
@@ -228,7 +231,7 @@ async def __monitor(feed: db.Feed) -> str:
         new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
         feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
-    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in updated_entries[::-1]))
+    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
 
     return UPDATED
 

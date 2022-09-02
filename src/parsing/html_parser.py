@@ -3,6 +3,7 @@ from collections.abc import Iterator, Iterable, Awaitable
 from typing import Union, Optional
 
 import re
+import asyncio
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
 from urllib.parse import urlparse
@@ -42,6 +43,7 @@ class Parser:
         self.html_tree = HtmlTree('')
         self.feed_link = feed_link
         self.parsed = False
+        self._parse_item_count = 0
 
     async def parse(self):
         self.soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
@@ -56,6 +58,9 @@ class Parser:
 
     async def _parse_item(self, soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]]) \
             -> Optional[Text]:
+        self._parse_item_count += 1
+        if self._parse_item_count % 64 == 0:
+            await asyncio.sleep(0)  # yield to other coroutines, avoid blocking
         result = []
         if isinstance(soup, Iterator):  # a Tag is also Iterable, but we only expect an Iterator here
             prev_tag_name = None

@@ -5,7 +5,6 @@ from typing import Callable
 import sys
 import functools
 
-import telethon.helpers
 from aiohttp import ClientResponse
 from cachetools.keys import hashkey
 
@@ -130,45 +129,3 @@ def bozo_exception_removal_wrapper(func: Callable, *args, **kwargs):
         del ret['bozo_exception']
 
     return ret
-
-
-def apply_monkey_patches():
-    def _telethon_helpers_strip_text(text, entities):
-        """
-        https://github.com/LonamiWebs/Telethon/blob/046e2cb605e4def4d38c2f0d665ea49babb90093/telethon/helpers.py#L65
-        """
-        if not entities:
-            return text.strip()
-
-        len_ori = len(text)
-        text = text.lstrip()
-        left_offset = len_ori - len(text)
-        text = text.rstrip()
-        len_final = len(text)
-
-        for i in reversed(range(len(entities))):
-            e = entities[i]
-            if e.length == 0:
-                del entities[i]
-                continue
-
-            if e.offset + e.length > left_offset:
-                if e.offset >= left_offset:
-                    e.offset -= left_offset
-                else:
-                    e.length = e.offset + e.length - left_offset
-                    e.offset = 0
-            else:
-                del entities[i]
-                continue
-
-            if e.offset + e.length <= len_final:
-                continue
-            if e.offset >= len_final:
-                del entities[i]
-            else:
-                e.length = len_final - e.offset
-
-        return text
-
-    telethon.helpers.strip_text = _telethon_helpers_strip_text

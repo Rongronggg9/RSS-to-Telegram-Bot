@@ -18,6 +18,7 @@ from itertools import chain
 
 from .. import log
 from ..aio_helper import run_async_on_demand
+from ..compat import parsing_utils_html_validator_preprocess
 
 logger = log.getLogger('RSStT.parsing')
 
@@ -144,16 +145,7 @@ def is_emoticon(tag: Tag) -> bool:
 
 
 def _html_validator(html: str) -> str:
-    # fix malformed HTML first, since minify-html is not so robust
-    # (resulting in RecursionError or unexpected format while html_parser parsing the minified HTML)
-    # https://github.com/wilsonzlin/minify-html/issues/86
-    soup = BeautifulSoup(html, 'lxml')
-    for tag in chain(soup.find_all('script'), soup.find_all(attrs={'class': 'sr-only'})):
-        # remove unwanted tags
-        tag.decompose()
-    html = str(soup)
-    soup.decompose()
-    del soup
+    html = parsing_utils_html_validator_preprocess(html)
     html = minify(html)
     html = stripBr(html)
     html = replaceInvalidCharacter(html)

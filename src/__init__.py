@@ -11,11 +11,6 @@ aio_helper.init()
 # register main-process-only log handlers
 log.init()
 
-from . import compat
-
-# apply monkey patches before importing other packages
-compat.apply_monkey_patches()
-
 import os
 import signal
 import asyncio

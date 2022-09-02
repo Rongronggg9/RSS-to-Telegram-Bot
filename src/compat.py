@@ -6,6 +6,7 @@ import sys
 import functools
 
 from aiohttp import ClientResponse
+from bs4 import BeautifulSoup
 from cachetools.keys import hashkey
 
 _version_info = sys.version_info
@@ -90,6 +91,26 @@ def ssl_create_default_context():
     if _version_info[1] >= 10:  # However, TLSv1.1 still not enabled
         context.set_ciphers(_ciphers_py39)
     return context
+
+
+def parsing_utils_html_validator_preprocess(html: str) -> str:
+    contains_sr_only = 'sr-only' in html
+    if (
+            _version_info[1] < 8  # minify-html >0.6.10 requires Python 3.8+
+            or
+            contains_sr_only  # clear sr-only first, otherwise minify-html cannot strip spaces around them
+    ):
+        # fix malformed HTML first, since minify-html is not so robust
+        # (resulting in RecursionError or unexpected format while html_parser parsing the minified HTML)
+        # https://github.com/wilsonzlin/minify-html/issues/86
+        soup = BeautifulSoup(html, 'lxml')
+        if contains_sr_only:
+            for tag in soup.find_all(attrs={'class': 'sr-only'}):
+                with suppress(ValueError, AttributeError):
+                    tag.decompose()
+        html = str(soup)
+        soup.decompose()
+    return html
 
 
 def cached_async(cache, key=hashkey):

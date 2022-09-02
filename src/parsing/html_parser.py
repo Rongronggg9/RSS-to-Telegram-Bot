@@ -90,7 +90,7 @@ class Parser:
             return None
 
         tag = soup.name
-        if tag is None:
+        if tag is None or tag == 'script':
             return None
 
         if tag == 'table':

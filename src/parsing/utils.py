@@ -4,9 +4,7 @@ from typing import Optional, Sequence, Union
 import re
 import json
 from contextlib import suppress
-from bs4 import BeautifulSoup
 from bs4.element import Tag
-from minify_html import minify as _minify
 from html import unescape
 from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
@@ -14,11 +12,10 @@ from telethon.helpers import add_surrogate
 from functools import partial
 from urllib.parse import urljoin
 from os import path
-from itertools import chain
 
 from .. import log
 from ..aio_helper import run_async_on_demand
-from ..compat import parsing_utils_html_validator_preprocess
+from ..compat import parsing_utils_html_validator_minify
 
 logger = log.getLogger('RSStT.parsing')
 
@@ -90,13 +87,6 @@ stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
 isAbsoluteHttpLink = re.compile(r'^https?://').match
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 
-minify = partial(_minify,
-                 # https://docs.rs/minify-html/latest/minify_html/struct.Cfg.html
-                 do_not_minify_doctype=True,
-                 ensure_spec_compliant_unquoted_attribute_values=True,
-                 keep_closing_tags=True,
-                 keep_spaces_between_attributes=True)
-
 
 class Enclosure:
     def __init__(self, url: str, length: Union[int, str], _type: str, duration: str = None):
@@ -145,8 +135,7 @@ def is_emoticon(tag: Tag) -> bool:
 
 
 def _html_validator(html: str) -> str:
-    html = parsing_utils_html_validator_preprocess(html)
-    html = minify(html)
+    html = parsing_utils_html_validator_minify(html)
     html = stripBr(html)
     html = replaceInvalidCharacter(html)
     return html

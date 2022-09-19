@@ -250,9 +250,11 @@ async def post():
     try:
         loop.call_later(10, lambda: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
         logger.info('Exiting gracefully...')
-        scheduler.shutdown(wait=False)
-        res = await asyncio.gather(bot.disconnect() if bot else asyncio.Future(), db.close(), tgraph.close(),
-                                   return_exceptions=True)
+        if scheduler.running:
+            scheduler.shutdown(wait=False)
+        if bot:
+            await bot.disconnect()
+        res = await asyncio.gather(db.close(), tgraph.close(), return_exceptions=True)
         for e in (e for e in res if isinstance(e, BaseException)):
             logger.error('Error when exiting gracefully: ', exc_info=e)
         aio_helper.shutdown()

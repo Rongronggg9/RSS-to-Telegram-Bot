@@ -26,6 +26,16 @@ POOL_TYPE = Literal['thread', 'process']
 assert min(CPU_COUNT, AVAIL_CPU_COUNT, PROCESS_COUNT) > 0
 assert min(THREAD_POOL_WEIGHT, PROCESS_POOL_WEIGHT) >= 0
 
+
+def _process_exit(_signum, _frame):
+    exit(1)
+
+
+def _process_initializer():
+    signal(SIGINT, _process_exit)
+    signal(SIGTERM, _process_exit)
+
+
 # asyncio executors
 aioThreadExecutor = ThreadPoolExecutor(
     max_workers=THREAD_POOL_WEIGHT,
@@ -33,17 +43,13 @@ aioThreadExecutor = ThreadPoolExecutor(
 ) if THREAD_POOL_WEIGHT else None
 aioProcessExecutor = ProcessPoolExecutor(
     max_workers=PROCESS_POOL_WEIGHT,
-    initializer=lambda: (
-            signal(SIGINT, lambda *_, **__: exit(1))
-            and
-            signal(SIGTERM, lambda *_, **__: exit(1))
-    )
+    initializer=_process_initializer
 ) if PROCESS_POOL_WEIGHT else None
 
 __aioExecutorsDeque = deque(
     (
         *((aioThreadExecutor,) * THREAD_POOL_WEIGHT),
-        *((aioProcessExecutor,) * PROCESS_COUNT),
+        *((aioProcessExecutor,) * PROCESS_POOL_WEIGHT),
     )
 ) if aioThreadExecutor and aioProcessExecutor else None
 

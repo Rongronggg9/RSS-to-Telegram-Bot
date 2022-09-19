@@ -264,8 +264,9 @@ async def post():
 
 
 def main():
+    exit_code = 0
     try:
-        signal.signal(signal.SIGTERM, lambda *_, **__: exit(1))  # graceful exit handler
+        signal.signal(signal.SIGTERM, lambda *_, **__: exit())  # graceful exit handler
 
         init()
 
@@ -299,8 +300,11 @@ def main():
         loop.run_forever()
     except (KeyboardInterrupt, SystemExit) as e:
         logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
+        exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 99
     finally:
         loop.run_until_complete(post())
+        logger.log(log.INFO if exit_code == 0 else log.ERROR, f'Exited with code {exit_code}')
+        exit(exit_code)
 
 
 if __name__ == '__main__':

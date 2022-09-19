@@ -15,7 +15,7 @@ from collections import deque
 from . import env
 
 CPU_COUNT = os.cpu_count()
-AVAIL_CPU_COUNT = len(os.sched_getaffinity(0))
+AVAIL_CPU_COUNT = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else CPU_COUNT
 PROCESS_COUNT = min(AVAIL_CPU_COUNT, 3) if env.MULTIPROCESSING else 1
 
 THREAD_POOL_WEIGHT = 1

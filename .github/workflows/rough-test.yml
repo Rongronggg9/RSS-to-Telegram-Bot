@@ -34,4 +34,7 @@ jobs:
           echo 'TOKEN=test' > .env
           echo 'MANAGER=-1' >> .env
           echo 'DEBUG=1' >> .env
+          echo 'PORT=60088' >> .env
+          echo 'TABLE_TO_IMAGE=1' >> .env
+          echo 'MULTIPROCESSING=1' >> .env
           python3 -u telegramRSSbot.py

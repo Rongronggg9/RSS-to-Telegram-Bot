@@ -60,6 +60,12 @@ def init():
 
         pre_tasks.append(loop.create_task(redirect_server.run(port=env.PORT)))
 
+    if env.TOKEN.lower() == 'test':
+        # no login, just for test
+        logger.info('Test mode, no login.')
+        loop.run_until_complete(asyncio.gather(*pre_tasks))
+        exit(0)
+
     sleep_for = 0
     while api_keys:
         sleep_for += 10

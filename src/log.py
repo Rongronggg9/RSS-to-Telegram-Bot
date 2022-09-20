@@ -105,11 +105,24 @@ class _APSCFilter(logging.Filter):
         return True
 
 
-class AiohttpAccessFilter(logging.Filter):
+class _AiohttpAccessFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.msg % record.args
         if record.levelno <= logging.INFO and 'Mozilla' not in msg:
             return False
+        return True
+
+
+class _TelethonClientUpdatesFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.msg % record.args
+        if 'Fatal error' in msg:
+            coro = env.bot.send_message(
+                env.MANAGER,
+                msg + '\n\n' + 'Now the bot will restart.'
+            )
+            _logger.critical('Telethon client fatal error! Exiting...')
+            shutdown(prerequisite=coro)
         return True
 
 
@@ -120,5 +133,6 @@ def init():
     getLogger('apscheduler.scheduler').addFilter(apsc_filter)
     getLogger('apscheduler.executors.default').addFilter(apsc_filter)
 
-    aiohttp_access_filter = AiohttpAccessFilter()
-    getLogger('aiohttp.access').addFilter(aiohttp_access_filter)
+    getLogger('aiohttp.access').addFilter(_AiohttpAccessFilter())
+
+    getLogger('telethon.client.updates').addFilter(_TelethonClientUpdatesFilter())

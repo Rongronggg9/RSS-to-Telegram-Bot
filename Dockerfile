@@ -40,12 +40,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=dep-builder-common /opt/venv /opt/venv
 COPY requirements.txt .
 
-ARG FEEDPARSER_ENHANCED=0
+ARG EXP_DEPS=0
 RUN \
     set -ex && \
-    if [ "$FEEDPARSER_ENHANCED" = 1 ]; then \
-        pip uninstall -y feedparser && \
-        sed -i 's/^feedparser[^#]*#\s*//g' requirements.txt ; \
+    if [ "$EXP_DEPS" = 1 ]; then \
+        REGEX='^([^~=<>]+)[^#]*#\s*(\1@.+)$' ; \
+        pip uninstall -y $(sed -nE "s/$REGEX/\1/p" requirements.txt) && \
+        sed -Ei "s/$REGEX/\2/g" requirements.txt && \
         pip install --no-cache-dir \
             -r requirements.txt \
         ; \

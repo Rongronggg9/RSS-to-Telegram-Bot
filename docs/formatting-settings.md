@@ -25,10 +25,10 @@
     - A positive integer between [<ins>0</ins>, 4096]. <ins>0</ins> means "unlimited", actually equivalent to 4096 due to the internal limitation of Telegram (4096 characters for pure text messages; 1024 characters for text messages with media; some media types cannot be mixed with some others).
     - It is only effective when **send mode** is **auto**. Even if a post can be sent in a single Telegram message, but exceeding this limit, it has to be sent as a Telegraph post. Useful when you prefer Telegraph posts more than Telegram messages but still prefer receiving very short posts as Telegram messages. _Note that the media of a post will affect the internal limitation of Telegram, so it is possible that the length limit is not exceeded but the post is still too long for Telegram._
 - **Media**:
+    > Note that the option is only effective when **send mode** is **auto** or **force Telegram messages**
     - **<ins>Enable</ins>**: including media in Telegram messages (if any media is attached)
     - **Disable**: send pure-text Telegram messages, no matter whether media is attached or not
-    - **Only media, no content (if any media)**: if any media is attached, send it as a Telegram message containing only its media, no post content. Otherwise, send a pure-text Telegram message (of course, with its content). You may want to switch the **send mode** to **force Telegram messages** also.
-    - _(Note that the option is only effective when **send mode** is **auto** or **force Telegram messages**)_
+    - **Only media, no content**: if any media is attached, send it as a Telegram message containing only its media, no post content (title, source and author are still here unless you've disabled them explicitly). Otherwise, the post is simply ignored. You may want to switch the **send mode** to **force Telegram messages** also.
 - **Post title**:
     - **<ins>Auto</ins>**: display the post title only when it is not auto-filled _(e.g., some routes of [RSSHub](https://github.com/DIYGod/RSSHub) will autofill the title)_
     - **Enable**: always display post title _(the post must have a title)_

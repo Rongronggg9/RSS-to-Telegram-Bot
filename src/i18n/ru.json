@@ -110,7 +110,7 @@
         "display_media": "Медиа",
         "display_media_-1": "Выключены",
         "display_media_0": "Включены",
-        "display_media_1": "Только медиа, без содержимого (если есть медиа)",
+        "display_media_1": "Только медиа, без содержимого",
         "display_author": "Автор",
         "display_author_-1": "Выключен",
         "display_author_0": "Автоматически",

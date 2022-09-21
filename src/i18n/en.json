@@ -110,7 +110,7 @@
         "display_media": "Media",
         "display_media_-1": "Disable",
         "display_media_0": "Enable",
-        "display_media_1": "Only media, no content (if any media)",
+        "display_media_1": "Only media, no content",
         "display_author": "Author",
         "display_author_-1": "Disable",
         "display_author_0": "Auto",

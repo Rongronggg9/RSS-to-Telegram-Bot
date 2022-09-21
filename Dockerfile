@@ -21,6 +21,20 @@ RUN \
 
 FROM python:3.10-bullseye AS dep-builder
 
+RUN \
+    set -ex && \
+    apt-get update && \
+    apt-get install -yq --no-install-recommends \
+        cmake \
+    && \
+    rm -rf /var/lib/apt/lists/* && \
+    git clone --depth=1 https://github.com/microsoft/mimalloc.git && \
+    mkdir -p /mimalloc/build/lib && \
+    cd /mimalloc/build && \
+    cmake /mimalloc && \
+    make mimalloc -j$((`nproc`+1)) && \
+    ln libmimalloc.so* lib/
+
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY --from=dep-builder-common /opt/venv /opt/venv
@@ -91,6 +105,7 @@ ENV \
     # https://github.com/home-assistant/core/pull/70899
     # https://github.com/jemalloc/jemalloc/blob/5.2.1/TUNING.md
 
+COPY --from=dep-builder /mimalloc/build/lib /usr/local/lib
 COPY --from=dep-builder /opt/venv /opt/venv
 COPY --from=app-builder /app-minimal /app
 

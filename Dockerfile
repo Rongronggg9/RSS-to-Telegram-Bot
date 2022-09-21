@@ -100,6 +100,7 @@ ENV \
     PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     RAPIDFUZZ_IMPLEMENTATION=cpp \
+    PYTHONMALLOC=malloc \
     LD_PRELOAD=libjemalloc.so.2 \
     MALLOC_CONF=background_thread:true,max_background_threads:1,metadata_thp:auto,dirty_decay_ms:80000,muzzy_decay_ms:80000
     # jemalloc tuning, Ref:

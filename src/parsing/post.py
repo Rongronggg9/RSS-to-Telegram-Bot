@@ -111,6 +111,7 @@ class Post:
                                                                  display_media=display_media)
 
                 if formatted_post_tuple is None:
+                    logger.debug(f'Post {self.link} is not sent to user {user_id} due to empty content')
                     return  # skip
 
                 formatted_post, need_media, need_link_preview = formatted_post_tuple

@@ -307,8 +307,17 @@ class PostFormatter:
         if option_hash in self.__post_bucket:
             return self.__post_bucket[option_hash]
 
-        if message_type in {NORMAL_MESSAGE, LINK_MESSAGE} and display_media == ONLY_MEDIA_NO_CONTENT and not self.media:
-            # skip if ONLY_MEDIA_NO_CONTENT but no media
+        if (
+                (
+                        message_type in {NORMAL_MESSAGE, LINK_MESSAGE}
+                        and display_media == ONLY_MEDIA_NO_CONTENT and not need_media
+                )  # ONLY_MEDIA_NO_CONTENT but no media
+                or
+                (
+                        not self.parsed_html and not need_media
+                        and via_type is NO_VIA and title_type == NO_POST_TITLE and need_author is False
+                )  # no content or media, and metadata is completely disabled by user
+        ):
             self.__post_bucket[option_hash] = None
             return None
 

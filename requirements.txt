@@ -1,6 +1,6 @@
 # telegram and telegraph
 cryptg==0.3.1
-telethon==1.25.0
+telethon==1.25.0  # telethon@git+https://github.com/LonamiWebs/Telethon.git@v1
 aiographfix==0.2.2
 
 # feed parsing
@@ -17,7 +17,7 @@ minify-html-onepass==0.10.0; python_version>="3.8"  # Python 3.8+ (aarch64/amd64
 matplotlib==3.5.3
 
 # db
-asyncpg==0.26.0  # asyncpg@git+https://github.com/Rongronggg9/asyncpg.git@fix/pep-621
+asyncpg==0.26.0
 tortoise-orm[accel]==0.19.2
 aerich==0.6.3
 

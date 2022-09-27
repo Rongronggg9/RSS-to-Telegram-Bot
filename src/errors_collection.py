@@ -8,7 +8,7 @@ from telethon.errors import (
     PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError, PhotoCropSizeSmallError,
     PhotoContentUrlEmptyError, PhotoContentTypeInvalidError, GroupedMediaInvalidError, MediaGroupedInvalidError,
     MediaInvalidError, VideoContentTypeInvalidError, VideoFileInvalidError, ExternalUrlInvalidError,
-    WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, ChatAdminRequiredError
+    WebpageCurlFailedError, WebpageMediaEmptyError, MediaEmptyError, ChatAdminRequiredError, ChatRestrictedError
 )
 
 
@@ -23,7 +23,7 @@ class ContextTimeoutError(asyncio.TimeoutError):
 
 
 UserBlockedErrors: tuple = (UserIsBlockedError, UserIdInvalidError, ChatWriteForbiddenError, ChannelPrivateError,
-                            InputUserDeactivatedError, ChatAdminRequiredError, EntityNotFoundError)
+                            InputUserDeactivatedError, ChatAdminRequiredError, EntityNotFoundError, ChatRestrictedError)
 InvalidMediaErrors: tuple = (PhotoInvalidDimensionsError, PhotoSaveFileInvalidError, PhotoInvalidError,
                              PhotoCropSizeSmallError, PhotoContentUrlEmptyError, PhotoContentTypeInvalidError,
                              GroupedMediaInvalidError, MediaGroupedInvalidError, MediaInvalidError,

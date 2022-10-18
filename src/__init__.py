@@ -303,7 +303,7 @@ def main():
                           misfire_grace_time=10)
         scheduler.start()
 
-        loop.run_forever()
+        loop.run_until_complete(bot.disconnected)
     except (KeyboardInterrupt, SystemExit) as e:
         logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
         exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 99

@@ -3,7 +3,7 @@ version: '3.6'
 
 services:
   main:
-    image: rongronggg9/rss-to-telegram  # switch to dev branch: rongronggg9/rss-to-telegram:dev
+    image: rongronggg9/rss-to-telegram:dev  # stable image: rongronggg9/rss-to-telegram
     container_name: rsstt  # need to be unique
     restart: unless-stopped
     volumes:

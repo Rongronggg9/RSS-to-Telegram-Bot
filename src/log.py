@@ -34,7 +34,7 @@ _logger = getLogger('RSStT.watchdog')
 
 async def exit_handler(prerequisite: Awaitable = None):
     try:
-        if prerequisite:
+        if prerequisite and env.bot.is_connected():
             try:
                 await asyncio.wait_for(prerequisite, timeout=10)
             except asyncio.TimeoutError:

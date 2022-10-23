@@ -254,13 +254,17 @@ async def lazy():
 
 async def post():
     try:
-        loop.call_later(10, lambda: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
+        if getattr(signal, 'SIGALRM', None):
+            signal.alarm(15)
+            signal.signal(signal.SIGALRM, lambda *_, **__: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
+        loop.call_later(10, lambda: os.kill(os.getpid(), signal.SIGKILL))
         logger.info('Exiting gracefully...')
+        tasks = [asyncio.shield(asyncio.create_task(db.close())), asyncio.create_task(tgraph.close())]
         if scheduler.running:
             scheduler.shutdown(wait=False)
         if bot and bot.is_connected():
-            await bot.disconnect()
-        res = await asyncio.gather(db.close(), tgraph.close(), return_exceptions=True)
+            tasks.append(bot.disconnect())
+        res = await asyncio.gather(*tasks, return_exceptions=True)
         for e in (e for e in res if isinstance(e, BaseException)):
             logger.error('Error when exiting gracefully: ', exc_info=e)
         aio_helper.shutdown()
@@ -308,7 +312,7 @@ def main():
         logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
         exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 99
     finally:
-        loop.run_until_complete(post())
+        loop.run_until_complete(asyncio.shield(post()))
         logger.log(log.INFO if exit_code == 0 else log.ERROR, f'Exited with code {exit_code}')
         exit(exit_code)
 

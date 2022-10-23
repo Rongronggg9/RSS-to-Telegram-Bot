@@ -258,7 +258,7 @@ async def post():
         logger.info('Exiting gracefully...')
         if scheduler.running:
             scheduler.shutdown(wait=False)
-        if bot:
+        if bot and bot.is_connected():
             await bot.disconnect()
         res = await asyncio.gather(db.close(), tgraph.close(), return_exceptions=True)
         for e in (e for e in res if isinstance(e, BaseException)):

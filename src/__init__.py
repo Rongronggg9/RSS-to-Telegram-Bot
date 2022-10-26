@@ -87,7 +87,6 @@ def init():
 
     if bot is None:
         logger.critical('LOGIN FAILED!')
-        loop.run_until_complete(post())
         exit(1)
 
     env.bot = bot
@@ -253,24 +252,21 @@ async def lazy():
 
 
 async def post():
-    try:
-        if getattr(signal, 'SIGALRM', None):
-            signal.alarm(15)
-            signal.signal(signal.SIGALRM, lambda *_, **__: os.kill(os.getpid(), signal.SIGKILL))  # double insurance
-        loop.call_later(10, lambda: os.kill(os.getpid(), signal.SIGKILL))
-        logger.info('Exiting gracefully...')
-        tasks = [asyncio.shield(asyncio.create_task(db.close())), asyncio.create_task(tgraph.close())]
-        if scheduler.running:
-            scheduler.shutdown(wait=False)
-        if bot and bot.is_connected():
-            tasks.append(bot.disconnect())
-        res = await asyncio.gather(*tasks, return_exceptions=True)
-        for e in (e for e in res if isinstance(e, BaseException)):
-            logger.error('Error when exiting gracefully: ', exc_info=e)
-        aio_helper.shutdown()
-    except Exception as e:
+    logger.info('Exiting gracefully...')
+    tasks = [asyncio.shield(loop.create_task(db.close())), loop.create_task(tgraph.close())]
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
+    if bot and bot.is_connected():
+        tasks.append(bot.disconnect())
+    res = await asyncio.gather(*tasks, return_exceptions=True)
+    for e in (e for e in res if isinstance(e, BaseException)):
         logger.error('Error when exiting gracefully: ', exc_info=e)
-        os.kill(os.getpid(), signal.SIGKILL)
+    aio_helper.shutdown()
+
+
+def force_quit(*_):
+    logger.critical('Force quitting...', stack_info=True)
+    os.kill(os.getpid(), signal.SIGKILL)
 
 
 def main():
@@ -310,9 +306,28 @@ def main():
         loop.run_until_complete(bot.disconnected)
     except (KeyboardInterrupt, SystemExit) as e:
         logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
-        exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 99
+        exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 0
     finally:
-        loop.run_until_complete(asyncio.shield(post()))
+        try:
+            if getattr(signal, 'SIGALRM', None):
+                signal.alarm(15)
+                signal.signal(signal.SIGALRM, force_quit)  # double insurance
+            loop.call_later(10, force_quit)
+        except Exception as e:
+            logger.warning('Error when setting exit timeout (this is a bug, please report it):', exc_info=e)
+        for _ in range(3):
+            try:
+                loop.run_until_complete(asyncio.shield(post()))
+            except RuntimeError as e:
+                logger.error('Event loop stopped when exiting gracefully (probably caused by a race condition):',
+                             exc_info=e)
+            except Exception as e:
+                logger.critical('Error when exiting gracefully (this is a bug, please report it):', exc_info=e)
+                force_quit()
+            else:
+                break
+        else:
+            force_quit()
         logger.log(log.INFO if exit_code == 0 else log.ERROR, f'Exited with code {exit_code}')
         exit(exit_code)
 

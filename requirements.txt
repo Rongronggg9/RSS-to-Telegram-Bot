@@ -17,7 +17,7 @@ minify-html-onepass==0.10.2; python_version>="3.8"  # Python 3.8+ (aarch64/amd64
 matplotlib==3.5.3
 
 # db
-asyncpg==0.26.0
+asyncpg==0.27.0
 tortoise-orm[accel]==0.19.2
 aerich==0.6.3
 

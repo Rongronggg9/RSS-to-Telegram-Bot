@@ -2,6 +2,9 @@ from __future__ import annotations
 from typing import Optional
 from typing_extensions import Final
 
+import matplotlib
+matplotlib.use('Agg')
+
 from math import ceil
 from PIL import Image
 from io import BytesIO

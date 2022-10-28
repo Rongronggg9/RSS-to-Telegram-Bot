@@ -1,5 +1,5 @@
 # telegram and telegraph
-cryptg==0.3.1
+cryptg==0.4.0
 telethon==1.25.4  # telethon@git+https://github.com/LonamiWebs/Telethon.git@v1
 aiographfix==0.2.2
 
@@ -12,9 +12,10 @@ lxml==4.9.1
 rapidfuzz==2.12.0
 emoji==2.1.0
 minify-html==0.6.10; python_version<="3.7"  # 0.6.10 for Python 3.7 (amd64 only)
-minify-html==0.10.2; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
-minify-html-onepass==0.10.2; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
-matplotlib==3.5.3
+minify-html==0.10.3; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
+minify-html-onepass==0.10.3; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
+matplotlib==3.5.3; python_version<="3.7"
+matplotlib==3.6.1; python_version>="3.8"
 
 # db
 asyncpg==0.27.0

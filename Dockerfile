@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye AS dep-builder-common
+FROM python:3.11-bullseye AS dep-builder-common
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -12,6 +12,7 @@ COPY requirements.txt .
 
 RUN \
     set -ex && \
+    export MAKEFLAGS="-j$((`nproc`+1))" && \
     pip install --no-cache-dir \
         -r requirements.txt \
     && \
@@ -19,7 +20,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.10-bullseye AS dep-builder
+FROM python:3.11-bullseye AS dep-builder
 
 RUN \
     set -ex && \
@@ -54,7 +55,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.10-bullseye as app-builder
+FROM python:3.11-bullseye as app-builder
 
 WORKDIR /app
 
@@ -84,7 +85,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.10-slim-bullseye as app
+FROM python:3.11-slim-bullseye as app
 
 WORKDIR /app
 

@@ -544,7 +544,7 @@ class PostFormatter:
                 elif enclosure.type.startswith('audio'):
                     medium = Audio(enclosure.url)
                 elif enclosure.type.startswith('video'):
-                    medium = Video(enclosure.url)
+                    medium = Video(enclosure.url, type_fallback_urls=enclosure.thumbnail)
                 elif enclosure.type.startswith('image'):
                     medium = Image(enclosure.url)
                 else:

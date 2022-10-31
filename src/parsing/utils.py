@@ -89,7 +89,7 @@ isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?
 
 
 class Enclosure:
-    def __init__(self, url: str, length: Union[int, str], _type: str, duration: str = None):
+    def __init__(self, url: str, length: Union[int, str], _type: str, duration: str = None, thumbnail: str = None):
         self.url = url
         self.length = (
             int(length)
@@ -100,6 +100,7 @@ class Enclosure:
         )
         self.type = _type
         self.duration = duration
+        self.thumbnail = thumbnail
 
 
 # load emoji dict
@@ -185,19 +186,31 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
     title = entry.get('title')
     title = html_space_stripper(title, enable_emojify=True) if title else None
     EntryParsed.title = title or None  # reject empty string
+
+    enclosures = []
+
     if isinstance(entry.get('links'), list):
-        EntryParsed.enclosures = []
-        for link in entry['links']:
-            if link.get('rel') == 'enclosure':
-                enclosure_url = link.get('href')
-                if not enclosure_url:
-                    continue
-                enclosure_url = resolve_relative_link(feed_link, enclosure_url)
-                EntryParsed.enclosures.append(Enclosure(url=enclosure_url,
-                                                        length=link.get('length'),
-                                                        _type=link.get('type')))
-        if EntryParsed.enclosures and entry.get('itunes_duration'):
-            EntryParsed.enclosures[0].duration = entry['itunes_duration']
+        for link in (link for link in entry['links'] if link.get('rel') == 'enclosure' and link.get('href')):
+            enclosures.append(Enclosure(url=resolve_relative_link(feed_link, link['href']),
+                                        length=link.get('length'),
+                                        _type=link.get('type')))
+        if enclosures and entry.get('itunes_duration'):
+            enclosures[0].duration = entry['itunes_duration']
+
+    if isinstance(entry.get('media_content'), list):
+        enclosures_media = []
+        for media in (media for media in entry['media_content'] if media.get('url')):
+            enclosures_media.append(Enclosure(url=resolve_relative_link(feed_link, media['url']),
+                                              length=media.get('fileSize'),
+                                              _type=media.get('type') or media.get('medium'),
+                                              duration=media.get('duration')))
+        if enclosures_media:
+            if isinstance(entry.get('media_thumbnail'), list) and entry['media_thumbnail'] \
+                    and isinstance(entry['media_thumbnail'][0], dict):
+                enclosures_media[0].thumbnail = entry['media_thumbnail'][0].get('url')
+            enclosures.extend(enclosures_media)
+
+    EntryParsed.enclosures = enclosures or None
 
     return EntryParsed
 

@@ -52,9 +52,9 @@ async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, ev
     msg = i18n[lang]['help_msg_html' if event.chat_id != env.MANAGER else 'manager_help_msg_html']
     if event.is_private:
         msg += '\n\n' + i18n[lang]['usage_in_channel_or_group_prompt_html']
-    await event.respond(msg, parse_mode='html') \
+    await event.respond(msg, parse_mode='html', link_preview=False) \
         if isinstance(event, events.NewMessage.Event) or not hasattr(event, 'edit') \
-        else await event.edit(msg, parse_mode='html')
+        else await event.edit(msg, parse_mode='html', link_preview=False)
 
 
 @command_gatekeeper(only_manager=False)

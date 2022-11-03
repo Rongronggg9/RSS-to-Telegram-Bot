@@ -49,7 +49,7 @@
 - 为 Telegram 和 RSS 源配置独立的代理设置
 - OPML 导入和导出 (保持自定义标题)
 - 自定义订阅
-- 优化的性能 (参见 [FAQ](docs/FAQ.zh.md#q-bot-的性能怎么样它看起来有轻微的内存泄漏问题))
+- 优化的性能 (参见 [FAQ](docs/FAQ.zh.md#q-bot-的性能怎么样))
 - 用户友好
 - HTTP 缓存
 

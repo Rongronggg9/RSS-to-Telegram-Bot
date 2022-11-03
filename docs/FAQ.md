@@ -12,9 +12,13 @@
 
 **A**: Send `/lang` and select language again. The bot will update your command list.
 
-### **Q**: How is the performance of the bot? It appears to have a slight memory leak problem.
+### **Q**: How is the performance of the bot?
 
-**A**: The bot is designed to be asynchronous, so it is lightweight and fast. Even if there are over 6000 feeds, the bot can still run on a single core VPS, with an incredibly low load average (~0.2) and approximate 350MB memory usage. The bot can still work fine in such a condition and its stability and usability will not be influenced. As for the memory leak problem, it is a [known issue](https://github.com/kurtmckee/feedparser/issues/287) of an upstream library `feedparser`, and it is not a bug of the bot.
+**A**: The bot is designed to be asynchronous, so it is lightweight and fast. Even if there are over 6000 feeds, the bot can still run on a single core VPS, with an incredibly low load average (~0.2) and approximate 350MB memory usage. The bot can still work fine in such a condition and its stability and usability will not be degraded. 
+
+### **Q**: It appears to have a slight memory leak problem...
+
+**A**: It is not a "memory leakage" but a memory fragmentation issue of `glibc`'s `ptmalloc` and not a bug of the bot. It can only be observed on Linux or macOS. Refer to [this issue](https://github.com/kurtmckee/feedparser/issues/287) for possible workarounds. Note that the official Docker image contains some workarounds to get rid of the issue. If you deployed the official Docker image but still find some "memory leakage", please raise an issue.
 
 ### **Q**: Why do I still receive notifications even if I mute the subscription?
 

@@ -51,7 +51,7 @@
     - Hashtags, custom title, etc.
 - Individual proxy settings for Telegram and RSS feeds
 - OPML importing and exporting (keep custom title)
-- Optimized performance (see also the [FAQ](docs/FAQ.md#q-how-is-the-performance-of-the-bot-it-appears-to-have-a-slight-memory-leak-problem))
+- Optimized performance (see also the [FAQ](docs/FAQ.md#q-how-is-the-performance-of-the-bot))
 - User-friendly
 - HTTP Caching
 

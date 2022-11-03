@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 from cachetools import TTLCache
 from os import path
 
-from ... import db, web
+from ... import db, web, env
 from ...aio_helper import run_async_on_demand
 from ...i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html, \
@@ -124,6 +124,9 @@ async def sub(user_id: int,
         ret['sub'] = _sub
         if created_new_sub:
             logger.info(f'Subed {feed_url} for {user_id}')
+
+        env.loop.create_task(asyncio.shield(update_interval(feed=feed)))
+
         return ret
 
     except Exception as e:
@@ -317,7 +320,7 @@ async def migrate_to_new_url(feed: db.Feed, new_url: str) -> Union[bool, db.Feed
         if await db.Sub.filter(feed=new_url_feed, user_id=exist_sub.user_id).exists():
             continue  # sub already exists, skip it, delete cascade later
         exist_sub.feed = new_url_feed
-        tasks_migrate.append(asyncio.create_task(exist_sub.save()))
+        tasks_migrate.append(env.loop.create_task(exist_sub.save()))
 
     await asyncio.gather(*tasks_migrate)
     await asyncio.gather(update_interval(new_url_feed), feed.delete())

@@ -15,7 +15,7 @@
 [![Build status (dev)](https://img.shields.io/github/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/Publish%20Docker%20image/dev?label=build%20%28dev%29&logo=docker)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Adev)
 [![Docker pulls](https://img.shields.io/docker/pulls/rongronggg9/rss-to-telegram?label=pulls&logo=docker&color=informational)](https://hub.docker.com/r/rongronggg9/rss-to-telegram)
 
-For the docker images go to: https://hub.docker.com/r/rongronggg9/rss-to-telegram
+> An x86_64 (amd64) or arm64v8 (aarch64) machine is required. If you need a VPS, [Vultr (affiliate link, w/ 14-days-valid $100 trial credit)](https://www.vultr.com/?ref=8947246-8H) High Performance (Intel) NVMe SSD Cloud Servers (starting at $6/month) is recommended.
 
 ### Deploy
 
@@ -37,9 +37,10 @@ docker-compose up -d
 
 ## Option 2: Railway.app
 
-### Deploy
+> Railway accounts without any verified payment method or prepaid balance can only consume 500 execution hours per month, which means that RSStT will be paused after 500 hours of uptime.  
+> To get rid of the execution time limit, either associate a credit/debit card to your account or prepaid $5 **once**. You will get $5 free credit each month without execution time limit, which is pretty enough for RSStT. Except the prepaid balance (if you don't want to associate a credit/debit card), hosting RSStT should be free of charge.
 
-> Uncheck the checkbox `Private repository`! Or you are not able to update with ease.
+### Deploy
 
 |                             master                              |                            dev                            |
 |:---------------------------------------------------------------:|:---------------------------------------------------------:|
@@ -57,11 +58,12 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ### Update
 
-Turn to the fork automatically created by Railway and switch to the branch you've deployed, then click `Fetch upstream` and `Fetch and merge`.
+`https://railway.app/dashboard` -> your RSStT project -> `RSS-to-Telegram-Bot` -> `Settings` -> `Check for updates`
 
-## Option 3: Heroku
+## Option 3: ~~Heroku~~
 
-> Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.
+> ~~Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.~~  
+> [Heroku no longer offers free plans](https://blog.heroku.com/next-chapter). Deploying RSStT on Heroku could cost you at least $16 per month ($7 for Heroku Dyno and $9 for Heroku Postgres). The recommended (virtually) free PaaS platform is [Railway.app](#option-2-railwayapp).
 
 ### Deploy
 
@@ -74,13 +76,6 @@ Turn to the fork automatically created by Railway and switch to the branch you'v
 [heroku_master]: https://heroku.com/deploy?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fmaster
 
 [heroku_dev]: https://heroku.com/deploy?template=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot%2Ftree%2Fdev
-
-### Keep the dyno "awake"
-
-> **IMPORTANT**  
-> If you deploy RSStT as a **free dyno**, it will sleep if the dyno receives no web traffic in 30 minutes. Sending commands to the bot will NOT help.
-
-Turn to [Kaffeine](https://kaffeine.herokuapp.com/), filling your Heroku app name, and click `Give my app a caffeine shot every 30 minutes ☕`. You do not need to check `I want a bedtime!` as long as your account has a verified payment method since Heroku has no longer enforced 6-hour-per-day sleeps since 2017. However, if your account has no verified payment method, you may still want to check `I want a bedtime!`. By checking it, your dyno will have a 6-hour sleep per day, which ensures that it will not exhaust your 550-hour credit.
 
 ### Update
 
@@ -155,7 +150,7 @@ vi .env  # fill in env variables
 python3 -u telegramRSSbot.py
 ```
 
-###     * Advanced command line arguments
+### \* Advanced command line arguments
 
 - `-h`, `--help`: show the help message and exit
 - `-c`, `--config`: path to the config folder

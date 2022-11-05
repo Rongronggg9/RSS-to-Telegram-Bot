@@ -8,6 +8,7 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from collections import defaultdict, Counter
+from itertools import islice, repeat
 from traceback import format_exc
 
 from . import inner
@@ -130,19 +131,19 @@ async def run_monitor_task():
             logger.error(f'The TimeoutError of the feed ({feed.link}) in the task:', exc_info=error)
 
 
-def calculate_update(old_hashes: Sequence[str], entries: Sequence[dict]) -> tuple[list[str], list[dict]]:
-    # sequence matters so we cannot use a set
-    new_hashes = old_hashes.copy() if isinstance(old_hashes, list) else list(old_hashes)
-    updated_entries = []
-    for entry in reversed(entries):
-        guid = entry.get('guid') or entry.get('link') or entry.get('title')
-        if not guid:
-            continue  # feed hospital, please
-        h = get_hash(guid)
-        if h in old_hashes:
-            continue
-        new_hashes.insert(0, h)
-        updated_entries.insert(0, entry)
+def calculate_update(old_hashes: Sequence[str], entries: Sequence[dict]) -> tuple[Iterable[str], Iterable[dict]]:
+    new_hashes_d = {
+        get_hash(guid): entry for guid, entry in (
+            (
+                entry.get('guid') or entry.get('link') or entry.get('title') or entry.get('summary')
+                or entry.get('content'),
+                entry
+            ) for entry in entries
+        ) if guid
+    }
+    new_hashes_d.update(zip(old_hashes, repeat(None)))
+    new_hashes = new_hashes_d.keys()
+    updated_entries = filter(None, new_hashes_d.values())
     return new_hashes, updated_entries
 
 
@@ -220,8 +221,7 @@ async def __monitor(feed: db.Feed) -> str:
         return NOT_UPDATED
 
     logger.debug(f'Updated: {feed.link}')
-    length = max(len(rss_d.entries) * 2, 100)
-    feed.entry_hashes = new_hashes[:length]
+    feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100)))
     http_caching_d = inner.utils.get_http_caching_headers(wf.headers)
     feed.etag = http_caching_d['ETag']
     feed.last_modified = http_caching_d['Last-Modified']
@@ -231,7 +231,7 @@ async def __monitor(feed: db.Feed) -> str:
         new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
         feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
-    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
+    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(tuple(updated_entries))))
 
     return UPDATED
 

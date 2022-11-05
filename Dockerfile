@@ -10,9 +10,14 @@ RUN \
 
 COPY requirements.txt .
 
+# temporary workaround for aarch64
+ARG TARGETPLATFORM
 RUN \
     set -ex && \
     export MAKEFLAGS="-j$((`nproc`+1))" && \
+    if [ "$TARGETPLATFORM" != "linux/amd64" ]; then \
+      CFLAGS='-O3 -g1 -pipe -fPIC -flto' LDFLAGS='-flto' STATIC_DEPS='true' pip install lxml ; \
+    fi && \
     pip install --no-cache-dir \
         -r requirements.txt \
     && \

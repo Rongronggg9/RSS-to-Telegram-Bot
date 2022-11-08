@@ -15,7 +15,7 @@ minify-html==0.6.10; python_version<="3.7"  # 0.6.10 for Python 3.7 (amd64 only)
 minify-html==0.10.3; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
 minify-html-onepass==0.10.3; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
 matplotlib==3.5.3; python_version<="3.7"
-matplotlib==3.6.1; python_version>="3.8"
+matplotlib==3.6.2; python_version>="3.8"
 
 # db
 asyncpg==0.27.0

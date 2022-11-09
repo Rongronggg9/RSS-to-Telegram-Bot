@@ -125,7 +125,7 @@ async def sub(user_id: int,
         if created_new_sub:
             logger.info(f'Subed {feed_url} for {user_id}')
 
-        env.loop.create_task(asyncio.shield(update_interval(feed=feed)))
+        await asyncio.shield(update_interval(feed=feed))
 
         return ret
 

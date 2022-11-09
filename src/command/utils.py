@@ -615,7 +615,9 @@ class AddedToGroupAction(events.ChatAction):
             return False
         if event.created:
             return True  # group created or migrated
-        if event.user_added or isinstance(event.action_message.action, types.MessageActionChatAddUser):
+        if event.user_added or (
+                event.action_message and isinstance(event.action_message.action, types.MessageActionChatAddUser)
+        ):
             return env.bot_id in event.user_ids  # added to a group
         return False
 

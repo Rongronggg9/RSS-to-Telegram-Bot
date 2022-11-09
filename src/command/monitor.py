@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, Optional
 from typing_extensions import Final
 from collections.abc import MutableMapping, Iterable, Sequence
 
@@ -131,7 +131,8 @@ async def run_monitor_task():
             logger.error(f'The TimeoutError of the feed ({feed.link}) in the task:', exc_info=error)
 
 
-def calculate_update(old_hashes: Sequence[str], entries: Sequence[dict]) -> tuple[Iterable[str], Iterable[dict]]:
+def calculate_update(old_hashes: Optional[Sequence[str]], entries: Sequence[dict]) \
+        -> tuple[Iterable[str], Iterable[dict]]:
     new_hashes_d = {
         get_hash(guid): entry for guid, entry in (
             (
@@ -141,7 +142,8 @@ def calculate_update(old_hashes: Sequence[str], entries: Sequence[dict]) -> tupl
             ) for entry in entries
         ) if guid
     }
-    new_hashes_d.update(zip(old_hashes, repeat(None)))
+    if old_hashes:
+        new_hashes_d.update(zip(old_hashes, repeat(None)))
     new_hashes = new_hashes_d.keys()
     updated_entries = filter(None, new_hashes_d.values())
     return new_hashes, updated_entries
@@ -215,13 +217,14 @@ async def __monitor(feed: db.Feed) -> str:
         await feed.save()
 
     new_hashes, updated_entries = calculate_update(feed.entry_hashes, rss_d.entries)
+    updated_entries = tuple(updated_entries)
 
     if not updated_entries:  # not updated
         logger.debug(f'Fetched (not updated): {feed.link}')
         return NOT_UPDATED
 
     logger.debug(f'Updated: {feed.link}')
-    feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100)))
+    feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
     http_caching_d = inner.utils.get_http_caching_headers(wf.headers)
     feed.etag = http_caching_d['ETag']
     feed.last_modified = http_caching_d['Last-Modified']
@@ -231,7 +234,7 @@ async def __monitor(feed: db.Feed) -> str:
         new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
         feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
-    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(tuple(updated_entries))))
+    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
 
     return UPDATED
 

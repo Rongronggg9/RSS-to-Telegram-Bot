@@ -86,7 +86,6 @@ class AbstractMedium(ABC):
     def __init__(self):
         self.valid: Optional[bool] = None
         self.drop_silently: bool = False  # if True, will not be included in invalid media
-        self.original_urls: tuple[str, ...] = tuple()
         self.type_fallback_medium: Optional[AbstractMedium] = None
         self.need_type_fallback: bool = False
         self.uploaded_bucket: defaultdict[int, Optional[tuple[TypeMessageMedia, TypeMedium]]] \
@@ -634,7 +633,6 @@ class Animation(Image):
 
 class UploadedImage(AbstractMedium):
     type: str = IMAGE
-    original_urls = ['']
 
     def __init__(self, file: Union[bytes, BytesIO, Callable, Awaitable]):
         super().__init__()
@@ -739,6 +737,7 @@ class Media:
         self._media.append(medium)
 
     def url_exists(self, url: str, loose: bool = False) -> Optional[Medium]:
+        # must check if medium is Medium and not UploadedImage
         if not loose:
             return next(
                 (

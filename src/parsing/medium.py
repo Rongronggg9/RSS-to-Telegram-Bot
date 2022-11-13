@@ -64,7 +64,9 @@ MEDIA_MAX_SIZE: Final = 20971520
 
 # Note:
 # One message can have 10 media at most, but there are some exceptions.
-# 1. A GIF (Animation) and webp (although as a file) must occupy a SINGLE message.
+# 1. A GIF (Animation) and WEBP (sent as a file) must occupy a SINGLE message.
+#   1a. A WEBP sent as a file will be shown just like a sticker.
+#   1b. Since some time in 2022, Telegram DC will convert any WEBP sent as an image to a JPG. Before that, same as (1a).
 # 2. Videos and Images can be mixed in a media group, but any other type of media cannot be in the same message.
 # 3. Images uploaded as MessageMediaPhoto will be considered as an image. While MessageMediaDocument not, it's a file.
 # 4. Any other type of media except Image must be uploaded as MessageMediaDocument.
@@ -346,14 +348,14 @@ class Medium(AbstractMedium):
                         self.valid = False
                         self.drop_silently = True
                         return False
-                    # force convert WEBP/SVG to PNG
+                    # force convert SVG to PNG
                     if (
                             self.content_type
-                            and any(keyword in self.content_type for keyword in ('webp', 'svg', 'application'))
+                            and any(keyword in self.content_type for keyword in ('svg', 'application'))
                     ):
                         # immediately fall back to 'images.weserv.nl'
                         self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
-                        invalid_reasons.append('force convert WEBP/SVG to PNG')
+                        invalid_reasons.append('force convert SVG to PNG')
                         continue
                     # always invalid
                     if self.width + self.height > 10000:

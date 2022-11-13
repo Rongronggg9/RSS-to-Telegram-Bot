@@ -349,37 +349,48 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
     content_length = int(response.headers.get('Content-Length', '1024'))
     content = response.content
     preloaded_length = content.total_bytes  # part of response body already came with the response headers
-    if not (  # hey, here is a `not`!
-            # a non-webp-or-svg image
-            (content_type.startswith('image') and all(keyword not in content_type for keyword in ('webp', 'svg')))
-            or (
-                    # an un-truncated webp image
-                    any(keyword in content_type for keyword in ('webp', 'application'))
-                    # PIL cannot handle a truncated webp image
-                    and content_length <= max(preloaded_length, IMAGE_MAX_FETCH_SIZE)
-            )
-    ):
+    fetch_full = False
+    fetch_rest = False
+    if 'svg' in content_type:  # svg
         return -1, -1
+    if 'webp' in content_type or 'application' in content_type:  # webp or other binary files
+        if content_length <= max(preloaded_length, IMAGE_MAX_FETCH_SIZE):
+            # un-truncated (PIL cannot handle a truncated webp image)
+            fetch_full = True
+        else:
+            return -1, -1
     is_jpeg = None
     already_read = 0
-    eof_flag = False
+    eof_flag = content.at_eof()
     exit_flag = False
     with BytesIO() as buffer:
         while not exit_flag:
             curr_chunk_length = 0
             preloaded_length = content.total_bytes - already_read
             while preloaded_length > IMAGE_READ_BUFFER_SIZE or curr_chunk_length < IMAGE_ITER_CHUNK_SIZE:
-                # get almost all preloaded bytes, but leaving some to avoid next automatic preloading
-                chunk = await content.read(max(preloaded_length - IMAGE_READ_BUFFER_SIZE, IMAGE_READ_BUFFER_SIZE))
-                if chunk == b'':  # EOF
+                if content.is_eof():
+                    chunk = await content.readany()
                     eof_flag = True
-                    break
+                elif fetch_full:
+                    chunk = await content.read()
+                    eof_flag = True
+                else:
+                    read_length = max(
+                        # get almost all preloaded bytes, but leaving some to avoid next automatic preloading
+                        preloaded_length - IMAGE_READ_BUFFER_SIZE,
+                        IMAGE_ITER_CHUNK_SIZE,
+                        IMAGE_MAX_FETCH_SIZE - already_read if fetch_rest else 0
+                    )
+                    chunk = await content.read(read_length)
+                    eof_flag = not chunk or content.at_eof()
                 if is_jpeg is None:
                     is_jpeg = chunk.startswith(SOI)
                 already_read += len(chunk)
                 curr_chunk_length += len(chunk)
                 buffer.seek(0, SEEK_END)
                 buffer.write(chunk)
+                if eof_flag:
+                    break
                 preloaded_length = content.total_bytes - already_read
 
             if eof_flag or already_read >= IMAGE_MAX_FETCH_SIZE:
@@ -398,18 +409,21 @@ async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int,
                     file_header = buffer.getvalue()
                     find_start_pos = 0
                     for _ in range(3):
-                        pointer = -1
                         for marker in (b'\xff\xc2', b'\xff\xc1', b'\xff\xc0'):
                             p = file_header.find(marker, find_start_pos)
                             if p != -1:
                                 pointer = p
                                 break
-                        if pointer != -1 and pointer + 9 <= len(file_header):
+                        else:
+                            break
+
+                        if pointer + 9 <= len(file_header):
                             if file_header.count(EOI, 0, pointer) != file_header.count(SOI, 0, pointer) - 1:
                                 # we are currently entering the thumbnail in Exif, bypassing...
                                 # (why the specifications makers made Exif so freaky?)
                                 eoi_pos = file_header.find(EOI, pointer)
                                 if eoi_pos == -1:
+                                    fetch_rest = True  # a thumbnail is huge
                                     break  # no EOI found, we could never leave the thumbnail...
                                 find_start_pos = eoi_pos + len(EOI)
                                 continue

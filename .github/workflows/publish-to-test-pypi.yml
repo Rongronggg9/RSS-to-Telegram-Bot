@@ -26,7 +26,11 @@ jobs:
       - name: Build a binary wheel and a source tarball
         run: |
           git describe --tags --always | \
-            sed -E 's#v([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)-([[:digit:]]+)(-.+)?#__version__ = "\1-r\2"#g' \
+            sed -E \
+              -e 's#^v##' \
+              -e 's#([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)-([[:digit:]]+)(-.+)?#\1.post\2#g' \
+              -e 's#^#__version__ = "#' \
+              -e 's#$#"#' \
             >src/version.py
           python -m build --sdist --wheel --outdir dist/ .
       - name: Publish distribution to Test PyPI

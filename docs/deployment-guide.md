@@ -120,12 +120,15 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 [![PyPI - Implementation](https://img.shields.io/pypi/implementation/rsstt?logo=python)](https://www.python.org)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rsstt?logo=python)](https://www.python.org)
 
-> Create a virtual environment (`venv`) and activate it first if needed.
+> Create a virtual environment (`venv`) and activate it first if needed.  
 > Default config folder is `~/.rsstt`.
+
+> `pip3 install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.  
+> `pip3 install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
 
 ```sh
 pip3 install -U pip setuptools
-pip3 install rsstt
+pip3 install -U rsstt
 mkdir -p ~/.rsstt
 wget https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/dev/.env.sample -O ~/.rsstt/.env
 vi ~/.rsstt/.env  # fill in env variables

@@ -3,8 +3,10 @@ on:
   push:
     branches:
       - dev
-    paths:
-      - "src/version.py"
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '**.sample'
   workflow_dispatch: ~
 jobs:
   build-n-publish:
@@ -12,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
@@ -21,6 +25,9 @@ jobs:
           python -m pip install build --user
       - name: Build a binary wheel and a source tarball
         run: |
+          git describe --tags --always | \
+            sed -E 's#v([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)-([[:digit:]]+)(-.+)?#__version__ = "\1-r\2"#g' \
+            >src/version.py
           python -m build --sdist --wheel --outdir dist/ .
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@master

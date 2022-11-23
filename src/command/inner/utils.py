@@ -59,29 +59,19 @@ def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: in
     )
 
 
-def get_http_caching_headers(headers: Optional[Mapping]) -> dict[str, Optional[Union[str, datetime]]]:
+def get_http_last_modified(headers: Optional[Mapping]) -> datetime:
     """
     :param headers: dict of headers
     :return: a dict containing "Etag" (`str` or `None`) and "Last-Modified" (`datetime.datetime` or `None`) headers
     """
-    if not headers:
-        return {
-            'Last-Modified': None,
-            'ETag': None
-        }
-
-    last_modified = headers.get('Last-Modified', headers.get('Date'))
+    last_modified = headers.get('Last-Modified') or headers.get('Date') if headers else None
     try:
-        last_modified = parsedate_to_datetime(last_modified) if last_modified else datetime.utcnow()
+        return parsedate_to_datetime(last_modified) if last_modified else datetime.utcnow()
     except ValueError:
         try:
-            last_modified = datetime.fromisoformat(last_modified)  # why some websites are so freaky? I can't understand
+            return datetime.fromisoformat(last_modified)  # why some websites are so freaky? I can't understand
         except ValueError:
-            last_modified = datetime.utcnow()
-    return {
-        'Last-Modified': last_modified,
-        'ETag': headers.get('ETag')
-    }
+            return datetime.utcnow()
 
 
 def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Optional[tuple[tuple[Any, ...], ...]]:

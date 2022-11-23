@@ -14,7 +14,7 @@ from os import path
 from ... import db, web, env
 from ...aio_helper import run_async_on_demand
 from ...i18n import i18n
-from .utils import get_hash, update_interval, list_sub, get_http_caching_headers, filter_urls, logger, escape_html, \
+from .utils import get_hash, update_interval, list_sub, get_http_last_modified, filter_urls, logger, escape_html, \
     check_sub_limit
 from ...parsing.utils import html_space_stripper
 
@@ -81,9 +81,10 @@ async def sub(user_id: int,
                 feed.state = 1
                 feed.error_count = 0
                 feed.next_check_time = None
-                http_caching_d = get_http_caching_headers(wf.headers)
-                feed.etag = http_caching_d['ETag']
-                feed.last_modified = http_caching_d['Last-Modified']
+                etag = wf.headers and wf.headers.get('ETag')
+                if etag:
+                    feed.etag = etag
+                feed.last_modified = get_http_last_modified(wf.headers)
                 feed.entry_hashes = [get_hash(entry.get('guid') or entry.get('link')) for entry in rss_d.entries]
                 await feed.save()  # now we get the id
                 db.effective_utils.EffectiveTasks.update(feed.id)

@@ -178,61 +178,73 @@ async def __monitor(feed: db.Feed) -> str:
     wf = await web.feed_get(feed.link, headers=headers, verbose=False)
     rss_d = wf.rss_d
 
-    if (rss_d is not None or wf.status == 304) and (feed.error_count > 0 or feed.next_check_time):
-        feed.error_count = 0
-        feed.next_check_time = None
-        await feed.save()
+    no_error = True
+    feed_updated_fields = set()
+    try:
+        if wf.status == 304:  # cached
+            logger.debug(f'Fetched (not updated, cached): {feed.link}')
+            return CACHED
 
-    if wf.status == 304:  # cached
-        logger.debug(f'Fetched (not updated, cached): {feed.link}')
-        return CACHED
-
-    if rss_d is None:  # error occurred
-        feed.error_count += 1
-        if feed.error_count % 20 == 0:  # error_count is always > 0
-            logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
-        if feed.error_count >= 100:
-            logger.error(f'Deactivated feed due to too many errors: {feed.link}')
-            await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
+        if rss_d is None:  # error occurred
+            no_error = False
+            feed.error_count += 1
+            feed_updated_fields.add('error_count')
+            if feed.error_count % 20 == 0:  # error_count is always > 0
+                logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
+            if feed.error_count >= 100:
+                logger.error(f'Deactivated feed due to too many errors: {feed.link}')
+                await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
+                return FAILED
+            if feed.error_count >= 10:  # too much error, delay next check
+                interval = feed.interval or db.EffectiveOptions.default_interval
+                next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
+                if next_check_interval > interval:
+                    feed.next_check_time = now + timedelta(minutes=next_check_interval)
+                    feed_updated_fields.add('next_check_time')
             return FAILED
-        if feed.error_count >= 10:  # too much error, delay next check
-            interval = feed.interval or db.EffectiveOptions.default_interval
-            next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
-            if next_check_interval > interval:
-                feed.next_check_time = now + timedelta(minutes=next_check_interval)
-        await feed.save()
-        return FAILED
 
-    if not rss_d.entries:  # empty
+        etag = wf.headers and wf.headers.get('ETag')
+        if etag:
+            feed.etag = etag
+            feed_updated_fields.add('etag')
+
+        if not rss_d.entries:  # empty
+            logger.debug(f'Fetched (empty): {feed.link}')
+            return EMPTY
+
+        title = rss_d.feed.title
+        title = html_space_stripper(title) if title else ''
+        if title != feed.title:
+            logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
+            feed.title = title
+            feed_updated_fields.add('title')
+
+        new_hashes, updated_entries = calculate_update(feed.entry_hashes, rss_d.entries)
+        updated_entries = tuple(updated_entries)
+
+        if not updated_entries:  # not updated
+            logger.debug(f'Fetched (not updated): {feed.link}')
+            return NOT_UPDATED
+
+        logger.debug(f'Updated: {feed.link}')
+        feed.last_modified = inner.utils.get_http_last_modified(wf.headers)
+        feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
+        feed_updated_fields.update({'last_modified', 'entry_hashes'})
+    finally:
+        if no_error:
+            if feed.error_count > 0:
+                feed.error_count = 0
+                feed_updated_fields.add('error_count')
+            if feed.next_check_time:
+                feed.next_check_time = None
+                feed_updated_fields.add('next_check_time')
+
+        if feed_updated_fields:
+            await feed.save(update_fields=feed_updated_fields)
+
         if wf.url != feed.link:
-            await inner.sub.migrate_to_new_url(feed, wf.url)
-        logger.debug(f'Fetched (empty): {feed.link}')
-        return EMPTY
-
-    title = rss_d.feed.title
-    title = html_space_stripper(title) if title else ''
-    if title != feed.title:
-        logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
-        feed.title = title
-        await feed.save()
-
-    new_hashes, updated_entries = calculate_update(feed.entry_hashes, rss_d.entries)
-    updated_entries = tuple(updated_entries)
-
-    if not updated_entries:  # not updated
-        logger.debug(f'Fetched (not updated): {feed.link}')
-        return NOT_UPDATED
-
-    logger.debug(f'Updated: {feed.link}')
-    feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
-    http_caching_d = inner.utils.get_http_caching_headers(wf.headers)
-    feed.etag = http_caching_d['ETag']
-    feed.last_modified = http_caching_d['Last-Modified']
-    await feed.save()
-
-    if wf.url != feed.link:
-        new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
-        feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
+            new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
+            feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
     await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
 

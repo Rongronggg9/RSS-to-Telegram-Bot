@@ -62,12 +62,15 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
                       **__):
     chat_id = chat_id or event.chat_id
 
+    reply_message: Message = await event.get_reply_message()
+    if reply_message and reply_message.sender_id == env.bot_id:
+        if isinstance(reply_message.reply_markup, types.ReplyKeyboardForceReply):
+            await reply_message.delete()
+    elif event.is_group:
+        return  # only respond to reply in groups
+
     await check_sub_limit(event, user_id=chat_id, lang=lang)
 
-    callback_tail = get_callback_tail(event, chat_id)
-    reply_message: Message = await event.get_reply_message()
-    if event.is_group and reply_message.sender_id != env.bot_id:
-        return  # must reply to the bot in a group to import opml
     try:
         opml_file: bytes = await event.download_media(file=bytes)
     except Exception as e:
@@ -124,7 +127,8 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
         if not sub_ranges:
             return  # no subscription set custom title
 
-        button_data = 'del_subs_title=' + '|'.join(f'{start}-{end}' for start, end in sub_ranges) + callback_tail
+        button_data = 'del_subs_title=' + '|'.join(f'{start}-{end}' for start, end in sub_ranges) \
+                      + get_callback_tail(event, chat_id)
         if len(button_data) <= 64:  # Telegram API limit
             button = [
                 [Button.inline(i18n[lang]['delete_subs_title_button'], button_data)],

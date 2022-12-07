@@ -34,7 +34,7 @@ url-normalize==1.4.3
 colorlog==6.7.0
 APScheduler==3.9.1.post1
 python-dotenv==0.21.0
-multidict==6.0.2
+multidict==6.0.3
 attrs==22.1.0
 asyncstdlib==3.10.5
 cachetools==5.2.0

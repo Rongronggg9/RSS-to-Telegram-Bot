@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 
 from . import log, env
 from .errors_collection import ContextTimeoutError
+from .compat import nullcontext
 
 _USER_LIKE = Union[int, str]
 
@@ -116,11 +117,22 @@ async def user_flood_wait_background(user: _USER_LIKE, seconds: int) -> asyncio.
 
 
 # ----- web locks -----
-_hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = \
-    defaultdict(partial(asyncio.BoundedSemaphore, 12))
-overall_web_semaphore = asyncio.BoundedSemaphore(768)
+overall_web_semaphore = (asyncio.BoundedSemaphore(env.HTTP_CONCURRENCY)
+                         if env.HTTP_CONCURRENCY > 0
+                         else nullcontext())
+
+if env.HTTP_CONCURRENCY_PER_HOST > 0:
+    _hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = \
+        defaultdict(partial(asyncio.BoundedSemaphore, env.HTTP_CONCURRENCY_PER_HOST))
 
 
-def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:
-    hostname = urlparse(url).hostname if parse else url
-    return _hostname_semaphore_bucket[hostname]
+    def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:
+        hostname = urlparse(url).hostname if parse else url
+        return _hostname_semaphore_bucket[hostname]
+
+else:
+    _null_semaphore = nullcontext()
+
+
+    def hostname_semaphore(*_, **__) -> nullcontext:
+        return _null_semaphore

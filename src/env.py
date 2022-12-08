@@ -217,6 +217,8 @@ USER_AGENT: Final = os.environ.get('USER_AGENT') or f'RSStT/{__version__} RSS Re
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 
 HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
+HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)
+HTTP_CONCURRENCY_PER_HOST: Final = int(os.environ.get('HTTP_CONCURRENCY_PER_HOST') or 16)
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'

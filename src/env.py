@@ -178,7 +178,7 @@ MULTIUSER: Final = __bool_parser(os.environ.get('MULTIUSER'), default_value=True
 
 CRON_SECOND: Final = int(os.environ.get('CRON_SECOND') or 0) % 60
 
-# ----- proxy config -----
+# ----- network config -----
 DEFAULT_PROXY: Final = os.environ.get('SOCKS_PROXY') or os.environ.get('socks_proxy') \
                        or os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy') \
                        or os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
@@ -215,6 +215,8 @@ PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
 USER_AGENT: Final = os.environ.get('USER_AGENT') or f'RSStT/{__version__} RSS Reader'
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
+
+HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'

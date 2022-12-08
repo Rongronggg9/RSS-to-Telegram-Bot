@@ -191,7 +191,7 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     :return: {url, content, headers, status}
     """
     if not timeout:
-        timeout = 12
+        timeout = env.HTTP_TIMEOUT
     return await _get(
         url=url, timeout=timeout, semaphore=semaphore, headers=headers,
         resp_callback=partial(__norm_callback,
@@ -442,7 +442,7 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[st
     if url.startswith('data:'):
         return None
     try:
-        r = await _get(url, timeout=12, resp_callback=__medium_info_callback,
+        r = await _get(url, resp_callback=__medium_info_callback,
                        read_bufsize=IMAGE_READ_BUFFER_SIZE, read_until_eof=False)
         if r.status != 200:
             raise ValueError(f'status code is not 200, but {r.status}')
@@ -465,7 +465,7 @@ async def get_page_title(url: str, allow_hostname=True, allow_path: bool = False
     r = None
     # noinspection PyBroadException
     try:
-        r = await get(url=url, timeout=2, decode=False, intended_content_type='text/html', max_size=2 * 1024)
+        r = await get(url=url, decode=False, intended_content_type='text/html', max_size=2 * 1024)
         if r.status != 200 or not r.content:
             raise ValueError('not an HTML page')
         # if len(r.content) <= 27:  # len of `<html><head><title></title>`

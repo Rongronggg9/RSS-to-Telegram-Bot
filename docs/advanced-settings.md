@@ -37,6 +37,7 @@
 | `IPV6_PRIOR`            | Enforce fetching feeds over IPv6 firstly or not? [^4] | `1`                            | `0`                         |
 | `TRAFFIC_SAVING`        | Enable network traffic saving mode or not? [^5]       | `1`                            | `0`                         |
 | `LAZY_MEDIA_VALIDATION` | Let Telegram DC to validate media or not? [^6]        | `1`                            | `0`                         |
+| `HTTP_TIMEOUT`          | HTTP request timeout in seconds                       | `60`                           | `12`                        |
 
 ### Misc settings
 

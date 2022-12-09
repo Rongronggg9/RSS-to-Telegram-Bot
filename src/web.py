@@ -78,6 +78,8 @@ logger = log.getLogger('RSStT.web')
 
 contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=")[^"]+(?=")').search, flags=re.I)
 
+sentinel = object()
+
 
 class WebError(Exception):
     def __init__(self, error_name: str, status: Union[int, str] = None, url: str = None,
@@ -177,7 +179,7 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
     return None
 
 
-async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, asyncio.Semaphore] = None,
+async def get(url: str, timeout: Optional[float] = sentinel, semaphore: Union[bool, asyncio.Semaphore] = None,
               headers: Optional[dict] = None, decode: bool = False,
               max_size: Optional[int] = None, intended_content_type: Optional[str] = None) -> WebResponse:
     """
@@ -190,8 +192,6 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     :param intended_content_type: if specified, only return response if the content-type matches
     :return: {url, content, headers, status}
     """
-    if not timeout:
-        timeout = env.HTTP_TIMEOUT
     return await _get(
         url=url, timeout=timeout, semaphore=semaphore, headers=headers,
         resp_callback=partial(__norm_callback,
@@ -201,9 +201,12 @@ async def get(url: str, timeout: Optional[float] = None, semaphore: Union[bool, 
     )
 
 
-async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = None,
+async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sentinel,
                semaphore: Union[bool, asyncio.Semaphore] = None, headers: Optional[dict] = None,
                read_bufsize: int = DEFAULT_READ_BUFFER_SIZE, read_until_eof: bool = True) -> WebResponse:
+    if timeout is sentinel:
+        timeout = env.HTTP_TIMEOUT
+
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
@@ -254,7 +257,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
         try:
             async with semaphore_to_use:
                 async with locks.overall_web_semaphore:
-                    ret = await asyncio.wait_for(_fetch(), timeout + 0.1)
+                    ret = await asyncio.wait_for(_fetch(), timeout and timeout + 0.1)
                     if socket_family == AF_INET6 and tries < max_tries \
                             and ret.status in {400,  # Bad Request (some feed providers return 400 for banned IPs)
                                                403,  # Forbidden
@@ -278,7 +281,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = Non
             continue
 
 
-async def feed_get(url: str, timeout: Optional[float] = None, web_semaphore: Union[bool, asyncio.Semaphore] = None,
+async def feed_get(url: str, timeout: Optional[float] = sentinel, web_semaphore: Union[bool, asyncio.Semaphore] = None,
                    headers: Optional[dict] = None, verbose: bool = True) -> WebFeed:
     ret = WebFeed(url=url, ori_url=url)
 

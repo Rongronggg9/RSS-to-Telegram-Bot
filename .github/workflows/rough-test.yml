@@ -13,10 +13,6 @@ jobs:
       matrix:
         version: [ '3.7', '3.8', '3.9', '3.10', '3.11' ]
         os: [ ubuntu-latest, macos-latest, windows-latest ]
-        exclude:
-          # disabled due to the lack of prebuilt wheel: https://bugs.launchpad.net/lxml/+bug/1995064
-          - os: windows-latest
-            version: '3.11'
     name: Python ${{ matrix.version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:

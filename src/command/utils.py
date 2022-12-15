@@ -25,7 +25,7 @@ from ..compat import cached_async
 logger = log.getLogger('RSStT.command')
 
 splitByWhitespace = re.compile(r'\s+').split
-stripInlineHeader = partial(re.compile(r'^@\w{5,}\s+').sub, '')
+stripInlineHeader = partial(re.compile(r'^@\w{4,}\s+').sub, '')
 
 
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins

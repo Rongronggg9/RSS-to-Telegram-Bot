@@ -217,6 +217,18 @@ class TelegraphIfy:
                     for disallowed_tag in disallowed_tags:
                         disallowed_tag.replaceWithChildren()
 
+                # deal with inline quotes
+                if tag.name == 'q':
+                    tag.insert_before('“')
+                    tag.insert_after('”')
+                    cite = tag.get('cite')
+                    if cite:
+                        tag.name = 'a'
+                        tag['href'] = cite
+                        del tag['cite']
+                    else:
+                        tag.replaceWithChildren()
+
                 # deal with tags itself
                 if tag.name in TELEGRAPH_DEL_TAGS:
                     if tag.name == 'table':

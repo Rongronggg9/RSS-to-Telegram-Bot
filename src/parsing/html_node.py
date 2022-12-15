@@ -4,16 +4,16 @@ from typing import Optional, Union, List
 from url_normalize import url_normalize
 
 __all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Code", "Pre", "Br", "Hr",
-           "ListItem", "OrderedList", "UnorderedList"]
+           "ListItem", "OrderedList", "UnorderedList", "TypeTextContent"]
 
-_TypeTextContent = Union["Text", str, List["Text"]]  # list["SomeType"] not compatible with Python 3.7
+TypeTextContent = Union["Text", str, List["Text"]]  # list["SomeType"] not compatible with Python 3.7
 
 
 class Text:
     tag: Optional[str] = None
     attr: Optional[str] = None
 
-    def __init__(self, content: _TypeTextContent, param: Optional[str] = None, *_args, **_kwargs):
+    def __init__(self, content: TypeTextContent, param: Optional[str] = None, *_args, **_kwargs):
         if content is None:
             content = ''
         self.param = param
@@ -174,7 +174,7 @@ class HtmlTree(Text):
 
 # ---- HTML tags super class ----
 class TagWithParam(Text):
-    def __init__(self, content: _TypeTextContent, param: str, *_args, **_kwargs):
+    def __init__(self, content: TypeTextContent, param: str, *_args, **_kwargs):
         super().__init__(content, param)
 
 
@@ -183,7 +183,7 @@ class TagWithOptionalParam(Text):
 
 
 class TagWithoutParam(Text):
-    def __init__(self, content: _TypeTextContent, *_args, **_kwargs):
+    def __init__(self, content: TypeTextContent, *_args, **_kwargs):
         super().__init__(content)
 
 
@@ -196,7 +196,7 @@ class Link(TagWithParam):
     tag = 'a'
     attr = 'href'
 
-    def __init__(self, content: _TypeTextContent, param: str, copy: bool = False, *_args, **_kwargs):
+    def __init__(self, content: TypeTextContent, param: str, copy: bool = False, *_args, **_kwargs):
         super().__init__(content, param)
         if not copy:
             try:

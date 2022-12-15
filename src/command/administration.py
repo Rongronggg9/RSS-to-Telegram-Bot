@@ -224,7 +224,7 @@ async def cmd_set_sub_limit(event: Union[events.NewMessage.Event, Message], *_, 
     """
     command = `/set_sub_limit user_id sub_limit`
     """
-    args = parse_command(event.raw_text)
+    args = parse_command(event.raw_text, strip_inline_header=True)
     if len(args) < 2 or not args[1].lstrip('-').isdecimal():
         await event.respond(i18n[lang]['permission_denied_no_direct_use'] % '/user_info')
         return

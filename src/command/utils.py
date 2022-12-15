@@ -25,11 +25,15 @@ from ..compat import cached_async
 logger = log.getLogger('RSStT.command')
 
 splitByWhitespace = re.compile(r'\s+').split
+stripInlineHeader = partial(re.compile(r'^@\w{5,}\s+').sub, '')
 
 
 # ANONYMOUS_ADMIN = 1087968824  # no need for MTProto, user_id will be `None` for anonymous admins
 
-def parse_command(command: str, max_split: int = 0, strip_target_chat: bool = True) -> list[AnyStr]:
+def parse_command(command: str, max_split: int = 0,
+                  strip_target_chat: bool = True, strip_inline_header: bool = False) -> list[AnyStr]:
+    if strip_inline_header:
+        command = stripInlineHeader(command)
     command = command.strip()
     if strip_target_chat:
         temp = splitByWhitespace(command, maxsplit=2)
@@ -44,7 +48,7 @@ async def parse_command_get_sub_or_user_and_param(command: str,
                                                   max_split: int = 0,
                                                   allow_setting_user_default: bool = False) \
         -> tuple[Optional[db.Sub], Optional[str]]:
-    args = parse_command(command, max_split=max_split)
+    args = parse_command(command, max_split=max_split, strip_inline_header=True)
     sub_or_user = param = None
     if len(args) >= 2 and args[1] == 'default' and allow_setting_user_default:
         sub_or_user = await db.User.get_or_none(id=user_id)

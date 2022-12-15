@@ -62,7 +62,7 @@ def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: in
 def get_http_last_modified(headers: Optional[Mapping]) -> datetime:
     """
     :param headers: dict of headers
-    :return: a dict containing "Etag" (`str` or `None`) and "Last-Modified" (`datetime.datetime` or `None`) headers
+    :return: last modified time
     """
     last_modified = headers.get('Last-Modified') or headers.get('Date') if headers else None
     try:

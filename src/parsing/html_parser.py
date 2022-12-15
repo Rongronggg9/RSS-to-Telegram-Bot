@@ -31,6 +31,15 @@ srcsetParser = re.compile(r'(?:^|,\s*)'
                           r'(?=,|$)').finditer  # e.g.: url,url 1x,url 2x,url 100w,url 200w
 
 
+def effective_link(content: TypeTextContent, href: str, base: str = None) -> Union[TypeTextContent, Link, Text]:
+    if href.startswith('javascript'):  # drop javascript links
+        return content
+    href = resolve_relative_link(href, base)
+    if not isAbsoluteHttpLink(href):
+        return Text([Text(f'{content} ('), Code(href), Text(')')])
+    return Link(content, href)
+
+
 class Parser:
     def __init__(self, html: str, feed_link: Optional[str] = None):
         """
@@ -128,6 +137,18 @@ class Parser:
                 return None
             return Text([Hr(), quote, Hr()])
 
+        if tag == 'q':
+            quote = await self._parse_item(soup.children)
+            if not quote:
+                return None
+            quote.strip()
+            if quote.is_empty():
+                return None
+            cite = soup.get('cite')
+            if cite:
+                quote = effective_link(quote, cite, self.feed_link)
+            return Text([Text('“'), quote, Text('”')])
+
         if tag == 'pre':
             return Pre(await self._parse_item(soup.children))
 
@@ -144,12 +165,7 @@ class Parser:
             href = soup.get("href")
             if not href:
                 return None
-            href = resolve_relative_link(self.feed_link, href)
-            if not isAbsoluteHttpLink(href):
-                if href.startswith('javascript'):  # drop javascript links
-                    return text
-                return Text([Text(f'{text} ('), Code(href), Text(')')])
-            return Link(text, href)
+            return effective_link(text, href, self.feed_link)
 
         if tag == 'img':
             src, srcset = soup.get('src'), soup.get('srcset')
@@ -247,7 +263,7 @@ class Parser:
                 return None
             src = resolve_relative_link(self.feed_link, src)
             title = urlparse(src).hostname if env.TRAFFIC_SAVING else await web.get_page_title(src)
-            return Text([Br(2), Link(f'iframe ({title})', param=src), Br(2)])
+            return Text([Br(2), effective_link(f'iframe ({title})', src), Br(2)])
 
         if tag == 'ol' or tag == 'ul':
             texts = []

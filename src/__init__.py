@@ -99,7 +99,7 @@ async def pre():
     # wait for pre tasks
     await asyncio.gather(*pre_tasks)
 
-    bare_target_matcher = r'(?P<target>@\w{5,}|(-100|\+)\d+)'
+    bare_target_matcher = r'(?P<target>@\w{4,}|(-100|\+)\d+)'
     target_matcher = rf'(\s+{bare_target_matcher})?'
     _command_matcher = r'(?P<command>{}(?=[\s@]|$))(@\w+)?'
     construct_command_matcher = _command_matcher.format

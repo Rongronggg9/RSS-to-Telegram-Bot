@@ -126,12 +126,6 @@ async def pre():
                           events.NewMessage(pattern=construct_remote_command_matcher('/set')))
     bot.add_event_handler(command.customization.cmd_set_default,
                           events.NewMessage(pattern=construct_remote_command_matcher('/set_default')))
-    bot.add_event_handler(command.customization.cmd_set_title,
-                          events.NewMessage(pattern=construct_remote_command_matcher('/set_title')))
-    bot.add_event_handler(command.customization.cmd_set_interval,
-                          events.NewMessage(pattern=construct_remote_command_matcher('/set_interval')))
-    bot.add_event_handler(command.customization.cmd_set_hashtags,
-                          events.NewMessage(pattern=construct_remote_command_matcher('/set_hashtags')))
     bot.add_event_handler(command.opml.opml_import,
                           command.utils.NewFileMessage(pattern=rf'.*?{bare_target_matcher}?',
                                                        filename_pattern=r'^.*\.opml$'))
@@ -151,10 +145,23 @@ async def pre():
                           events.NewMessage(pattern=construct_command_matcher('/test')))
     bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
                           events.NewMessage(pattern=construct_command_matcher('/user_info')))
-    bot.add_event_handler(command.administration.cmd_set_sub_limit,
-                          events.NewMessage(pattern=construct_command_matcher('/set_sub_limit')))
     bot.add_event_handler(command.administration.cmd_set_option,
                           events.NewMessage(pattern=construct_command_matcher('/set_option')))
+
+    # trigger bt inline query
+    inline_query_matcher = rf'(@{env.bot_peer.username}\s+)?'
+    bot.add_event_handler(command.administration.cmd_set_sub_limit,
+                          events.NewMessage(
+                              pattern=inline_query_matcher + construct_command_matcher('/set_sub_limit')))
+    bot.add_event_handler(command.customization.cmd_set_title,
+                          events.NewMessage(
+                              pattern=inline_query_matcher + construct_remote_command_matcher('/set_title')))
+    bot.add_event_handler(command.customization.cmd_set_interval,
+                          events.NewMessage(
+                              pattern=inline_query_matcher + construct_remote_command_matcher('/set_interval')))
+    bot.add_event_handler(command.customization.cmd_set_hashtags,
+                          events.NewMessage(
+                              pattern=inline_query_matcher + construct_remote_command_matcher('/set_hashtags')))
 
     callback_target_matcher = r'(%(?P<target>\+?\d+))?'
     # callback query handler

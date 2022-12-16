@@ -34,7 +34,7 @@ srcsetParser = re.compile(r'(?:^|,\s*)'
 def effective_link(content: TypeTextContent, href: str, base: str = None) -> Union[TypeTextContent, Link, Text]:
     if href.startswith('javascript'):  # drop javascript links
         return content
-    href = resolve_relative_link(href, base)
+    href = resolve_relative_link(base, href)
     if not isAbsoluteHttpLink(href):
         return Text([Text(f'{content} ('), Code(href), Text(')')])
     return Link(content, href)

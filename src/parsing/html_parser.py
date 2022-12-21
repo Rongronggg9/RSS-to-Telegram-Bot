@@ -7,7 +7,7 @@ import asyncio
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
 from urllib.parse import urlparse
-from attr import define
+from dataclasses import dataclass
 
 from .. import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
@@ -304,7 +304,7 @@ class Parser:
         return str(self.html_tree)
 
 
-@define
+@dataclass
 class Parsed:
     html_tree: HtmlTree
     media: Media

@@ -22,7 +22,7 @@ from ipaddress import ip_network, ip_address
 from urllib.parse import urlparse
 from socket import AF_INET, AF_INET6
 from multidict import CIMultiDictProxy
-from attr import define
+from dataclasses import dataclass
 from functools import partial
 from asyncstdlib.functools import lru_cache
 
@@ -114,7 +114,7 @@ class WebError(Exception):
         return self.i18n_message()
 
 
-@define
+@dataclass
 class WebResponse:
     url: str  # redirected url
     ori_url: str  # original url
@@ -124,7 +124,7 @@ class WebResponse:
     reason: Optional[str]
 
 
-@define
+@dataclass
 class WebFeed:
     url: str  # redirected url
     ori_url: str  # original url

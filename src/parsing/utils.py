@@ -200,9 +200,12 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
     if isinstance(entry.get('media_content'), list):
         enclosures_media = []
         for media in (media for media in entry['media_content'] if media.get('url')):
+            media_type = media.get('type') or media.get('medium')
+            if media_type and 'flash' in media_type:  # application/x-shockwave-flash or so on
+                continue  # false media
             enclosures_media.append(Enclosure(url=resolve_relative_link(feed_link, media['url']),
                                               length=media.get('fileSize'),
-                                              _type=media.get('type') or media.get('medium'),
+                                              _type=media_type,
                                               duration=media.get('duration')))
         if enclosures_media:
             if isinstance(entry.get('media_thumbnail'), list) and entry['media_thumbnail'] \

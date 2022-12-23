@@ -22,36 +22,51 @@ RUN \
 
 FROM python:3.11-bullseye AS dep-builder
 
+ENV PATH="/opt/venv/bin:$PATH"
+ARG EXP_REGEX='^([^~=<>]+)[^#]*#\s*(\1@.+)$'
+
+COPY requirements.txt .
+RUN \
+    set -ex && \
+    pip wheel --no-cache-dir --no-deps \
+        $(sed -nE "s/$EXP_REGEX/\2/p" requirements.txt)
+
+COPY --from=dep-builder-common /opt/venv /opt/venv
+
+ARG EXP_DEPS=0
+RUN \
+    set -ex && \
+    if [ "$EXP_DEPS" = 1 ]; then \
+        AFFECTED_PKGS=$(sed -nE "s/$EXP_REGEX/\1/p" requirements.txt); \
+        pip uninstall -y $AFFECTED_PKGS && \
+        for pkg in $AFFECTED_PKGS; do \
+            sed -Ei "s#$pkg.*#$(find . -iname "${pkg}-*.whl")#" requirements.txt; \
+        done; \
+        pip install --no-cache-dir \
+            -r requirements.txt \
+        ; \
+    fi;
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+FROM buildpack-deps:bullseye AS mimalloc-builder
+
 RUN \
     set -ex && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
         cmake \
     && \
-    rm -rf /var/lib/apt/lists/* && \
     git clone --depth=1 https://github.com/microsoft/mimalloc.git && \
     mkdir -p /mimalloc/build/lib && \
     cd /mimalloc/build && \
     cmake /mimalloc && \
     make mimalloc -j$((`nproc`+1)) && \
-    ln libmimalloc.so* lib/
-
-ENV PATH="/opt/venv/bin:$PATH"
-
-COPY --from=dep-builder-common /opt/venv /opt/venv
-COPY requirements.txt .
-
-ARG EXP_DEPS=0
-RUN \
-    set -ex && \
-    if [ "$EXP_DEPS" = 1 ]; then \
-        REGEX='^([^~=<>]+)[^#]*#\s*(\1@.+)$' ; \
-        pip uninstall -y $(sed -nE "s/$REGEX/\1/p" requirements.txt) && \
-        sed -Ei "s/$REGEX/\2/g" requirements.txt && \
-        pip install --no-cache-dir \
-            -r requirements.txt \
-        ; \
-    fi;
+    ln libmimalloc.so* lib/ && \
+    apt-get purge -yq --auto-remove \
+        cmake \
+    && \
+    rm -rf /var/lib/apt/lists/*
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -108,7 +123,7 @@ ENV \
     # https://github.com/home-assistant/core/pull/70899
     # https://github.com/jemalloc/jemalloc/blob/5.2.1/TUNING.md
 
-COPY --from=dep-builder /mimalloc/build/lib /usr/local/lib
+COPY --from=mimalloc-builder /mimalloc/build/lib /usr/local/lib
 COPY --from=dep-builder /opt/venv /opt/venv
 COPY --from=app-builder /app-minimal /app
 

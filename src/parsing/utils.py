@@ -8,7 +8,6 @@ from bs4.element import Tag
 from html import unescape
 from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
-from telethon.helpers import add_surrogate
 from functools import partial
 from urllib.parse import urljoin
 from os import path
@@ -219,7 +218,14 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
 
 
 def surrogate_len(s: str) -> int:
-    return len(add_surrogate(s))
+    # in theory, the condition should be `0x10000 <= ord(c) <= 0x10FFFF`
+    # but in practice, it is impossible to have a character with `ord(c) > 0x10FFFF`
+    # >>> chr(0x110000)
+    # ValueError: chr() arg not in range(0x110000)
+    # >>> '\U00110000'
+    # SyntaxError: (unicode error) 'unicodeescape' codec can't decode bytes in position 0-9: illegal Unicode character
+    return sum(2 if 0x10000 <= ord(c) else 1
+               for c in s)
 
 
 def sort_entities(entities: Sequence[TypeMessageEntity]) -> list[TypeMessageEntity]:

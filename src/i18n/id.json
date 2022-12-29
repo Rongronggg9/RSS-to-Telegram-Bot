@@ -40,7 +40,7 @@
         "permission_denied_input_command": "Silakan masukkan perintah untuk melanjutkan…",
         "permission_denied_no_direct_use": "Perintah ini tidak digunakan langsung. Gunakan %s.",
         "promote_to_admin_prompt": "Jika Anda adalah admin anonim pada grup ini, harap promosikan bot ini menjadi admin (tak perlu izin) agar bot dapat memverifikasi identitas Anda.",
-        "group_upgrade_needed_prompt": "",
+        "group_upgrade_needed_prompt": "Uups, grup anda belum dimutakhirkan ke supergrup. Umumnya, peladen Telegram otomatis memutakhirkannya pada seberapa waktu, jika tidak demikian, anda harus memutakhirkan secara manual sebelum anda menggunakan bot.\nMohon ikuti petunjuk ini:\n1. Pergi ke info grup, kemudian ketuk \"Kelola grup\".\n2. Ubah\"Riwayat chat untuk anggota baru\" ke \"Terlihat\".\n3. Simpan pengaturan riwayat chat terlihat.\n4. Simpan semua settingan.\n5. (Opsional) jika perlu, anda dapat mengubahnya kembali \"Riwayat chat untuk anggota baru\" ke \"Tersembunyi\" lagi.\n6. Sekarang anda sudah dapat menggunakan bot.",
         "sub_limit_reached_prompt": "Jumlah langganan Anda telah mencapai batas (%d/%d) yang ditetapkan oleh pengelola bot. Harap menghapus (/unsub) beberapa langganan sebelum menambahkan yang lain."
     },
     "l10n_misc": {
@@ -57,8 +57,8 @@
         "n_subscriptions_in_total": "%d langganan",
         "other_settings_button": "Pengaturan lainnya…",
         "user": "Pengguna",
-        "channel": "",
-        "group": ""
+        "channel": "Kanal",
+        "group": "Grup"
     },
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Silakan balas pesan ini dengan URL feed RSS.\nAtau, Anda dapat menggunakan <code>/sub url1 url2 url3 …</code> untuk berlangganan dalam jumlah besar.",
@@ -79,13 +79,13 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Silakan kirimkan saya berkas OPML yang ingin diimpor (nama ekstensi harus .opml).",
-        "import_for_channel_or_group_prompt": "",
+        "import_for_channel_or_group_prompt": "Jika anda ingin mengimpor langganan untuk kanal/grup anda, silakan isi keterangan dengan ID kanal/grup (harus dimulai dengan '-100') atau @username.",
         "send_opml_reply_placeholder": "Berkas OPML yang ingin diimpor (nama ekstensi harus .opml)",
         "fetch_file_failed": "Gagal mengambil berkas",
         "opml_import_processing": "Jika jumlah langganan banyak atau server feed lambat, mungkin dibutuhkan waktu yang lama. Duduklah dan santai.",
         "opml_parse_error": "Kesalahan menguraikan OPML",
-        "keep_subs_title_button": "",
-        "delete_subs_title_button": ""
+        "keep_subs_title_button": "Pertahankan judul ubahsuai dari langganan yang diimpor",
+        "delete_subs_title_button": "Hapus judul ubahsuai dari langganan yang diimpor"
     },
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "Silakan pilih langganan yang ingin Anda ubah.",
@@ -116,12 +116,12 @@
         "display_author_0": "Otomatis",
         "display_author_1": "Aktifkan",
         "display_via": "Sumber",
-        "display_via_-4": "",
-        "display_via_-3": "",
-        "display_via_-2": "",
-        "display_via_-1": "",
+        "display_via_-4": "Tidak ada judul umpan balik, URL kosong di bagian akhir",
+        "display_via_-3": "Tanpa judul umpan balik, tautan ditampilkan sebagai judul postingan",
+        "display_via_-2": "Nonaktifkan sepenuhnya",
+        "display_via_-1": "Tanpa judul umpan balik, hyperlink dibagian akhir",
         "display_via_0": "Judul feed dan tautan",
-        "display_via_1": "",
+        "display_via_1": "Judul umpan balik dan tautan ditampilkan sebagai judul postingan",
         "display_title": "Judul pos",
         "display_title_-1": "Nonaktifkan",
         "display_title_0": "Otomatis",
@@ -129,31 +129,31 @@
         "style": "Gaya",
         "style_0": "",
         "style_1": "",
-        "set_custom_title_button": "",
-        "set_custom_interval_button": "",
-        "set_custom_hashtags_button": "",
-        "set_interval_prompt": "",
+        "set_custom_title_button": "Judul ubahsuai…",
+        "set_custom_interval_button": "Interval ubahsuai (dalam menit)…",
+        "set_custom_hashtags_button": "Tagar ubahsuai…",
+        "set_interval_prompt": "Silakan pilih interval untuk monitor.",
         "set_length_limit_prompt": "Pilih batas panjang.\n\nJika pos lebih panjang dari batas ATAU tidak dapat dikirim dalam satu pesan, ia akan dikirim melalui Telegraph.\nApabila pengiriman melalui Telegraph gagal, hanya judul dan sumber yang akan dikirim.",
         "length_limit_only_effective_if_send_mode_auto": "Batas panjang efektif hanya saat mode pengirimannya otomatis.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Mode pengiriman saat ini tidak akan menampilkan media pada pesan Telegram.",
-        "use_user_default_button": "",
-        "read_formatting_settings_guidebook_html": ""
+        "use_user_default_button": "Gunakan default saya",
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Baca panduan pengaturan pemformatan di sini.</a>"
     },
     "l10n_cmd_set_default": {
-        "set_user_default_description": "",
-        "reset_all_button": "",
-        "reset_all_confirm_prompt": "",
-        "reset_all_confirm": "",
+        "set_user_default_description": "Tetapkan pengaturan default ke pelanggan.\n\nSetelan langganan yang tidak disetel akan dikembalikan ke setelan dihalaman ini. Ini berguna jika anda ingin menyetel setelan yang sama untuk sebagian besar langganan anda.",
+        "reset_all_button": "Setel ulang semua langganan ke default saya",
+        "reset_all_confirm_prompt": "Apakah anda yakin ingin menyetel ulang semua langganan ke default?",
+        "reset_all_confirm": "Ya, setel ulang semua langganan saya ke default",
         "reset_all_cancel": "Tidak, batalkan",
-        "reset_all_successful": ""
+        "reset_all_successful": "Sukses menyetel ulang semua langganan ke default"
     },
     "l10n_sub_info": {
         "subscription_info": "Informasi langganan",
         "feed_title": "Judul feed",
         "subscription_title": "Judul khusus",
         "feed_url": "URL feed",
-        "hashtags": "",
-        "default_emoji_header_description": ""
+        "hashtags": "Tagar",
+        "default_emoji_header_description": "%s langganan menggunakan pengaturan default anda. Anda dapat mengubahnya dengan menggunakan /set_default."
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "Pemantauan telah gagal 100 kali berturut-turut. Langganan Anda ke feed RSS ini telah dinonaktifkan.\nUntuk mengaktifkannya kembali, silakan gunakan perintah /activate_subs."

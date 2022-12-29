@@ -56,6 +56,10 @@ class _I18N:
         self.__initialized = True
         self.set_help_msg_html()
 
+        self.lang_3_per_row = tuple(lang for lang in ALL_LANGUAGES if len(self[lang]['lang_native_name']) <= 7)
+        self.lang_2_per_row = tuple(lang for lang in ALL_LANGUAGES if 7 < len(self[lang]['lang_native_name']) <= 12)
+        self.lang_1_per_row = tuple(lang for lang in ALL_LANGUAGES if len(self[lang]['lang_native_name']) > 12)
+
     def __getitem__(self, lang_code: Optional[str]) -> "_L10N":
         if not lang_code or not isinstance(lang_code, str):
             return self.get_fallback_l10n()

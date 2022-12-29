@@ -723,12 +723,7 @@ async def send_success_and_failure_msg(message: Union[Message, events.NewMessage
 def get_group_migration_help_msg(lang: Optional[str] = None) \
         -> tuple[str, tuple[tuple[types.KeyboardButtonCallback, ...], ...]]:
     msg = i18n[lang]['group_upgrade_needed_prompt']
-    buttons = inner.utils.arrange_grid(
-        (
-            Button.inline(i18n[_lang]['lang_native_name'], data=f'get_group_migration_help={_lang}')
-            for _lang in ALL_LANGUAGES if _lang != lang
-        ),
-        columns=2)
+    buttons, _ = inner.utils.get_lang_buttons(callback='get_group_migration_help', current_lang=lang)
     return msg, buttons
 
 

@@ -22,26 +22,26 @@
         "uncaught_internal_error": "Errore interno non rilevato",
         "operation_timeout_error": "Timeout dell'operazione",
         "action_invalid": "Azione non valida",
-        "sub_limit_reached": "",
+        "sub_limit_reached": "Limite di iscrizioni raggiunto",
         "flood_wait_prompt": "Stai operando così troppo frequentemente che il bot ha superato il limite di velocità di Telegram. Per favore rallenta.",
         "edit_conflict_prompt": "State operando così troppo frequentemente che l'operazione va in conflitto. Per favore, rallenta.",
         "callback_already_running_prompt": "Hai richiesto un altro comando. Si prega di riprovare dopo che è terminato.",
         "message_too_long_prompt": "Il comando avrebbe dovuto essere eseguito correttamente, ma il messaggio di ritorno è troppo lungo e non può essere inviato."
     },
     "l10n_permission_denied_reasons": {
-        "channel_or_group_not_found": "",
-        "permission_denied_no_permission": "",
+        "channel_or_group_not_found": "Il canale/gruppo non è stato trovato.",
+        "permission_denied_no_permission": "Non hai il permesso di eseguire questo comando.",
         "permission_denied_not_bot_manager": "Questo comando può essere usato solo dal bot manager.",
         "permission_denied_not_chat_admin": "Questo comando può essere usato solo dagli amministratori di questo gruppo/canale.",
         "permission_denied_not_in_private_chat": "Questo comando può essere usato solo in una chat privata.",
         "permission_denied_not_member": "Non sei in questo gruppo/canale, quindi non puoi usare il bot.",
         "permission_denied_bot_not_member": "Il bot non è più in questo gruppo/canale, quindi non funzionerà qui.",
-        "permission_denied_switch_pm": "",
-        "permission_denied_input_command": "",
-        "permission_denied_no_direct_use": "",
+        "permission_denied_switch_pm": "Continua nella chat privata con il bot…",
+        "permission_denied_input_command": "Per favore inserisci un comando per continuare…",
+        "permission_denied_no_direct_use": "Questo comando non dovrebbe essere utilizzato direttamente. Usa invece %s.",
         "promote_to_admin_prompt": "Se sei un amministratore anonimo di questo gruppo, per favore promuovi il bot a un amministratore (non è necessario un permesso) per permettere al bot di verificare la tua identità.",
         "group_upgrade_needed_prompt": "Ops, il tuo gruppo non è stato aggiornato a un supergruppo. Generalmente, il server Telegram dovrebbe eseguire automaticamente questo aggiornamento in un certo momento, ma se non lo fa, devi aggiornarlo manualmente prima di poter utilizzare il bot.\nPer favore segui questi passi:\n1. Vai alle informazioni sul gruppo, poi clicca su \"Gestisci gruppo\".\n2. Cambia \"Cronologia chat per i nuovi membri\" in \"Visibile\".\n3. Salva l'impostazione della visibilità della cronologia della chat.\n4. Salva tutte le impostazioni.\n5. (Opzionale) Se necessario, puoi cambiare \"Storia della chat per i nuovi membri\" di nuovo in \"Nascosto.\n6. Ora dovresti essere in grado di usare il bot.",
-        "sub_limit_reached_prompt": ""
+        "sub_limit_reached_prompt": "La quantità delle tue iscrizioni ha raggiunto il limite (%d/%d) applicato dal manager del bot. Per favore rimuovi (/unsub) alcune iscrizioni prima di aggiungerne altre."
     },
     "l10n_misc": {
         "choose_sub_prompt": "Per favore, scegli un abbonamento",
@@ -55,27 +55,27 @@
         "processing": "Elaborazione, si prega di attendere un momento…",
         "canceled_by_user": "Annullato dall'utente.",
         "n_subscriptions_in_total": "%d abbonamenti in totale",
-        "other_settings_button": "",
-        "user": "",
-        "channel": "",
-        "group": ""
+        "other_settings_button": "Altre impostazioni…",
+        "user": "Utente",
+        "channel": "Canale",
+        "group": "Gruppo"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "Si prega di inserire l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
+        "sub_reply_feed_url_prompt_html": "Si prega di rispondere a questo messaggio con l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
         "sub_usage_in_channel_html": "Per favore usa <code>/sub url1 url2 url3 …</code> per iscriverti.",
         "sub_successful": "Iscritta con successo",
-        "sub_failed": "Iscritta fallita"
+        "sub_failed": "Iscrizione fallita"
     },
     "l10n_cmd_unsub": {
-        "unsub_choose_sub_prompt_html": "Per favore, scegli l'abbonamento che vuoi cancellare. \nOppure, puoi usare <code>/unsub url1 url2 url3 …</code> per cancellarti in blocco.",
+        "unsub_choose_sub_prompt_html": "Per favore, scegli un abbonamento che vuoi cancellare. \nOppure, puoi usare <code>/unsub url1 url2 url3 …</code> per cancellarti in blocco.",
         "unsub_successful": "Disabbonati con successo",
-        "unsub_failed": "Disabbonato fallito"
+        "unsub_failed": "Disicrizione fallita"
     },
     "l10n_cmd_unsub_all": {
         "unsub_all_confirm_prompt": "Sei sicuro di voler annullare l'iscrizione a tutti gli abbonamenti?",
         "unsub_all_confirm": "Sì, annulla l'iscrizione a tutti gli abbonamenti",
         "unsub_all_cancel": "No, cancella",
-        "unsub_all_successful": "Annullate le iscrizione di tutti gli abbonamenti con successo"
+        "unsub_all_successful": "Disiscrizione da tutte le iscrizioni completata con successo"
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Per favore inviatemi il file OPML da importare (il nome dell'estensione deve essere .opml).",

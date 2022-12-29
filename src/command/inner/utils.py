@@ -4,6 +4,7 @@ from collections.abc import Iterable, Mapping
 
 import asyncio
 import re
+from itertools import chain
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from zlib import crc32
@@ -74,7 +75,7 @@ def get_http_last_modified(headers: Optional[Mapping]) -> datetime:
             return datetime.utcnow()
 
 
-def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Optional[tuple[tuple[Any, ...], ...]]:
+def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> tuple[tuple[Any, ...], ...]:
     """
     :param to_arrange: `Iterable` containing objects to arrange
     :param columns: 1-based, telegram limit: 8 (row 1-12), 4 (row 13)
@@ -88,7 +89,42 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> Opti
     columns = min(columns, len(to_arrange))
     return tuple(
         tuple(to_arrange[i:i + columns]) for i in range(0, counts, columns)
-    ) if counts > 0 else None
+    ) if counts > 0 else ()
+
+
+def get_lang_buttons(callback=str, current_lang: str = None) \
+        -> tuple[tuple[tuple[KeyboardButtonCallback, ...], ...], tuple[str, ...]]:
+    lang_3_per_row = [lang for lang in i18n.lang_3_per_row if lang != current_lang]
+    lang_2_per_row = [lang for lang in i18n.lang_2_per_row if lang != current_lang]
+    lang_1_per_row = [lang for lang in i18n.lang_1_per_row if lang != current_lang]
+
+    _ = len(lang_3_per_row) % 3
+    if _ != 0:
+        lang_2_per_row.extend(lang_3_per_row[-_:])
+        lang_2_per_row.sort()
+        lang_3_per_row = lang_3_per_row[:-_]
+
+    _ = len(lang_2_per_row) % 2
+    if _ != 0:
+        lang_1_per_row.extend(lang_2_per_row[-_:])
+        lang_1_per_row.sort()
+        lang_2_per_row = lang_2_per_row[:-_]
+
+    buttons = (
+            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
+                          for lang in lang_3_per_row),
+                         columns=3)
+            +
+            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
+                          for lang in lang_2_per_row),
+                         columns=2)
+            +
+            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
+                          for lang in lang_1_per_row),
+                         columns=1)
+    )
+    langs = tuple(chain(lang_3_per_row, lang_2_per_row, lang_1_per_row))
+    return buttons, langs
 
 
 async def get_sub_list_by_page(user_id: int, page_number: int, size: int, desc: bool = True, *args, **kwargs) \

@@ -52,7 +52,7 @@ INVALID_CHARACTERS = (
     '\x06'  # ACKNOWLEDGE
     '\x07'  # BELL
     '\x08'  # BACKSPACE
-    '\t'    # '\x09', # HORIZONTAL TAB
+    '\x09'  # '\t', # HORIZONTAL TAB
     '\x0b'  # LINE TABULATION
     '\x0c'  # FORM FEED
     '\x0e'  # SHIFT OUT
@@ -76,6 +76,10 @@ INVALID_CHARACTERS = (
     '\u2028'  # LINE SEPARATOR
     '\u2029'  # PARAGRAPH SEPARATOR
 )
+
+# load emoji dict
+with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-8') as emojify_json:
+    EMOJI_DICT = json.load(emojify_json)
 
 replaceInvalidCharacter = partial(re.compile(rf'[{INVALID_CHARACTERS}]').sub, ' ')  # use initially
 replaceSpecialSpace = partial(re.compile(rf'[{SPACES[1:]}]').sub, ' ')  # use carefully
@@ -102,11 +106,6 @@ class Enclosure:
         self.thumbnail = thumbnail
 
 
-# load emoji dict
-with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-8') as emojify_json:
-    emoji_dict = json.load(emojify_json)
-
-
 def resolve_relative_link(base: Optional[str], url: Optional[str]) -> str:
     if not base or not url or isAbsoluteHttpLink(url) or not isAbsoluteHttpLink(base):
         return url or ''
@@ -115,7 +114,7 @@ def resolve_relative_link(base: Optional[str], url: Optional[str]) -> str:
 
 def emojify(xml):
     xml = emojize(xml, language='alias', variant='emoji_type')
-    for emoticon, emoji in emoji_dict.items():
+    for emoticon, emoji in EMOJI_DICT.items():
         # emojify weibo emoticons, get all here: https://api.weibo.com/2/emotions.json?source=1362404091
         xml = xml.replace(f'[{emoticon}]', emoji)
     return xml

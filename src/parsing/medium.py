@@ -31,7 +31,7 @@ pixiv_size_parser: Final = re.compile(r'(?P<url_prefix>^https?://i\.pixiv\.(cat|
                                       r'(?P<url_infix>/img/\d{4}/(\d{2}/){5})'
                                       r'(?P<filename>\d+_p\d+)'
                                       r'(?P<file_ext>\.\w+$)').match
-sinaimg_server_parser: Final = re.compile(r'(?P<url_prefix>^https?://wx)'
+sinaimg_server_parser: Final = re.compile(r'(?P<url_prefix>^https?://(wx|tvax?))'
                                           r'(?P<server_id>\d)'
                                           r'(?P<url_suffix>\.sinaimg\.\S+$)').match
 # lizhi_sizes: Final = ('ud.mp3', 'hd.mp3', 'sd.m4a')  # ud.mp3 is rare
@@ -533,9 +533,6 @@ class Image(Medium):
         for url in self.urls:
             sinaimg_match = sinaimg_size_parser(url)
             pixiv_match = pixiv_size_parser(url)
-            if not any([sinaimg_match, pixiv_match]):
-                new_urls.append(url)
-                continue
             if sinaimg_match:
                 parsed_sinaimg = sinaimg_match.groupdict()  # is a sinaimg img
                 for size_name in sinaimg_sizes:

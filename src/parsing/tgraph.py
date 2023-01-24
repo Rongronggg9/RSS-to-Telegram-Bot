@@ -308,11 +308,11 @@ class TelegraphIfy:
         self.telegraph_html_content = (soup.decode() +
                                        '<p> '
                                        # '<a href="https://github.com/Rongronggg9/RSS-to-Telegram-Bot">RSStT</a>. '
-                                       ' "{self.title}"</p>'
+                                       ' </p>'
                                        # "If images cannot be loaded properly due to anti-hotlinking, "
                                        # "please consider install "
                                        # "<a href='https://greasyfork.org/scripts/432923'>this userscript</a>."
-                                       + (f'<p><a href="https://t.me/inside1024">Source</a></p>' ))
+                                       + (f'<p></p>' ))
 
     async def telegraph_ify(self):
         await self.task  # wait for the page to be fully created

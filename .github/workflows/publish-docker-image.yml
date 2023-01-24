@@ -4,7 +4,7 @@ on:
     branches-ignore:
       - dependabot/**
     tags:
-      - '**'
+      - 'dev'
     paths-ignore:
       - 'docs/**'
       - '**.md'

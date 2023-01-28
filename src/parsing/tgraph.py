@@ -15,6 +15,7 @@ from aiohttp_socks import ProxyConnector
 
 from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
+from .medium import construct_weserv_url
 from ..aio_helper import run_async_on_demand
 
 convert_table_to_png: Optional[Awaitable]
@@ -293,8 +294,11 @@ class TelegraphIfy:
                     if not isAbsoluteHttpLink(attr_content):
                         tag.replaceWithChildren()
                         continue
-                    if tag.name in {'video', 'img'} and not attr_content.startswith(env.IMG_RELAY_SERVER):
-                        attr_content = env.IMG_RELAY_SERVER + attr_content
+                    if not attr_content.startswith(env.IMG_RELAY_SERVER):
+                        if tag.name == 'video':
+                            attr_content = env.IMG_RELAY_SERVER + attr_content
+                        if tag.name == 'img' and not attr_content.startswith(env.IMAGES_WESERV_NL):
+                            attr_content = construct_weserv_url(attr_content)
                     tag.attrs = {attr_name: attr_content}
 
         if self.feed_title:

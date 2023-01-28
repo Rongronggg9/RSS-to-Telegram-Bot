@@ -12,7 +12,7 @@ from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
     MessageMediaPhoto, MessageMediaDocument, InputFile, InputFileBig, InputMediaUploadedPhoto
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError, BadRequestError
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlparse
 
 from .. import env, log, web, locks
 from .html_node import Code, Link, Br, Text, HtmlTree
@@ -946,6 +946,13 @@ class Media:
         return '|'.join(medium.hash for medium in self._media)
 
 
+def weserv_param_encode(param: str) -> str:
+    hash_index = param.find('#')
+    if hash_index != -1:
+        param = param[:hash_index]  # remove fragment
+    return param.replace('&', '%26')  # & will mess up the query string, other characters are fine
+
+
 def construct_weserv_url(url: str,
                          width: Optional[int] = None,
                          height: Optional[int] = None,
@@ -953,18 +960,16 @@ def construct_weserv_url(url: str,
                          output_format: Optional[str] = None,
                          without_enlargement: Optional[bool] = None,
                          default_image: Optional[str] = None) -> str:
-    params = {
-        'url': url,
-        'w': width,
-        'h': height,
-        'fit': fit,
-        'output': output_format,
-        'we': '1' if without_enlargement else None,
-        'default': default_image,
-    }
-    filtered_params = {k: v for k, v in params.items() if v is not None}
-    query_string = urlencode(filtered_params)
-    return f'{env.IMAGES_WESERV_NL}?{query_string}'
+    return (
+            f'{env.IMAGES_WESERV_NL}?'
+            f'url={weserv_param_encode(url)}'
+            + (f'&w={width}' if width else '')
+            + (f'&h={height}' if height else '')
+            + (f'&fit={fit}' if fit else '')
+            + (f'&output={output_format}' if output_format else '')
+            + (f'&we=1' if without_enlargement else '')
+            + (f'&default={weserv_param_encode(default_image)}' if default_image else '')
+    )
 
 
 def construct_weserv_url_convert_to_2560_png(url: str) -> str:

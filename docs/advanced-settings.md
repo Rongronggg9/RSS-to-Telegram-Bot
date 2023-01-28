@@ -47,8 +47,8 @@
 |----------------------|---------------------------------------------------------------------------|-----------------------------------------------|-------------------------------------------------|
 | `MULTIUSER`          | Enable multi-user feature or not?                                         | `0`                                           | `1`                                             |
 | `CRON_SECOND`        | Run the feed monitoring task at the n-th second of each minute? (0-59)    | `30`                                          | `0`                                             |
-| `IMG_RELAY_SERVER`   | Media relay server URL                                                    | `https://images.weserv.nl/?url=`              | `https://rsstt-img-relay.rongrong.workers.dev/` |
-| `IMAGES_WESERV_NL`   | images.weserv.nl URL                                                      | `https://t0.nl/`                              | `https://images.weserv.nl/`                     |
+| `IMG_RELAY_SERVER`   | Media relay server URL                                                    | `https://wsrv.nl/?url=`                       | `https://rsstt-img-relay.rongrong.workers.dev/` |
+| `IMAGES_WESERV_NL`   | https://github.com/weserv/images instance                                 | `https://t0.nl/`                              | `https://wsrv.nl/`                              |
 | `DATABASE_URL`       | Database URL [^7]                                                         | `postgres://user:pass@example.com:5432/table` | `sqlite://path/to/config/db.sqlite3`            |
 | `TABLE_TO_IMAGE`     | Convert tables to image (causing higher CPU load) or just drop them?      | `1`                                           | `0`                                             |
 | `MANAGER_PRIVILEGED` | Allow the bot manager to manipulate any users' subscriptions or not? [^8] | `1`                                           | `0`                                             |

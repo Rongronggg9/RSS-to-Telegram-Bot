@@ -229,8 +229,8 @@ IMG_RELAY_SERVER: Final = (
 )
 del _img_relay_server
 
-# ----- images.weserv.nl config -----
-_images_weserv_nl = os.environ.get('IMAGES_WESERV_NL') or 'https://images.weserv.nl/'
+# ----- wsrv.nl config -----
+_images_weserv_nl = os.environ.get('IMAGES_WESERV_NL') or 'https://wsrv.nl/'
 IMAGES_WESERV_NL: Final = (
         ('' if _images_weserv_nl.startswith('http') else 'https://')
         + _images_weserv_nl

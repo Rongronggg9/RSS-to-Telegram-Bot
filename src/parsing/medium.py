@@ -311,7 +311,7 @@ class Medium(AbstractMedium):
                 if (
                         # let Telegram DC to determine the validity of media
                         env.LAZY_MEDIA_VALIDATION
-                        # images from images.weserv.nl are considered always valid
+                        # images from wsrv.nl are considered always valid
                         # but if the dimension of the image has not been extracted yet, let it continue
                         or (env.TRAFFIC_SAVING
                             and url.startswith(env.IMAGES_WESERV_NL)
@@ -353,7 +353,7 @@ class Medium(AbstractMedium):
                             self.content_type
                             and any(keyword in self.content_type for keyword in ('svg', 'application'))
                     ):
-                        # immediately fall back to 'images.weserv.nl'
+                        # immediately fall back to 'wsrv.nl'
                         self.urls = [url for url in self.urls if url.startswith(env.IMAGES_WESERV_NL)]
                         invalid_reasons.append('force convert SVG to PNG')
                         continue
@@ -387,7 +387,7 @@ class Medium(AbstractMedium):
                     invalid_reasons.append(f'size > {self.maxSize}')
                     self.valid = False
 
-                # some images cannot be sent as file directly, if so, images.weserv.nl may help
+                # some images cannot be sent as file directly, if so, wsrv.nl may help
                 if self.type == FILE and self.content_type and self.content_type.startswith('image') \
                         and not url.startswith(env.IMAGES_WESERV_NL):
                     self.urls.append(construct_images_weserv_nl_url_convert_to_jpg(url))

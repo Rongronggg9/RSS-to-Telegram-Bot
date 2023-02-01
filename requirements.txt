@@ -19,7 +19,7 @@ matplotlib==3.6.2; python_version>="3.8"
 
 # db
 asyncpg==0.27.0
-tortoise-orm[accel]==0.19.2
+tortoise-orm[accel]==0.19.3
 aerich==0.6.3
 
 # network

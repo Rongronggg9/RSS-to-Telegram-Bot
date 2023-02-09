@@ -12,7 +12,7 @@ from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExternal, \
     MessageMediaPhoto, MessageMediaDocument, InputFile, InputFileBig, InputMediaUploadedPhoto
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError, BadRequestError
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from .. import env, log, web, locks
 from .html_node import Code, Link, Br, Text, HtmlTree
@@ -950,7 +950,8 @@ def weserv_param_encode(param: str) -> str:
     hash_index = param.find('#')
     if hash_index != -1:
         param = param[:hash_index]  # remove fragment
-    return param.replace('&', '%26')  # & will mess up the query string, other characters are fine
+    param = quote(param)
+    return param
 
 
 def construct_weserv_url(url: str,

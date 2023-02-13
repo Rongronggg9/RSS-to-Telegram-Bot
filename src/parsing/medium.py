@@ -950,7 +950,9 @@ def weserv_param_encode(param: str) -> str:
     hash_index = param.find('#')
     if hash_index != -1:
         param = param[:hash_index]  # remove fragment
-    return param.replace('&', '%26')  # & will mess up the query string, other characters are fine
+    # & will mess up the query string
+    # leaving % as is will let weserv decode the encoded character before requesting the source image
+    return param.replace('%', '%25').replace('&', '%26')
 
 
 def construct_weserv_url(url: str,

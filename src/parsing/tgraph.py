@@ -298,6 +298,8 @@ class TelegraphIfy:
                         if tag.name == 'video':
                             attr_content = env.IMG_RELAY_SERVER + attr_content
                         if tag.name == 'img' and not attr_content.startswith(env.IMAGES_WESERV_NL):
+                            if attr_content.split('.', 1)[1].split('/', 1)[0] == 'sinaimg.cn':
+                                attr_content = env.IMG_RELAY_SERVER + attr_content
                             attr_content = construct_weserv_url(attr_content)
                     tag.attrs = {attr_name: attr_content}
 

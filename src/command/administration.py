@@ -98,7 +98,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
             return
 
         await asyncio.gather(
-            *(__send(uid, entry, rss_d.feed.title, url) for entry in entries_to_send)
+            *(__send(uid, entry, rss_d.feed.title, wf.url) for entry in entries_to_send)
         )
 
     except Exception as e:

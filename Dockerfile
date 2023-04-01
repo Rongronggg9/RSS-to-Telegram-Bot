@@ -51,16 +51,18 @@ RUN \
 
 FROM buildpack-deps:bullseye AS mimalloc-builder
 
+WORKDIR /mimalloc
+
 RUN \
     set -ex && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
         cmake \
     && \
-    git clone --depth=1 https://github.com/microsoft/mimalloc.git && \
-    mkdir -p /mimalloc/build/lib && \
-    cd /mimalloc/build && \
-    cmake /mimalloc && \
+    curl -sL https://github.com/microsoft/mimalloc/archive/refs/tags/v2.0.9.tar.gz | tar -zxf - --strip-components=1 && \
+    mkdir -p build/lib && \
+    cd build && \
+    cmake .. && \
     make mimalloc -j$((`nproc`+1)) && \
     ln libmimalloc.so* lib/ && \
     apt-get purge -yq --auto-remove \

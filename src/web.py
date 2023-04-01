@@ -7,6 +7,7 @@ from .compat import nullcontext, ssl_create_default_context, AiohttpUvloopTransp
 import re
 import asyncio
 import aiohttp
+import aiohttp.helpers
 import feedparser
 import PIL.Image
 import PIL.ImageFile
@@ -230,9 +231,14 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
                                          headers=_headers) as session:
             async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
                 async with AiohttpUvloopTransportHotfix(response):
+                    url_obj = response.url
                     status = response.status
                     content = await resp_callback(response) if status == 200 else None
-                    return WebResponse(url=str(response.url),
+                    auth_header = response.request_info.headers.get('Authorization')
+                    if auth_header:
+                        auth = aiohttp.helpers.BasicAuth.decode(auth_header)
+                        url_obj = url_obj.with_user(auth.login or None).with_password(auth.password or None)
+                    return WebResponse(url=str(url_obj),
                                        ori_url=url,
                                        content=content,
                                        headers=response.headers,

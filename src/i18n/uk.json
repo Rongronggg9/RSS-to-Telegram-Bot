@@ -36,7 +36,7 @@
         "permission_denied_not_in_private_chat": "Ця команда тільки для використання в приватних чатах.",
         "permission_denied_not_member": "Ви не перебуваєте в цій групі/каналі, тому не можете використовувати бот.",
         "permission_denied_bot_not_member": "Бот більше не перебуває в групі/каналі і не може працювати з нею.",
-        "permission_denied_switch_pm": "Продовжити в приватному чаті з ботом...",
+        "permission_denied_switch_pm": "Продовжити в приватному чаті з ботом…",
         "permission_denied_input_command": "Будь ласка, введіть команду для продовження…",
         "permission_denied_no_direct_use": "Ця команда не повинна використовуватися напряму. Використовуйте %s замість неї.",
         "promote_to_admin_prompt": "Якщо ви анонімний адмін цієї групи, будь ласка, попросіть адміністратора підтвердити вашу особу (жодних дозволів не потрібно).",
@@ -133,7 +133,7 @@
         "set_custom_interval_button": "Свій інтервал (у хвилинах)…",
         "set_custom_hashtags_button": "Свої хештеги…",
         "set_interval_prompt": "Будь ласка, вкажіть інтервал відстеження.",
-        "set_length_limit_prompt": "Будь ласка, вкажіть обмеження по довжині.",
+        "set_length_limit_prompt": "Будь ласка, виберіть обмеження довжини.\n\nЯкщо пост довший за ліміт АБО не може бути відправлений в одному повідомленні, він буде відправлений через Telegraph.\nЯкщо відправка через Telegraph не вдається, буде відправлена тільки її назва і джерело.",
         "length_limit_only_effective_if_send_mode_auto": "Обмеження за довжиною працює тільки для режиму авто.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Поточний режим відправки ніколи не покаже медіа в повідомленнях Telegram.",
         "use_user_default_button": "Використовувати мої установки",
@@ -211,7 +211,7 @@
         "set_user_state_as": "Встановити стан користувача",
         "reset_sub_limit_to_default": "Скинути ліміт кількості підписок на початкове значення",
         "set_sub_limit_to": "Встановити ліміт кількості підписок на…",
-        "cmd_set_sub_limit_prompt_html": "Використання команди: <code>/set_sub_limit user_id subscription_quantity_limit</code>\nУвага: <code>subscription_quantity_limit</code> повинен бути числом, <code>-1</code> для безліміту."
+        "cmd_set_sub_limit_prompt_html": "Використання команди: <code>/set_sub_limit \"ID_користувача\" \"Обмеження_на_кількість_підписок\"</code>\n\nПримітка: <code>Обмеження_на_кількість_підписок</code> має бути цілим числом, <code>-1</code> для необмеженої кількості."
     },
     "l10n_cmd_descriptions": {
         "commands": "Команди",

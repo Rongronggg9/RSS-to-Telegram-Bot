@@ -57,6 +57,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 | [pl] / Polish / Polski                 | [@marcin93]                             | [![pl_s]][pl_w]           |
 | [es] / Spanish / Español               | [@OscarCMD]                             | [![es_s]][es_w]           |
 | [ja] / Japanese / 日本語                  | [@Misaka13514]                          | [![ja_s]][ja_w]           |
+| [eu] / Basque / Euskara               | [@ionlizarazu]                             | [![eu_s]][eu_w]           |
 
 [i18n]: ../src/i18n
 
@@ -75,6 +76,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [pl]: ../src/i18n/pl.json
 [es]: ../src/i18n/es.json
 [ja]: ../src/i18n/ja.json
+[eu]: ../src/i18n/eu.json
 
 [en_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/en/glossary/svg-badge.svg
 [zh_Hans_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/zh_Hans/glossary/svg-badge.svg
@@ -91,6 +93,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [pl_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/pl/glossary/svg-badge.svg
 [es_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/es/glossary/svg-badge.svg
 [ja_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/ja/glossary/svg-badge.svg
+[eu_s]: https://hosted.weblate.org/widgets/rss-to-telegram-bot/eu/glossary/svg-badge.svg
 
 [en_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/en/
 [zh_Hans_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/zh_Hans/
@@ -107,6 +110,7 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [pl_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/pl/
 [es_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/es/
 [ja_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/ja/
+[eu_w]: https://hosted.weblate.org/engage/rss-to-telegram-bot/eu/
 
 [@Rongronggg9]: https://github.com/Rongronggg9
 [@Alfy]: https://hosted.weblate.org/user/Alfy/
@@ -127,3 +131,4 @@ https://hosted.weblate.org/projects/rss-to-telegram-bot/
 [@lauravpf]: https://hosted.weblate.org/user/lauravpf/
 [@OscarCMD]: https://github.com/OscarCMD
 [@Misaka13514]: https://github.com/Misaka13514
+[@ionlizarazu]: https://github.com/ionlizarazu

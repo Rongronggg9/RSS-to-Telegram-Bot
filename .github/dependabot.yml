@@ -10,8 +10,10 @@ updates:
     target-branch: "dev"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 16
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "dev"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 16

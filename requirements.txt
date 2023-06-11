@@ -38,5 +38,5 @@ multidict==6.0.4
 asyncstdlib==3.10.8
 cachetools==5.3.1
 CJKwrap==2.2
-typing-extensions==4.5.0
+typing-extensions==4.6.3
 uvloop==0.17.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

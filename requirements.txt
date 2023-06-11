@@ -9,7 +9,7 @@ listparser[lxml]==0.19
 pillow==9.5.0
 beautifulsoup4==4.12.2
 lxml==4.9.2
-rapidfuzz==3.0.0
+rapidfuzz==3.1.1
 emoji==2.5.0
 minify-html==0.6.10; python_version<="3.7"  # 0.6.10 for Python 3.7 (amd64 only)
 minify-html==0.10.8; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)

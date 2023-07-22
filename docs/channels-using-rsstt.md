@@ -16,3 +16,11 @@
 - Capoo Subscription: [@capoo_sub](https://t.me/capoo_sub)
 - 加零 Subscription: [@jia0_sub](https://t.me/jia0_sub)
 - 重庆轨道交通微博观察: [@crtweibowatch](https://t.me/crtweibowatch)
+
+## English
+
+- Doctor Who Magpie: [@doctorwho_magpie](https://t.me/doctorwho_magpie)
+- Leetcode Daily Questions: [@leetcode_dailyquestion](https://t.me/leetcode_dailyquestion)
+- lobster.rs Feed: [@lobster_rs](https://t.me/lobster_rs)
+- Neil Gaiman Everwhere: [@neilgaiman_everwhere](https://t.me/neilgaiman_everwhere)
+- O'Reilly News: [@oreilly_news](https://t.me/oreilly_news)

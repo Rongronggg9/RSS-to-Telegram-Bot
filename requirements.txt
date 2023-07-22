@@ -18,7 +18,7 @@ matplotlib==3.5.3; python_version<="3.7"
 matplotlib==3.6.2; python_version>="3.8"
 
 # db
-asyncpg==0.27.0
+asyncpg==0.28.0
 tortoise-orm[accel]==0.19.3
 aerich==0.6.3
 

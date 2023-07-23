@@ -42,7 +42,7 @@ docker-compose up -d
 
 ### Deploy
 
-|                             master                              |                            dev                            |
+|                             master                              |                     dev (recommended)                     |
 |:---------------------------------------------------------------:|:---------------------------------------------------------:|
 | [![Deploy on Railway (master)][railway_button]][railway_master] | [![Deploy on Railway (dev)][railway_button]][railway_dev] |
 
@@ -67,7 +67,7 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ### Deploy
 
-|                            master                            |                          dev                           |
+|                            master                            |                   dev (recommended)                    |
 |:------------------------------------------------------------:|:------------------------------------------------------:|
 | [![Deploy to Heroku (master)][heroku_button]][heroku_master] | [![Deploy to Heroku (dev)][heroku_button]][heroku_dev] |
 

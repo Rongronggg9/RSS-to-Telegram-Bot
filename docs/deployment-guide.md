@@ -37,8 +37,8 @@ docker-compose up -d
 
 ## Option 2: Railway.app
 
-> Railway accounts without any verified payment method or prepaid balance can only consume 500 execution hours per month, which means that RSStT will be paused after 500 hours of uptime.  
-> To get rid of the execution time limit, either associate a credit/debit card to your account or prepaid $5 **once**. You will get $5 free credit each month without execution time limit, which is pretty enough for RSStT. Except the prepaid balance (if you don't want to associate a credit/debit card), hosting RSStT should be free of charge.
+> ~~Railway accounts without any verified payment method or prepaid balance can only consume 500 execution hours per month, which means that RSStT will be paused after 500 hours of uptime. To get rid of the execution time limit, either associate a credit/debit card to your account or prepaid $5 **once**. You will get $5 free credit each month without execution time limit, which is pretty enough for RSStT. Except the prepaid balance (if you don't want to associate a credit/debit card), hosting RSStT should be free of charge.~~
+> [Railway no longer offers free plans](https://blog.railway.app/p/pricing-and-plans-migration-guide-2023). Deploying RSStT on Railway could cost you at least $5 per month (Hobby Plan).
 
 ### Deploy
 
@@ -63,7 +63,7 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 ## Option 3: ~~Heroku~~
 
 > ~~Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.~~  
-> [Heroku no longer offers free plans](https://blog.heroku.com/next-chapter). Deploying RSStT on Heroku could cost you at least $16 per month ($7 for Heroku Dyno and $9 for Heroku Postgres). The recommended (virtually) free PaaS platform is [Railway.app](#option-2-railwayapp).
+> [Heroku no longer offers free plans](https://blog.heroku.com/next-chapter). Deploying RSStT on Heroku could cost you at least $16 per month ($7 for Heroku Dyno and $9 for Heroku Postgres). [Railway.app](#option-2-railwayapp) offers lower price and better performance.
 
 ### Deploy
 

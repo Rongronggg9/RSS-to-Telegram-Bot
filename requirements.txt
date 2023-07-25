@@ -1,6 +1,6 @@
 # telegram and telegraph
 cryptg==0.4.0
-telethon==1.28.5  # telethon@git+https://github.com/LonamiWebs/Telethon.git@v1
+telethon==1.29.2  # telethon@git+https://github.com/LonamiWebs/Telethon.git@v1
 aiographfix==0.2.2
 
 # feed parsing

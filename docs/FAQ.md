@@ -40,3 +40,7 @@ If you want to allow a certain channel/group to use the bot, you should promote 
 
 **A**: Once the bot finds itself lacking the permission to send messages (not granted or being blocked), it will immediately unsubscribe all subscriptions in this chat. Meanwhile, if this chat is a channel or group and the bot is still a member of it, it will leave the channel/group.
 Make sure to grant the bot enough permission (sending messages) in channel/group.
+
+### **Q**: The bot doesn't respond after running, and the log shows "Server sent a very new message with ID...". 
+
+**A:** This is a limitation of Telethon. The issue is explained in the [FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean). If you're not running the bot on a platform like Heroku or Railway, you can try switching to the program directory and deleting the `config/bot.session` file, then run the program again to resolve the issue.

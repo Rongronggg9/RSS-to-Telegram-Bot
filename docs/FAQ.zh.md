@@ -40,3 +40,7 @@
 
 **A**: 一旦机器人发现自身缺乏发送消息的权限（未授予或被屏蔽），它将立即退订该聊天中的所有订阅。与此同时，如果该聊天是频道或群组且机器人仍是成员，它将退出该频道/群组。
 确保在群组/频道中授予机器人足够的权限（发送消息）。
+
+### **Q**: 机器人运行后没有反应,日志显示 `Server sent a very new message with ID...`
+
+**A**: 这是Telethon的一项限制。在[FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean)中已经解释了这个问题。如果你没有在类似Heroku或Railway这样的PaaS平台上运行机器人，你可以尝试切换到程序目录并删除`config/bot.session`文件，然后重新运行程序来解决这个问题。

@@ -138,6 +138,7 @@ class Message:
                     # only acquire overall semaphore when sending
                     async with self.__overall_semaphore:
                         if self.media_type == MEDIA_GROUP:
+                            # Extracted from telethon.client.uploads.UploadMethods._send_album()
                             media = []
                             for medium in self.media:
                                 _, fm, _ = await env.bot._file_to_media(medium)
@@ -146,10 +147,12 @@ class Message:
                             media[-1].entities = self.format_entities or None
                             entity = await env.bot.get_input_entity(self.user_id)
                             reply_to = get_message_id(reply_to)
-                            request = functions.messages.SendMultiMediaRequest(entity,
-                                                                               reply_to_msg_id=reply_to,
-                                                                               multi_media=media,
-                                                                               silent=self.silent)
+                            request = functions.messages.SendMultiMediaRequest(
+                                entity,
+                                reply_to=None if reply_to is None else types.InputReplyToMessage(reply_to),
+                                multi_media=media,
+                                silent=self.silent
+                            )
                             result = await env.bot(request)
                             random_ids = [m.random_id for m in media]
                             return env.bot._get_response_message(random_ids, result, entity)

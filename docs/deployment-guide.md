@@ -148,7 +148,7 @@ python3 -m rsstt
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git
 cd RSS-to-Telegram-Bot
 pip3 install -r requirements.txt
-cp .env.example .env
+cp .env.sample .env
 vi .env  # fill in env variables
 python3 -u telegramRSSbot.py
 ```

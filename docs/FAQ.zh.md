@@ -36,7 +36,11 @@
 如果你想要允许某个用户使用 bot，向 bot 发送 `/user_info 用户ID` 或 `/user_info @用户名`，然后将他提升为「用户」。  
 如果你想要允许某个频道/群组使用 bot，你需要将频道/群组本身和至少一位它的管理员提升为提升为「用户」。只有被提升的管理员才可以在频道/群组里操作 bot。
 
-### **Q**: 为什么机器人自动退出了我的频道/群组？
+### **Q**: 为什么 bot 自动退出了我的频道/群组？
 
-**A**: 一旦机器人发现自身缺乏发送消息的权限（未授予或被屏蔽），它将立即退订该聊天中的所有订阅。与此同时，如果该聊天是频道或群组且机器人仍是成员，它将退出该频道/群组。
-确保在群组/频道中授予机器人足够的权限（发送消息）。
+**A**: 一旦 bot 发现自身缺乏发送消息的权限（未授予或被屏蔽），它将立即退订该聊天中的所有订阅。与此同时，如果该聊天是频道或群组且 bot 仍是成员，它将退出该频道/群组。
+确保在群组/频道中授予 bot 足够的权限（发送消息）。
+
+### **Q**: 我的 bot 无响应。查看日志后发现 Telethon 在抱怨 "Server sent a very new message with ID..."，"Server replied with a wrong session ID..."，或者 "Could not find a matching Constructor ID for the TLObject..."。
+
+**A**: Telethon 正保护您免受潜在的攻击。欲知详情，请参阅 [Telethon FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean)。如果你确信问题并非由攻击引起，而只是由错误的配置引发，且 bot 并非部署于 PaaS 平台上（如 Heroku, Railway），你可以通过停止 RSStT，删除会话文件（`config/bot.session`），然后重启 RSStT 以解决这个问题。

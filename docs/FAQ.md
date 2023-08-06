@@ -36,7 +36,11 @@ Using the bot in a group is possible even if you don't have the multi-user mode 
 If you want to allow a certain user to use the bot, send `/user_info user_id` or `/user_info @username` to the bot and promote their to "User".  
 If you want to allow a certain channel/group to use the bot, you should promote both the channel/group itself and at least one of its administrators to "User". Only the promoted administrators can operate the bot in the channel/group.
 
-### **Q**: why did the bot automatically leave my channel/group?
+### **Q**: Why did the bot automatically leave my channel/group?
 
 **A**: Once the bot finds itself lacking the permission to send messages (not granted or being blocked), it will immediately unsubscribe all subscriptions in this chat. Meanwhile, if this chat is a channel or group and the bot is still a member of it, it will leave the channel/group.
 Make sure to grant the bot enough permission (sending messages) in channel/group.
+
+### **Q**: My bot is not responding. I checked the log and saw Telethon complaining "Server sent a very new message with ID...", "Server replied with a wrong session ID...", or "Could not find a matching Constructor ID for the TLObject...".
+
+**A:** Telethon is protecting you from potential attacks. For details, please refer to [Telethon FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean). If you believe that it is caused by misconfiguration instead of attacks, and the bot is not deployed on a PaaS platform (e.g. Heroku, Railway), you may stop RSStT, delete the session file (`config/bot.session`), and restart it to solve the problem.

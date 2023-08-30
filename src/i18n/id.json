@@ -140,8 +140,8 @@
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">Baca panduan pengaturan pemformatan di sini.</a>"
     },
     "l10n_cmd_set_default": {
-        "set_user_default_description": "Tetapkan pengaturan default ke pelanggan.\n\nSetelan langganan yang tidak disetel akan dikembalikan ke setelan dihalaman ini. Ini berguna jika anda ingin menyetel setelan yang sama untuk sebagian besar langganan anda.",
-        "reset_all_button": "Setel ulang semua langganan ke default saya",
+        "set_user_default_description": "Atur pengaturan default untuk langganan.\n\nPengaturan langganan yang belum ditetapkan akan kembali ke pengaturan pada halaman ini. Hal ini berguna jika Anda ingin mengatur pengaturan yang sama untuk sebagian besar langganan Anda.",
+        "reset_all_button": "Atur ulang semua langganan ke pengaturan default saya",
         "reset_all_confirm_prompt": "Apakah anda yakin ingin menyetel ulang semua langganan ke default?",
         "reset_all_confirm": "Ya, setel ulang semua langganan saya ke default",
         "reset_all_cancel": "Tidak, batalkan",

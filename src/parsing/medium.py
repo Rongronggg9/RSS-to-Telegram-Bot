@@ -524,7 +524,7 @@ class Image(Medium):
     type = IMAGE
     maxSize = IMAGE_MAX_SIZE
     typeFallbackTo = File
-    typeFallbackAllowSelfUrls = True
+    typeFallbackAllowSelfUrls = False
     inputMediaExternalType = InputMediaPhotoExternal
 
     def __init__(self, urls: Union[str, list[str]]):
@@ -532,7 +532,7 @@ class Image(Medium):
         new_urls = []
         for url in self.urls:
             sinaimg_match = sinaimg_size_parser(url)
-            pixiv_match = pixiv_size_parser(url)
+            pixiv_match = pixiv_size_parser(url) if not sinaimg_match else None
             if sinaimg_match:
                 parsed_sinaimg = sinaimg_match.groupdict()  # is a sinaimg img
                 for size_name in sinaimg_sizes:
@@ -550,6 +550,7 @@ class Image(Medium):
             if url not in new_urls:
                 new_urls.append(url)
         self.urls = new_urls
+        self.type_fallback_urls = new_urls.copy()
         urls_not_weserv = [url for url in self.urls if not url.startswith(env.IMAGES_WESERV_NL)]
         self.urls.extend(construct_weserv_url_convert_to_2560_png(urls_not_weserv[i])
                          for i in range(min(len(urls_not_weserv), 3)))  # use for final fallback

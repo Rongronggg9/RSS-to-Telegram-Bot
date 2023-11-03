@@ -35,7 +35,7 @@ colorlog==6.7.0
 APScheduler==3.10.4
 python-dotenv==0.21.0
 multidict==6.0.4
-asyncstdlib==3.10.8
+asyncstdlib==3.10.9
 cachetools==5.3.1
 CJKwrap==2.2
 typing-extensions==4.7.1

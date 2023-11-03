@@ -314,6 +314,9 @@ def main():
     except (KeyboardInterrupt, SystemExit) as e:
         logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
         exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 0
+    except Exception as e:
+        logger.critical('Uncaught error:', exc_info=e)
+        exit_code = 99
     finally:
         try:
             if getattr(signal, 'SIGALRM', None):

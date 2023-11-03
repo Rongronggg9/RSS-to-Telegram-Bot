@@ -31,7 +31,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Set Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram
           flavor: latest=false
@@ -54,7 +54,7 @@ jobs:
       - name: Set Docker meta (exp-deps)
         if: ${{ endsWith(github.ref, 'dev') }}
         id: meta-fpe
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram
           flavor: latest=false

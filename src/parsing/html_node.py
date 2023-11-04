@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from url_normalize import url_normalize
 
-__all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Code", "Pre", "Br", "Hr",
+__all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Blockquote", "Code", "Pre", "Br", "Hr",
            "ListItem", "OrderedList", "UnorderedList", "TypeTextContent"]
 
 TypeTextContent = Union["Text", str, list["Text"]]
@@ -222,6 +222,10 @@ class Underline(TagWithoutParam):
 
 class Strike(TagWithoutParam):
     tag = 's'
+
+
+class Blockquote(TagWithoutParam):
+    tag = 'blockquote'
 
 
 class Code(TagWithOptionalParam):

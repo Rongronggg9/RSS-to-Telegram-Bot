@@ -125,17 +125,19 @@ class Parser:
             parent = soup.parent.name
             text = await self._parse_item(soup.children)
             if text:
-                return Text([Br(), text, Br()]) if parent != 'li' else text
+                if parent == 'li':
+                    return text
+                text_l = [Br(), text]
+                if not(isinstance(soup.next_sibling, Tag) and soup.next_sibling.name == 'blockquote'):
+                    text_l.append(Br())
+                return Text(text_l)
             return None
 
         if tag == 'blockquote':
             quote = await self._parse_item(soup.children)
-            if not quote:
-                return None
-            quote.strip()
-            if quote.is_empty():
-                return None
-            return Text([Hr(), quote, Hr()])
+            if quote:
+                return Blockquote(quote)
+            return None
 
         if tag == 'q':
             quote = await self._parse_item(soup.children)

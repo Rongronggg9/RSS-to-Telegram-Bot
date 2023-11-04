@@ -1,11 +1,10 @@
-"""Containing something makes the bot compatible with Python 3.7 ~ 3.10, ThreadPoolExecutor/ProcessPoolExecutor."""
 from __future__ import annotations
 
 import sys
 
 _version_info = sys.version_info
-if _version_info < (3, 7):
-    raise RuntimeError("This bot requires Python 3.7 or later")
+if _version_info < (3, 9):
+    raise RuntimeError("This bot requires Python 3.9 or later")
 
 from typing import Callable
 
@@ -24,7 +23,7 @@ except ImportError:
 import ssl
 from contextlib import AbstractContextManager, AbstractAsyncContextManager, suppress
 
-# backport `contextlib.nullcontext` for Python 3.7 ~ 3.9
+# backport `contextlib.nullcontext` for Python 3.9
 if _version_info[1] >= 10:
     # noinspection PyUnresolvedReferences
     from contextlib import nullcontext
@@ -120,8 +119,6 @@ def parsing_utils_html_validator_minify(html: str) -> str:
     preprocessed = False
     if (
             minify_html_onepass is None  # requires minify-html-onepass to workaround upstream issue
-            or
-            _version_info[1] < 8  # minify-html >0.6.10 requires Python 3.8+
             or
             contains_sr_only  # clear sr-only first, otherwise minify-html cannot strip spaces around them
     ):

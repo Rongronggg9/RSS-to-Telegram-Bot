@@ -91,12 +91,12 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 > RSStT is tested only under the recommended system requirements.
 
-|                      | **Minimum**               | **Recommended** |
-|----------------------|---------------------------|-----------------|
-| **Operating system** | Linux, Windows, macOS     | Linux           |
-| **Architecture**     | x86_64, arm64             | x86_64          |
-| **Python**           | 3.7 (x86_64), 3.8 (arm64) | 3.9, 3.10       |
-| **Free memory**      | 128MB                     | \> 384MB        |
+|                      | **Minimum**           | **Recommended** |
+|----------------------|-----------------------|-----------------|
+| **Operating system** | Linux, Windows, macOS | Linux           |
+| **Architecture**     | x86_64, arm64         | x86_64          |
+| **Python**           | 3.9                   | 3.11            |
+| **Free memory**      | 128MB                 | \> 384MB        |
 
 ### Prerequisites
 

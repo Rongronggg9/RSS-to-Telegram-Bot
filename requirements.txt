@@ -11,11 +11,9 @@ beautifulsoup4==4.12.2
 lxml==4.9.3
 rapidfuzz==3.2.0
 emoji==2.8.0
-minify-html==0.6.10; python_version<="3.7"  # 0.6.10 for Python 3.7 (amd64 only)
-minify-html==0.10.8; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
-minify-html-onepass==0.10.8; python_version>="3.8"  # Python 3.8+ (aarch64/amd64 only)
-matplotlib==3.5.3; python_version<="3.7"
-matplotlib==3.7.2; python_version>="3.8"
+minify-html==0.10.8
+minify-html-onepass==0.10.8
+matplotlib==3.7.2
 
 # db
 asyncpg==0.28.0
@@ -39,4 +37,4 @@ asyncstdlib==3.10.9
 cachetools==5.3.1
 CJKwrap==2.2
 typing-extensions==4.7.1
-uvloop==0.17.0; python_version>="3.7" and sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
+uvloop==0.17.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

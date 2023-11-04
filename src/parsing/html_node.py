@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import Optional, Union, List
+from typing import Optional, Union
 
 from url_normalize import url_normalize
 
 __all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Code", "Pre", "Br", "Hr",
            "ListItem", "OrderedList", "UnorderedList", "TypeTextContent"]
 
-TypeTextContent = Union["Text", str, List["Text"]]  # list["SomeType"] not compatible with Python 3.7
+TypeTextContent = Union["Text", str, list["Text"]]
 
 
 class Text:

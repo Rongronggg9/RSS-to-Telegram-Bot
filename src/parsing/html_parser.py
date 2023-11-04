@@ -135,9 +135,12 @@ class Parser:
 
         if tag == 'blockquote':
             quote = await self._parse_item(soup.children)
-            if quote:
-                return Blockquote(quote)
-            return None
+            if not quote:
+                return None
+            quote.strip()
+            if quote.is_empty():
+                return None
+            return Blockquote(quote)
 
         if tag == 'q':
             quote = await self._parse_item(soup.children)

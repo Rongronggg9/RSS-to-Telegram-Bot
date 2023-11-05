@@ -61,15 +61,27 @@ HEADER_TEMPLATE: Final = {
 FEED_ACCEPT: Final = 'application/rss+xml, application/rdf+xml, application/atom+xml, ' \
                      'application/xml;q=0.9, text/xml;q=0.8, text/*;q=0.7, application/*;q=0.6'
 
-EXCEPTIONS_SHOULD_RETRY: Final = (asyncio.TimeoutError,
-                                  # aiohttp.ClientPayloadError,
-                                  # aiohttp.ClientResponseError,
-                                  # aiohttp.ClientConnectionError,
-                                  aiohttp.ClientConnectorError,  # connection refused, etc
-                                  aiohttp.ServerConnectionError,
-                                  RetryInIpv4,
-                                  TimeoutError,
-                                  ConnectionError)
+EXCEPTIONS_SHOULD_RETRY: Final = (
+    asyncio.TimeoutError,
+    # aiohttp.ClientPayloadError,
+    # aiohttp.ClientResponseError,
+    # aiohttp.ClientConnectionError,
+    aiohttp.ClientConnectorError,  # connection refused, etc
+    aiohttp.ServerConnectionError,
+    RetryInIpv4,
+    TimeoutError,
+    ConnectionError
+)
+STATUSES_SHOULD_RETRY_IN_IPV4: Final = {
+    400,  # Bad Request (some feed providers return 400 for banned IPs)
+    403,  # Forbidden
+    429,  # Too Many Requests
+    451,  # Unavailable For Legal Reasons
+}
+STATUSES_PERMANENT_REDIRECT: Final = {
+    301,  # Moved Permanently
+    308,  # Permanent Redirect
+}
 
 MAX_TRIES: Final = 2
 
@@ -231,7 +243,13 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
                                          headers=_headers) as session:
             async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
                 async with AiohttpUvloopTransportHotfix(response):
-                    url_obj = response.url
+                    status_url_history = [(resp.status, resp.url) for resp in response.history]
+                    status_url_history.append((response.status, response.url))
+                    url_obj = status_url_history[0][1]
+                    for (status0, url_obj0), (status1, url_obj1) in zip(status_url_history, status_url_history[1:]):
+                        if not (status0 in STATUSES_PERMANENT_REDIRECT or url_obj0.with_scheme('https') == url_obj1):
+                            break  # fail fast
+                        url_obj = url_obj1  # permanent redirect, update url
                     status = response.status
                     content = await resp_callback(response) if status == 200 else None
                     auth_header = response.request_info.headers.get('Authorization')
@@ -265,10 +283,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
                 async with locks.overall_web_semaphore:
                     ret = await asyncio.wait_for(_fetch(), timeout and timeout + 0.1)
                     if socket_family == AF_INET6 and tries < max_tries \
-                            and ret.status in {400,  # Bad Request (some feed providers return 400 for banned IPs)
-                                               403,  # Forbidden
-                                               429,  # Too Many Requests
-                                               451}:  # Unavailable For Legal Reasons
+                            and ret.status in STATUSES_SHOULD_RETRY_IN_IPV4:
                         raise RetryInIpv4(ret.status, ret.reason)
                     return ret
         except EXCEPTIONS_SHOULD_RETRY as e:

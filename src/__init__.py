@@ -138,11 +138,11 @@ async def pre():
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=False),
                           events.NewMessage(pattern=construct_remote_command_matcher('/deactivate_subs')))
     bot.add_event_handler(command.misc.cmd_lang,
-                          events.NewMessage(pattern=construct_command_matcher('/lang')))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/lang')))
     bot.add_event_handler(command.misc.cmd_version,
                           events.NewMessage(pattern=construct_command_matcher('/version')))
     bot.add_event_handler(command.administration.cmd_test,
-                          events.NewMessage(pattern=construct_command_matcher('/test')))
+                          events.NewMessage(pattern=construct_remote_command_matcher('/test')))
     bot.add_event_handler(command.administration.cmd_user_info_or_callback_set_user,
                           events.NewMessage(pattern=construct_command_matcher('/user_info')))
     bot.add_event_handler(command.administration.cmd_set_option,

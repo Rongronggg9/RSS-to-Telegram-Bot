@@ -6,7 +6,7 @@ import re
 import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
-from bs4.element import Tag, SoupStrainer
+from bs4.element import SoupStrainer
 from urllib.parse import urljoin
 from cachetools import TTLCache
 from os import path
@@ -274,13 +274,17 @@ async def unsub_all(user_id: int, lang: Optional[str] = None) \
 async def export_opml(user_id: int) -> Optional[bytes]:
     sub_list = await list_sub(user_id)
     opml = BeautifulSoup(OPML_TEMPLATE, 'lxml-xml')
-    create_time = Tag(name='dateCreated')
-    create_time.string = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S UTC')
+    create_time = opml.new_tag('dateCreated')
+    create_time.string = opml.new_string(datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S UTC'))
     opml.head.append(create_time)
     empty_flags = True
     for _sub in sub_list:
         empty_flags = False
-        outline = Tag(name='outline', attrs={'text': _sub.title or _sub.feed.title, 'xmlUrl': _sub.feed.link})
+        outline = opml.new_tag(name='outline', attrs=dict(
+            type='rss',
+            text=_sub.title or _sub.feed.title,
+            xmlUrl=_sub.feed.link
+        ))
         opml.body.append(outline)
     if empty_flags:
         return None

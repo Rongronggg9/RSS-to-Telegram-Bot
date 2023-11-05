@@ -283,6 +283,7 @@ async def export_opml(user_id: int) -> Optional[bytes]:
         outline = opml.new_tag(name='outline', attrs=dict(
             type='rss',
             text=_sub.title or _sub.feed.title,
+            title=_sub.feed.title,
             xmlUrl=_sub.feed.link
         ))
         opml.body.append(outline)

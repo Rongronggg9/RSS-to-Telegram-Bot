@@ -27,9 +27,21 @@ from random import sample
 from . import log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
+from .compat import nullcontext
 
 # log
 logger = log.getLogger('RSStT')
+
+if env.PROFILING:
+    try:
+        import yappi
+        yappi.set_clock_type(env.PROFILING if isinstance(env.PROFILING, str) else 'cpu')
+        logger.info(f'Profiling mode, clock type: {yappi.get_clock_type()}')
+    except ImportError:
+        logger.warning('yappi is not installed, profiling is disabled.')
+        yappi = None
+else:
+    yappi = None
 
 loop = env.loop
 bot: Optional[TelegramClient] = None
@@ -308,9 +320,10 @@ def main():
                           trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
                           max_instances=10,
                           misfire_grace_time=10)
-        scheduler.start()
+        with yappi.run(profile_threads=False) if yappi else nullcontext():
+            scheduler.start()
+            loop.run_until_complete(bot.disconnected)
 
-        loop.run_until_complete(bot.disconnected)
     except (KeyboardInterrupt, SystemExit) as e:
         logger.error(f'Received {type(e).__name__}, exiting...', exc_info=e)
         exit_code = e.code if isinstance(e, SystemExit) and e.code is not None else 0
@@ -318,6 +331,16 @@ def main():
         logger.critical('Uncaught error:', exc_info=e)
         exit_code = 99
     finally:
+        if yappi:
+            try:
+                prof = yappi.get_func_stats()
+                prof.print_all()
+                import time
+                curr_time = int(time.time())
+                for typ in ('pstat', 'ystat'):
+                    prof.save(os.path.join(env.config_folder_path, f'prof_{curr_time}.{typ}'), typ)
+            except Exception as e:
+                logger.error('Error when exporting profiling stats:', exc_info=e)
         try:
             if getattr(signal, 'SIGALRM', None):
                 signal.alarm(15)

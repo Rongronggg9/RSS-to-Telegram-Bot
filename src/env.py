@@ -250,6 +250,7 @@ TRAFFIC_SAVING: Final = __bool_parser(os.environ.get('TRAFFIC_SAVING'))
 LAZY_MEDIA_VALIDATION: Final = __bool_parser(os.environ.get('LAZY_MEDIA_VALIDATION'))
 NO_UVLOOP: Final = __bool_parser(os.environ.get('NO_UVLOOP'))
 MULTIPROCESSING: Final = __bool_parser(os.environ.get('MULTIPROCESSING'))
+
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 __configure_logging(  # config twice to make .env file work
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,
@@ -257,6 +258,16 @@ __configure_logging(  # config twice to make .env file work
 )
 if DEBUG:
     logger.debug('DEBUG mode enabled')
+
+_profiling = os.environ.get('PROFILING')
+if _profiling is None:
+    PROFILING: Final = False
+else:
+    _profiling = _profiling.lower()
+    if _profiling in ('cpu', 'wall'):
+        PROFILING: Final = _profiling
+    else:
+        PROFILING: Final = __bool_parser(_profiling)
 
 # ----- environment config -----
 RAILWAY_STATIC_URL: Final = os.environ.get('RAILWAY_STATIC_URL')

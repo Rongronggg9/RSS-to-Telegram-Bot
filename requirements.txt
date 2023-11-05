@@ -38,3 +38,7 @@ cachetools==5.3.1
 CJKwrap==2.2
 typing-extensions==4.8.0
 uvloop==0.17.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
+
+# dev requirements
+# TODO: drop requirements.txt and use pyproject.toml
+yappi==1.4.0

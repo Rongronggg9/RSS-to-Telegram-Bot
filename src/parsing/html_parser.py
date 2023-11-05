@@ -127,10 +127,13 @@ class Parser:
             if text:
                 if parent == 'li':
                     return text
-                text_l = [Br(), text]
-                if not(isinstance(soup.next_sibling, Tag) and soup.next_sibling.name == 'blockquote'):
+                text_l = [text]
+                ps, ns = soup.previous_sibling, soup.next_sibling
+                if not (isinstance(ps, Tag) and ps.name == 'blockquote'):
+                    text_l.insert(0, Br())
+                if not (isinstance(ns, Tag) and ns.name == 'blockquote'):
                     text_l.append(Br())
-                return Text(text_l)
+                return Text(text_l) if len(text_l) > 1 else text
             return None
 
         if tag == 'blockquote':

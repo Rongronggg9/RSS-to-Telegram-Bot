@@ -238,13 +238,12 @@ async def __monitor(feed: db.Feed) -> str:
             if feed.next_check_time:
                 feed.next_check_time = None
                 feed_updated_fields.add('next_check_time')
+            if wf.url != feed.link:
+                new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
+                feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
         if feed_updated_fields:
             await feed.save(update_fields=feed_updated_fields)
-
-        if wf.url != feed.link:
-            new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
-            feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
 
     await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
 

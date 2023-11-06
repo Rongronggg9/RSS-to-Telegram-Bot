@@ -53,7 +53,7 @@ def shutdown(prerequisite: Awaitable = None):
 
 
 class _Watchdog:
-    def __init__(self, delay: int = 5 * 60):
+    def __init__(self, delay: int = 10 * 60):
         self._watchdog = env.loop.call_later(delay, self._exit_bot, delay)
 
     @staticmethod
@@ -65,7 +65,7 @@ class _Watchdog:
             coro = env.loop.create_task(env.bot.send_message(env.MANAGER, f'WATCHDOG: {msg}'))
         shutdown(prerequisite=coro)
 
-    def fine(self, delay: int = 15 * 60):
+    def feed(self, delay: int = 15 * 60):
         self._watchdog.cancel()
         self._watchdog = env.loop.call_later(delay, self._exit_bot, delay)
 
@@ -97,10 +97,10 @@ class _APSCFilter(logging.Filter):
                     env.loop.create_task(coro)
             return True
         if ' executed successfully' in msg:
-            self.count = 0
-            self.watchdog.fine()
             return False
         if 'Running job "run_monitor_task' in msg:
+            self.count = 0
+            self.watchdog.feed()
             return False
         return True
 

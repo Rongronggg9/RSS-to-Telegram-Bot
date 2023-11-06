@@ -10,7 +10,7 @@ from telethon.tl.patched import Message
 
 from .. import env, db
 from ..compat import bozo_exception_removal_wrapper
-from ..aio_helper import run_async_on_demand
+from ..aio_helper import run_async
 from ..i18n import i18n
 from . import inner
 from .utils import command_gatekeeper, logger, send_success_and_failure_msg, get_callback_tail, check_sub_limit
@@ -81,10 +81,10 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
     reply: Message = await event.reply(i18n[lang]['processing'] + '\n' + i18n[lang]['opml_import_processing'])
     logger.info(f'Got an opml file from {chat_id}')
 
-    opml_d = await run_async_on_demand(
+    opml_d = await run_async(
         partial(bozo_exception_removal_wrapper,
                 listparser.parse, opml_file),
-        condition=len(opml_file) > 64 * 1024
+        prefer_pool='thread' if len(opml_file) < 64 * 1024 else None
     )
     if not opml_d.feeds:
         await reply.edit('ERROR: ' + i18n[lang]['opml_parse_error'])

@@ -12,7 +12,7 @@ from cachetools import TTLCache
 from os import path
 
 from ... import db, web, env
-from ...aio_helper import run_async_on_demand
+from ...aio_helper import run_async
 from ...i18n import i18n
 from .utils import get_hash, update_interval, list_sub, get_http_last_modified, filter_urls, logger, escape_html, \
     check_sub_limit
@@ -345,9 +345,9 @@ async def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
     # if len(html) < 69:  # len of `<html><head></head><body></body></html>` + `<link rel="alternate" href="">`
     #     return None  # too short to sniff
 
-    soup = await run_async_on_demand(BeautifulSoup, html, 'lxml',
-                                     parse_only=SoupStrainer(name=('a', 'link'), attrs={'href': True}),
-                                     prefer_pool='thread', condition=len(html) > 64 * 1024)
+    soup = await run_async(BeautifulSoup, html, 'lxml',
+                           parse_only=SoupStrainer(name=('a', 'link'), attrs={'href': True}),
+                           prefer_pool='thread')
     links = (
             soup.find_all(name='link', attrs={'rel': 'alternate', 'type': FeedLinkTypeMatcher})
             or

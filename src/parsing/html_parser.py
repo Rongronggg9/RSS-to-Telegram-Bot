@@ -13,7 +13,7 @@ from .. import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
-from ..aio_helper import run_async_on_demand
+from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]
 if env.TABLE_TO_IMAGE:
@@ -55,8 +55,7 @@ class Parser:
         self._parse_item_count = 0
 
     async def parse(self):
-        self.soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
-                                              prefer_pool='thread', condition=len(self.html) > 64 * 1024)
+        self.soup = await run_async(BeautifulSoup, self.html, 'lxml', prefer_pool='thread')
         self.html_tree = HtmlTree(await self._parse_item(self.soup))
         self.parsed = True
 

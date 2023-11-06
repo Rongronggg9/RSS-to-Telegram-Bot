@@ -13,7 +13,7 @@ from urllib.parse import urljoin
 from os import path
 
 from .. import log
-from ..aio_helper import run_async_on_demand
+from ..aio_helper import run_async
 from ..compat import parsing_utils_html_validator_minify
 
 logger = log.getLogger('RSStT.parsing')
@@ -141,7 +141,7 @@ def _html_validator(html: str) -> str:
 
 
 async def html_validator(html: str) -> str:
-    return await run_async_on_demand(_html_validator, html, condition=len(html) > 64 * 1024)
+    return await run_async(_html_validator, html, prefer_pool='thread')
 
 
 def html_space_stripper(s: str, enable_emojify: bool = False) -> str:

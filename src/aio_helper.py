@@ -79,18 +79,6 @@ def _get_executor():
     return chosen_executor
 
 
-async def run_async_on_demand(func: Callable,
-                              *args,
-                              condition: Union[Callable, bool] = None,
-                              prefer_pool: POOL_TYPE = None,
-                              **kwargs):
-    return (
-        await run_async(func, *args, prefer_pool=prefer_pool, **kwargs)
-        if condition and (condition is True or condition(*args, **kwargs)) else
-        func(*args, **kwargs)
-    )
-
-
 async def run_async(func: Callable, *args, prefer_pool: POOL_TYPE = None, **kwargs):
     """
     Run a CPU-consuming function asynchronously.

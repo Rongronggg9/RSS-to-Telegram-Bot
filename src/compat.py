@@ -10,6 +10,7 @@ from typing import Callable
 
 import copy
 import functools
+import itertools
 import listparser.opml
 import listparser.common
 from aiohttp import ClientResponse
@@ -59,49 +60,26 @@ class AiohttpUvloopTransportHotfix(AbstractAsyncContextManager):
             self.transport.abort()
 
 
-# default cipher list in Python 3.9
-_ciphers_py39 = (
-    'TLS_AES_256_GCM_SHA384:'
-    'TLS_CHACHA20_POLY1305_SHA256:'
-    'TLS_AES_128_GCM_SHA256:'
-    'ECDHE-ECDSA-AES256-GCM-SHA384:'
-    'ECDHE-RSA-AES256-GCM-SHA384:'
-    'ECDHE-ECDSA-AES128-GCM-SHA256:'
-    'ECDHE-RSA-AES128-GCM-SHA256:'
-    'ECDHE-ECDSA-CHACHA20-POLY1305:'
-    'ECDHE-RSA-CHACHA20-POLY1305:'
-    'ECDHE-ECDSA-AES256-SHA384:'
-    'ECDHE-RSA-AES256-SHA384:'
-    'ECDHE-ECDSA-AES128-SHA256:'
-    'ECDHE-RSA-AES128-SHA256:'
-    'DHE-RSA-AES256-GCM-SHA384:'
-    'DHE-RSA-AES128-GCM-SHA256:'
-    'DHE-RSA-AES256-SHA256:'
-    'DHE-RSA-AES128-SHA256:'
-    'DHE-RSA-CHACHA20-POLY1305:'
-    'ECDHE-ECDSA-AES256-SHA:'
-    'ECDHE-RSA-AES256-SHA:'
-    'DHE-RSA-AES256-SHA:'
-    'ECDHE-ECDSA-AES128-SHA:'
-    'ECDHE-RSA-AES128-SHA:'
-    'DHE-RSA-AES128-SHA:'
-    'AES256-GCM-SHA384:'
-    'AES128-GCM-SHA256:'
-    'AES256-SHA256:'
-    'AES128-SHA256:'
-    'AES256-SHA:'
-    'AES128-SHA'
-)
-
-
 # Reuse SSLContext as aiohttp does:
 # https://github.com/aio-libs/aiohttp/blob/b51610b93b2ae15c4062e3a1680a536ba5f4c5c4/aiohttp/connector.py#L906
 @functools.lru_cache(None)
 def ssl_create_default_context():
-    """`ssl.create_default_context`"""
+    """
+    Python 3.10+ disabled some legacy cipher, while some websites still use them.
+    The function will merge the default cipher list with the one from Python 3.9.
+    Some distributions (e.g., Debian) set `PY_SSL_DEFAULT_CIPHERS=2` for Python 3.11+,
+    effectively re-enabling all these legacy ciphers.
+    So we can assume that re-enabling them is not a major security issue.
+    """
     context = ssl.create_default_context()
-    if _version_info[1] >= 10:  # However, TLSv1.1 still not enabled
-        context.set_ciphers(_ciphers_py39)
+    if _version_info[1] >= 10:  # Python 3.10+ also disabled TLS 1.1, here we only care about cipher
+        py39_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        # https://github.com/python/cpython/blob/50c21ad35372983680b44130be560d856c5f27ca/Modules/_ssl.c#L163
+        py39_ctx.set_ciphers('DEFAULT:!aNULL:!eNULL:!MD5:!3DES:!DES:!RC4:!IDEA:!SEED:!aDSS:!SRP:!PSK')
+        context.set_ciphers(':'.join(set(map(
+            lambda cipher: cipher['name'],
+            itertools.chain(py39_ctx.get_ciphers(), context.get_ciphers())
+        ))))
     return context
 
 

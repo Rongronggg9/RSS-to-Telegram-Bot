@@ -16,7 +16,7 @@ from aiohttp_socks import ProxyConnector
 from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
 from .medium import construct_weserv_url
-from ..aio_helper import run_async_on_demand
+from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]
 if env.TABLE_TO_IMAGE:
@@ -203,8 +203,7 @@ class TelegraphIfy:
         self.task = env.loop.create_task(self.generate_page())
 
     async def generate_page(self):
-        soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
-                                         prefer_pool='thread', condition=len(self.html) > 64 * 1024)
+        soup = await run_async(BeautifulSoup, self.html, 'lxml', prefer_pool='thread')
 
         for tag in soup.find_all(recursive=True):
             with suppress(ValueError, AttributeError):

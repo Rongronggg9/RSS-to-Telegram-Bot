@@ -29,7 +29,7 @@ from asyncstdlib.functools import lru_cache
 
 from . import env, log, locks
 from .compat import bozo_exception_removal_wrapper
-from .aio_helper import run_async_on_demand
+from .aio_helper import run_async
 from .i18n import i18n
 from .errors_collection import RetryInIpv4
 
@@ -337,11 +337,11 @@ async def feed_get(url: str, timeout: Optional[float] = sentinel, web_semaphore:
             return ret
 
         with BytesIO(rss_content) as rss_content_io:
-            rss_d = await run_async_on_demand(
+            rss_d = await run_async(
                 partial(bozo_exception_removal_wrapper,
                         feedparser.parse, rss_content_io, sanitize_html=False,
                         response_headers={k.lower(): v for k, v in resp.headers.items()}),
-                condition=len(rss_content) > 64 * 1024
+                prefer_pool='thread' if len(rss_content) < 64 * 1024 else None
             )
 
         if not rss_d.feed.get('title'):  # why there is no feed hospital?
@@ -494,8 +494,7 @@ async def get_page_title(url: str, allow_hostname=True, allow_path: bool = False
             raise ValueError('not an HTML page')
         # if len(r.content) <= 27:  # len of `<html><head><title></title>`
         #     raise ValueError('invalid HTML')
-        soup = await run_async_on_demand(BeautifulSoup, r.content, 'lxml',
-                                         prefer_pool='thread', condition=len(r.content) > 64 * 1024)
+        soup = await run_async(BeautifulSoup, r.content, 'lxml', prefer_pool='thread')
         title = soup.title.text
         return title.strip()
     except Exception:

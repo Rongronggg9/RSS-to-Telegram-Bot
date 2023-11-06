@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Union, Optional
+from typing_extensions import Final
 
 import asyncio
 import re
@@ -13,6 +14,9 @@ from ..i18n import i18n
 from ..parsing.post import get_post_from_entry
 from .utils import command_gatekeeper, parse_command, logger, parse_customization_callback_data
 from . import inner
+
+SELECTED_EMOJI: Final = '🔘'
+UNSELECTED_EMOJI: Final = '⚪️'
 
 parseKeyValuePair = re.compile(r'^/\S+\s+([^\s=]+)(?:\s*=\s*|\s+)?(.+)?$')
 
@@ -189,18 +193,21 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
             + (f"\n\n{i18n[lang]['user_state']}: {i18n[lang][f'user_state_{state}']} "
                f"({i18n[lang][f'user_state_description_{state}']})" if state is not None else '')
     )
-    buttons = (
-        (Button.inline(f"{i18n[lang]['set_user_state_as']} \"{i18n[lang]['user_state_-1']}\"",
-                       data=f"set_user={user_id},-1") if user.state != -1 else inner.utils.emptyButton,),
-        (Button.inline(f"{i18n[lang]['set_user_state_as']} \"{i18n[lang]['user_state_0']}\"",
-                       data=f"set_user={user_id},0") if user.state != 0 else inner.utils.emptyButton,),
-        (Button.inline(f"{i18n[lang]['set_user_state_as']} \"{i18n[lang]['user_state_1']}\"",
-                       data=f"set_user={user_id},1") if user.state != 1 else inner.utils.emptyButton,),
+    buttons = tuple(filter(None, (
+        *(
+            (Button.inline(
+                (SELECTED_EMOJI if user.state == btn_state else UNSELECTED_EMOJI)
+                + '{prompt} "{state}"'.format(prompt=i18n[lang]['set_user_state_as'],
+                                              state=i18n[lang][f'user_state_{btn_state}']),
+                data='null' if user.state == btn_state else f"set_user={user_id},{btn_state}"
+            ),)
+            for btn_state in range(-1, 2)
+        ),
         (Button.inline(f"{i18n[lang]['reset_sub_limit_to_default']} "
                        f"({default_sub_limit if default_sub_limit > 0 else i18n[lang]['sub_limit_unlimited']})",
-                       data=f"reset_sub_limit={user_id}") if not is_default_limit else inner.utils.emptyButton,),
+                       data=f"reset_sub_limit={user_id}"),) if not is_default_limit else None,
         (Button.switch_inline(i18n[lang]['set_sub_limit_to'], query=f'/set_sub_limit {user_id} ', same_peer=True),),
-    ) if user_id != env.MANAGER else None
+    ))) if user_id != env.MANAGER else None
     await event.edit(msg_text, parse_mode='html', buttons=buttons) if is_callback \
         else await event.respond(msg_text, parse_mode='html', buttons=buttons)
 

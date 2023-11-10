@@ -52,25 +52,25 @@ jobs:
           cache-from: type=gha,scope=docker-release
           cache-to: type=gha,scope=docker-release,mode=max
       - name: Set Docker meta (exp-deps)
-        if: ${{ endsWith(github.ref, 'dev') }}
-        id: meta-fpe
+        if: ${{ startsWith(github.ref, 'refs/heads') && github.ref_name != 'master' }}
+        id: meta-exp
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/rss-to-telegram
           flavor: latest=false
-          tags: type=raw,value=exp-deps,enable=true
+          tags: type=raw,value=${{ github.ref_name != 'dev' && format('{0}-', github.ref_name) || '' }}exp-deps,enable=true
       - name: Push to Docker Hub (exp-deps)
-        if: ${{ endsWith(github.ref, 'dev') }}
+        if: ${{ startsWith(github.ref, 'refs/heads') && github.ref_name != 'master' }}
         uses: docker/build-push-action@v5
         with:
           push: true
           context: .
           build-args: EXP_DEPS=1
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta-fpe.outputs.tags }}
-          labels: ${{ steps.meta-fpe.outputs.labels }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:exp-deps
-          cache-to: type=inline,ref=${{ secrets.DOCKER_USERNAME }}/rss-to-telegram:exp-deps
+          tags: ${{ steps.meta-exp.outputs.tags }}
+          labels: ${{ steps.meta-exp.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.meta-exp.outputs.tags }}  # only one tag, safe to use
+          cache-to: type=inline
 
   description:
     name: Update repository description on Docker Hub

@@ -4,6 +4,7 @@ from collections.abc import Sequence
 
 import asyncio
 from telethon.tl import types, functions
+from telethon.errors.rpcbaseerrors import TimedOutError
 from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
 from telethon.utils import get_message_id
 from collections import defaultdict
@@ -95,6 +96,7 @@ class MessageDispatcher:
 
 class Message:
     no_retry = False
+    max_tries = 2 * 2  # telethon internally tries twice
     __overall_concurrency = 30
     __overall_semaphore = asyncio.BoundedSemaphore(__overall_concurrency)
 
@@ -113,7 +115,7 @@ class Message:
         self.media_type = media_type
         self.link_preview = link_preview
         self.silent = silent
-        self.retries = 0
+        self.tries = 0
 
         self.attributes = (
             (types.DocumentAttributeVideo(0, 0, 0),)
@@ -169,16 +171,19 @@ class Message:
             #     logger.error(f'Msg dropped due to lock acquisition timeout ({self.user_id})')
             #     return None
             except (FloodWaitError, SlowModeWaitError) as e:
-                # telethon has retried for us, but we release locks and retry again here to see if it will be better
-                if self.retries >= 1:
+                # telethon internally catches these errors and retries for us
+                self.tries += 2
+                if self.tries >= self.max_tries:
                     logger.error(f'Msg dropped due to too many flood control retries ({self.user_id})')
                     return None
-
-                self.retries += 1
                 await locks.user_flood_wait_background(self.user_id, seconds=e.seconds)  # acquire a flood wait
             except ServerError as e:
-                # telethon has retried for us, so we just retry once more
-                if self.retries >= 1:
+                # telethon internally catches this error and retries for us
+                self.tries += 2
+                if self.tries >= self.max_tries:
                     raise e
-
-                self.retries += 1
+            except TimedOutError as e:
+                # telethon does not catch this error or retry for us, so we do it ourselves
+                self.tries += 1
+                if self.tries >= self.max_tries:
+                    raise e

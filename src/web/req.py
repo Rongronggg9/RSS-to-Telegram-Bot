@@ -21,7 +21,7 @@ from .. import env, locks
 from ..compat import nullcontext, ssl_create_default_context, AiohttpUvloopTransportHotfix
 from ..aio_helper import run_async
 from ..errors_collection import RetryInIpv4
-from .utils import WebResponse, proxy_filter, logger, sentinel
+from .utils import YummyCookieJar, WebResponse, proxy_filter, logger, sentinel
 
 DEFAULT_READ_BUFFER_SIZE: Final = 2 ** 16
 
@@ -132,7 +132,7 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
 
     async def _fetch():
         async with aiohttp.ClientSession(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
-                                         headers=_headers) as session:
+                                         headers=_headers, cookie_jar=YummyCookieJar()) as session:
             async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
                 async with AiohttpUvloopTransportHotfix(response):
                     status_url_history = [(resp.status, resp.url) for resp in response.history]

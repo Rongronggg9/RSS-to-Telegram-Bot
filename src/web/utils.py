@@ -11,7 +11,8 @@ from ipaddress import ip_address, ip_network
 from urllib.parse import urlparse
 from multidict import CIMultiDictProxy
 
-from .. import env, log, i18n
+from .. import env, log
+from ..i18n import i18n
 
 logger = log.getLogger('RSStT.web')
 PRIVATE_NETWORKS: Final = tuple(ip_network(ip_block) for ip_block in

@@ -135,25 +135,26 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
                                          headers=_headers, cookie_jar=YummyCookieJar()) as session:
             async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
                 async with AiohttpUvloopTransportHotfix(response):
-                    status_url_history = [(resp.status, resp.url) for resp in response.history]
-                    status_url_history.append((response.status, response.url))
-                    url_obj = status_url_history[0][1]
-                    for (status0, url_obj0), (status1, url_obj1) in zip(status_url_history, status_url_history[1:]):
-                        if not (status0 in STATUSES_PERMANENT_REDIRECT or url_obj0.with_scheme('https') == url_obj1):
-                            break  # fail fast
-                        url_obj = url_obj1  # permanent redirect, update url
                     status = response.status
                     content = await resp_callback(response) if status == 200 else None
-                    auth_header = response.request_info.headers.get('Authorization')
-                    if auth_header:
-                        auth = aiohttp.helpers.BasicAuth.decode(auth_header)
-                        url_obj = url_obj.with_user(auth.login or None).with_password(auth.password or None)
-                    return WebResponse(url=str(url_obj),
-                                       ori_url=url,
-                                       content=content,
-                                       headers=response.headers,
-                                       status=status,
-                                       reason=response.reason)
+        status_url_history = [(resp.status, resp.url) for resp in response.history]
+        status_url_history.append((response.status, response.url))
+        url_obj = status_url_history[0][1]
+        for (status0, url_obj0), (status1, url_obj1) in zip(status_url_history, status_url_history[1:]):
+            if not (status0 in STATUSES_PERMANENT_REDIRECT or url_obj0.with_scheme('https') == url_obj1):
+                break  # fail fast
+            url_obj = url_obj1  # permanent redirect, update url
+        if auth_header := response.request_info.headers.get('Authorization'):
+            auth = aiohttp.helpers.BasicAuth.decode(auth_header)
+            url_obj = url_obj.with_user(auth.login or None).with_password(auth.password or None)
+        return WebResponse(
+            url=str(url_obj),
+            ori_url=url,
+            content=content,
+            headers=response.headers,
+            status=status,
+            reason=response.reason
+        )
 
     tries = 0
     retry_in_v4_flag = False

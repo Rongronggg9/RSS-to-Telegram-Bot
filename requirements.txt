@@ -17,7 +17,7 @@ matplotlib==3.7.2
 
 # db
 asyncpg==0.29.0
-tortoise-orm[accel]==0.19.3
+tortoise-orm[accel]==0.20.0
 aerich==0.6.3
 
 # network

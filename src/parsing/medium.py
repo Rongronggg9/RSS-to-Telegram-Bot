@@ -634,9 +634,10 @@ class Animation(Image):
 class UploadedImage(AbstractMedium):
     type: str = IMAGE
 
-    def __init__(self, file: Union[bytes, BytesIO, Callable, Awaitable]):
+    def __init__(self, file: Union[bytes, BytesIO, Callable, Awaitable], file_name: str = None):
         super().__init__()
         self.file = file
+        self.file_name = file_name
         self.uploaded_file: Union[InputFile, InputFileBig, None] = None
 
     def telegramize(self) -> Optional[InputMediaUploadedPhoto]:
@@ -705,7 +706,7 @@ class UploadedImage(AbstractMedium):
                     raise ValueError(f'File must be bytes or BytesIO, got {type(self.file)}')
                 if isinstance(self.file, BytesIO):
                     self.file.seek(0)
-                self.uploaded_file = await env.bot.upload_file(self.file)
+                self.uploaded_file = await env.bot.upload_file(self.file, file_name=self.file_name)
                 if isinstance(self.file, BytesIO):
                     self.file.close()
                 self.valid = True

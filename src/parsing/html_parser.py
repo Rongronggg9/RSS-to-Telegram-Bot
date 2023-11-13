@@ -110,7 +110,7 @@ class Parser:
                 columns = row.findAll(('td', 'th'))
                 if len(rows) > 1 and len(columns) > 1:  # allow single-row or single-column tables
                     if env.TABLE_TO_IMAGE:
-                        self.media.add(UploadedImage(convert_table_to_png(str(soup))))
+                        self.media.add(UploadedImage(convert_table_to_png(str(soup)), 'table.png'))
                     return None
                 for j, column in enumerate(columns):  # transpose single-row tables into single-column tables
                     row_content = await self._parse_item(column)

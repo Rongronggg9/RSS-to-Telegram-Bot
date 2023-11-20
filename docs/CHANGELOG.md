@@ -1,5 +1,38 @@
 # Changelog
 
+## Significant performance improvement, native blockquote and syntax highlighting (v2.4.0)
+
+### BREAKING CHANGES
+
+- **Drop Python 3.7 & 3.8 support**: The minimum Python version requirement is now 3.9.
+
+### Highlights
+
+#### Performance enhancements
+
+- **Reuse SSL context**: Reuse SSL context as `aiohttp` does. This improves performance (reduce load average by ~40%) and reduces memory usage.
+- **Lazy CookieJar**: Lazy creating CookieJar until there is really a Cookie. This improves performance (reduce load average by ~15%) and reduces memory usage.
+
+### Additions
+
+- **Native blockquote**: `<blockquote>` is now rendered as a native Telegram blockquote rather than a text block wrapped with horizontal rules.
+- **Syntax highlighting**: `<pre>` is now rendered as a native Telegram code block with syntax highlighting, as long as the language is specified in the `class` attribute.
+
+### Enhancements
+
+- **Custom-title-aware OPML**: When importing and exporting OPML, the bot will try to distinguish if a feed is of a custom title, and preserve it if so.
+- **`/lang` and `/test` as "remote" commands**: `/lang` and `/test` are now recognized as "remote" commands, which means you can use them in the private chat to make the operation actually apply to the channel/group you've specified in the command. Note: `/test` is only available to the bot manager.
+- **`/user_info` UX enhancement**: `/user_info` now has a better UX. Note: `/user_info` is only available to the bot manager.
+- **Minor enhancements**: The Docker image is now based on Debian bookworm.
+
+### Bug fixes
+
+- **Unexpected feed migration**: Fix a bug causing the bot to migrate feeds to a new URL unexpectedly. More specifically, the bot will now only migrate a feed if a redirection is considered permanent (HTTP status code 301 or 308).
+- **WEBP sent with wrong color space**: Fix a bug causing WEBP images sent with a wrong color space.
+- **Incorrect OPML format**: Fix incorrect OPML format making some RSS readers unable to import the OPML file exported by the bot.
+- **Mistaken watchdog feed timing**: Fix a bug causing the watchdog to be feed at the wrong time.
+- **Uncaught errors**: Fix some uncaught errors causing messages failed to be sent.
+
 ## Improved performance, subscription quantity limit, and more (v2.3.0)
 
 This is a long-awaited release. Nice to meet you again in the changelog! This is the last release that supports Python 3.7, and there will not be any patch version for the v2.3.x series. Any fixes will only be applied to the next release, which will bump the minimum Python version requirement to 3.9.

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **"Remote" `/test` unavailable**: Fix a bug preventing the bot manager from using the `/test` command "remotely".
+
 ## Significant performance improvement, native blockquote and syntax highlighting (v2.4.0)
 
 ### BREAKING CHANGES

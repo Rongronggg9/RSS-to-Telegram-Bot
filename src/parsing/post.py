@@ -153,8 +153,6 @@ class Post:
                 raise SystemExit(self.feed_link, self.feed_title, self.link, self.title) from e
 
     async def test_format(self, user_id: int):
-        if user_id != env.MANAGER:
-            return
         sub = await db.Sub.filter(feed__link=self.feed_link, user_id=user_id).get_or_none()
         if sub is None:
             user = await db.User.get_or_none(id=user_id)

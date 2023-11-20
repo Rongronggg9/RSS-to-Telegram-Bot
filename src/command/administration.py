@@ -61,8 +61,15 @@ async def cmd_set_option(event: Union[events.NewMessage.Event, Message], *_, lan
                         parse_mode='html')
 
 
-@command_gatekeeper(only_manager=True, timeout=None if env.DEBUG else 300)
-async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Optional[str] = None, **__):
+@command_gatekeeper(only_manager=True, only_in_private_chat=False, timeout=None if env.DEBUG else 300)
+async def cmd_test(
+        event: Union[events.NewMessage.Event, Message],
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__):
+    chat_id = chat_id or event.chat_id
+
     args = parse_command(event.raw_text)
     if len(args) < 2:
         await event.respond(i18n[lang]['cmd_test_usage_prompt_html'], parse_mode='html')
@@ -82,8 +89,6 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         start = 0
         end = 1
 
-    uid = event.chat_id
-
     try:
         wf = await web.feed_get(url, web_semaphore=False)
         rss_d = wf.rss_d
@@ -102,7 +107,7 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
             return
 
         await asyncio.gather(
-            *(__send(uid, entry, rss_d.feed.title, wf.url) for entry in entries_to_send)
+            *(__send(chat_id, entry, rss_d.feed.title, wf.url) for entry in entries_to_send)
         )
 
     except Exception as e:
@@ -111,10 +116,10 @@ async def cmd_test(event: Union[events.NewMessage.Event, Message], *_, lang: Opt
         return
 
 
-async def __send(uid, entry, feed_title, link):
+async def __send(chat_id, entry, feed_title, link):
     post = await get_post_from_entry(entry, feed_title, link)
-    logger.debug(f"Sending {entry.get('title', 'Untitled')} ({entry.get('link', 'No link')})...")
-    await post.test_format(uid)
+    logger.debug(f"Sending {entry.get('title', 'Untitled')} ({entry.get('link', 'No link')}) to {chat_id}...")
+    await post.test_format(chat_id)
 
 
 @command_gatekeeper(only_manager=True)

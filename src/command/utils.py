@@ -197,7 +197,7 @@ async def leave_chat(chat_id: hints.EntityLike) -> bool:
 def command_gatekeeper(func: Optional[Callable] = None,
                        *,
                        only_manager: bool = False,
-                       only_in_private_chat: bool = False,
+                       only_in_private_chat: bool = None,
                        allow_in_others_private_chat: bool = False,
                        allow_in_old_fashioned_groups: bool = False,
                        ignore_tg_lang: bool = False,
@@ -212,8 +212,8 @@ def command_gatekeeper(func: Optional[Callable] = None,
                        timeout=timeout,
                        quiet=quiet)
 
-    # assume that managing commands are only allowed in private chat
-    only_in_private_chat = only_in_private_chat or only_manager
+    # assume that managing commands are only allowed in private chat, unless specified
+    only_in_private_chat = only_manager if only_in_private_chat is None else only_in_private_chat
     # block contradicting settings
     assert not (only_in_private_chat and allow_in_old_fashioned_groups)
 

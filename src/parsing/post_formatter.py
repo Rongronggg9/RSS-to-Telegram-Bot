@@ -536,7 +536,7 @@ class PostFormatter:
                         medium.valid = False
                 elif not enclosure.type:
                     medium = File(enclosure.url)
-                elif 'svg' in enclosure.type:
+                elif any(keyword in enclosure.type for keyword in ('webp', 'svg')):
                     medium = Image(enclosure.url)
                     medium.url = construct_weserv_url_convert_to_2560_png(enclosure.url)
                 elif enclosure.type.startswith('image/gif'):

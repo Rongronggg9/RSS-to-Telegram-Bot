@@ -14,8 +14,8 @@ from os import path
 from ... import db, web, env
 from ...aio_helper import run_async
 from ...i18n import i18n
-from .utils import get_hash, update_interval, list_sub, get_http_last_modified, filter_urls, logger, escape_html, \
-    check_sub_limit
+from .utils import update_interval, list_sub, get_http_last_modified, filter_urls, logger, escape_html, \
+    check_sub_limit, calculate_update
 from ...parsing.utils import html_space_stripper
 
 FeedSnifferCache = TTLCache(maxsize=256, ttl=60 * 60 * 24)
@@ -85,7 +85,7 @@ async def sub(user_id: int,
                 if etag:
                     feed.etag = etag
                 feed.last_modified = get_http_last_modified(wf.headers)
-                feed.entry_hashes = [get_hash(entry.get('guid') or entry.get('link')) for entry in rss_d.entries]
+                feed.entry_hashes = list(calculate_update(old_hashes=None, entries=rss_d.entries)[0])
                 await feed.save()  # now we get the id
                 db.effective_utils.EffectiveTasks.update(feed.id)
 

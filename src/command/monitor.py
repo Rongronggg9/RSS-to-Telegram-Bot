@@ -1,19 +1,19 @@
 from __future__ import annotations
-from typing import Union, Optional
+from typing import Union
 from typing_extensions import Final
-from collections.abc import MutableMapping, Iterable, Sequence
+from collections.abc import MutableMapping, Iterable
 
 import gc
 import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from collections import defaultdict, Counter
-from itertools import islice, repeat
+from itertools import islice
 from traceback import format_exc
 
 from . import inner
 from .utils import escape_html, leave_chat
-from .inner.utils import get_hash, update_interval, deactivate_feed
+from .inner.utils import update_interval, deactivate_feed, calculate_update
 from .. import log, db, env, web, locks
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..i18n import i18n
@@ -129,24 +129,6 @@ async def run_monitor_task():
                      f'totally {timeout} feed(s) timed out after {wait_for}s:')
         for feed, error in timeout_errors:
             logger.error(f'The TimeoutError of the feed ({feed.link}) in the task:', exc_info=error)
-
-
-def calculate_update(old_hashes: Optional[Sequence[str]], entries: Sequence[dict]) \
-        -> tuple[Iterable[str], Iterable[dict]]:
-    new_hashes_d = {
-        get_hash(guid): entry for guid, entry in (
-            (
-                entry.get('guid') or entry.get('link') or entry.get('title') or entry.get('summary')
-                or entry.get('content'),
-                entry
-            ) for entry in entries
-        ) if guid
-    }
-    if old_hashes:
-        new_hashes_d.update(zip(old_hashes, repeat(None)))
-    new_hashes = new_hashes_d.keys()
-    updated_entries = filter(None, new_hashes_d.values())
-    return new_hashes, updated_entries
 
 
 async def __monitor(feed: db.Feed) -> str:

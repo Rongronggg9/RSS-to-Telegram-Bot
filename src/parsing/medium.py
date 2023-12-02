@@ -323,13 +323,20 @@ class Medium(AbstractMedium):
                     return True
                 medium_info = await web.get_medium_info(url)
                 if medium_info is None:
-                    if url.startswith(env.IMAGES_WESERV_NL) or url.startswith(env.IMG_RELAY_SERVER):
-                        invalid_reasons.append('fetch failed')
+                    if url.startswith(env.IMG_RELAY_SERVER):
+                        invalid_reasons.append('relayed image fetch failed')
                         continue
-                    medium_info = await web.get_medium_info(env.IMG_RELAY_SERVER + url)
-                    if medium_info is None:
-                        invalid_reasons.append('both original and relayed image fetch failed')
-                        continue
+                    elif url.startswith(env.IMAGES_WESERV_NL):
+                        url = insert_image_relay_into_weserv_url(url)
+                        medium_info = url and await web.get_medium_info(url)
+                        if medium_info is None:
+                            invalid_reasons.append('weserv fetch failed')
+                            continue
+                    else:
+                        medium_info = await web.get_medium_info(env.IMG_RELAY_SERVER + url)
+                        if medium_info is None:
+                            invalid_reasons.append('both original and relayed image fetch failed')
+                            continue
                 self.size, self.width, self.height, self.content_type = medium_info
                 if self.type == IMAGE and self.size <= self.maxSize and min(self.width, self.height) == -1 \
                         and self.content_type and self.content_type.startswith('image') \
@@ -461,13 +468,18 @@ class Medium(AbstractMedium):
             return False
         self._server_change_count += 1
         self.chosen_url = env.IMG_RELAY_SERVER + self.chosen_url
-        if not env.TRAFFIC_SAVING:
-            # noinspection PyBroadException
-            try:
-                await web.get(url=self.chosen_url, semaphore=False, max_size=0)  # let the img relay sever cache the img
-            except Exception:
-                pass
+        await self._try_get_chosen_url()  # let the relay sever cache it
         return True
+
+    async def _try_get_chosen_url(self) -> bool:
+        if env.TRAFFIC_SAVING:
+            return True
+        # noinspection PyBroadException
+        try:
+            await web.get(url=self.chosen_url, semaphore=False, max_size=0)
+            return True
+        except Exception:
+            return False
 
     def __bool__(self):
         if self.valid is None:
@@ -555,6 +567,15 @@ class Image(Medium):
         self.chosen_url = self.urls[0]
 
     async def change_server(self) -> bool:
+        if weserv_relayed := insert_image_relay_into_weserv_url(self.chosen_url):
+            # success if:
+            # 1. it is a weserv URL; and
+            # 2. it is called the first time.
+            # here we don't need to increase _server_change_count because the second call will just return None
+            self.chosen_url = weserv_relayed
+            await self._try_get_chosen_url()  # let the relay sever and weserv cache the image
+            return True
+
         sinaimg_server_match = sinaimg_server_parser(self.chosen_url)
         if not sinaimg_server_match:  # is not a sinaimg img
             return await super().change_server()
@@ -987,6 +1008,25 @@ def construct_weserv_url_convert_to_2560_png(url: str) -> str:
 
 def construct_weserv_url_convert_to_jpg(url: str) -> str:
     return construct_weserv_url(url, output_format='jpg')
+
+
+HEAD_IMAGES_WESERV_NL_URL: Final = construct_weserv_url('')
+HEAD_IMAGES_WESERV_NL_URL_RELAYED: Final = construct_weserv_url(env.IMG_RELAY_SERVER)
+LEN_HEAD_IMAGES_WESERV_NL_URL: Final = len(HEAD_IMAGES_WESERV_NL_URL)
+
+
+def insert_image_relay_into_weserv_url(url: str) -> Optional[str]:
+    """
+    Ensure weserv fetches the image via the relay server.
+    Useful when:
+    1. The image is from a domain/TLD banned by weserv; or
+    2. The image is from a CDN that bans weserv.
+    """
+    if not url.startswith(HEAD_IMAGES_WESERV_NL_URL):
+        return None  # not a weserv url
+    if url.startswith(HEAD_IMAGES_WESERV_NL_URL_RELAYED):
+        return None  # already relayed
+    return HEAD_IMAGES_WESERV_NL_URL_RELAYED + url[LEN_HEAD_IMAGES_WESERV_NL_URL:]
 
 
 async def detect_image_dimension_via_weserv(url: str) -> tuple[int, int]:

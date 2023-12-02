@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Enhancements
+
+- **`wsrv.nl` via relay**: Try to use `wsrv.nl` (environment variable `IMAGES_WESERV_NL`) via the media relay server (environment variable `IMG_RELAY_SERVER`). This is a workaround for images from domains/TLDs banned by `wsrv.nl` or CDNs that ban `wsrv.nl`. It can hopefully reduce the frequency of seeing "invalid media" in messages since RSStT uses `wsrv.nl` heavily to convert images into formats accepted by Telegram DCs. See also [#369](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/369).
+
 ### Bug fixes
 
 - **"Remote" `/test` unavailable**: Fix a bug preventing the bot manager from using the `/test` command "remotely".

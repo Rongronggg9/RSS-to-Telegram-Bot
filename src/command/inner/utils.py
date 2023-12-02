@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import AnyStr, Any, Union, Optional
-from collections.abc import Iterable, Mapping
+from typing import Any, Union, Optional
+from collections.abc import Iterable, Mapping, Sequence
 
 import asyncio
 import re
-from itertools import chain
+from itertools import chain, repeat
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from zlib import crc32
@@ -31,10 +31,23 @@ def construct_hashtags(tags: Union[Iterable[str], str]) -> str:
     return ' '.join(f'#{tag}' for tag in tags)
 
 
-def get_hash(string: AnyStr) -> str:
-    if isinstance(string, str):
-        string = string.encode('utf-8')
-    return hex(crc32(string))[2:]
+def calculate_update(old_hashes: Optional[Sequence[str]], entries: Sequence[dict]) \
+        -> tuple[Iterable[str], Iterable[dict]]:
+    new_hashes_d = {
+        hex(crc32(guid.encode('utf-8')))[2:]: entry
+        for guid, entry in (
+            (
+                entry.get('guid') or entry.get('link') or entry.get('title') or entry.get('summary')
+                or entry.get('content', ''),
+                entry
+            ) for entry in entries
+        ) if guid
+    }
+    if old_hashes:
+        new_hashes_d.update(zip(old_hashes, repeat(None)))
+    new_hashes = new_hashes_d.keys()
+    updated_entries = filter(None, new_hashes_d.values())
+    return new_hashes, updated_entries
 
 
 def filter_urls(urls: Optional[Iterable[str]]) -> tuple[str, ...]:

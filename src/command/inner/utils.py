@@ -7,9 +7,13 @@ import re
 from itertools import chain, repeat
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from zlib import crc32
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
+
+try:
+    from isal.isal_zlib import crc32
+except ImportError:
+    from zlib import crc32
 
 from ... import db, log, env
 from ...i18n import i18n

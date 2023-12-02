@@ -2,6 +2,10 @@
 
 ## 尚未发布
 
+### 增强
+
+- **经反代的 `wsrv.nl`: 尝试通过媒体反代服务器 (环境变量 `IMG_RELAY_SERVER`) 使用 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`)。这是对那些来自被 `wsrv.nl` 封禁的域名或将 `wsrv.nl` 封禁的 CDN 的图片的变通解决方案。考虑到 RSStT 大量使用 `wsrv.nl` 将图片转换为 Telegram DC 所接受的格式，这有望减少在消息中见到 "Invalid media" 的频率。另请参阅 [#369](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/369)。
+
 ### Bug 修复
 
 - **“远程” `/test` 不可用**：修复阻止 bot 管理员“远程”使用 `/test` 命令的错误。

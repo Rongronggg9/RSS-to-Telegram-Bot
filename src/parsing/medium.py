@@ -562,7 +562,7 @@ class Image(Medium):
         self.urls = new_urls
         self.type_fallback_urls = new_urls.copy()
         urls_not_weserv = [url for url in self.urls if not url.startswith(env.IMAGES_WESERV_NL)]
-        self.urls.extend(construct_weserv_url_convert_to_2560_png(urls_not_weserv[i])
+        self.urls.extend(construct_weserv_url_convert_to_2560(urls_not_weserv[i])
                          for i in range(min(len(urls_not_weserv), 3)))  # use for final fallback
         self.chosen_url = self.urls[0]
 
@@ -981,6 +981,7 @@ def construct_weserv_url(url: str,
                          height: Optional[int] = None,
                          fit: Optional[str] = None,
                          output_format: Optional[str] = None,
+                         quality: Optional[int] = None,
                          without_enlargement: Optional[bool] = None,
                          default_image: Optional[str] = None) -> str:
     return (
@@ -990,18 +991,27 @@ def construct_weserv_url(url: str,
             + (f'&h={height}' if height else '')
             + (f'&fit={fit}' if fit else '')
             + (f'&output={output_format}' if output_format else '')
+            + (f'&q={quality}' if quality else '')
             + (f'&we=1' if without_enlargement else '')
             + (f'&default={weserv_param_encode(default_image)}' if default_image else '')
     )
 
 
-def construct_weserv_url_convert_to_2560_png(url: str) -> str:
+def construct_weserv_url_convert_to_2560(url: str) -> str:
     return construct_weserv_url(
         url,
         width=2560,
         height=2560,
-        fit='inside',
-        output_format='png',
+        # fit='inside',  # is default
+        output_format='jpg',
+        # In the worst case, 89% ensures the size won't exceed 5MB
+        # E.g.:
+        # 2560x2560 white noise truecolor --89% JPEG--> 4.98MiB
+        # 2560x2560 white noise truecolor --90% JPEG--> 10.26MiB
+        # See also:
+        # https://robson.plus/white-noise-image-generator/
+        # https://fotoforensics.com/tutorial-estq.php
+        quality=89,
         without_enlargement=True
     )
 

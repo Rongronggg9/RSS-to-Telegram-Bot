@@ -9,6 +9,7 @@
 ### Bug fixes
 
 - **"Remote" `/test` unavailable**: Fix a bug preventing the bot manager from using the `/test` command "remotely".
+- **Resized images still too big**: Fix a bug causing images resized by `wsrv.nl` to be sometimes too big (exceed the 5MiB limitation of Telegram DC) to send.
 
 ## Significant performance improvement, native blockquote and syntax highlighting (v2.4.0)
 

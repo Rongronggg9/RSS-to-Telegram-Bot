@@ -11,7 +11,7 @@ from . import utils, tgraph
 from .splitter import get_plain_text_length
 from .html_parser import parse
 from .html_node import *
-from .medium import Media, Image, Video, Audio, File, Animation, construct_weserv_url_convert_to_2560_png
+from .medium import Media, Image, Video, Audio, File, Animation, construct_weserv_url_convert_to_2560
 
 AUTO: Final = 0
 DISABLE: Final = -1
@@ -538,7 +538,7 @@ class PostFormatter:
                     medium = File(enclosure.url)
                 elif any(keyword in enclosure.type for keyword in ('webp', 'svg')):
                     medium = Image(enclosure.url)
-                    medium.url = construct_weserv_url_convert_to_2560_png(enclosure.url)
+                    medium.url = construct_weserv_url_convert_to_2560(enclosure.url)
                 elif enclosure.type.startswith('image/gif'):
                     medium = Animation(enclosure.url)
                 elif enclosure.type.startswith('audio'):

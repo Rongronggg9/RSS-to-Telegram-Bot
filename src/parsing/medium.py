@@ -22,7 +22,7 @@ from ..errors_collection import InvalidMediaErrors, ExternalMediaFetchFailedErro
 logger = log.getLogger('RSStT.medium')
 
 sinaimg_sizes: Final = ('large', 'mw2048', 'mw1024', 'mw720', 'middle')
-sinaimg_size_parser: Final = re.compile(r'(?P<domain>^https?://wx\d\.sinaimg\.\w+/)'
+sinaimg_size_parser: Final = re.compile(r'(?P<domain>^https?://(wx|tvax?)\d\.sinaimg\.\w+/)'
                                         r'(?P<size>\w+)'
                                         r'(?P<filename>/\w+\.\w+$)').match
 pixiv_sizes: Final = ('original', 'master')

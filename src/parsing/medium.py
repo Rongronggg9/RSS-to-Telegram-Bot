@@ -1039,9 +1039,18 @@ def insert_image_relay_into_weserv_url(url: str) -> Optional[str]:
     return HEAD_IMAGES_WESERV_NL_URL_RELAYED + url[LEN_HEAD_IMAGES_WESERV_NL_URL:]
 
 
+async def get_medium_info_via_weserv(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
+    url = construct_weserv_url(url, output_format='json')
+    res = await web.get_medium_info_via_weserv(url)
+    if res:
+        return res
+    url = insert_image_relay_into_weserv_url(url)
+    if url:
+        return await web.get_medium_info_via_weserv(url)
+
+
 async def detect_image_dimension_via_weserv(url: str) -> tuple[int, int]:
-    url = construct_weserv_url_convert_to_jpg(url)
-    res = await web.get_medium_info(url)
+    res = await get_medium_info_via_weserv(url)
     if not res:
         return -1, -1
     _, width, height, _ = res

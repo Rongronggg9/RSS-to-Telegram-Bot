@@ -1,7 +1,9 @@
 from __future__ import annotations
+from typing import Union
 from typing_extensions import Final
 
 import aiohttp
+import json
 import PIL.Image
 import PIL.ImageFile
 from PIL import UnidentifiedImageError
@@ -10,7 +12,7 @@ from typing import Optional
 from asyncstdlib import lru_cache
 
 from .. import env
-from .req import _get
+from .req import get, _get
 from .utils import logger
 
 SOI: Final = b'\xff\xd8'
@@ -135,5 +137,24 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[st
     content_type = r.headers.get('Content-Type')
     if isinstance(r.content, tuple):
         width, height = r.content
+
+    return size, width, height, content_type
+
+
+@lru_cache(maxsize=1024)
+async def get_medium_info_via_weserv(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
+    try:
+        r = await get(url)
+        if r.status != 200:
+            raise ValueError(f'status code is not 200, but {r.status}')
+        data: dict[str, Union[str, int, bool]] = json.loads(r.content)
+    except Exception as e:
+        logger.debug(f'Medium info via weserv fetch failed: {url}', exc_info=e)
+        return None
+
+    width, height = data.get('width', -1), data.get('height', -1)
+    size = int(r.headers.get('X-Upstream-Response-Length') or -1)
+    content_type = data.get('format')
+    content_type = content_type and f'image/{content_type}'
 
     return size, width, height, content_type

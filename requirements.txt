@@ -36,6 +36,6 @@ multidict==6.0.4
 asyncstdlib==3.10.9
 cachetools==5.3.2
 CJKwrap==2.2
-typing-extensions==4.8.0
+typing-extensions==4.9.0
 uvloop==0.19.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
 isal==1.5.3; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'

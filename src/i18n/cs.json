@@ -63,22 +63,22 @@
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Odpovězte prosím na tuto zprávu a uveďte adresu URL kanálu RSS.\nNebo můžete použít <code>/sub url1 url2 url3 ...</code> pro hromadný odběr.",
         "sub_usage_in_channel_html": "",
-        "sub_successful": "",
-        "sub_failed": ""
+        "sub_successful": "Odběr úspěšný",
+        "sub_failed": "Chyba odběru"
     },
     "l10n_cmd_unsub": {
-        "unsub_choose_sub_prompt_html": "",
-        "unsub_successful": "",
-        "unsub_failed": ""
+        "unsub_choose_sub_prompt_html": "Prosím vyber odběr, který má být odhlášen.\nMůžeš také použít <code>/unsub url1 url2 url3 …</code> pro hromadné odhlášení.",
+        "unsub_successful": "Úspěšně odhlášeno",
+        "unsub_failed": "Chyba odlášení"
     },
     "l10n_cmd_unsub_all": {
-        "unsub_all_confirm_prompt": "",
-        "unsub_all_confirm": "",
-        "unsub_all_cancel": "",
-        "unsub_all_successful": ""
+        "unsub_all_confirm_prompt": "Opravdu chceteo dhlásit všechny odběry?",
+        "unsub_all_confirm": "Ano, odhlásit ze všech odběrů",
+        "unsub_all_cancel": "Ne, stornovat",
+        "unsub_all_successful": "Odhlášení ze všch odberů úspěšné"
     },
     "l10n_cmd_import": {
-        "send_opml_prompt": "",
+        "send_opml_prompt": "Prosím pro import mě pošli OPML soubor (přípona musí být .opml).",
         "import_for_channel_or_group_prompt": "",
         "send_opml_reply_placeholder": "",
         "fetch_file_failed": "",
@@ -90,9 +90,9 @@
     "l10n_cmd_set": {
         "set_choose_sub_prompt": "",
         "status": "",
-        "status_activated": "",
+        "status_activated": "Aktivováno",
         "status_deactivated": "",
-        "notification": "",
+        "notification": "Oznámení",
         "notification_normal": "",
         "notification_muted": "",
         "monitor_interval": "",

@@ -11,7 +11,7 @@ from . import utils, tgraph
 from .splitter import get_plain_text_length
 from .html_parser import parse
 from .html_node import *
-from .medium import Media, Image, Video, Audio, File, Animation, construct_weserv_url_convert_to_2560
+from .medium import Media, AbstractMedium, Image, Video, Audio, File, Animation, construct_weserv_url_convert_to_2560
 
 AUTO: Final = 0
 DISABLE: Final = -1
@@ -86,6 +86,7 @@ class PostFormatter:
         self.parsed: bool = False
         self.html_tree: Optional[HtmlTree] = None
         self.media: Optional[Media] = None
+        self.enclosure_medium_l: Optional[list[AbstractMedium]] = None
         self.parsed_html: Optional[str] = None
         self.plain_length: Optional[int] = None
         self.telegraph_link: Optional[Union[str, False]] = None  # if generating failed, will be False
@@ -515,6 +516,7 @@ class PostFormatter:
         self.html = parsed.parser.html  # use a validated HTML
         self.parsed = True
         if self.enclosures:
+            self.enclosure_medium_l = []
             for enclosure in self.enclosures:
                 # https://www.iana.org/assignments/media-types/media-types.xhtml
                 if not enclosure.url:
@@ -550,13 +552,17 @@ class PostFormatter:
                 else:
                     medium = File(enclosure.url)
                 self.media.add(medium)
+                self.enclosure_medium_l.append(medium)
 
     async def telegraph_ify(self):
         if isinstance(self.telegraph_link, str) or self.telegraph_link is False:
             return self.telegraph_link
 
+        html = self.html
+        if self.enclosure_medium_l:
+            html += f"<p>{'<br>'.join(medium.get_multimedia_html() for medium in self.enclosure_medium_l)}</p>"
         try:
-            self.telegraph_link = await tgraph.TelegraphIfy(self.html,
+            self.telegraph_link = await tgraph.TelegraphIfy(html,
                                                             title=self.title,
                                                             link=self.link,
                                                             feed_title=self.feed_title,

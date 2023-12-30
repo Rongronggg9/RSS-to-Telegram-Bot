@@ -5,6 +5,8 @@
 ### 增强
 
 - **经反代的 `wsrv.nl`: 尝试通过媒体反代服务器 (环境变量 `IMG_RELAY_SERVER`) 使用 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`)。这是对那些来自被 `wsrv.nl` 封禁的域名或将 `wsrv.nl` 封禁的 CDN 的图片的变通解决方案。考虑到 RSStT 大量使用 `wsrv.nl` 将图片转换为 Telegram DC 所接受的格式，这有望减少在消息中见到 "Invalid media" 的频率。另请参阅 [#369](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/369)。
+- - **Append enclosures to Telegraph post**: Append enclosures (if any) to Telegraph post if any. Previously, enclosures can only be sent in Telegram messages, but not in Telegraph posts.
+- **将 enclosure 附加到 Telegraph 文章**: 如果有的话，将 enclosure (附件) 附加到 Telegraph 文章。先前，enclosure 只能在 Telegram 消息中发送，而无法在 Telegraph 文章中发送。
 
 ### Bug 修复
 

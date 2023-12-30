@@ -110,6 +110,10 @@ class AbstractMedium(ABC):
         pass
 
     @abstractmethod
+    def get_multimedia_html(self) -> Optional[str]:
+        pass
+
+    @abstractmethod
     def get_link_html_node(self) -> Optional[Text]:
         pass
 
@@ -273,6 +277,12 @@ class Medium(AbstractMedium):
              if self.need_type_fallback and self.type_fallback_medium is not None
              else None)
         ) if not self.drop_silently else None
+
+    def get_multimedia_html(self) -> str:
+        url = self.original_urls[0]
+        if isAbsoluteHttpLink(url):
+            return f'<a href="{url}">{self.type}</a>'
+        return f'{self.type} (<code>{url}</code>)'
 
     def get_link_html_node(self) -> Text:
         url = self.original_urls[0]
@@ -566,6 +576,9 @@ class Image(Medium):
                          for i in range(min(len(urls_not_weserv), 3)))  # use for final fallback
         self.chosen_url = self.urls[0]
 
+    def get_multimedia_html(self) -> str:
+        return f'<img src="{self.original_urls[0]}" />'
+
     async def change_server(self) -> bool:
         if weserv_relayed := insert_image_relay_into_weserv_url(self.chosen_url):
             # success if:
@@ -597,6 +610,9 @@ class Video(Medium):
     typeFallbackTo = Image
     typeFallbackAllowSelfUrls = False
     inputMediaExternalType = InputMediaDocumentExternal
+
+    def get_multimedia_html(self) -> str:
+        return f'<video src="{self.original_urls[0]}" />'
 
 
 class Audio(Medium):
@@ -658,6 +674,9 @@ class UploadedImage(AbstractMedium):
         self.file = file
         self.file_name = file_name
         self.uploaded_file: Union[InputFile, InputFileBig, None] = None
+
+    def get_multimedia_html(self) -> None:
+        return None
 
     def telegramize(self) -> Optional[InputMediaUploadedPhoto]:
         if self.valid is None:

@@ -12,7 +12,7 @@
 - **"Remote" `/test` unavailable**: Fix a bug preventing the bot manager from using the `/test` command "remotely".
 - **Resized images still too big**: Fix a bug causing images resized by `wsrv.nl` to be sometimes too big (exceed the 5MiB limitation of Telegram DC) to send.
 
-## Significant performance improvement, native blockquote and syntax highlighting (v2.4.0)
+## v2.4.0: Significant performance improvement, native blockquote and syntax highlighting
 
 ### BREAKING CHANGES
 
@@ -45,7 +45,7 @@
 - **Mistaken watchdog feed timing**: Fix a bug causing the watchdog to be feed at the wrong time.
 - **Uncaught errors**: Fix some uncaught errors causing messages failed to be sent.
 
-## Improved performance, subscription quantity limit, and more (v2.3.0)
+## v2.3.0: Improved performance, subscription quantity limit, and more
 
 This is a long-awaited release. Nice to meet you again in the changelog! This is the last release that supports Python 3.7, and there will not be any patch version for the v2.3.x series. Any fixes will only be applied to the next release, which will bump the minimum Python version requirement to 3.9.
 
@@ -86,7 +86,7 @@ This is a long-awaited release. Nice to meet you again in the changelog! This is
 
 More unmentioned minor bugs have been fixed in the release. The changelog does not include all the changes. For more details, please refer to the [compare view](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/compare/v2.2.1...v2.3.0).
 
-## Published to PyPI, HTML table converter, and more (v2.2.1)
+## v2.2.1: Published to PyPI, HTML table converter, and more
 
 ### Additions
 
@@ -114,7 +114,7 @@ More unmentioned minor bugs have been fixed in the release. The changelog does n
 - **Deps bump**: Fixed an upstream bug preventing users from resetting all subscriptions to the user's default settings on a PostgreSQL-based instance.
 - **Minor bug fixes**
 
-## Channel remote management, more formatting options, and more (v2.2.0)
+## v2.2.0: Channel remote management, more formatting options, and more
 
 ### Additions
 
@@ -156,7 +156,7 @@ More unmentioned minor bugs have been fixed in the release. The changelog does n
 - **Extracting image dimension from Exif thumbnail**: Some images may contain a thumbnail in the Exif data. The bot will now avoid extracting the dimension from the thumbnail.
 - **Minor bug fixes**
 
-## Custom format, new l10n, improved media fallback, and more (v2.1.0)
+## v2.1.0: Custom format, new l10n, improved media fallback, and more
 
 Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `dev` branch. If you are using it, you may have noticed the new features. Since new commands are added, please use `/lang` command once again and select your language to let the bot update your command list.
 
@@ -216,7 +216,7 @@ Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `de
 - **Improper white-space and linebreak policy**: The bot can now avoid unintended white spaces and linebreaks in messages, especially for weird feeds. This also applies to the feed/post title and post author.
 - **Minor bug fixes**
 
-## Multi-user, i18n, improved user-friendliness, and more (v2.0.0)
+## v2.0.0: Multi-user, i18n, improved user-friendliness, and more
 
 Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)
 
@@ -256,7 +256,7 @@ Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)
 - **Proxy bypassing**: If env variable `PROXY_BYPASS_PRIVATE` is set, the bot will bypass proxy for private IPs. And will bypass proxy for domains listed in env variable `PROXY_BYPASS_DOMAINS`.
 - **Bugfixes**: A few bugfixes.
 
-## Rushed release to fix login (v1.6.1)
+## v1.6.1: Rushed release to fix login
 
 **This is a rushed release. It bumps the dependency `telethon` to the latest version. Please upgrade to this version immediately to avoid being unable to login due to the outdated dependency.**
 
@@ -274,7 +274,7 @@ The bot is currently being actively developed on the `multiuser` branch but has 
 - Introduce some workarounds to avoid being flood-controlled frequently
 - Introduce some deps to speed up HTTP requests
 
-## Switching to MTProto, OPML support, and more (v1.6.0)
+## v1.6.0: Switching to MTProto, OPML support, and more
 
 ### BREAKING CHANGES
 
@@ -312,7 +312,7 @@ The bot is currently being actively developed on the `multiuser` branch but has 
 - Bump Python to 3.9 (docker build)
 - Minor fixes
 
-## Complete rewrite of the post parser (v1.5.0)
+## v1.5.0: Complete rewrite of the post parser
 
 - The Post parser is completely rewritten, more stable, and can keep text formatting as much as possible
 - GIF Support
@@ -329,6 +329,6 @@ The bot is currently being actively developed on the `multiuser` branch but has 
 - Change the user-agent, because some websites have banned the UA of Requests
 - Logging improvement
 
-## Initial release (v1.0.0)
+## v1.0.0: Initial release
 
 initial public release

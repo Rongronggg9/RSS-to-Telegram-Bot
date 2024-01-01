@@ -1,17 +1,23 @@
 # 更新日志
 
-## 尚未发布
+## v2.4.1: 次要的增强和 bug 修复，以及新年快乐！
 
 ### 增强
 
 - **经反代的 `wsrv.nl`: 尝试通过媒体反代服务器 (环境变量 `IMG_RELAY_SERVER`) 使用 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`)。这是对那些来自被 `wsrv.nl` 封禁的域名或将 `wsrv.nl` 封禁的 CDN 的图片的变通解决方案。考虑到 RSStT 大量使用 `wsrv.nl` 将图片转换为 Telegram DC 所接受的格式，这有望减少在消息中见到 "Invalid media" 的频率。另请参阅 [#369](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/369)。
 - - **Append enclosures to Telegraph post**: Append enclosures (if any) to Telegraph post if any. Previously, enclosures can only be sent in Telegram messages, but not in Telegraph posts.
 - **将 enclosure 附加到 Telegraph 文章**: 如果有的话，将 enclosure (附件) 附加到 Telegraph 文章。先前，enclosure 只能在 Telegram 消息中发送，而无法在 Telegraph 文章中发送。
+- **依赖项更新**： 将大部分过时的依赖项更新到了最新版本。引入可一个可选依赖 `isal` 用于稍微提升条目散列的性能。
+- **本地化更新**: 本地化已被更新。
+- **杂项重构**: 重构了一些代码以提高可读性和可维护性。
 
 ### Bug 修复
 
 - **“远程” `/test` 不可用**：修复阻止 bot 管理员“远程”使用 `/test` 命令的错误。
 - **调节尺寸后的图像仍然太大**: 修复了一个错误，这个错误导致经过 `wsrv.nl` 调节尺寸后的图像有时候仍然太大（超过 Telegram DC 的 5MiB 限制）以至于无法发送。
+- **Sinaimg 图片未被正确解析**: 修复了针对 Sinaimg (微博图床) 图片的正则表达式。这有望减少在消息中见到 "Invalid media" 的频率。
+- **WEBP 被完全获取，而没有考虑获取限制**: 修复了一个导致不带有 `Content-Length` 标头的 WEBP 被完全获取，而没有考虑获取限制的错误。
+- **监视器和订阅的条目散列不统一**: 统一监视器和订阅的条目散列。先前，监视器和订阅的条目散列不统一，这可能导致 bot 在一个 RSS 源被首次订阅后发送已经存在的条目 (文章)。
 
 ## v2.4.0: 显著提高性能、原生块状引用和语法高亮
 

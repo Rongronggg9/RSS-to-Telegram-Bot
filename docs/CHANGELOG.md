@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Enhancements
+
+- **Set niceness for subprocesses/threads**: (Unix only) Nice subprocesses and/or threads to improve the responsiveness of the main process.
+
 ## v2.4.1: Minor enhancements, bug fixes, and Happy New Year!
 
 ### Enhancements

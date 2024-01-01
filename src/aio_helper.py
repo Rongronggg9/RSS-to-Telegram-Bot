@@ -2,18 +2,18 @@
 Asyncio helper functions.
 """
 from __future__ import annotations
-from typing import Callable, Union, Optional
+from typing import Callable, Optional
 from typing_extensions import Literal
 
 import os
 from functools import partial
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
 from time import sleep
 from signal import signal, SIGINT, SIGTERM
 from collections import deque
 from multiprocessing import get_context, current_process
 
-from . import env
+from . import env, log
 
 MP_CTX = get_context()
 
@@ -33,14 +33,28 @@ aioThreadExecutor: Optional[ThreadPoolExecutor] = None
 aioProcessExecutor: Optional[ProcessPoolExecutor] = None
 __aioExecutorsDeque: Optional[deque] = None
 
+logger = log.getLogger('RSStT.aio_helper')
+
 
 def _process_exit(_signum, _frame):
     exit(1)
 
 
+def _common_initializer():
+    if hasattr(os, 'nice'):
+        try:
+            niceness = os.nice(1)  # nice processes/threads
+        except Exception as e:
+            logger.warning('Failed to nice subprocess/thread', exc_info=e)
+        else:
+            logger.debug(f'The niceness of the subprocess/thread has been set to {niceness}')
+    logger.debug('Subprocess/thread initialized')
+
+
 def _process_initializer():
     signal(SIGINT, _process_exit)
     signal(SIGTERM, _process_exit)
+    _common_initializer()
 
 
 def init():
@@ -52,7 +66,8 @@ def init():
     # asyncio executors
     aioThreadExecutor = ThreadPoolExecutor(
         max_workers=THREAD_POOL_WEIGHT,
-        thread_name_prefix="rsstt_aio_thread_"
+        thread_name_prefix="rsstt_aio_thread_",
+        initializer=_common_initializer
     ) if THREAD_POOL_WEIGHT else None
     aioProcessExecutor = ProcessPoolExecutor(
         max_workers=PROCESS_POOL_WEIGHT,
@@ -67,8 +82,15 @@ def init():
         )
     ) if aioThreadExecutor and aioProcessExecutor else None
 
+    # initialize all subprocesses/threads now
+    # here we use sleep to ensure all subprocesses/threads are launched
+    futures: list[Future] = []
     if aioProcessExecutor and type(MP_CTX).__name__ == 'ForkContext':
-        [aioProcessExecutor.submit(sleep, 0.01 * (i + 1)) for i in range(PROCESS_POOL_WEIGHT * 2)]
+        futures.extend(aioProcessExecutor.submit(sleep, 0.01 * (i + 1)) for i in range(PROCESS_POOL_WEIGHT * 2))
+    if aioThreadExecutor:
+        futures.extend(aioThreadExecutor.submit(sleep, 0.01 * (i + 1)) for i in range(THREAD_POOL_WEIGHT * 2))
+    for future in futures:
+        future.result()  # wait for subprocesses/threads
 
 
 def _get_executor():

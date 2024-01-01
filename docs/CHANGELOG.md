@@ -1,16 +1,22 @@
 # Changelog
 
-## Unreleased
+## v2.4.1: Minor enhancements, bug fixes, and Happy New Year!
 
 ### Enhancements
 
 - **`wsrv.nl` via relay**: Try to use `wsrv.nl` (environment variable `IMAGES_WESERV_NL`) via the media relay server (environment variable `IMG_RELAY_SERVER`). This is a workaround for images from domains/TLDs banned by `wsrv.nl` or CDNs that ban `wsrv.nl`. It can hopefully reduce the frequency of seeing "invalid media" in messages since RSStT uses `wsrv.nl` heavily to convert images into formats accepted by Telegram DCs. See also [#369](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/369).
 - **Append enclosures to Telegraph post**: Append enclosures (if any) to Telegraph post if any. Previously, enclosures can only be sent in Telegram messages, but not in Telegraph posts.
+- **Dependencies update**: Bumped most outdated dependencies to the latest version. An optional dependency `isal` has been added to slightly improve the performance of entry hashing.
+- **L10n update**: Localizations have been updated.
+- **Misc refactoring**: Some code has been refactored to improve readability and maintainability.
 
 ### Bug fixes
 
 - **"Remote" `/test` unavailable**: Fix a bug preventing the bot manager from using the `/test` command "remotely".
 - **Resized images still too big**: Fix a bug causing images resized by `wsrv.nl` to be sometimes too big (exceed the 5MiB limitation of Telegram DC) to send.
+- **Sinaimg images not parsed properly**: Fix the URL regex of Sinaimg images. It can hopefully reduce the frequency of seeing "invalid media" in messages.
+- **WEBP fully fetched regardless of fetch limit**: Fix a bug causing WEBP without `Content-Length` header to be fully fetched regardless of the fetch limit.
+- **Entry hashing for monitor and sub not unified**: Unify the entry hashing for monitor and sub. Previously, the entry hashing for monitor and sub is not unified, which may cause the bot to send persisting entries (posts) after a feed is subscribed for the first time.
 
 ## v2.4.0: Significant performance improvement, native blockquote and syntax highlighting
 

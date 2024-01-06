@@ -43,11 +43,13 @@ def _process_exit(_signum, _frame):
 def _common_initializer():
     if hasattr(os, 'nice'):
         try:
-            niceness = os.nice(1)  # nice processes/threads
+            niceness = os.nice(env.EXECUTOR_NICENESS_INCREMENT)
         except Exception as e:
             logger.warning('Failed to nice subprocess/thread', exc_info=e)
         else:
             logger.debug(f'The niceness of the subprocess/thread has been set to {niceness}')
+    elif env.EXECUTOR_NICENESS_INCREMENT:
+        logger.warning('The current platform does not support nice(), ignoring EXECUTOR_NICENESS_INCREMENT')
     logger.debug('Subprocess/thread initialized')
 
 
@@ -81,6 +83,9 @@ def init():
             *((aioProcessExecutor,) * PROCESS_POOL_WEIGHT),
         )
     ) if aioThreadExecutor and aioProcessExecutor else None
+
+    if env.EXECUTOR_NICENESS_INCREMENT < 0:
+        logger.warning('Lowering the niceness of subprocesses/threads may impact the performance of the main process')
 
     # initialize all subprocesses/threads now
     # here we use sleep to ensure all subprocesses/threads are launched

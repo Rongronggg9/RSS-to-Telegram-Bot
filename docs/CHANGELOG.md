@@ -2,9 +2,13 @@
 
 ## Unreleased
 
-### Enhancements
+### Addition
 
 - **Set niceness for subprocesses/threads**: (Unix only) Nice subprocesses and/or threads to improve the responsiveness of the main process. This is tunable via the environment variable `EXECUTOR_NICENESS_INCREMENT`.
+
+### Enhancements
+
+- **HTML list support improvement**: Now `<menu>` and `<dir>` are treated the same as `<ul>` (unordered list). In addition, orphan `<li>` (list item) without a valid list parent tag are no longer ignored but treated as an item in an single unordered list.
 
 ## v2.4.1: Minor enhancements, bug fixes, and Happy New Year!
 

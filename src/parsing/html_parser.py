@@ -64,8 +64,11 @@ class Parser:
             raise RuntimeError('You must parse the HTML first')
         return stripNewline(stripLineEnd(self.html_tree.get_html().strip()))
 
-    async def _parse_item(self, soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]]) \
-            -> Optional[Text]:
+    async def _parse_item(
+            self,
+            soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]],
+            in_list: bool = False
+    ) -> Optional[Text]:
         self._parse_item_count += 1
         if self._parse_item_count % 64 == 0:
             await asyncio.sleep(0)  # yield to other coroutines, avoid blocking
@@ -282,21 +285,24 @@ class Parser:
             title = urlparse(src).hostname if env.TRAFFIC_SAVING else await web.get_page_title(src)
             return Text([Br(2), effective_link(f'iframe ({title})', src), Br(2)])
 
-        if tag == 'ol' or tag == 'ul':
+        if (ordered := tag == 'ol') or tag in ('ul', 'menu', 'dir'):
             texts = []
             list_items = soup.findAll('li', recursive=False)
             if not list_items:
                 return None
             for list_item in list_items:
-                text = await self._parse_item(list_item)
+                text = await self._parse_item(list_item, in_list=True)
                 if text and text.get_html().strip():
                     texts.append(ListItem(text))
             if not texts:
                 return None
-            if tag == 'ol':
-                return OrderedList([Br(), *texts, Br()])
-            if tag == 'ul':
-                return UnorderedList([Br(), *texts, Br()])
+            return OrderedList([Br(), *texts, Br()]) if ordered else UnorderedList([Br(), *texts, Br()])
+
+        if tag == 'li' and not in_list:
+            # <li> tags should be wrapped in <ol> or <ul>, but very few feeds do not obey this rule
+            # we do an "ugly fix" here to ensure that linebreaks are not missing
+            text = await self._parse_item(soup.children)
+            return UnorderedList([Br(), ListItem(text), Br()]) if text and text.get_html().strip() else None
 
         text = await self._parse_item(soup.children)
         return text or None

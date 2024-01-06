@@ -4,7 +4,7 @@
 
 ### Enhancements
 
-- **Set niceness for subprocesses/threads**: (Unix only) Nice subprocesses and/or threads to improve the responsiveness of the main process.
+- **Set niceness for subprocesses/threads**: (Unix only) Nice subprocesses and/or threads to improve the responsiveness of the main process. This is tunable via the environment variable `EXECUTOR_NICENESS_INCREMENT`.
 
 ## v2.4.1: Minor enhancements, bug fixes, and Happy New Year!
 

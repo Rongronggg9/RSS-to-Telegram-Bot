@@ -250,6 +250,7 @@ TRAFFIC_SAVING: Final = __bool_parser(os.environ.get('TRAFFIC_SAVING'))
 LAZY_MEDIA_VALIDATION: Final = __bool_parser(os.environ.get('LAZY_MEDIA_VALIDATION'))
 NO_UVLOOP: Final = __bool_parser(os.environ.get('NO_UVLOOP'))
 MULTIPROCESSING: Final = __bool_parser(os.environ.get('MULTIPROCESSING'))
+EXECUTOR_NICENESS_INCREMENT: Final = int(os.environ.get('EXECUTOR_NICENESS_INCREMENT') or (2 * hasattr(os, 'nice')))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 __configure_logging(  # config twice to make .env file work
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,

@@ -41,6 +41,8 @@ If you want to allow a certain channel/group to use the bot, you should promote 
 **A**: Once the bot finds itself lacking the permission to send messages (not granted or being blocked), it will immediately unsubscribe all subscriptions in this chat. Meanwhile, if this chat is a channel or group and the bot is still a member of it, it will leave the channel/group.
 Make sure to grant the bot enough permission (sending messages) in channel/group.
 
+A special case is that the bot will leave a topic group if the "General" topic is closed. This is a temporary limitation before topic groups are fully supported.
+
 ### **Q**: My bot is not responding. I checked the log and saw Telethon complaining "Server sent a very new message with ID...", "Server replied with a wrong session ID...", or "Could not find a matching Constructor ID for the TLObject...".
 
 **A:** Telethon is protecting you from potential attacks. For details, please refer to [Telethon FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean). If you believe that it is caused by misconfiguration instead of attacks, and the bot is not deployed on a PaaS platform (e.g. Heroku, Railway), you may stop RSStT, delete the session file (`config/bot.session`), and restart it to solve the problem.

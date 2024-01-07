@@ -266,9 +266,8 @@ async def unsubs(user_id: int,
 
 async def unsub_all(user_id: int, lang: Optional[str] = None) \
         -> Optional[dict[str, Union[dict[str, Union[int, str, db.Sub, None]], str]]]:
-    user_sub_list = await db.Sub.filter(user=user_id)
-    sub_ids = tuple(_sub.id for _sub in user_sub_list)
-    return await unsubs(user_id, sub_ids=sub_ids, lang=lang)
+    user_sub_list = await db.Sub.filter(user=user_id).values_list('id', flat=True)
+    return await unsubs(user_id, sub_ids=user_sub_list, lang=lang) if user_sub_list else None
 
 
 async def export_opml(user_id: int) -> Optional[bytes]:

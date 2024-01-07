@@ -194,6 +194,13 @@ async def leave_chat(chat_id: hints.EntityLike) -> bool:
         return False
 
 
+async def unsub_all_and_leave_chat(user_id: hints.EntityLike):
+    await asyncio.gather(
+        inner.sub.unsub_all(user_id),
+        leave_chat(user_id)
+    )
+
+
 def command_gatekeeper(func: Optional[Callable] = None,
                        *,
                        only_manager: bool = False,
@@ -537,19 +544,15 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 elif isinstance(e, (EntitiesTooLongError, MessageTooLongError)):
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['message_too_long_prompt'])
                 elif isinstance(e, errors_collection.UserBlockedErrors):
-                    tasks = []
-                    if await inner.utils.have_subs(chat_id):
-                        tasks.append(inner.sub.unsub_all(chat_id))
-                    if chat_id < 0:  # it is a group
-                        tasks.append(leave_chat(chat_id))
-                    if tasks:
-                        await asyncio.gather(*tasks)
+                    await unsub_all_and_leave_chat(chat_id)
+                elif isinstance(e, BadRequestError) and e.message == 'TOPIC_CLOSED':
+                    await unsub_all_and_leave_chat(chat_id)
                 else:
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
             except (FloodError, MessageNotModifiedError, locks.ContextTimeoutError):
                 pass  # we can do nothing but be a pessimism to drop it
             except Exception as e:
-                logger.error('Uncaught error occurred when dealing with an uncaught error', exc_info=e)
+                logger.error('Uncaught error occurred when dealing with another uncaught error', exc_info=e)
             finally:
                 raise events.StopPropagation
 

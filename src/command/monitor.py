@@ -10,9 +10,10 @@ from email.utils import format_datetime
 from collections import defaultdict, Counter
 from itertools import islice
 from traceback import format_exc
+from telethon.errors import BadRequestError
 
 from . import inner
-from .utils import escape_html, leave_chat
+from .utils import escape_html, unsub_all_and_leave_chat
 from .inner.utils import update_interval, deactivate_feed, calculate_update
 from .. import log, db, env, web, locks
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
@@ -263,13 +264,12 @@ async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapp
 
 async def __send(sub: db.Sub, post: Union[str, Post]):
     user_id = sub.user_id
-    entity = None
     try:
         try:
-            try:
-                entity = await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
-            except ValueError as e:  # cannot get the input entity, the bot may be banned by the user
-                raise EntityNotFoundError(user_id) from e
+            await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
+        except ValueError:  # cannot get the input entity, the bot may be banned by the user
+            return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=type(EntityNotFoundError).__name__)
+        try:
             if isinstance(post, str):
                 await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
                 return
@@ -277,23 +277,10 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             if __user_blocked_counter[user_id]:  # reset the counter if success
                 del __user_blocked_counter[user_id]
         except UserBlockedErrors as e:
-            user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
-            if user_unsub_all_lock.locked():
-                return  # no need to unsub twice!
-            async with user_unsub_all_lock:
-                if __user_blocked_counter[user_id] < 5:
-                    __user_blocked_counter[user_id] += 1
-                    return  # skip once
-                # fail for 5 times, consider been banned
-                del __user_blocked_counter[user_id]
-                tasks = []
-                logger.error(f'User blocked ({type(e).__name__}): {user_id}')
-                if await inner.utils.have_subs(user_id):
-                    tasks.append(inner.sub.unsub_all(user_id))
-                if user_id < 0 and entity:  # it is a group and can get the entity
-                    tasks.append(leave_chat(user_id))
-                if tasks:
-                    await asyncio.gather(*tasks)
+            return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=type(e).__name__)
+        except BadRequestError as e:
+            if e.message == 'TOPIC_CLOSED':
+                return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=e.message)
     except Exception as e:
         logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}):', exc_info=e)
         try:
@@ -309,6 +296,20 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
                          f'(feed: {post.feed_link}, user: {sub.user_id}):',
                          exc_info=e)
             await env.bot.send_message(env.MANAGER, 'An sending error message cannot be sent, please check the logs.')
+
+
+async def __locked_unsub_all_and_leave_chat(user_id: int, err_msg: str):
+    user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
+    if user_unsub_all_lock.locked():
+        return  # no need to unsub twice!
+    async with user_unsub_all_lock:
+        if __user_blocked_counter[user_id] < 5:
+            __user_blocked_counter[user_id] += 1
+            return  # skip once
+        # fail for 5 times, consider been banned
+        del __user_blocked_counter[user_id]
+        logger.error(f'User blocked ({err_msg}): {user_id}')
+        await unsub_all_and_leave_chat(user_id)
 
 
 async def __deactivate_feed_and_notify_all(feed: db.Feed,

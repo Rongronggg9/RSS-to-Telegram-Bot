@@ -62,11 +62,11 @@ async def opml_import(event: Union[events.NewMessage.Event, Message],
                       **__):
     chat_id = chat_id or event.chat_id
 
-    reply_message: Message = await event.get_reply_message()
+    reply_message: Optional[Message] = await event.get_reply_message()
     if reply_message and reply_message.sender_id == env.bot_id:
         if isinstance(reply_message.reply_markup, types.ReplyKeyboardForceReply):
-            await reply_message.delete()
-    elif event.is_group:
+            env.loop.create_task(reply_message.delete())
+    elif event.is_group:  # in group but not a reply to the bot
         return  # only respond to reply in groups
 
     await check_sub_limit(event, user_id=chat_id, lang=lang)

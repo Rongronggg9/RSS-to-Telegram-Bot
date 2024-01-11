@@ -292,17 +292,22 @@ class Parser:
                 return None
             for list_item in list_items:
                 text = await self._parse_item(list_item, in_list=True)
-                if text and text.get_html().strip():
-                    texts.append(ListItem(text))
+                if text:
+                    texts.append(text)
             if not texts:
                 return None
             return OrderedList([Br(), *texts, Br()]) if ordered else UnorderedList([Br(), *texts, Br()])
 
-        if tag == 'li' and not in_list:
-            # <li> tags should be wrapped in <ol> or <ul>, but very few feeds do not obey this rule
+        if tag == 'li':
+            # <li> tags should be wrapped in <ol> or <ul>, but some feeds do not obey this rule
             # we do an "ugly fix" here to ensure that linebreaks are not missing
             text = await self._parse_item(soup.children)
-            return UnorderedList([Br(), ListItem(text), Br()]) if text and text.get_html().strip() else None
+            if not text:
+                return None
+            text.strip(deeper=True)
+            if not text.get_html().strip():
+                return None
+            return ListItem(text) if in_list else UnorderedList([Br(), ListItem(text), Br()])
 
         text = await self._parse_item(soup.children)
         return text or None

@@ -31,9 +31,13 @@ async def cmd_import(event: Union[events.NewMessage.Event, Message],
             '\n\n'
             + i18n[lang]['import_for_channel_or_group_prompt'] if event.is_private else ''
         ),
-        buttons=Button.force_reply(single_use=True,
-                                   selective=True,
-                                   placeholder=i18n[lang]['send_opml_reply_placeholder']),
+        buttons=(
+            Button.force_reply(
+                single_use=True,
+                selective=True,
+                placeholder=i18n[lang]['send_opml_reply_placeholder']
+            ) if event.is_group and chat_id == event.chat_id else None
+        ),
         reply_to=event.id if event.is_group else None
     )
 

@@ -31,13 +31,20 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message],
               else i18n[lang]['sub_usage_in_channel_html'])
 
     if not filtered_urls:
-        await event.respond(prompt,
-                            parse_mode='html',
-                            buttons=(Button.force_reply(single_use=True,
-                                                        selective=True,
-                                                        placeholder='url1 url2 url3 ...')
-                                     if allow_reply else None),
-                            reply_to=event.id if event.is_group else None)
+        await event.respond(
+            prompt,
+            parse_mode='html',
+            buttons=(
+                Button.force_reply(
+                    single_use=True,
+                    selective=True,
+                    placeholder='url1 url2 url3 ...'
+                )
+                # do not force reply in private chat
+                if event.is_group else None
+            ),
+            reply_to=event.id if event.is_group else None
+        )
         return
 
     # delete the force reply message

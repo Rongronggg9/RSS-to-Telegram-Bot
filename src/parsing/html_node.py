@@ -39,16 +39,18 @@ class Text:
                 self.content.lstrip()
             if strip_r:
                 self.content.rstrip()
+            return
         if not self.is_listed():  # nested
             if not deeper:
                 return
             self.content.strip()
+        # listed
         while strip_l and self.content and type(self.content[0]) is Br:
             self.content.pop(0)
         while strip_r and self.content and type(self.content[-1]) is Br:
             self.content.pop()
         if deeper:
-            any(map(lambda text: text.strip(strip_l=strip_l, strip_r=strip_r), self.content))
+            any(map(lambda text: text.strip(deeper=deeper, strip_l=strip_l, strip_r=strip_r), self.content))
 
     def lstrip(self, deeper: bool = False):
         self.strip(deeper=deeper, strip_r=False)

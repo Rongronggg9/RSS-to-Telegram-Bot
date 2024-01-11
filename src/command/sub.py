@@ -5,6 +5,7 @@ from telethon import events, Button
 from telethon.tl import types
 from telethon.tl.patched import Message
 
+from .. import env
 from ..i18n import i18n
 from . import inner
 from .utils import command_gatekeeper, parse_command, escape_html, parse_callback_data_with_page, \
@@ -38,6 +39,14 @@ async def cmd_sub(event: Union[events.NewMessage.Event, Message],
                                      if allow_reply else None),
                             reply_to=event.id if event.is_group else None)
         return
+
+    # delete the force reply message
+    reply_message: Optional[Message] = await event.get_reply_message()
+    if (
+            reply_message and reply_message.sender_id == env.bot_id
+            and isinstance(reply_message.reply_markup, types.ReplyKeyboardForceReply)
+    ):
+        env.loop.create_task(reply_message.delete())
 
     msg: Message = await event.respond(i18n[lang]['processing'])
 

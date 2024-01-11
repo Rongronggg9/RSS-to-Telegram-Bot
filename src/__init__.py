@@ -19,6 +19,7 @@ from time import sleep
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from telethon import TelegramClient, events
 from telethon.errors import ApiIdPublishedFloodError, RPCError
 from telethon.tl import types
@@ -305,9 +306,9 @@ def main():
         loop.create_task(lazy())
 
         scheduler.add_job(func=command.monitor.run_monitor_task,
-                          trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
-                          max_instances=10,
-                          misfire_grace_time=10)
+                                            trigger=IntervalTrigger(seconds=15),
+                                            max_instances=10,
+                                            misfire_grace_time=10)
         scheduler.start()
 
         loop.run_until_complete(bot.disconnected)

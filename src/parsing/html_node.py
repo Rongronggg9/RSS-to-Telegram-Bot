@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Optional, Union
 
-from url_normalize import url_normalize
-
 __all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Blockquote", "Code", "Pre", "Br", "Hr",
            "ListItem", "OrderedList", "UnorderedList", "TypeTextContent"]
 
@@ -197,17 +195,6 @@ class ListParent(TagWithoutParam):
 class Link(TagWithParam):
     tag = 'a'
     attr = 'href'
-
-    def __init__(self, content: TypeTextContent, param: str, copy: bool = False, *_args, **_kwargs):
-        super().__init__(content, param)
-        if not copy:
-            try:
-                self.param = url_normalize(self.param)
-            except (ValueError, TypeError):
-                # clear invalid URL
-                self.param = None
-                self.tag = None
-                self.attr = None
 
 
 class Bold(TagWithoutParam):

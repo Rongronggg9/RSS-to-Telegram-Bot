@@ -39,9 +39,9 @@ class Text:
                 self.content.rstrip()
             return
         if not self.is_listed():  # nested
-            if not deeper:
-                return
-            self.content.strip()
+            if deeper:
+                self.content.strip()
+            return
         # listed
         while strip_l and self.content and type(self.content[0]) is Br:
             self.content.pop(0)

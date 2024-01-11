@@ -6,6 +6,10 @@
 
 - **除去 `<li>` 中的表层空格**: 除去 `<li>` (列表项) 中的表层空格 (包括换行符) 以提高可读性。只有前导和尾随空格 (包括换行符) 被除去。
 
+### Bug 修复
+
+- **(`/sub`) “强制回复”未被清除**: `/sub` 和 `/import` 都将 `ReplyKeyboardForceReply` 设置为 `True` 以强制用户回复 bot。然而，由于 Telegram 的一个 bug，即使用户已经回复过了，它仍然有效，导致回复栏总是重新出现。先前，通过在用户回复后删除包含 `ReplyKeyboardForceReply` 的提示消息，为 `/import` 应用了变通解决方案 (另请参阅 [#170](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/170))。但是 `/sub` 在那时被遗忘了。现在，这个变通解决方案也被应用到了 `/sub` 上。
+
 ## v2.5.0: 响应性优化、小的增强和修复
 
 ### 新增功能

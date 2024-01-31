@@ -1,7 +1,7 @@
 {
     "l10n_info": {
-        "lang_code": "en",
-        "iso_639_code": "",
+        "lang_code": "el",
+        "iso_639_code": "el",
         "language_name": "Όνομα γλώσσας",
         "lang_native_name": "Όνομα γλώσσας (γηγενής)",
         "select_lang_prompt": "Παρακαλώ Επιλέξτε μια γλώσσα.",

@@ -10,7 +10,7 @@ pillow==10.2.0
 beautifulsoup4==4.12.2
 lxml==4.9.3
 rapidfuzz==3.6.1
-emoji==2.9.0
+emoji==2.10.1
 minify-html==0.15.0
 minify-html-onepass==0.15.0
 matplotlib==3.8.2

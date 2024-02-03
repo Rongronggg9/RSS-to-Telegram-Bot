@@ -28,7 +28,7 @@ python-socks[asyncio]==2.4.4
 dnspython[idna]==2.5.0
 
 # utils
-colorlog==6.8.0
+colorlog==6.8.2
 APScheduler==3.10.4
 python-dotenv==1.0.1
 multidict==6.0.4

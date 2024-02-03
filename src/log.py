@@ -62,7 +62,7 @@ class _Watchdog:
         _logger.critical(msg)
         coro = None
         if env.bot is not None:
-            coro = env.loop.create_task(env.bot.send_message(env.MANAGER, f'WATCHDOG: {msg}'))
+            coro = env.loop.create_task(env.bot.send_message(env.ERROR_LOGGING_CHAT, f'WATCHDOG: {msg}'))
         shutdown(prerequisite=coro)
 
     def feed(self, delay: int = 15 * 60):
@@ -83,7 +83,7 @@ class _APSCFilter(logging.Filter):
             self.count += 1
             if self.count != 0 and self.count % 5 == 0:
                 coro = env.bot.send_message(
-                    env.MANAGER,
+                    env.ERROR_LOGGING_CHAT,
                     f'RSS monitor tasks have conflicted too many times ({self.count})!\n'
                     + ('Please store the log and restart.\n(sometimes it may be caused by too many subscriptions)'
                        if self.count < 15 else
@@ -118,7 +118,7 @@ class _TelethonClientUpdatesFilter(logging.Filter):
         msg = record.msg % record.args
         if 'Fatal error' in msg:
             coro = env.bot.send_message(
-                env.MANAGER,
+                env.ERROR_LOGGING_CHAT,
                 msg + '\n\n' + 'Now the bot will restart.'
             )
             _logger.critical('Telethon client fatal error! Exiting...')

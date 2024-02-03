@@ -156,12 +156,8 @@ API_HASH: Final = os.environ.get('API_HASH')
 TOKEN: Final = os.environ.get('TOKEN')
 
 try:
-    _chatid = os.environ.get('CHATID')
-    _chatid = int(_chatid) if isinstance(_chatid, str) and _chatid.lstrip('-').isdecimal() else _chatid
-    _manager = os.environ.get('MANAGER') or _chatid
-    MANAGER: Final = int(_manager) if isinstance(_manager, str) and _manager.lstrip('-').isdecimal() else _manager
-    del _chatid
-    del _manager
+    _manager = tuple(map(int, __list_parser(os.environ.get('MANAGER') or os.environ.get('CHATID'))))
+    MANAGER: Final = set(_manager)  # optimize membership test
 
     if not all((TOKEN, MANAGER)):
         logger.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
@@ -169,6 +165,11 @@ try:
 except Exception as e:
     logger.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
+
+_error_logging_chat = os.environ.get('ERROR_LOGGING_CHAT')
+ERROR_LOGGING_CHAT: Final = int(_error_logging_chat) if _error_logging_chat else _manager[0]
+del _error_logging_chat
+del _manager
 
 MANAGER_PRIVILEGED: Final = __bool_parser(os.environ.get('MANAGER_PRIVILEGED'))
 

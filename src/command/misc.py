@@ -35,7 +35,7 @@ async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # cal
     await db.User.update_or_create(defaults={'lang': lang}, id=event.chat_id)
     await set_bot_commands(scope=types.BotCommandScopePeer(await event.get_input_chat()),
                            lang_code='',
-                           commands=get_commands_list(lang=lang, manager=event.chat_id == env.MANAGER))
+                           commands=get_commands_list(lang=lang, manager=event.chat_id in env.MANAGER))
     logger.info(f'Changed language to {lang} for {event.chat_id}')
     help_button = Button.inline(text=i18n[lang]['cmd_description_help'], data='help')
     await event.edit(welcome_msg, buttons=help_button)
@@ -46,7 +46,7 @@ async def cmd_or_callback_help(event: Union[events.NewMessage.Event, Message, ev
                                *_,
                                lang: Optional[str] = None,
                                **__):  # callback data: help; command: /help
-    msg = i18n[lang]['help_msg_html' if event.chat_id != env.MANAGER else 'manager_help_msg_html']
+    msg = i18n[lang]['manager_help_msg_html' if event.chat_id in env.MANAGER else 'help_msg_html']
     if event.is_private:
         msg += '\n\n' + i18n[lang]['usage_in_channel_or_group_prompt_html']
     await event.respond(msg, parse_mode='html', link_preview=False) \

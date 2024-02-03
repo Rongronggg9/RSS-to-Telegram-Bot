@@ -264,7 +264,7 @@ async def get_set_interval_buttons(sub_or_user: Union[db.Sub, int],
 
     minimal_interval: int = db.EffectiveOptions.minimal_interval
 
-    if (sub_or_user.id if is_user else sub_or_user.user_id) == env.MANAGER:
+    if (sub_or_user.id if is_user else sub_or_user.user_id) in env.MANAGER:
         minimal_interval = min(minimal_interval, 1)
 
     columns = 4
@@ -381,7 +381,11 @@ async def set_interval(sub_or_user: Union[db.Sub, db.User], interval: int) -> Un
     minimal_interval = db.EffectiveOptions.minimal_interval
     if not isinstance(interval, int) or interval <= 0:
         interval = None
-    if interval and interval < minimal_interval and (sub_or_user.id if is_user else sub_or_user.user_id) != env.MANAGER:
+    if (
+            interval
+            and interval < minimal_interval
+            and (sub_or_user.id if is_user else sub_or_user.user_id) not in env.MANAGER
+    ):
         interval = minimal_interval
     if interval == sub_or_user.interval:
         return sub_or_user

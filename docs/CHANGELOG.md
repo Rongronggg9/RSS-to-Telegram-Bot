@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Addition
+
+- **Multiple managers**: The environment variable `MANAGER` now accepts a single user ID as well as a list separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`. Each user in the list will be able to manage the bot **equally**.
+- **Customizable error logging chat**: Previously, some error logs were always sent to the bot manager. To make it more flexible, a new environment variable `ERROR_LOGGING_CHAT`, accepting a **single** user/channel/group ID, has been added. If set, these error logs will be sent to the specified chat. Otherwise, the first user ID in `MANAGER` will be selected as default.
+
 ### Enhancements
 
 - **Strip whitespaces in `<li>`**: Strip whitespaces (including linebreaks) in `<li>` (list item) to improve readability. Only the leading and trailing whitespaces (including linebreaks) are stripped.

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional
 
 # the event loop and basic configurations are initialized in env, so import it first
 # some logger configurations are set in log, so import it second to make them effective in child processes
@@ -15,8 +16,8 @@ import os
 import signal
 import asyncio
 from functools import partial
+from itertools import chain
 from time import sleep
-from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from telethon import TelegramClient, events
@@ -227,35 +228,31 @@ async def pre():
 
 
 async def lazy():
-    # noinspection PyTypeChecker
-    manager_lang: Optional[str] = await db.User.get_or_none(id=env.MANAGER).values_list('lang', flat=True)
+    manager_lang_d: dict[int, str] = dict(await db.User.filter(id__in=env.MANAGER).values_list('id', 'lang'))
 
-    set_bot_commands_tasks = (
-        loop.create_task(
+    cmd_coro_chain = chain(
+        (
             command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
                                            lang_code='',
-                                           commands=get_commands_list())
-        ),
-        *(
-            loop.create_task(
-                command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
-                                               lang_code=i18n[lang]['iso_639_code'],
-                                               commands=get_commands_list(lang=lang))
-            )
+                                           commands=get_commands_list()),
+        ), (
+            command.utils.set_bot_commands(scope=types.BotCommandScopeDefault(),
+                                           lang_code=i18n[lang]['iso_639_code'],
+                                           commands=get_commands_list(lang=lang))
             for lang in ALL_LANGUAGES if len(i18n[lang]['iso_639_code']) == 2
-        ),
-        loop.create_task(
-            command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(env.MANAGER, 0)),
+        ), (
+            command.utils.set_bot_commands(scope=types.BotCommandScopePeer(types.InputPeerUser(manager, 0)),
                                            lang_code='',
-                                           commands=get_commands_list(lang=manager_lang, manager=True))
+                                           commands=get_commands_list(lang=lang, manager=True))
+            for manager, lang in manager_lang_d.items()
         ),
     )
 
-    # get set_bot_commands tasks result
-    try:
-        await asyncio.gather(*set_bot_commands_tasks)
-    except RPCError as _e:
-        logger.warning('Set command error: ', exc_info=_e)
+    for coro in cmd_coro_chain:
+        try:
+            await asyncio.gather(asyncio.sleep(1.5), coro)  # sleep to avoid flood
+        except RPCError as e:
+            logger.warning('Set command error: ', exc_info=e)
 
 
 async def post():
@@ -287,7 +284,8 @@ def main():
 
         logger.info(
             f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
-            f"MANAGER: {env.MANAGER}\n"
+            f"MANAGER: {', '.join(map(str, env.MANAGER))}\n"
+            f"ERROR_LOGGING_CHAT: {env.ERROR_LOGGING_CHAT}\n"
             f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"
             f"R_PROXY (for RSS): {env.REQUESTS_PROXIES['all'] if env.REQUESTS_PROXIES else 'not set'}\n"
             f"DATABASE: {env.DATABASE_URL.split('://', 1)[0]}\n"

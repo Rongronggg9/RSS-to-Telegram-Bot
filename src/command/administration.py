@@ -175,7 +175,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
     if state is not None:
         user.state = state
         await user.save()
-    state = user.state if user_id != env.MANAGER else None
+    state = None if user_id in env.MANAGER else user.state
     default_sub_limit = (db.EffectiveOptions.user_sub_limit
                          if user_id > 0
                          else db.EffectiveOptions.channel_or_group_sub_limit)
@@ -198,7 +198,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
             + (f"\n\n{i18n[lang]['user_state']}: {i18n[lang][f'user_state_{state}']} "
                f"({i18n[lang][f'user_state_description_{state}']})" if state is not None else '')
     )
-    buttons = tuple(filter(None, (
+    buttons = None if user_id in env.MANAGER else tuple(filter(None, (
         *(
             (Button.inline(
                 (SELECTED_EMOJI if user.state == btn_state else UNSELECTED_EMOJI)
@@ -212,7 +212,7 @@ async def cmd_user_info_or_callback_set_user(event: Union[events.NewMessage.Even
                        f"({default_sub_limit if default_sub_limit > 0 else i18n[lang]['sub_limit_unlimited']})",
                        data=f"reset_sub_limit={user_id}"),) if not is_default_limit else None,
         (Button.switch_inline(i18n[lang]['set_sub_limit_to'], query=f'/set_sub_limit {user_id} ', same_peer=True),),
-    ))) if user_id != env.MANAGER else None
+    )))
     await event.edit(msg_text, parse_mode='html', buttons=buttons) if is_callback \
         else await event.respond(msg_text, parse_mode='html', buttons=buttons)
 

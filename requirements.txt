@@ -7,7 +7,7 @@ aiographfix==0.2.2
 feedparser==6.0.11  # feedparser@git+https://github.com/Rongronggg9/feedparser.git@develop
 listparser[lxml]==0.19
 pillow==10.2.0
-beautifulsoup4==4.12.2
+beautifulsoup4==4.12.3
 lxml==4.9.3
 rapidfuzz==3.6.1
 emoji==2.10.1

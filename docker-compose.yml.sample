@@ -10,7 +10,7 @@ services:
       - ./config:/app/config
     environment:
       - TOKEN=1234567890:A1BCd2EF3gH45IJK6lMN7oPqr8ST9UvWX0Yz0  # get it from @BotFather
-      - MANAGER=1234567890  # get it from @userinfobot
+      - MANAGER=1234567890  # get it from @userinfobot, can be a list (e.g., 1234567890;987654321)
 
 # ↓------ To disable sending via Telegraph, comment out this area ------↓ #
 # Get Telegraph API access tokens: https://api.telegra.ph/createAccount?short_name=RSStT&author_name=Generated%20by%20RSStT&author_url=https%3A%2F%2Fgithub.com%2FRongronggg9%2FRSS-to-Telegram-Bot
@@ -27,6 +27,7 @@ services:
 
 # Please read https://github.com/Rongronggg9/RSS-to-Telegram-Bot/blob/master/docs/advanced-settings.md for more details.
 # ↓------ Advanced settings ------↓ #
+      #- ERROR_LOGGING_CHAT=-1001234567890  # default: the first MANAGER
       #- MULTIUSER=0  # default: 1
       #- CRON_SECOND=30  # 0-59, default: 0
       #- DATABASE_URL=postgres://username:password@host:port/db_name  # default: sqlite://path/to/config/db.sqlite3

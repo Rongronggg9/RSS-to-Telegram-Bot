@@ -15,6 +15,7 @@
 ### Bug fixes
 
 - **(`/sub`) "force reply" not cleared**: Both `/sub` and `/import` set `ReplyKeyboardForceReply` to `True` to force the user to reply to the bot. However, due to a bug of Telegram, it keeps effective even if the user has made a reply, making the reply bar always reappear. Previously, a workaround has been applied to `/import` by deleting the prompt message containing `ReplyKeyboardForceReply` after the user has made a reply (see also [#170](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/170)). But `/sub` was forgotten at that time. Now the workaround has been applied to `/sub` too.
+- **"Remote" `/lang` unavailable**: Fix a bug preventing users from using the `/lang` command "remotely".
 
 ## v2.5.0: Responsiveness improvement, tiny enhancements and fixes
 

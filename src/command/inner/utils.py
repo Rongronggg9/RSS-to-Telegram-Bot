@@ -109,7 +109,7 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> tupl
     ) if counts > 0 else ()
 
 
-def get_lang_buttons(callback=str, current_lang: str = None) \
+def get_lang_buttons(callback=str, current_lang: str = None, tail: str = '') \
         -> tuple[tuple[tuple[KeyboardButtonCallback, ...], ...], tuple[str, ...]]:
     lang_3_per_row = [lang for lang in i18n.lang_3_per_row if lang != current_lang]
     lang_2_per_row = [lang for lang in i18n.lang_2_per_row if lang != current_lang]
@@ -128,15 +128,15 @@ def get_lang_buttons(callback=str, current_lang: str = None) \
         lang_2_per_row = lang_2_per_row[:-_]
 
     buttons = (
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
+            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}{tail}')
                           for lang in lang_3_per_row),
                          columns=3)
             +
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
+            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}{tail}')
                           for lang in lang_2_per_row),
                          columns=2)
             +
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
+            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}{tail}')
                           for lang in lang_1_per_row),
                          columns=1)
     )

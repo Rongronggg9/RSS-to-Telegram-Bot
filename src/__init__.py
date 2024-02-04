@@ -183,7 +183,7 @@ async def pre():
     bot.add_event_handler(command.sub.cmd_or_callback_unsub_all,
                           events.CallbackQuery(pattern=rf'unsub_all{callback_target_matcher}$'))
     bot.add_event_handler(command.misc.callback_set_lang,
-                          events.CallbackQuery(pattern=r'^set_lang=[\w_\-]+$'))
+                          events.CallbackQuery(pattern=rf'^set_lang=[\w_\-]+{callback_target_matcher}$'))
     bot.add_event_handler(command.misc.cmd_or_callback_help,
                           events.CallbackQuery(pattern='^help$'))
     bot.add_event_handler(partial(command.customization.callback_activate_or_deactivate_all_subs, activate=True),

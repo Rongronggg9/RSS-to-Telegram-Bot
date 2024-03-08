@@ -154,6 +154,7 @@ SAMPLE_APIS: Final = {
 API_ID: Final = int(os.environ['API_ID']) if os.environ.get('API_ID') else None
 API_HASH: Final = os.environ.get('API_HASH')
 TOKEN: Final = os.environ.get('TOKEN')
+TELEGRAPH_IMG_UPLOAD: Final = os.environ['TELEGRAPH_IMG_UPLOAD'] if os.environ.get('TELEGRAPH_IMG_UPLOAD') else False
 
 try:
     _manager = tuple(map(int, __list_parser(os.environ.get('MANAGER') or os.environ.get('CHATID'))))

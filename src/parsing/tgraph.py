@@ -1,7 +1,10 @@
 from __future__ import annotations
+
+import json
 from typing import Union, Optional
 from typing_extensions import Final
 from collections.abc import Awaitable
+import requests
 
 import asyncio
 import time
@@ -269,7 +272,6 @@ class TelegraphIfy:
                 elif tag.name not in TELEGRAPH_ALLOWED_TAGS:
                     tag.replaceWithChildren()  # remove disallowed tags
                     continue
-
                 # verify tags
                 if tag.name == 'a' and not tag.text:
                     tag.replaceWithChildren()  # remove invalid links
@@ -278,7 +280,6 @@ class TelegraphIfy:
                     alt = tag.get('alt')
                     tag.replaceWith(alt) if alt else tag.decompose()  # drop emoticon
                     continue
-
                 # deal with attributes
                 if tag.name not in TELEGRAPH_TAGS_ALLOW_ATTR:
                     tag.attrs = {}  # remove all attributes
@@ -299,7 +300,11 @@ class TelegraphIfy:
                         if tag.name == 'img' and not attr_content.startswith(env.IMAGES_WESERV_NL):
                             if attr_content.split('.', 1)[1].split('/', 1)[0] == 'sinaimg.cn':
                                 attr_content = env.IMG_RELAY_SERVER + attr_content
-                            attr_content = construct_weserv_url(attr_content)
+                            if env.TELEGRAPH_IMG_UPLOAD:
+                                attr_content = telegraph_file_upload(attr_content)
+                            else:
+                                attr_content = construct_weserv_url(attr_content)
+                            logger.warning(f'Processed img: {attr_content}')
                     tag.attrs = {attr_name: attr_content}
 
         if self.feed_title:
@@ -357,3 +362,34 @@ class TelegraphIfy:
                     f'Network error ({type(e).__name__}) occurred when creating telegraph page, will retry')
                 return await self.telegraph_ify()
             raise e
+
+
+def telegraph_file_upload(file_url):
+    '''
+    Sends a file to telegra.ph storage and returns its url
+    Works ONLY with 'gif', 'jpeg', 'jpg', 'png', 'mp4'
+
+    Parameters
+    ---------------
+    path_to_file -> str, path to a local file
+
+    Return
+    ---------------
+    telegraph_url -> str, url of the file uploaded
+
+    >>>telegraph_file_upload('test_image.jpg')
+    https://telegra.ph/file/16016bafcf4eca0ce3e2b.jpg
+    >>>telegraph_file_upload('untitled.txt')
+    error, txt-file can not be processed
+    '''
+    response = requests.get(file_url)
+    if response.status_code == 200:
+        # 提取图片内容
+        image_data = response.content
+        url = 'https://telegra.ph/upload'
+        upload_response = requests.post(url, files={'file': ('file', image_data)})
+        telegraph_url = json.loads(upload_response.content)
+        telegraph_url = telegraph_url[0]['src']
+        telegraph_url = f'https://telegra.ph{telegraph_url}'
+        return telegraph_url
+    return construct_weserv_url(file_url)

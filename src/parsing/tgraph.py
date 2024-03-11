@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import json
 from typing import Union, Optional
 from typing_extensions import Final
 from collections.abc import Awaitable
-import requests
 
 import asyncio
 import time
@@ -16,7 +14,7 @@ from aiohttp import ClientTimeout, ClientError
 from aiohttp_retry import RetryClient
 from aiohttp_socks import ProxyConnector
 
-from .. import env, log
+from .. import env, log, web
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
 from .medium import construct_weserv_url
 from ..aio_helper import run_async
@@ -301,10 +299,10 @@ class TelegraphIfy:
                             if attr_content.split('.', 1)[1].split('/', 1)[0] == 'sinaimg.cn':
                                 attr_content = env.IMG_RELAY_SERVER + attr_content
                             if env.TELEGRAPH_IMG_UPLOAD:
-                                attr_content = telegraph_file_upload(attr_content)
+                                attr_content = await telegraph_file_upload(attr_content)
                             else:
                                 attr_content = construct_weserv_url(attr_content)
-                            logger.warning(f'Processed img: {attr_content}')
+                            logger.debug(f'Processed img: {attr_content}')
                     tag.attrs = {attr_name: attr_content}
 
         if self.feed_title:
@@ -364,30 +362,29 @@ class TelegraphIfy:
             raise e
 
 
-def telegraph_file_upload(file_url):
+async def telegraph_file_upload(file_url):
     '''
-    Sends a file to telegra.ph storage and returns its url
+    use file url upload to telegra.ph storage and returns its url
     Works ONLY with 'gif', 'jpeg', 'jpg', 'png', 'mp4'
 
     Parameters
     ---------------
-    path_to_file -> str, path to a local file
+    path_to_file -> str, file_url
 
     Return
     ---------------
     telegraph_url -> str, url of the file uploaded
-
-    >>>telegraph_file_upload('test_image.jpg')
+    >>>telegraph_file_upload('https://pics4.baidu.com/feed/38dbb6fd5266d016a27113a55c317b0a34fa35ff.jpeg@f_auto?token=5ff5fe2c2e833b70692db8bae3a1f0ce')
     https://telegra.ph/file/16016bafcf4eca0ce3e2b.jpg
-    >>>telegraph_file_upload('untitled.txt')
+    >>>telegraph_file_upload('https://error.com')
     error, txt-file can not be processed
     '''
-    response = requests.get(file_url)
-    if response.status_code == 200:
-        # 提取图片内容
+    response = await web.get(file_url)
+    if response.status == 200:
         image_data = response.content
         url = 'https://telegra.ph/upload'
-        upload_response = requests.post(url, files={'file': ('file', image_data)})
+        upload_response = await web.post(url, data={'file': image_data})
+        import json
         telegraph_url = json.loads(upload_response.content)
         telegraph_url = telegraph_url[0]['src']
         telegraph_url = f'https://telegra.ph{telegraph_url}'

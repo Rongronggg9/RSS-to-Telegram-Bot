@@ -154,7 +154,6 @@ SAMPLE_APIS: Final = {
 API_ID: Final = int(os.environ['API_ID']) if os.environ.get('API_ID') else None
 API_HASH: Final = os.environ.get('API_HASH')
 TOKEN: Final = os.environ.get('TOKEN')
-TELEGRAPH_IMG_UPLOAD: Final = os.environ['TELEGRAPH_IMG_UPLOAD'] if os.environ.get('TELEGRAPH_IMG_UPLOAD') else False
 
 try:
     _manager = tuple(map(int, __list_parser(os.environ.get('MANAGER') or os.environ.get('CHATID'))))
@@ -222,6 +221,8 @@ HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
 HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)
 HTTP_CONCURRENCY_PER_HOST: Final = int(os.environ.get('HTTP_CONCURRENCY_PER_HOST') or 16)
 
+# if open telegraph img upload, image relay server will be ignored
+TELEGRAPH_IMG_UPLOAD: Final = __bool_parser(os.environ['TELEGRAPH_IMG_UPLOAD'])
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'
 IMG_RELAY_SERVER: Final = (

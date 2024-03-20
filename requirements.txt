@@ -1,19 +1,19 @@
 # telegram and telegraph
 cryptg==0.4.0
-telethon==1.33.1
+telethon==1.34.0
 aiographfix==0.2.2
 
 # feed parsing
 feedparser==6.0.11  # feedparser@git+https://github.com/Rongronggg9/feedparser.git@develop
 listparser[lxml]==0.19
-pillow==10.1.0
-beautifulsoup4==4.12.2
+pillow==10.2.0
+beautifulsoup4==4.12.3
 lxml==4.9.3
-rapidfuzz==3.6.1
-emoji==2.9.0
+rapidfuzz==3.6.2
+emoji==2.10.1
 minify-html==0.15.0
 minify-html-onepass==0.15.0
-matplotlib==3.8.2
+matplotlib==3.8.3
 
 # db
 asyncpg==0.29.0
@@ -21,21 +21,20 @@ tortoise-orm[accel]==0.20.0
 aerich==0.6.3
 
 # network
-aiohttp[speedups]==3.9.1
+aiohttp[speedups]==3.9.3
 aiohttp-socks==0.8.4
 aiohttp-retry==2.8.3
 python-socks[asyncio]==2.4.4
-dnspython[idna]==2.4.2
-url-normalize==1.4.3
+dnspython[idna]==2.6.1
 
 # utils
-colorlog==6.8.0
+colorlog==6.8.2
 APScheduler==3.10.4
-python-dotenv==1.0.0
-multidict==6.0.4
-asyncstdlib==3.10.9
-cachetools==5.3.2
+python-dotenv==1.0.1
+multidict==6.0.5
+asyncstdlib==3.12.1
+cachetools==5.3.3
 CJKwrap==2.2
-typing-extensions==4.9.0
+typing-extensions==4.10.0
 uvloop==0.19.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-isal==1.5.3; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'
+isal==1.6.1; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'

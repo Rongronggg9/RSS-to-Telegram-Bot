@@ -1,7 +1,7 @@
 {
     "l10n_info": {
-        "lang_code": "Kürzer ist besser. Normalerweise ist es dasselbe wie der iso_639_code. Wenn eine Sprache über mehrere allgemeine Varianten verfügt, von welchen keine als allgemeinen Standard verwendet werde kann, sollte stattdessen die Verwendung von erweiterten IETF language tags in Erwägung gezogen werden.",
-        "iso_639_code": "",
+        "lang_code": "de",
+        "iso_639_code": "de",
         "language_name": "German",
         "lang_native_name": "Deutsch",
         "select_lang_prompt": "Bitte wählen Sie eine Sprache.",

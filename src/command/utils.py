@@ -268,9 +268,9 @@ def command_gatekeeper(func: Optional[Callable] = None,
                 chat_in_db, _ = await db.User.get_or_create(id=chat_id, defaults={'lang': 'null'})
                 chat_state = chat_in_db.state
 
-            permission_denied_not_manager = only_manager and sender_id != env.MANAGER
+            permission_denied_not_manager = only_manager and sender_id not in env.MANAGER
             permission_denied_no_permission = (
-                    sender_id != env.MANAGER
+                    sender_id not in env.MANAGER
                     and ((not env.MULTIUSER and max(sender_state, chat_state) < 1) or min(sender_state, chat_state) < 0)
             )
             if permission_denied_not_manager or permission_denied_no_permission:
@@ -436,7 +436,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                         chat_id = get_peer_id(chat, add_mark=True)
                         if not isinstance(chat, types.Channel):
                             # only allow operating channel/group in private chats
-                            if sender_id != env.MANAGER or not env.MANAGER_PRIVILEGED:
+                            if sender_id not in env.MANAGER or not env.MANAGER_PRIVILEGED:
                                 raise TypeError
                         await user_and_chat_permission_check()
                     except (TypeError, ValueError, ChatIdInvalidError) as e:
@@ -473,7 +473,7 @@ def command_gatekeeper(func: Optional[Callable] = None,
                                    f'because a group migration to supergroup is needed')
                     raise events.StopPropagation
 
-                if sender_id == env.MANAGER and env.MANAGER_PRIVILEGED:
+                if sender_id in env.MANAGER and env.MANAGER_PRIVILEGED:
                     participant_type = 'PrivilegedBotManager'
                     await execute()
                     raise events.StopPropagation

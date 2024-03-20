@@ -245,10 +245,10 @@ async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapp
                                  f'Please check:<br><br>' +
                                  format_exc().replace('\n', '<br>'),
                                  feed_title=feed.title, link=link)
-            await error_message.send_formatted_post(env.MANAGER, send_mode=2)
+            await error_message.send_formatted_post(env.ERROR_LOGGING_CHAT, send_mode=2)
         except Exception as e:
             logger.error(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
-            await env.bot.send_message(env.MANAGER, 'A parsing error message cannot be sent, please check the logs.')
+            await env.bot.send_message(env.ERROR_LOGGING_CHAT, 'A parsing error message cannot be sent, please check the logs.')
         return
     res = await asyncio.gather(
         *(asyncio.wait_for(__send(sub, post), 8.5 * 60) for sub in subs),
@@ -290,12 +290,12 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
                                  format_exc().replace('\n', '<br>'),
                                  title=post.title, feed_title=post.feed_title, link=post.link, author=post.author,
                                  feed_link=post.feed_link)
-            await error_message.send_formatted_post(env.MANAGER, send_mode=2)
+            await error_message.send_formatted_post(env.ERROR_LOGGING_CHAT, send_mode=2)
         except Exception as e:
             logger.error(f'Failed to send sending error message for {post.link} '
                          f'(feed: {post.feed_link}, user: {sub.user_id}):',
                          exc_info=e)
-            await env.bot.send_message(env.MANAGER, 'An sending error message cannot be sent, please check the logs.')
+            await env.bot.send_message(env.ERROR_LOGGING_CHAT, 'An sending error message cannot be sent, please check the logs.')
 
 
 async def __locked_unsub_all_and_leave_chat(user_id: int, err_msg: str):

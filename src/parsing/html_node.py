@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Optional, Union
 
-from url_normalize import url_normalize
-
 __all__ = ["HtmlTree", "Text", "Link", "Bold", "Italic", "Underline", "Strike", "Blockquote", "Code", "Pre", "Br", "Hr",
            "ListItem", "OrderedList", "UnorderedList", "TypeTextContent"]
 
@@ -39,16 +37,18 @@ class Text:
                 self.content.lstrip()
             if strip_r:
                 self.content.rstrip()
+            return
         if not self.is_listed():  # nested
-            if not deeper:
-                return
-            self.content.strip()
+            if deeper:
+                self.content.strip()
+            return
+        # listed
         while strip_l and self.content and type(self.content[0]) is Br:
             self.content.pop(0)
         while strip_r and self.content and type(self.content[-1]) is Br:
             self.content.pop()
         if deeper:
-            any(map(lambda text: text.strip(strip_l=strip_l, strip_r=strip_r), self.content))
+            any(map(lambda text: text.strip(deeper=deeper, strip_l=strip_l, strip_r=strip_r), self.content))
 
     def lstrip(self, deeper: bool = False):
         self.strip(deeper=deeper, strip_r=False)
@@ -195,17 +195,6 @@ class ListParent(TagWithoutParam):
 class Link(TagWithParam):
     tag = 'a'
     attr = 'href'
-
-    def __init__(self, content: TypeTextContent, param: str, copy: bool = False, *_args, **_kwargs):
-        super().__init__(content, param)
-        if not copy:
-            try:
-                self.param = url_normalize(self.param)
-            except (ValueError, TypeError):
-                # clear invalid URL
-                self.param = None
-                self.tag = None
-                self.attr = None
 
 
 class Bold(TagWithoutParam):

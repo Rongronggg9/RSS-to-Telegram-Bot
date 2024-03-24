@@ -73,7 +73,7 @@ def init():
         sleep_for += 10
         api_id, api_hash = api_keys.popitem()
         try:
-            bot = TelegramClient(os.path.join(env.config_folder_path, 'bot'), api_id, api_hash,
+            bot = TelegramClient(None, api_id, api_hash,
                                  proxy=env.TELEGRAM_PROXY_DICT, request_retries=2, flood_sleep_threshold=60,
                                  raise_last_call_error=True, loop=loop).start(bot_token=env.TOKEN)
             break

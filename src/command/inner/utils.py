@@ -4,6 +4,7 @@ from collections.abc import Iterable, Mapping, Sequence
 
 import asyncio
 import re
+from collections import defaultdict
 from itertools import chain, repeat
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -111,36 +112,32 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> tupl
 
 def get_lang_buttons(callback=str, current_lang: str = None, tail: str = '') \
         -> tuple[tuple[tuple[KeyboardButtonCallback, ...], ...], tuple[str, ...]]:
-    lang_3_per_row = [lang for lang in i18n.lang_3_per_row if lang != current_lang]
-    lang_2_per_row = [lang for lang in i18n.lang_2_per_row if lang != current_lang]
-    lang_1_per_row = [lang for lang in i18n.lang_1_per_row if lang != current_lang]
+    def push(n_: int):
+        if len(carry) >= n_:
+            lang_n_per_row[n_].extend(carry)
+            carry.clear()
 
-    _ = len(lang_3_per_row) % 3
-    if _ != 0:
-        lang_2_per_row.extend(lang_3_per_row[-_:])
-        lang_2_per_row.sort()
-        lang_3_per_row = lang_3_per_row[:-_]
+    lang_n_per_row = defaultdict(list)
+    carry = []
+    for n in sorted(i18n.lang_n_per_row.keys(), reverse=True):
+        for lang in i18n.lang_n_per_row[n]:
+            if lang == current_lang:
+                continue
+            push(n)
+            carry.append(lang)
+        push(n)
+        lang_n_per_row[n].sort()
+    push(1)
 
-    _ = len(lang_2_per_row) % 2
-    if _ != 0:
-        lang_1_per_row.extend(lang_2_per_row[-_:])
-        lang_1_per_row.sort()
-        lang_2_per_row = lang_2_per_row[:-_]
-
-    buttons = (
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}{tail}')
-                          for lang in lang_3_per_row),
-                         columns=3)
-            +
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}{tail}')
-                          for lang in lang_2_per_row),
-                         columns=2)
-            +
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}{tail}')
-                          for lang in lang_1_per_row),
-                         columns=1)
+    buttons = tuple(
+        tuple(map(
+            lambda l: Button.inline(i18n[l]['lang_native_name'], data=f'{callback}={l}{tail}'),
+            lang_n_per_row[n][i:i + n]
+        ))
+        for n in sorted(lang_n_per_row.keys(), reverse=True)
+        for i in range(0, len(lang_n_per_row[n]), n)
     )
-    langs = tuple(chain(lang_3_per_row, lang_2_per_row, lang_1_per_row))
+    langs = tuple(chain(*lang_n_per_row.values()))
     return buttons, langs
 
 

@@ -4,6 +4,7 @@ from typing import Optional
 from json import load
 from os import listdir, path
 from multidict import CIMultiDict, istr
+from cjkwrap import cjklen
 from telethon.tl import types
 
 I18N_PATH = path.split(path.realpath(__file__))[0]
@@ -43,6 +44,7 @@ class _I18N:
             return
         self.__l10n_d: CIMultiDict[_L10N] = CIMultiDict()
         self.__iso_639_d: CIMultiDict[str] = CIMultiDict()
+        self.lang_n_per_row = {1: [], 2: [], 3: []}
         for lang in ALL_LANGUAGES:
             l10n = _L10N(lang)
             iso_639_code = l10n['iso_639_code']
@@ -52,13 +54,16 @@ class _I18N:
             self.__l10n_d[lang] = l10n
             if iso_639_code:
                 self.__iso_639_d[iso_639_code] = lang
+            cjklen_native_name = cjklen(l10n['lang_native_name'])
+            if cjklen_native_name <= 7:
+                self.lang_n_per_row[3].append(lang)
+            elif 7 < cjklen_native_name <= 12:
+                self.lang_n_per_row[2].append(lang)
+            else:
+                self.lang_n_per_row[1].append(lang)
 
         self.__initialized = True
         self.set_help_msg_html()
-
-        self.lang_3_per_row = tuple(lang for lang in ALL_LANGUAGES if len(self[lang]['lang_native_name']) <= 7)
-        self.lang_2_per_row = tuple(lang for lang in ALL_LANGUAGES if 7 < len(self[lang]['lang_native_name']) <= 12)
-        self.lang_1_per_row = tuple(lang for lang in ALL_LANGUAGES if len(self[lang]['lang_native_name']) > 12)
 
     def __getitem__(self, lang_code: Optional[str]) -> "_L10N":
         if not lang_code or not isinstance(lang_code, str):
@@ -143,6 +148,10 @@ class _L10N:
             return _I18N().get_fallback_l10n(None if self.__l10n_lang['iso_639_code'] else self.__lang_code)[key]
 
         return key
+
+    @property
+    def lang_code(self):
+        return self.__lang_code
 
     def html_escaped(self, key: str):
         return self[key].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')

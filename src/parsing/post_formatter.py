@@ -11,7 +11,8 @@ from . import utils, tgraph
 from .splitter import get_plain_text_length
 from .html_parser import parse
 from .html_node import *
-from .medium import Media, AbstractMedium, Image, Video, Audio, File, Animation, construct_weserv_url_convert_to_2560
+from .medium import Media, AbstractMedium, Image, Video, Audio, File, Animation
+from ..web.media import construct_weserv_url_convert_to_2560
 
 AUTO: Final = 0
 DISABLE: Final = -1

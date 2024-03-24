@@ -6,6 +6,7 @@ from collections.abc import Callable
 import re
 import asyncio
 import aiohttp
+import aiohttp.hdrs
 import aiohttp.helpers
 from contextlib import suppress
 from bs4 import BeautifulSoup
@@ -84,10 +85,18 @@ async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False
     return None
 
 
-async def get(url: str, timeout: Optional[float] = sentinel, semaphore: Union[bool, asyncio.Semaphore] = None,
-              headers: Optional[dict] = None, decode: bool = False,
-              max_size: Optional[int] = None, intended_content_type: Optional[str] = None) -> WebResponse:
+async def request(
+        method: str,
+        url: str,
+        timeout: Optional[float] = sentinel,
+        semaphore: Union[bool, asyncio.Semaphore] = None,
+        headers: Optional[dict] = None,
+        decode: bool = False,
+        max_size: Optional[int] = None,
+        intended_content_type: Optional[str] = None
+) -> WebResponse:
     """
+    :param method: HTTP method
     :param url: URL to fetch
     :param timeout: timeout in seconds
     :param semaphore: semaphore to use for limiting concurrent connections
@@ -97,8 +106,10 @@ async def get(url: str, timeout: Optional[float] = sentinel, semaphore: Union[bo
     :param intended_content_type: if specified, only return response if the content-type matches
     :return: {url, content, headers, status}
     """
-    return await _get(
-        url=url, timeout=timeout, semaphore=semaphore, headers=headers,
+    return await _request(
+        method=method,
+        url=url,
+        timeout=timeout, semaphore=semaphore, headers=headers,
         resp_callback=partial(__norm_callback,
                               decode=decode, max_size=max_size, intended_content_type=intended_content_type),
         read_bufsize=min(max_size, DEFAULT_READ_BUFFER_SIZE) if max_size is not None else DEFAULT_READ_BUFFER_SIZE,
@@ -106,9 +117,16 @@ async def get(url: str, timeout: Optional[float] = sentinel, semaphore: Union[bo
     )
 
 
-async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sentinel,
-               semaphore: Union[bool, asyncio.Semaphore] = None, headers: Optional[dict] = None,
-               read_bufsize: int = DEFAULT_READ_BUFFER_SIZE, read_until_eof: bool = True) -> WebResponse:
+async def _request(
+        method: str,
+        url: str,
+        resp_callback: Callable,
+        timeout: Optional[float] = sentinel,
+        semaphore: Union[bool, asyncio.Semaphore] = None,
+        headers: Optional[dict] = None,
+        read_bufsize: int = DEFAULT_READ_BUFFER_SIZE,
+        read_until_eof: bool = True
+) -> WebResponse:
     if timeout is sentinel:
         timeout = env.HTTP_TIMEOUT
 
@@ -131,9 +149,18 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
         _headers.update(headers)
 
     async def _fetch():
-        async with aiohttp.ClientSession(connector=proxy_connector, timeout=aiohttp.ClientTimeout(total=timeout),
-                                         headers=_headers, cookie_jar=YummyCookieJar()) as session:
-            async with session.get(url, read_bufsize=read_bufsize, read_until_eof=read_until_eof) as response:
+        async with aiohttp.ClientSession(
+                connector=proxy_connector,
+                timeout=aiohttp.ClientTimeout(total=timeout),
+                headers=_headers,
+                cookie_jar=YummyCookieJar()
+        ) as session:
+            async with session.request(
+                    method,
+                    url,
+                    read_bufsize=read_bufsize,
+                    read_until_eof=read_until_eof
+            ) as response:
                 async with AiohttpUvloopTransportHotfix(response):
                     status = response.status
                     content = await resp_callback(response) if status == 200 else None
@@ -193,6 +220,10 @@ async def _get(url: str, resp_callback: Callable, timeout: Optional[float] = sen
                          + f'), retrying: {url}')
             await asyncio.sleep(0.1)
             continue
+
+
+_get = partial(_request, aiohttp.hdrs.METH_GET)
+get = partial(request, aiohttp.hdrs.METH_GET)
 
 
 @lru_cache(maxsize=256)

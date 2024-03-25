@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, Optional
 from typing_extensions import Final
 
 import aiohttp
@@ -8,7 +8,6 @@ import PIL.Image
 import PIL.ImageFile
 from PIL import UnidentifiedImageError
 from io import BytesIO, SEEK_END
-from typing import Optional
 from asyncstdlib import lru_cache
 
 from .. import env
@@ -23,6 +22,8 @@ IMAGE_READ_BUFFER_SIZE: Final = 1
 INFINITY: Final = float('inf')
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+LRU_CACHE_MAXSIZE: Final = 1024
 
 
 async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int, int]:
@@ -141,8 +142,79 @@ async def get_medium_info(url: str) -> Optional[tuple[int, int, int, Optional[st
     return size, width, height, content_type
 
 
-@lru_cache(maxsize=1024)
-async def get_medium_info_via_weserv(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
+def weserv_param_encode(param: str) -> str:
+    hash_index = param.find('#')
+    if hash_index != -1:
+        param = param[:hash_index]  # remove fragment
+    # & will mess up the query string
+    # leaving % as is will let weserv decode the encoded character before requesting the source image
+    return param.replace('%', '%25').replace('&', '%26')
+
+
+def construct_weserv_url(url: str,
+                         width: Optional[int] = None,
+                         height: Optional[int] = None,
+                         fit: Optional[str] = None,
+                         output_format: Optional[str] = None,
+                         quality: Optional[int] = None,
+                         without_enlargement: Optional[bool] = None,
+                         default_image: Optional[str] = None) -> str:
+    return (
+            f'{env.IMAGES_WESERV_NL}?'
+            f'url={weserv_param_encode(url)}'
+            + (f'&w={width}' if width else '')
+            + (f'&h={height}' if height else '')
+            + (f'&fit={fit}' if fit else '')
+            + (f'&output={output_format}' if output_format else '')
+            + (f'&q={quality}' if quality else '')
+            + (f'&we=1' if without_enlargement else '')
+            + (f'&default={weserv_param_encode(default_image)}' if default_image else '')
+    )
+
+
+def construct_weserv_url_convert_to_2560(url: str) -> str:
+    return construct_weserv_url(
+        url,
+        width=2560,
+        height=2560,
+        # fit='inside',  # is default
+        output_format='jpg',
+        # In the worst case, 89% ensures the size won't exceed 5MB
+        # E.g.:
+        # 2560x2560 white noise truecolor --89% JPEG--> 4.98MiB
+        # 2560x2560 white noise truecolor --90% JPEG--> 10.26MiB
+        # See also:
+        # https://robson.plus/white-noise-image-generator/
+        # https://fotoforensics.com/tutorial-estq.php
+        quality=89,
+        without_enlargement=True
+    )
+
+
+def construct_weserv_url_convert_to_jpg(url: str) -> str:
+    return construct_weserv_url(url, output_format='jpg')
+
+
+HEAD_IMAGES_WESERV_NL_URL: Final = construct_weserv_url('')
+HEAD_IMAGES_WESERV_NL_URL_RELAYED: Final = construct_weserv_url(env.IMG_RELAY_SERVER)
+LEN_HEAD_IMAGES_WESERV_NL_URL: Final = len(HEAD_IMAGES_WESERV_NL_URL)
+
+
+def insert_image_relay_into_weserv_url(url: str) -> Optional[str]:
+    """
+    Ensure weserv fetches the image via the relay server.
+    Useful when:
+    1. The image is from a domain/TLD banned by weserv; or
+    2. The image is from a CDN that bans weserv.
+    """
+    if not url.startswith(HEAD_IMAGES_WESERV_NL_URL):
+        return None  # not a weserv url
+    if url.startswith(HEAD_IMAGES_WESERV_NL_URL_RELAYED):
+        return None  # already relayed
+    return HEAD_IMAGES_WESERV_NL_URL_RELAYED + url[LEN_HEAD_IMAGES_WESERV_NL_URL:]
+
+
+async def _get_medium_info_via_weserv(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
     try:
         r = await get(url)
         if r.status != 200:
@@ -158,3 +230,22 @@ async def get_medium_info_via_weserv(url: str) -> Optional[tuple[int, int, int, 
     content_type = content_type and f'image/{content_type}'
 
     return size, width, height, content_type
+
+
+@lru_cache(maxsize=LRU_CACHE_MAXSIZE)
+async def get_medium_info_via_weserv(url: str) -> Optional[tuple[int, int, int, Optional[str]]]:
+    url = construct_weserv_url(url, output_format='json')
+    res = await _get_medium_info_via_weserv(url)
+    if res:
+        return res
+    url = insert_image_relay_into_weserv_url(url)
+    if url:
+        return await _get_medium_info_via_weserv(url)
+
+
+async def detect_image_dimension_via_weserv(url: str) -> tuple[int, int]:
+    res = await get_medium_info_via_weserv(url)
+    if not res:
+        return -1, -1
+    _, width, height, _ = res
+    return width, height

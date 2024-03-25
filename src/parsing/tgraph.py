@@ -15,7 +15,7 @@ from aiohttp_socks import ProxyConnector
 
 from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
-from .medium import construct_weserv_url
+from ..web.media import construct_weserv_url
 from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]

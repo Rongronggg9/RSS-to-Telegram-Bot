@@ -8,8 +8,8 @@ from telethon.errors import RPCError
 
 from .. import env, db
 from .utils import command_gatekeeper, get_group_migration_help_msg, set_bot_commands, logger, \
-    parse_callback_data_with_page
-from ..i18n import i18n, ALL_LANGUAGES, get_commands_list
+    parse_callback_data_with_page, get_callback_tail
+from ..i18n import i18n, get_commands_list
 from . import inner
 
 
@@ -22,21 +22,30 @@ async def cmd_start(event: Union[events.NewMessage.Event, Message], *_, lang=Non
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_lang(event: Union[events.NewMessage.Event, Message], *_, **__):
-    buttons, langs = inner.utils.get_lang_buttons(callback='set_lang')
+async def cmd_lang(event: Union[events.NewMessage.Event, Message],
+                   *_,
+                   chat_id: Optional[int] = None,
+                   **__):
+    chat_id = chat_id or event.chat_id
+    callback_tail = get_callback_tail(event, chat_id)
+    buttons, langs = inner.utils.get_lang_buttons(callback='set_lang', tail=callback_tail)
     msg = '\n'.join(f"{i18n[lang]['select_lang_prompt']}" for lang in langs)
     await event.respond(msg, buttons=buttons)
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_set_lang(event: events.CallbackQuery.Event, *_, **__):  # callback data: set_lang={lang_code}
+async def callback_set_lang(event: events.CallbackQuery.Event,
+                            *_,
+                            chat_id: Optional[int] = None,
+                            **__):  # callback data: set_lang={lang_code}
+    chat_id = chat_id or event.chat_id
     lang, _ = parse_callback_data_with_page(event.data)
     welcome_msg = i18n[lang]['welcome_prompt']
-    await db.User.update_or_create(defaults={'lang': lang}, id=event.chat_id)
+    await db.User.update_or_create(defaults={'lang': lang}, id=chat_id)
     await set_bot_commands(scope=types.BotCommandScopePeer(await event.get_input_chat()),
                            lang_code='',
-                           commands=get_commands_list(lang=lang, manager=event.chat_id in env.MANAGER))
-    logger.info(f'Changed language to {lang} for {event.chat_id}')
+                           commands=get_commands_list(lang=lang, manager=chat_id in env.MANAGER))
+    logger.info(f'Changed language to {lang} for {chat_id}')
     help_button = Button.inline(text=i18n[lang]['cmd_description_help'], data='help')
     await event.edit(welcome_msg, buttons=help_button)
 

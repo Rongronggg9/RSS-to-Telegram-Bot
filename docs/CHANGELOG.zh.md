@@ -2,6 +2,10 @@
 
 ## 尚未发布
 
+### 亮点
+
+- **上传媒体到 Telegraph**: 在生成 Telegraph 文章时，图片和视频都将被上传到 Telegraph。这是为了解决防盗链问题和提高文章的加载性能。此功能依赖媒体反代服务器 ([Rongronggg9/rsstt-img-relay](https://github.com/Rongronggg9/rsstt-img-relay)) 的最新版本。由于太大而无法上传的图片和视频仍将由 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`) 或媒体反代服务器 (环境变量 `IMG_RELAY_SERVER`) 进行代理。感谢 [#431](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/pull/431) 的启发。
+
 ### 新增功能
 
 - **多个管理员**: 环境变量 `MANAGER` 现在既接受单个用户 ID，也接受由 `;`, `,`, `(空格)`, `(换行)` 或 `(制表符)` 分隔的列表。列表中的每个用户都可以**平等地**管理机器人。

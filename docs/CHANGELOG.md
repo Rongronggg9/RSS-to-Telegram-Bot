@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Highlights
+
+- **Upload media to Telegraph**: When generating Telegraph posts, images as well as videos will be uploaded to Telegraph. This is to solve anti-hotlinking issues and improve the load performance of posts. This feature depends on the latest version of the media relay server ([Rongronggg9/rsstt-img-relay](https://github.com/Rongronggg9/rsstt-img-relay)). Those images and videos that are too large to be uploaded will still be proxied by `wsrv.nl` (environment variable `IMAGES_WESERV_NL`) or media relay server (environment variable `IMG_RELAY_SERVER`). Thanks [#431](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/pull/431) for inspiration.
+
 ### Addition
 
 - **Multiple managers**: The environment variable `MANAGER` now accepts a single user ID as well as a list separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`. Each user in the list will be able to manage the bot **equally**.

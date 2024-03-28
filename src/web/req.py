@@ -93,7 +93,8 @@ async def request(
         headers: Optional[dict] = None,
         decode: bool = False,
         max_size: Optional[int] = None,
-        intended_content_type: Optional[str] = None
+        intended_content_type: Optional[str] = None,
+        allow_redirects: bool = True,
 ) -> WebResponse:
     """
     :param method: HTTP method
@@ -104,16 +105,16 @@ async def request(
     :param decode: whether to decode the response body
     :param max_size: maximum size of the response body (in bytes), None=unlimited, 0=ignore response body
     :param intended_content_type: if specified, only return response if the content-type matches
+    :param allow_redirects: whether to allow redirects
     :return: {url, content, headers, status}
     """
     return await _request(
-        method=method,
-        url=url,
-        timeout=timeout, semaphore=semaphore, headers=headers,
+        method=method, url=url,
+        timeout=timeout, semaphore=semaphore, headers=headers, allow_redirects=allow_redirects,
         resp_callback=partial(__norm_callback,
                               decode=decode, max_size=max_size, intended_content_type=intended_content_type),
         read_bufsize=min(max_size, DEFAULT_READ_BUFFER_SIZE) if max_size is not None else DEFAULT_READ_BUFFER_SIZE,
-        read_until_eof=max_size is None
+        read_until_eof=max_size is None,
     )
 
 
@@ -125,7 +126,8 @@ async def _request(
         semaphore: Union[bool, asyncio.Semaphore] = None,
         headers: Optional[dict] = None,
         read_bufsize: int = DEFAULT_READ_BUFFER_SIZE,
-        read_until_eof: bool = True
+        read_until_eof: bool = True,
+        allow_redirects: bool = True,
 ) -> WebResponse:
     if timeout is sentinel:
         timeout = env.HTTP_TIMEOUT
@@ -159,7 +161,8 @@ async def _request(
                     method,
                     url,
                     read_bufsize=read_bufsize,
-                    read_until_eof=read_until_eof
+                    read_until_eof=read_until_eof,
+                    allow_redirects=allow_redirects,
             ) as response:
                 async with AiohttpUvloopTransportHotfix(response):
                     status = response.status

@@ -249,3 +249,24 @@ async def detect_image_dimension_via_weserv(url: str) -> tuple[int, int]:
         return -1, -1
     _, width, height, _ = res
     return width, height
+
+
+IMG_RELAY_SERVER_UPLOAD_TO_TELEGRAPH_PATH = 'upload_graph/'
+
+
+@lru_cache(maxsize=LRU_CACHE_MAXSIZE)
+async def upload_to_telegraph(url: str) -> Optional[str]:
+    try:
+        resp = await get(
+            env.IMG_RELAY_SERVER + IMG_RELAY_SERVER_UPLOAD_TO_TELEGRAPH_PATH + url,
+            allow_redirects=False,
+            max_size=0
+        )
+        if location := resp.headers.get('Location'):
+            return location
+        if err := resp.headers.get('X-Telegraph-Error'):
+            logger.debug(f'Upload to telegraph failed (Telegraph error): {err}')
+        else:
+            logger.debug(f'Upload to telegraph failed (status code): {resp.status} {resp.reason}')
+    except Exception as e:
+        logger.debug('Upload to telegraph failed', exc_info=e)

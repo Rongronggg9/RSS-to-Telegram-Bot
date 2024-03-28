@@ -15,6 +15,7 @@
 
 - **Strip whitespaces in `<li>`**: Strip whitespaces (including linebreaks) in `<li>` (list item) to improve readability. Only the leading and trailing whitespaces (including linebreaks) are stripped.
 - **Only set "force reply" in groups**: Only set `ReplyKeyboardForceReply` to `True` in groups. Previously, it was also set in private chats. See also "Bug fixes" below.
+- **Minor enhancements**: Some internal functions have been optimized to improve readability and maintainability.
 
 ### Bug fixes
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.6.0: Upload media to Telegraph, management enhancements
 
 ### Highlights
 

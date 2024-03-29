@@ -48,7 +48,7 @@
 | `ERROR_LOGGING_CHAT`          | Chat (user/channel/group) ID for error logging.                             | `-1001234567890`                              | The first user ID in `MANAGER`                  |
 | `MULTIUSER`                   | Enable multi-user feature or not?                                           | `0`                                           | `1`                                             |
 | `CRON_SECOND`                 | Run the feed monitoring task at the n-th second of each minute? (0-59)      | `30`                                          | `0`                                             |
-| `IMG_RELAY_SERVER`            | Media relay server URL                                                      | `https://wsrv.nl/?url=`                       | `https://rsstt-img-relay.rongrong.workers.dev/` |
+| `IMG_RELAY_SERVER`            | Media relay server (https://github.com/Rongronggg9/rsstt-img-relay) URL     | `https://wsrv.nl/?url=`                       | `https://rsstt-img-relay.rongrong.workers.dev/` |
 | `IMAGES_WESERV_NL`            | https://github.com/weserv/images instance                                   | `https://t0.nl/`                              | `https://wsrv.nl/`                              |
 | `DATABASE_URL`                | Database URL [^7]                                                           | `postgres://user:pass@example.com:5432/table` | `sqlite://path/to/config/db.sqlite3`            |
 | `TABLE_TO_IMAGE`              | Convert tables to image (causing higher CPU load) or just drop them?        | `1`                                           | `0`                                             |

@@ -14,7 +14,6 @@ from telethon.errors import BadRequestError
 
 from . import inner
 from .utils import escape_html, unsub_all_and_leave_chat
-from .inner.utils import update_interval, deactivate_feed, calculate_update
 from .. import log, db, env, web, locks
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..i18n import i18n
@@ -146,7 +145,7 @@ async def __monitor(feed: db.Feed) -> str:
     subs = await feed.subs.filter(state=1)
     if not subs:  # nobody has subbed it
         logger.warning(f'Feed {feed.id} ({feed.link}) has no active subscribers.')
-        await update_interval(feed)
+        await inner.utils.update_interval(feed)
         return SKIPPED
 
     if all(locks.user_flood_lock(sub.user_id).locked() for sub in subs):
@@ -202,7 +201,7 @@ async def __monitor(feed: db.Feed) -> str:
             feed.title = title
             feed_updated_fields.add('title')
 
-        new_hashes, updated_entries = calculate_update(feed.entry_hashes, rss_d.entries)
+        new_hashes, updated_entries = inner.utils.calculate_update(feed.entry_hashes, rss_d.entries)
         updated_entries = tuple(updated_entries)
 
         if not updated_entries:  # not updated
@@ -248,7 +247,8 @@ async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapp
             await error_message.send_formatted_post(env.ERROR_LOGGING_CHAT, send_mode=2)
         except Exception as e:
             logger.error(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
-            await env.bot.send_message(env.ERROR_LOGGING_CHAT, 'A parsing error message cannot be sent, please check the logs.')
+            await env.bot.send_message(env.ERROR_LOGGING_CHAT,
+                                       'A parsing error message cannot be sent, please check the logs.')
         return
     res = await asyncio.gather(
         *(asyncio.wait_for(__send(sub, post), 8.5 * 60) for sub in subs),
@@ -295,7 +295,8 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
             logger.error(f'Failed to send sending error message for {post.link} '
                          f'(feed: {post.feed_link}, user: {sub.user_id}):',
                          exc_info=e)
-            await env.bot.send_message(env.ERROR_LOGGING_CHAT, 'An sending error message cannot be sent, please check the logs.')
+            await env.bot.send_message(env.ERROR_LOGGING_CHAT,
+                                       'An sending error message cannot be sent, please check the logs.')
 
 
 async def __locked_unsub_all_and_leave_chat(user_id: int, err_msg: str):
@@ -315,7 +316,7 @@ async def __locked_unsub_all_and_leave_chat(user_id: int, err_msg: str):
 async def __deactivate_feed_and_notify_all(feed: db.Feed,
                                            subs: Iterable[db.Sub],
                                            reason: Union[web.WebError, str] = None):
-    await deactivate_feed(feed)
+    await inner.utils.deactivate_feed(feed)
 
     if not subs:  # nobody has subbed it or no active sub exists
         return

@@ -1,6 +1,10 @@
 # 更新日志
 
-## 尚未发布
+## v2.6.0: 上传媒体到 Telegraph、管理增强
+
+### 亮点
+
+- **上传媒体到 Telegraph**: 在生成 Telegraph 文章时，图片和视频都将被上传到 Telegraph。这是为了解决防盗链问题和提高文章的加载性能。此功能依赖媒体反代服务器 ([Rongronggg9/rsstt-img-relay](https://github.com/Rongronggg9/rsstt-img-relay)) 的最新版本。由于太大而无法上传的图片和视频仍将由 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`) 或媒体反代服务器 (环境变量 `IMG_RELAY_SERVER`) 进行代理。感谢 [#431](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/pull/431) 的启发。
 
 ### 新增功能
 
@@ -11,6 +15,7 @@
 
 - **除去 `<li>` 中的表层空格**: 除去 `<li>` (列表项) 中的表层空格 (包括换行符) 以提高可读性。只有前导和尾随空格 (包括换行符) 被除去。
 - **只在群组中设置“强制回复”**: 只在群组中设置 `ReplyKeyboardForceReply` 为 `True`。先前，它也在私聊中被设置。另请参阅下面的“Bug 修复”。
+- **次要的重构**: 重构了一些内部函数以提高可读性和可维护性。
 
 ### Bug 修复
 

@@ -9,7 +9,7 @@ listparser[lxml]==0.19
 pillow==10.3.0
 beautifulsoup4==4.12.3
 lxml==4.9.3
-rapidfuzz==3.7.0
+rapidfuzz==3.8.1
 emoji==2.11.0
 minify-html==0.15.0
 minify-html-onepass==0.15.0

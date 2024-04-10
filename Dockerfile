@@ -1,4 +1,4 @@
-FROM python:3.11-bookworm AS dep-builder-common
+FROM python:3.12-bookworm AS dep-builder-common
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -20,7 +20,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.11-bookworm AS dep-builder
+FROM python:3.12-bookworm AS dep-builder
 
 ENV PATH="/opt/venv/bin:$PATH"
 ARG EXP_REGEX='^([^~=<>]+)[^#]*#\s*(\1@.+)$'
@@ -72,7 +72,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.11-bookworm as app-builder
+FROM python:3.12-bookworm as app-builder
 
 WORKDIR /app
 
@@ -102,7 +102,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.11-slim-bookworm as app
+FROM python:3.12-slim-bookworm as app
 
 WORKDIR /app
 

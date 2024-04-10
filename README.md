@@ -27,8 +27,16 @@
 
 [Channels Using RSStT]: docs/channels-using-rsstt.md
 
-
-**Important**: If you have your own RSStT bot (v1), please read the [migration guide](docs/migration-guide-v2.md) to learn how to migrate to v2.
+<table>
+    <tr>
+        <td><img src="docs/resources/example5.png" alt="Screenshot"></td>
+        <td rowspan="2"><img src="docs/resources/example7.png" alt="Screenshot"></td>
+        <td rowspan="2"><img src="docs/resources/example8.png" alt="Screenshot"></td>
+    </tr>
+    <tr>
+        <td><img src="docs/resources/example6.png" alt="Screenshot"></td>
+    </tr>
+</table>
 
 ## Highlights
 
@@ -55,8 +63,6 @@
 - Optimized performance (see also the [FAQ](docs/FAQ.md#q-how-is-the-performance-of-the-bot))
 - User-friendly
 - HTTP Caching
-
-<img src="docs/resources/example1.png" width = "300" alt=""/><img src="docs/resources/example3.png" width = "300" alt=""/><img src="docs/resources/example4.png" width = "300" alt=""/>
 
 ## Deployment
 

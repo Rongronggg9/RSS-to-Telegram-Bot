@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Highlights
+
+- **Support Python 3.12**: Minor fixes have been made to support Python 3.12. The official Docker image is now based on Python 3.12 as well.
+
 ### Enhancements
 
 - **Minor refactor**: Some internal functions have been refactored to improve readability and maintainability.

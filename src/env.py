@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Union
 from typing_extensions import Final
 
 import asyncio
@@ -13,7 +13,6 @@ from telethon.tl.types import User, InputPeerUser
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
 from pathlib import Path
-from distutils.version import StrictVersion
 from functools import partial
 
 from .version import __version__
@@ -37,6 +36,45 @@ def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
 
 def __list_parser(var: Optional[str]) -> list[str]:
     return re.split(r'[\s,;，；]+', var.strip()) if var else []
+
+
+def __decompose_version(version: str) -> list[Union[int, str]]:
+    def buf_put(as_int: bool):
+        nonlocal buf
+        if not buf:
+            raise ValueError(f'Empty part in version string: {version}')
+        parts.append(int(buf) if as_int else buf)
+        buf = ''
+
+    parts = []
+    buf = ''
+    for i, char in enumerate(version):
+        if char == '.':
+            buf_put(as_int=True)
+            continue
+        if not char.isdecimal():
+            buf_put(as_int=True)
+            parts.append(version[i:])
+            break
+        buf += char
+    if buf:
+        buf_put(as_int=True)
+    return parts
+
+
+def __compare_version(version1: str, version2: str) -> tuple[int, list[Union[int, str]], list[Union[int, str]]]:
+    """loose comparison, only compare the numeric parts"""
+    parts1 = __decompose_version(version1)
+    parts2 = __decompose_version(version2)
+    marker = 0
+    for part1, part2 in zip(parts1, parts2):
+        if not (isinstance(part1, int) and isinstance(part2, int)):
+            break
+        if part1 == part2:
+            continue
+        marker = 1 if part1 > part2 else -1
+        break
+    return marker, parts1, parts2
 
 
 # ----- setup logging -----
@@ -86,52 +124,51 @@ for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
         load_dotenv(dot_env_path, override=True)
         logger.info(f'Found .env file at "{dot_env_path}", loaded')
 
+
 # ----- get version -----
-_version = 'dirty'
+def __get_version():
+    if is_self_run_as_a_whole_package:
+        # noinspection PyBroadException
+        try:
+            with open(os.path.normpath(os.path.join(self_path, '..', '.version')), 'r') as v:
+                version = v.read().strip()
+        except Exception:
+            version = 'dirty'
 
-if is_self_run_as_a_whole_package:
-    # noinspection PyBroadException
+        if not version or version == '@':
+            version = 'dirty'
+
+    if version == 'dirty':
+        from subprocess import Popen, PIPE, DEVNULL
+
+        # noinspection PyBroadException
+        try:
+            with Popen(['git', 'describe', '--tags', '--dirty', '--broken', '--always'],
+                       shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as git:
+                git.wait(3)
+                version = git.stdout.read().decode().strip()
+            with Popen(['git', 'branch', '--show-current'],
+                       shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as git:
+                git.wait(3)
+                if branch := git.stdout.read().decode().strip():
+                    version += f'@{branch}'
+        except Exception:
+            version = 'dirty'
+
     try:
-        with open(os.path.normpath(os.path.join(self_path, '..', '.version')), 'r') as v:
-            _version = v.read().strip()
-    except Exception:
-        _version = 'dirty'
-
-    if not _version or _version == '@':
-        _version = 'dirty'
-
-if _version == 'dirty':
-    from subprocess import Popen, PIPE, DEVNULL
-
-    # noinspection PyBroadException
-    try:
-        with Popen(['git', 'describe', '--tags', '--dirty', '--broken', '--always'],
-                   shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __git:
-            __git.wait(3)
-            _version = __git.stdout.read().decode().strip()
-        with Popen(['git', 'branch', '--show-current'],
-                   shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __git:
-            __git.wait(3)
-            __git = __git.stdout.read().decode().strip()
-            if __git:
-                _version += f'@{__git}'
-    except Exception:
-        _version = 'dirty'
-
-_version_match = re.match(r'^v?\d+\.\d+(\.\w+(\.\w+)?)?', _version)
-if _version_match:
-    try:
-        if StrictVersion(_version_match[0].lstrip('v')) < StrictVersion(__version__):
-            _version = _version[_version_match.end():]
-            _version = re.sub(r'(?<!\d{4})-\d+-(?!\d{2})', '', _version, count=1)
-            _version = f'v{__version__}-{_version}' if _version else f'v{__version__}'
+        sign, version_decomposed, version_pkg_decomposed = __compare_version(version.lstrip('v'), __version__)
+        if sign <= -1:  # outdated version: older than pkg ver
+            version = __version__
+            if isinstance(version_decomposed[-1], str) and not isinstance(version_pkg_decomposed[-1], str):
+                version += re.sub(r'^-\d+(?=-)', '', version_decomposed[-1])  # trim ahead commit count
+            version = f'v{version}'
     except ValueError:
-        _version = f'v{__version__}'
-else:
-    _version = f'v{__version__}' + (f'-{_version}' if _version and _version != 'dirty' else '')
+        version = f'v{__version__}'
 
-VERSION: Final = _version
-del _version, _version_match
+    return version
+
+
+VERSION: Final = __get_version()
 
 # ----- basic config -----
 SAMPLE_APIS: Final = {

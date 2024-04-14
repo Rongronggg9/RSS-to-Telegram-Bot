@@ -21,7 +21,7 @@ tortoise-orm[accel]==0.20.0
 aerich==0.6.3
 
 # network
-aiohttp[speedups]==3.9.3
+aiohttp[speedups]==3.9.4
 aiohttp-socks==0.8.4
 aiohttp-retry==2.8.3
 python-socks[asyncio]==2.4.4

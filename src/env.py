@@ -127,6 +127,7 @@ for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
 
 # ----- get version -----
 def __get_version():
+    version = 'dirty'
     if is_self_run_as_a_whole_package:
         # noinspection PyBroadException
         try:

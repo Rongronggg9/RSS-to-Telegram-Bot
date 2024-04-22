@@ -26,15 +26,55 @@ jobs:
           python-version: ${{ matrix.version }}
           cache: 'pip'
       - name: Install dependencies
+        shell: bash
         run: |
+          set -eux
           pip install --upgrade pip wheel setuptools
           pip install -r requirements.txt
-      - name: Test
+      - name: Setup PostgreSQL
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
-          echo 'TOKEN=test' > .env
-          echo 'MANAGER=-1' >> .env
-          echo 'DEBUG=1' >> .env
-          echo 'PORT=60088' >> .env
-          echo 'TABLE_TO_IMAGE=1' >> .env
-          echo 'MULTIPROCESSING=1' >> .env
+          set -eux
+          sudo apt-get -yq update
+          sudo apt-get -yq install postgresql
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "CREATE USER test WITH PASSWORD 'test';"
+          sudo -u postgres psql -c "CREATE DATABASE test OWNER test;"
+      - name: Prepare environment
+        shell: bash
+        run: |
+          set -eux
+          echo 'TOKEN=test' > .env_sqlite
+          echo 'MANAGER=-1' >> .env_sqlite
+          echo 'DEBUG=1' >> .env_sqlite
+          echo "PORT=$((RANDOM + 16384))" >> .env_sqlite
+          echo 'TABLE_TO_IMAGE=1' >> .env_sqlite
+          echo 'MULTIPROCESSING=1' >> .env_sqlite
+          cp .env_sqlite .env_postgresql
+          echo 'DATABASE_URL=postgresql://test:test@localhost:5432/test' >> .env_postgresql
+          ln -s src rsstt
+      - name: Test RSS-to-Telegram-Bot (SQLite)
+        shell: bash
+        run: |
+          set -eux
+          cp .env_sqlite .env
           python3 -u telegramRSSbot.py
+      - name: Test RSS-to-Telegram-Bot as a Python package (SQLite)
+        shell: bash
+        run: |
+          set -eux
+          python3 -m rsstt
+      - name: Test RSS-to-Telegram-Bot (PostgreSQL)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -eux
+          cp .env_postgresql .env
+          python3 -u telegramRSSbot.py
+      - name: Test RSS-to-Telegram-Bot as a Python package (PostgreSQL)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -eux
+          python3 -m rsstt

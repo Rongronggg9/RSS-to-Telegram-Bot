@@ -78,3 +78,11 @@ jobs:
         run: |
           set -eux
           python3 -m rsstt
+      - name: Test scripts/aerich_helper.py
+        shell: bash
+        run: |
+          set -eux
+          ./scripts/aerich_helper.py -h
+          ./scripts/aerich_helper.py -v history
+          ./scripts/aerich_helper.py -v heads
+          ./scripts/aerich_helper.py -v upgrade True

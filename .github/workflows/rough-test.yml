@@ -52,7 +52,7 @@ jobs:
           echo 'TABLE_TO_IMAGE=1' >> .env_sqlite
           echo 'MULTIPROCESSING=1' >> .env_sqlite
           cp .env_sqlite .env_postgresql
-          echo 'DATABASE_URL=postgresql://test:test@localhost:5432/test' >> .env_postgresql
+          echo 'DATABASE_URL=postgres://test:test@localhost:5432/test' >> .env_postgresql
           ln -s src rsstt
       - name: Test RSS-to-Telegram-Bot (SQLite)
         shell: bash
@@ -78,7 +78,7 @@ jobs:
         run: |
           set -eux
           python3 -m rsstt
-      - name: Test scripts/aerich_helper.py
+      - name: Test scripts/aerich_helper.py (SQLite)
         shell: bash
         run: |
           set -eux
@@ -86,6 +86,15 @@ jobs:
           ./scripts/aerich_helper.py -v history
           ./scripts/aerich_helper.py -v heads
           ./scripts/aerich_helper.py -v upgrade True
+      - name: Test scripts/aerich_helper.py (PostgreSQL)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -eux
+          . .env_postgresql
+          ./scripts/aerich_helper.py -v -u "$DATABASE_URL" history
+          ./scripts/aerich_helper.py -v -u "$DATABASE_URL" heads
+          ./scripts/aerich_helper.py -v -u "$DATABASE_URL" upgrade True
       - name: Test aerich migration upgrade (SQLite)
         shell: bash
         run: |

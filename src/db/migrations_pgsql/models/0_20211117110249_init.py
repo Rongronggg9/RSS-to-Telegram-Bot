@@ -1,5 +1,9 @@
--- upgrade --
-CREATE TABLE IF NOT EXISTS "aerich" (
+from tortoise import BaseDBAsyncClient
+
+
+async def upgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        CREATE TABLE IF NOT EXISTS "aerich" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "version" VARCHAR(255) NOT NULL,
     "app" VARCHAR(20) NOT NULL,
@@ -86,4 +90,9 @@ COMMENT ON COLUMN "sub"."display_author" IS 'Display author or not?-1=disable, 0
 COMMENT ON COLUMN "sub"."display_via" IS 'Display via or not?-2=completely disable, -1=disable but display link, 0=auto, 1=force display';
 COMMENT ON COLUMN "sub"."display_title" IS 'Display title or not?-1=disable, 0=auto, 1=force display';
 COMMENT ON COLUMN "sub"."style" IS 'Style of posts: 0=RSStT, 1=flowerss';
-COMMENT ON TABLE "sub" IS 'Sub model.';
+COMMENT ON TABLE "sub" IS 'Sub model.';"""
+
+
+async def downgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        """

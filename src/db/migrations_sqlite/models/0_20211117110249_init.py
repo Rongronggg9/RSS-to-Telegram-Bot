@@ -1,5 +1,9 @@
--- upgrade --
-CREATE TABLE IF NOT EXISTS "aerich" (
+from tortoise import BaseDBAsyncClient
+
+
+async def upgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        CREATE TABLE IF NOT EXISTS "aerich" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "version" VARCHAR(255) NOT NULL,
     "app" VARCHAR(20) NOT NULL,
@@ -51,4 +55,9 @@ CREATE TABLE IF NOT EXISTS "sub" (
     "feed_id" INT NOT NULL REFERENCES "feed" ("id") ON DELETE CASCADE,
     "user_id" BIGINT NOT NULL REFERENCES "user" ("id") ON DELETE CASCADE,
     CONSTRAINT "uid_sub_user_id_029239" UNIQUE ("user_id", "feed_id")
-) /* Sub model. */;
+) /* Sub model. */;"""
+
+
+async def downgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        """

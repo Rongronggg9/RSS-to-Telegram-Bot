@@ -86,3 +86,31 @@ jobs:
           ./scripts/aerich_helper.py -v history
           ./scripts/aerich_helper.py -v heads
           ./scripts/aerich_helper.py -v upgrade True
+      - name: Test aerich migration upgrade (SQLite)
+        shell: bash
+        run: |
+          set -eux
+          rm -rf config
+          cp .env_sqlite .env
+          CURR_REF="$(git rev-parse HEAD)"
+          git checkout stale/aerich-0.6
+          pip install -qr requirements.txt
+          python3 -u telegramRSSbot.py
+          git checkout "$CURR_REF"
+          pip install -qr requirements.txt
+          python3 -u telegramRSSbot.py
+      - name: Test aerich migration upgrade (PostgreSQL)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -eux
+          sudo -u postgres psql -c "DROP DATABASE test;"
+          sudo -u postgres psql -c "CREATE DATABASE test OWNER test;"
+          cp .env_postgresql .env
+          CURR_REF="$(git rev-parse HEAD)"
+          git checkout stale/aerich-0.6
+          pip install -qr requirements.txt
+          python3 -u telegramRSSbot.py
+          git checkout "$CURR_REF"
+          pip install -qr requirements.txt
+          python3 -u telegramRSSbot.py

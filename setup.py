@@ -11,8 +11,14 @@ version = re.search(r"""__version__ *= *['"]([^'"]+)['"]""", (PROJ_ROOT / "src/v
 
 replacePackagePath = partial(re.compile(r'^src').sub, 'rsstt')
 
-source_packages = find_packages(include=['src', 'src.*'])
-proj_packages = [replacePackagePath(name) for name in source_packages]
+# DB migrations are not Python packages, but they should also be included in the package
+source_packages = find_packages(PROJ_ROOT, include=['src', 'src.*'])
+db_migrations_dirs = [
+    str(path.relative_to(PROJ_ROOT)).replace('/', '.')
+    for path in (PROJ_ROOT / 'src' / 'db').glob('migrations_*/**')
+    if path.is_dir()
+]
+proj_packages = [replacePackagePath(name) for name in source_packages + db_migrations_dirs]
 
 setup(
     version=version,

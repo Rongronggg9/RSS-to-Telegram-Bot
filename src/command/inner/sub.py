@@ -92,18 +92,23 @@ async def sub(user_id: int,
         sub_title = sub_title if feed.title != sub_title else None
 
         if not _sub:  # create a new sub if needed
-            _sub, created_new_sub = await db.Sub.get_or_create(user_id=user_id, feed=feed,
-                                                               defaults={'title': sub_title if sub_title else None,
-                                                                         'interval': None,
-                                                                         'notify': -100,
-                                                                         'send_mode': -100,
-                                                                         'length_limit': -100,
-                                                                         'link_preview': -100,
-                                                                         'display_author': -100,
-                                                                         'display_via': -100,
-                                                                         'display_title': -100,
-                                                                         'style': -100,
-                                                                         'display_media': -100})
+            _sub, created_new_sub = await db.Sub.get_or_create(
+                user_id=user_id, feed=feed,
+                defaults={
+                    'title': sub_title if sub_title else None,
+                    'interval': None,
+                    'notify': -100,
+                    'send_mode': -100,
+                    'length_limit': -100,
+                    'link_preview': -100,
+                    'display_author': -100,
+                    'display_via': -100,
+                    'display_title': -100,
+                    'display_entry_tags': -100,
+                    'style': -100,
+                    'display_media': -100
+                }
+            )
 
         if not created_new_sub:
             if _sub.title == sub_title and _sub.state == 1:

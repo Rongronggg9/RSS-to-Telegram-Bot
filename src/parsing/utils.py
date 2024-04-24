@@ -11,6 +11,7 @@ from telethon.tl.types import TypeMessageEntity
 from functools import partial
 from urllib.parse import urljoin
 from os import path
+from itertools import chain
 
 from .. import log
 from ..aio_helper import run_async
@@ -156,6 +157,7 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
         content: str = ''
         link: Optional[str] = None
         author: Optional[str] = None
+        tags: Optional[list[str]] = None
         title: Optional[str] = None
         enclosures: list[Enclosure] = None
 
@@ -184,6 +186,8 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
     title = entry.get('title')
     title = html_space_stripper(title, enable_emojify=True) if title else None
     EntryParsed.title = title or None  # reject empty string
+    if (tags := entry.get('tags')) and isinstance(tags, list):
+        EntryParsed.tags = list(filter(None, (tag.get('term') for tag in tags)))
 
     enclosures = []
 
@@ -299,3 +303,12 @@ def merge_contiguous_entities(entities: Sequence[TypeMessageEntity]) -> list[Typ
             entity.length = new_end_pos - new_start_pos
         merged_entities.append(entity)
     return merged_entities
+
+
+def merge_tags(*tag_lists: Optional[list[str]]) -> list[str]:
+    non_empty_tag_lists: list[list[str]] = list(filter(None, tag_lists))
+    if not non_empty_tag_lists:
+        return []
+    if len(non_empty_tag_lists) == 1:
+        return non_empty_tag_lists[0]
+    return list(dict.fromkeys(chain(*non_empty_tag_lists)))

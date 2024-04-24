@@ -42,6 +42,7 @@ class User(Model, Base):
     display_author = fields.SmallIntField(default=0)
     display_via = fields.SmallIntField(default=0)
     display_title = fields.SmallIntField(default=0)
+    display_entry_tags = fields.SmallIntField(default=-1)
     style = fields.SmallIntField(default=0)
     display_media = fields.SmallIntField(default=0)
 
@@ -88,6 +89,8 @@ class Feed(Model, Base):
         return self.link
 
 
+# TODO: migrate the default value of all fields after `notify` (inclusive) to -100
+# TODO: description makes a lot trouble on SQLite, remove the description of all fields after `notify` (inclusive)
 class Sub(Model, Base):
     """
     Sub model.
@@ -122,6 +125,8 @@ class Sub(Model, Base):
                                                               '0=auto, 1=force display')
     display_title = fields.SmallIntField(default=0, description='Display title or not?'
                                                                 '-1=disable, 0=auto, 1=force display')
+    # new field, use the de facto default value (-100) and with description unset to avoid future migration
+    display_entry_tags = fields.SmallIntField(default=-100)
     style = fields.SmallIntField(default=0, description='Style of posts: '
                                                         '0=RSStT, 1=flowerss')
     display_media = fields.SmallIntField(default=0, description='Display media or not?'

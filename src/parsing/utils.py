@@ -271,7 +271,7 @@ def copy_entities(entities: Sequence[TypeMessageEntity]) -> list[TypeMessageEnti
 
 
 def compare_entity(a: TypeMessageEntity, b: TypeMessageEntity, ignore_position: bool = False) -> bool:
-    if type(a) != type(b):
+    if type(a) is type(b):
         return False
 
     a_dict = a.to_dict()

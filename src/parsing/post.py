@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 
-from .. import db, env
+from .. import db
 from ..errors_collection import MediaSendFailErrors
 from .utils import parse_entry, logger, Enclosure
 from .post_formatter import PostFormatter
@@ -10,8 +10,16 @@ from .message import MessageDispatcher
 
 async def get_post_from_entry(entry, feed_title: str, feed_link: str = None) -> 'Post':
     entry_parsed = await parse_entry(entry, feed_link)
-    return Post(entry_parsed.content, entry_parsed.title, feed_title, entry_parsed.link, entry_parsed.author,
-                feed_link=feed_link, enclosures=entry_parsed.enclosures)
+    return Post(
+        html=entry_parsed.content,
+        title=entry_parsed.title,
+        feed_title=feed_title,
+        link=entry_parsed.link,
+        author=entry_parsed.author,
+        tags=entry_parsed.tags,
+        feed_link=feed_link,
+        enclosures=entry_parsed.enclosures
+    )
 
 
 class Post:
@@ -21,6 +29,7 @@ class Post:
                  feed_title: Optional[str] = None,
                  link: Optional[str] = None,
                  author: Optional[str] = None,
+                 tags: Optional[list[str]] = None,
                  feed_link: Optional[str] = None,
                  enclosures: list[Enclosure] = None):
         """
@@ -29,6 +38,7 @@ class Post:
         :param feed_title: feed title
         :param link: post link
         :param author: post author
+        :param tags: post tags
         :param feed_link: the url of the feed where the post from
         """
         self.html = html
@@ -36,16 +46,20 @@ class Post:
         self.feed_title = feed_title
         self.link = link
         self.author = author
+        self.tags = tags
         self.feed_link = feed_link
         self.enclosures = enclosures
 
-        self.post_formatter = PostFormatter(html=self.html,
-                                            title=self.title,
-                                            feed_title=self.feed_title,
-                                            link=self.link,
-                                            author=self.author,
-                                            feed_link=self.feed_link,
-                                            enclosures=self.enclosures)
+        self.post_formatter = PostFormatter(
+            html=self.html,
+            title=self.title,
+            feed_title=self.feed_title,
+            link=self.link,
+            author=self.author,
+            tags=self.tags,
+            feed_link=self.feed_link,
+            enclosures=self.enclosures
+        )
 
     async def send_formatted_post_according_to_sub(self, sub: db.Sub):
         if not isinstance(sub.feed, db.User):
@@ -61,6 +75,7 @@ class Post:
             display_author=sub.display_author if sub.display_author != -100 else user.display_author,
             display_via=sub.display_via if sub.display_via != -100 else user.display_via,
             display_title=sub.display_title if sub.display_title != -100 else user.display_title,
+            display_entry_tags=sub.display_entry_tags if sub.display_entry_tags != -100 else user.display_entry_tags,
             style=sub.style if sub.style != -100 else user.style,
             display_media=sub.display_media if sub.display_media != -100 else user.display_media,
             silent=not (sub.notify if sub.notify != -100 else user.notify)
@@ -76,6 +91,7 @@ class Post:
                                   display_author: int = 0,
                                   display_via: int = 0,
                                   display_title: int = 0,
+                                  display_entry_tags: int = -1,
                                   style: int = 0,
                                   display_media: int = 0,
                                   silent: bool = False):
@@ -92,6 +108,7 @@ class Post:
         :param display_author: -1=disable, 0=auto, 1=force display
         :param display_via: -2=completely disable, -1=disable but display link, 0=auto, 1=force display
         :param display_title: -1=disable, 0=auto, 1=force display
+        :param display_entry_tags: -1=disable, 1=force display
         :param style: 0=RSStT, 1=flowerss
         :param display_media: -1=disable, 0=enable
         :param silent: whether to send with notification sound
@@ -107,6 +124,7 @@ class Post:
                                                                  display_author=display_author,
                                                                  display_via=display_via,
                                                                  display_title=display_title,
+                                                                 display_entry_tags=display_entry_tags,
                                                                  style=style,
                                                                  display_media=display_media)
 
@@ -168,6 +186,7 @@ class Post:
                 display_title=user.display_title,
                 style=user.style,
                 display_media=user.display_media,
-                silent=not user.notify
+                silent=not user.notify,
+                display_entry_tags=user.display_entry_tags,
             )
         return await self.send_formatted_post_according_to_sub(sub=sub)

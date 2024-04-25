@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Union, Final, Iterable
 
 import re
 import json
+import string
 from contextlib import suppress
 from bs4.element import Tag
 from html import unescape
@@ -11,6 +12,7 @@ from telethon.tl.types import TypeMessageEntity
 from functools import partial
 from urllib.parse import urljoin
 from os import path
+from itertools import chain
 
 from .. import log
 from ..aio_helper import run_async
@@ -19,7 +21,7 @@ from ..compat import parsing_utils_html_validator_minify
 logger = log.getLogger('RSStT.parsing')
 
 # noinspection SpellCheckingInspection
-SPACES = (
+SPACES: Final[str] = (
     # all characters here, except for \u200c, \u200d and \u2060, are converted to space on TDesktop, but Telegram
     # Android preserves all
     ' '  # '\x20', SPACE
@@ -41,7 +43,7 @@ SPACES = (
     # '\u2060'  # WORD JOINER
     '\u3000'  # IDEOGRAPHIC SPACE
 )
-INVALID_CHARACTERS = (
+INVALID_CHARACTERS: Final[str] = (
     # all characters here are converted to space server-side
     '\x00'  # NULL
     '\x01'  # START OF HEADING
@@ -76,6 +78,10 @@ INVALID_CHARACTERS = (
     '\u2028'  # LINE SEPARATOR
     '\u2029'  # PARAGRAPH SEPARATOR
 )
+CHARACTERS_TO_ESCAPE_IN_HASHTAG: Final[str] = ''.join(
+    # all characters here will be replaced with '_'
+    sorted(set(SPACES + INVALID_CHARACTERS + string.punctuation + string.whitespace))
+)
 
 # load emoji dict
 with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-8') as emojify_json:
@@ -87,6 +93,7 @@ stripBr = partial(re.compile(r'\s*<br\s*/?\s*>\s*').sub, '<br>')
 stripLineEnd = partial(re.compile(rf'[{SPACES}]+\n').sub, '\n')  # use firstly
 stripNewline = partial(re.compile(r'\n{3,}').sub, '\n\n')  # use secondly
 stripAnySpace = partial(re.compile(r'\s+').sub, ' ')
+escapeHashtag = partial(re.compile(rf'[{CHARACTERS_TO_ESCAPE_IN_HASHTAG}]+').sub, '_')
 isAbsoluteHttpLink = re.compile(r'^https?://').match
 isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?|2)r?em)').search
 
@@ -156,6 +163,7 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
         content: str = ''
         link: Optional[str] = None
         author: Optional[str] = None
+        tags: Optional[list[str]] = None
         title: Optional[str] = None
         enclosures: list[Enclosure] = None
 
@@ -184,6 +192,8 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
     title = entry.get('title')
     title = html_space_stripper(title, enable_emojify=True) if title else None
     EntryParsed.title = title or None  # reject empty string
+    if (tags := entry.get('tags')) and isinstance(tags, list):
+        EntryParsed.tags = list(filter(None, (tag.get('term') for tag in tags)))
 
     enclosures = []
 
@@ -299,3 +309,15 @@ def merge_contiguous_entities(entities: Sequence[TypeMessageEntity]) -> list[Typ
             entity.length = new_end_pos - new_start_pos
         merged_entities.append(entity)
     return merged_entities
+
+
+def escape_hashtag(tag: str) -> str:
+    return escapeHashtag(tag).strip('_')
+
+
+def escape_hashtags(tags: Optional[Iterable[str]]) -> Iterable[str]:
+    return filter(None, map(escape_hashtag, tags)) if tags else ()
+
+
+def merge_tags(*tag_lists: Optional[Iterable[str]]) -> list[str]:
+    return list(dict.fromkeys(chain(*tag_lists)))

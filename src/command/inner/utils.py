@@ -33,7 +33,7 @@ def parse_hashtags(text: str) -> list[str]:
 def construct_hashtags(tags: Union[Iterable[str], str]) -> str:
     if isinstance(tags, str):
         tags = parse_hashtags(tags)
-    return ' '.join(f'#{tag}' for tag in tags)
+    return '#' + ' #'.join(tags)
 
 
 def calculate_update(old_hashes: Optional[Sequence[str]], entries: Sequence[dict]) \

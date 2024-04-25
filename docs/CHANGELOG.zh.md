@@ -8,6 +8,7 @@
 
 ### 亮点
 
+- **来自文章 (源条目) 的 #hashtag**: 如果在 `/set` 或 `/set_default` 中启用，来自文章 (源条目) 的 hashtag，与源的自定义 hashtag 合并后，将被添加到消息中。术语 "来自文章的 hashtag" 指的是 RSS `<item>` 或 Atom `<entry>` 中的 `<category>` 元素。此功能默认禁用。感谢 [@maooyer](https://github.com/maooyer) 在 [#449](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/pull/449) 中的作出的初次贡献。
 - **支持 Python 3.12**: 进行了一些小的修复以支持 Python 3.12。官方 Docker 镜像现在也基于 Python 3.12。
 - **使贡献更容易的辅助脚本**: 在进行更新数据库模型的贡献时，创建数据库迁移文件并不是一件容易的事。[scripts/aerich_helper.py](../scripts/aerich_helper.py) 是一个可以简化这个流程的辅助脚本。将 `--help` 传递给脚本以查看详细的使用指南。
 

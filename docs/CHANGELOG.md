@@ -14,6 +14,7 @@
 
 ### Enhancements
 
+- **Better handling custom #hashtags**: Invalid characters and punctuations that break hashtags are now replaced with `_` (underscore) when setting custom hashtags.
 - **Minor refactor**: Some internal functions have been refactored to improve readability and maintainability.
 
 ## v2.6.0: Upload media to Telegraph, management enhancements

@@ -84,7 +84,17 @@ async def init():
     # await Tortoise.init(config=config.TORTOISE_ORM)
     await aerich_command.init()
     await __upgrade_migrations_in_db()
-    await aerich_command.upgrade(run_in_transaction=True)
+    try:
+        if applied_migrations := await aerich_command.upgrade(run_in_transaction=True):
+            logger.info(f'Applied migrations due to DB schema changes: {", ".join(applied_migrations)}')
+    except Exception as e:
+        logger.critical('FAILED TO APPLY MIGRATIONS', exc_info=e)
+        try:
+            if migrations_to_apply := await aerich_command.heads():
+                logger.critical(f'UNAPPPLIED MIGRATIONS: {", ".join(migrations_to_apply)}')
+        except Exception as e:
+            logger.error('Failed to fetch unapplied migrations', exc_info=e)
+        exit(1)
     await effective_utils.init()
     logger.info('Successfully connected to the DB')
 

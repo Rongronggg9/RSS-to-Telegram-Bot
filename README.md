@@ -1,10 +1,9 @@
-<a href="https://t.me/RSStT_Bot"><img width="150" height="150" align="left" style="float: left; margin: 0 10px 0 0;" alt="RSStT icon" src="docs/resources/RSStT_icon.svg"/><a/>
+<p align="center">
+<img src="docs/resources/RSStT_icon.svg" alt="RSS to Telegram Bot" width="100">
+</p>
+<h1 align="center">RSS to Telegram Bot</h1>
 
-# [RSS to Telegram Bot](https://t.me/RSStT_Bot)
-
-**A Telegram RSS bot that cares about your reading experience**
-
-[简体中文 README](README.zh.md)
+<p align="center"><b>A Telegram RSS bot that cares about your reading experience</b></p>
 
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Rongronggg9/RSS-to-Telegram-Bot?logo=git&label=commit)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits)
 [![Translating status](https://img.shields.io/weblate/progress/rss-to-telegram-bot?logo=weblate&color=informational)](https://hosted.weblate.org/engage/rss-to-telegram-bot/)
@@ -12,12 +11,14 @@
 [![GitHub stars](https://img.shields.io/github/stars/Rongronggg9/Rss-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Rongronggg9/RSS-to-Telegram-Bot?style=social)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/fork)
 
-[![Telegram bot](https://img.shields.io/badge/bot-%40RSStT__Bot-229ed9?logo=telegram&style=for-the-badge)](https://t.me/RSStT_Bot)
-[![Telegram group](https://img.shields.io/badge/chat-%40RSStT__Group-229ed9?logo=telegram&style=for-the-badge)](https://t.me/RSStT_Group)
-[![Telegram channel](https://img.shields.io/badge/channel-%40RSStT__Channel-229ed9?logo=telegram&style=for-the-badge)](https://t.me/RSStT_Channel)
+[![Telegram bot](https://img.shields.io/badge/Telegram%20Bot-%40RSStT__Bot-229ed9?logo=telegram&style=for-the-badge)](https://t.me/RSStT_Bot)
+[![Telegram group](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.swo.moe%2Fstats%2Ftelegram%2FRSStT_Group&query=count&color=2CA5E0&label=Telegram%20Group&logo=telegram&cacheSeconds=3600&style=for-the-badge)](https://t.me/RSStT_Group)
+[![Telegram channel](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.swo.moe%2Fstats%2Ftelegram%2FRSStT_Channel&query=count&color=2CA5E0&label=Telegram%20Channel&logo=telegram&cacheSeconds=3600&style=for-the-badge)](https://t.me/RSStT_Channel)
 
-| [CHANGELOG] | [FAQ] | [Documentation] | [Channels Using RSStT] |
-|:-----------:|:-----:|-----------------|:----------------------:|
+| [简体中文 README] | [CHANGELOG] | [FAQ] | [Documentation] | [Channels Using RSStT] |
+|:-------------:|:-----------:|:-----:|-----------------|:----------------------:|
+
+[简体中文 README]: README.zh.md
 
 [CHANGELOG]: docs/CHANGELOG.md
 

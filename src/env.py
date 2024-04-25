@@ -119,7 +119,7 @@ dot_env_paths = (os.path.join(config_folder_path, '.env'),
                  os.path.join(os.path.abspath('.'), '.env'))
 if is_self_run_as_a_whole_package:
     dot_env_paths = (os.path.normpath(os.path.join(self_path, '..', '.env')),) + dot_env_paths
-for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
+for dot_env_path in dict.fromkeys(dot_env_paths):  # remove duplicates while keeping the order
     if os.path.isfile(dot_env_path):
         load_dotenv(dot_env_path, override=True)
         logger.info(f'Found .env file at "{dot_env_path}", loaded')

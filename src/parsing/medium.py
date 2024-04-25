@@ -253,8 +253,8 @@ class Medium(AbstractMedium):
     def __init__(self, urls: Union[str, list[str]], type_fallback_urls: Optional[Union[str, list[str]]] = None):
         super().__init__()
         urls = urls if isinstance(urls, list) else [urls]
-        # dedup, should not use a set because sequence is important
-        self.urls: list[str] = sorted(set(urls), key=urls.index)
+        # dedup while keeping the order
+        self.urls: list[str] = list(dict.fromkeys(urls))
         self.original_urls: tuple[str, ...] = tuple(self.urls)
         self.chosen_url: Optional[str] = self.urls[0]
         self._server_change_count: int = 0

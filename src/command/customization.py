@@ -400,16 +400,16 @@ async def cmd_set_hashtags(event: Union[events.NewMessage.Event, Message],
     if not hashtags and not sub.tags:
         await event.respond(i18n[lang]['cmd_set_hashtags_usage_prompt_html'], parse_mode='html')
         return
-    hashtags_str = ' '.join(hashtags) if hashtags else None
-    if hashtags_str and len(hashtags_str) > 255:
+    try:
+        await inner.customization.set_sub_hashtags(sub, hashtags)
+    except inner.customization.TooManyHashtagsError:
         await event.respond(i18n[lang]['set_hashtags_failure_too_many'])
         return
-    await inner.customization.set_sub_hashtags(sub, hashtags_str)
     await event.respond(
         (
                 ((i18n[lang]['set_hashtags_success_html'] + '\n'
-                  + f'<b>{inner.utils.construct_hashtags(hashtags)}</b>')
-                 if hashtags
+                  + f'<b>{inner.utils.construct_hashtags(sub.tags)}</b>')
+                 if sub.tags
                  else i18n[lang]['set_hashtags_success_cleared'])
                 + '\n\n' +
                 await inner.customization.get_sub_info(sub, lang=lang)

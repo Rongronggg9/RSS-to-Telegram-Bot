@@ -10,6 +10,7 @@ from ... import db, env
 from ...i18n import i18n
 from .utils import arrange_grid, update_interval, activate_or_deactivate_sub, formatting_time, logger, \
     construct_hashtags
+from ...parsing.utils import escape_hashtags
 
 SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "notify": (1, 0),
@@ -24,6 +25,10 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
 }
 
 FALLBACK_TO_USER_DEFAULT_EMOJI = "↩️"
+
+
+class TooManyHashtagsError(ValueError):
+    pass
 
 
 async def get_sub_info(sub: db.Sub,
@@ -475,15 +480,14 @@ async def del_subs_title(subs: Union[Iterable[db.Sub], db.Sub]) -> int:
 
 async def set_sub_hashtags(sub: db.Sub, hashtags: Union[Iterable[str], str, None]) -> db.Sub:
     if hashtags is None or isinstance(hashtags, str):
-        hashtags_str = hashtags
+        new_hashtags = hashtags
     else:
-        filtered_hashtags = []
-        for hashtag in hashtags:
-            hashtag = hashtag.strip(' \n\r\t#')
-            if hashtag:
-                filtered_hashtags.append(hashtag)
-        hashtags_str = ' '.join(filtered_hashtags) if filtered_hashtags else None
-    if sub.tags == hashtags_str:
-        return sub
-    sub.tags = hashtags_str
-    await sub.save()
+        new_hashtags = ' '.join(escape_hashtags(hashtags))
+    if new_hashtags and len(new_hashtags) > 255:
+        raise TooManyHashtagsError('Hashtags too long')
+    elif not new_hashtags:
+        new_hashtags = None
+    if sub.tags != new_hashtags:
+        sub.tags = new_hashtags
+        await sub.save()
+    return sub

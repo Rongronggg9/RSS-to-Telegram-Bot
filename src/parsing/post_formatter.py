@@ -94,6 +94,7 @@ class PostFormatter:
         self.parsed_html: Optional[str] = None
         self.plain_length: Optional[int] = None
         self.telegraph_link: Optional[Union[str, False]] = None  # if generating failed, will be False
+        self.tags_escaped: Optional[list[str]] = None
 
         self.__title_similarity: Optional[int] = None
 
@@ -223,7 +224,10 @@ class PostFormatter:
 
         # ---- determine tags ----
         if display_entry_tags == FORCE_DISPLAY:
-            tags = utils.merge_tags(tags, self.tags)
+            if self.tags_escaped is None:
+                self.tags_escaped = list(utils.escape_hashtags(self.tags))
+            if self.tags_escaped:
+                tags = utils.merge_tags(tags, self.tags_escaped) if tags else self.tags_escaped
 
         # ---- determine message_style ----
         if style == FLOWERSS:
@@ -352,7 +356,7 @@ class PostFormatter:
 
     def get_post_header_and_footer(self,
                                    sub_title: Optional[str],
-                                   tags: list,
+                                   tags: list[str],
                                    title_type: TypePostTitleType,
                                    via_type: TypeViaType,
                                    need_author: bool,
@@ -496,7 +500,7 @@ class PostFormatter:
 
     def generate_formatted_post(self,
                                 sub_title: Optional[str],
-                                tags: list,
+                                tags: list[str],
                                 title_type: TypePostTitleType,
                                 via_type: TypeViaType,
                                 need_author: bool,

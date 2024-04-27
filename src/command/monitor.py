@@ -1,13 +1,14 @@
 from __future__ import annotations
 from typing import Union
-from typing_extensions import Final
-from collections.abc import MutableMapping, Iterable
+from collections.abc import MutableMapping, Iterable, Mapping
 
 import gc
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from collections import defaultdict, Counter
+from contextlib import AbstractContextManager
 from itertools import islice
 from traceback import format_exc
 from telethon.errors import BadRequestError
@@ -22,60 +23,75 @@ from ..parsing.utils import html_space_stripper
 
 logger = log.getLogger('RSStT.monitor')
 
-NOT_UPDATED: Final = 'not_updated'
-CACHED: Final = 'cached'
-EMPTY: Final = 'empty'
-FAILED: Final = 'failed'
-UPDATED: Final = 'updated'
-SKIPPED: Final = 'skipped'
-
 # it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
 __user_unsub_all_lock_bucket: dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 __user_blocked_counter = Counter()
 
 
-class MonitoringLogs:
-    monitoring_counts = 0
-    not_updated = 0
-    cached = 0
-    empty = 0
-    failed = 0
-    updated = 0
-    skipped = 0
-    timeout = 0
+class MonitoringStat(AbstractContextManager):
+    # TODO: rewrite it to use real time?
+    # TODO: make __monitor directly call this class's method to log and make statistics
+    class Meta:
+        counter: MutableMapping[str, int] = Counter()
+        monitoring_counts = 0
+        summary_period = 10
 
-    @classmethod
-    def log(cls, not_updated: int, cached: int, empty: int, failed: int, updated: int, skipped: int, timeout: int):
-        cls.not_updated += not_updated
-        cls.cached += cached
-        cls.empty += empty
-        cls.failed += failed
-        cls.updated += updated
-        cls.skipped += skipped
-        cls.timeout += timeout
-        logger.debug(f'Finished feeds monitoring task: '
-                     f'updated({updated}), '
-                     f'not updated({not_updated}, including {cached} cached and {empty} empty), '
-                     f'fetch failed({failed}), '
-                     f'skipped({skipped}), '
-                     f'timeout({timeout})')
-        cls.monitoring_counts += 1
-        if cls.monitoring_counts == 10:
-            cls.print_summary()
+    @staticmethod
+    def _gen_property(key: str):
+        def getter(self):
+            return self.counter[key]
+
+        def setter(self, value):
+            self.counter[key] = value
+
+        return property(getter, setter)
+
+    not_updated: int = _gen_property('not_updated')
+    cached: int = _gen_property('cached')
+    empty: int = _gen_property('empty')
+    failed: int = _gen_property('failed')
+    updated: int = _gen_property('updated')
+    skipped: int = _gen_property('skipped')
+    timeout: int = _gen_property('timeout')
+    cancelled: int = _gen_property('cancelled')
+    unknown_error: int = _gen_property('unknown_error')
+    timeout_unknown_error: int = _gen_property('timeout_unknown_error')
+
+    @staticmethod
+    def _stat(counter: Mapping) -> str:
+        return ', '.join(filter(None, (
+            f'updated({counter["updated"]})',
+            f'not updated({counter["not_updated"]}, including {counter["cached"]} cached and {counter["empty"]} empty)',
+            f'fetch failed({counter["failed"]})' if counter["failed"] else '',
+            f'skipped({counter["skipped"]})' if counter["skipped"] else '',
+            f'timeout({counter["timeout"]})' if counter["timeout"] else '',
+            f'cancelled({counter["cancelled"]})' if counter["cancelled"] else '',
+            f'unknown error({counter["unknown_error"]})' if counter["unknown_error"] else '',
+            f'timeout w/ unknown error({counter["timeout_unknown_error"]})' if counter["timeout_unknown_error"] else '',
+        )))
+
+    def __init__(self):
+        self.counter: MutableMapping[str, int] = Counter()
+
+    def __exit__(self, *args):
+        meta = self.Meta
+        meta.counter += self.counter
+        level = logging.DEBUG
+        if self.timeout or self.cancelled or self.unknown_error or self.timeout_unknown_error:
+            level = logging.WARNING
+        msg = f'Finished a monitoring task: {self._stat(self.counter)}'
+        logger.log(level, msg)
+        self.Meta.monitoring_counts += 1
+        if meta.monitoring_counts == meta.summary_period:
+            self.print_summary()
+            meta.monitoring_counts = 0
+            meta.counter.clear()
             gc.collect()
 
     @classmethod
     def print_summary(cls):
-        logger.info(
-            f'Monitoring tasks summary in last 10 minutes: '
-            f'updated({cls.updated}), '
-            f'not updated({cls.not_updated}, including {cls.cached} cached and {cls.empty} empty), '
-            f'fetch failed({cls.failed}), '
-            f'skipped({cls.skipped}), '
-            f'timeout({cls.timeout})'
-        )
-        cls.not_updated = cls.cached = cls.empty = cls.failed = cls.updated = cls.skipped = cls.timeout = 0
-        cls.monitoring_counts = 0
+        meta = cls.Meta
+        logger.info(f'Summary of the last {meta.monitoring_counts} monitoring tasks: ' + cls._stat(meta.counter))
 
 
 async def run_monitor_task():
@@ -85,71 +101,67 @@ async def run_monitor_task():
 
     feeds = await db.Feed.filter(id__in=feed_id_to_monitor)
 
-    logger.debug('Started feeds monitoring task.')
+    logger.debug('Started a monitoring task.')
     wait_for = 10 * 60
-    timeout_errors = []
 
-    result = await asyncio.gather(*(asyncio.wait_for(__monitor(feed), timeout=wait_for) for feed in feeds),
-                                  return_exceptions=True)
+    with MonitoringStat() as stat:
+        task_feed_map = {
+            asyncio.create_task(__monitor(feed, stat)): feed
+            for feed in feeds
+        }
+        done, pending = await asyncio.wait(task_feed_map.keys(), timeout=wait_for)
 
-    not_updated = 0
-    cached = 0
-    empty = 0
-    failed = 0
-    updated = 0
-    skipped = 0
-    timeout = 0
+        for task in pending:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError as e:
+                stat.timeout += 1
+                feed = task_feed_map[task]
+                logger.error(f'Monitoring subtask timed out after {wait_for}s: {feed.link}', exc_info=e)
+            except Exception as e:
+                stat.timeout_unknown_error += 1
+                feed = task_feed_map[task]
+                logger.error(
+                    f'Monitoring subtask timed out after {wait_for}s and caused an unknown error: {feed.link}',
+                    exc_info=e
+                )
 
-    for f, r in zip(feeds, result):
-        if r is NOT_UPDATED:
-            not_updated += 1
-        elif r is CACHED:
-            not_updated += 1
-            cached += 1
-        elif r is EMPTY:
-            not_updated += 1
-            empty += 1
-        elif r is UPDATED:
-            updated += 1
-        elif r is FAILED:
-            failed += 1
-        elif r is SKIPPED:
-            skipped += 1
-        elif isinstance(r, asyncio.TimeoutError):
-            timeout += 1
-            timeout_errors.append((f, r))
-        elif isinstance(r, BaseException):
-            raise r
-        else:
-            raise TypeError(f'Unknown monitor result type: {r}')
-
-    MonitoringLogs.log(not_updated, cached, empty, failed, updated, skipped, timeout)
-    if timeout_errors:
-        logger.error(f'Timeout detected during a feeds monitoring task, '
-                     f'totally {timeout} feed(s) timed out after {wait_for}s:')
-        for feed, error in timeout_errors:
-            logger.error(f'The TimeoutError of the feed ({feed.link}) in the task:', exc_info=error)
+        for task in done:
+            try:
+                await task
+            except asyncio.CancelledError as e:
+                stat.cancelled += 1
+                feed = task_feed_map[task]
+                logger.error(f'Monitoring subtask failed due to CancelledError: {feed.link}', exc_info=e)
+            except Exception as e:
+                stat.unknown_error += 1
+                feed = task_feed_map[task]
+                logger.error(f'Monitoring failed due to an unknown error: {feed.link}', exc_info=e)
 
 
-async def __monitor(feed: db.Feed) -> str:
+async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
     """
     Monitor the update of a feed.
 
-    :param feed: the feed object to be monitored
-    :return: monitoring result
+    :param feed: Feed object to be monitored
+    :return: None
     """
     now = datetime.now(timezone.utc)
     if feed.next_check_time and now < feed.next_check_time:
-        return SKIPPED  # skip this monitor task
+        stat.skipped += 1
+        return  # skip this monitor task
 
     subs = await feed.subs.filter(state=1)
     if not subs:  # nobody has subbed it
         logger.warning(f'Feed {feed.id} ({feed.link}) has no active subscribers.')
         await inner.utils.update_interval(feed)
-        return SKIPPED
+        stat.skipped += 1
+        return
 
     if all(locks.user_flood_lock(sub.user_id).locked() for sub in subs):
-        return SKIPPED  # all subscribers are experiencing flood wait, skip this monitor task
+        stat.skipped += 1
+        return  # all subscribers are experiencing flood wait, skip this monitor task
 
     headers = {
         'If-Modified-Since': format_datetime(feed.last_modified or feed.updated_at)
@@ -165,7 +177,9 @@ async def __monitor(feed: db.Feed) -> str:
     try:
         if wf.status == 304:  # cached
             logger.debug(f'Fetched (not updated, cached): {feed.link}')
-            return CACHED
+            stat.not_updated += 1
+            stat.cached += 1
+            return
 
         if rss_d is None:  # error occurred
             no_error = False
@@ -174,25 +188,31 @@ async def __monitor(feed: db.Feed) -> str:
             if feed.error_count % 20 == 0:  # error_count is always > 0
                 logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
             if feed.error_count >= 100:
-                logger.error(f'Deactivated feed due to too many errors: {feed.link}')
+                logger.error(f'Deactivated due to too many ({feed.error_count}) errors '
+                             f'(current: {wf.error}): {feed.link}')
                 await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
-                return FAILED
+                stat.failed += 1
+                return
             if feed.error_count >= 10:  # too much error, delay next check
                 interval = feed.interval or db.EffectiveOptions.default_interval
                 next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
                 if next_check_interval > interval:
                     feed.next_check_time = now + timedelta(minutes=next_check_interval)
                     feed_updated_fields.add('next_check_time')
-            return FAILED
+            logger.debug(f'Fetched (failed, {feed.error_count}th retry, {wf.error}): {feed.link}')
+            stat.failed += 1
+            return
 
         etag = wf.headers and wf.headers.get('ETag')
-        if etag:
+        if etag and etag != feed.etag:
             feed.etag = etag
             feed_updated_fields.add('etag')
 
         if not rss_d.entries:  # empty
-            logger.debug(f'Fetched (empty): {feed.link}')
-            return EMPTY
+            logger.debug(f'Fetched (not updated, empty): {feed.link}')
+            stat.not_updated += 1
+            stat.empty += 1
+            return
 
         title = rss_d.feed.title
         title = html_space_stripper(title) if title else ''
@@ -206,7 +226,8 @@ async def __monitor(feed: db.Feed) -> str:
 
         if not updated_entries:  # not updated
             logger.debug(f'Fetched (not updated): {feed.link}')
-            return NOT_UPDATED
+            stat.not_updated += 1
+            return
 
         logger.debug(f'Updated: {feed.link}')
         feed.last_modified = inner.utils.get_http_last_modified(wf.headers)
@@ -228,8 +249,8 @@ async def __monitor(feed: db.Feed) -> str:
             await feed.save(update_fields=feed_updated_fields)
 
     await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
-
-    return UPDATED
+    stat.updated += 1
+    return
 
 
 async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapping):
@@ -267,7 +288,7 @@ async def __send(sub: db.Sub, post: Union[str, Post]):
     try:
         try:
             await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
-        except ValueError:  # cannot get the input entity, the bot may be banned by the user
+        except ValueError:  # cannot get the input entity, the user may have banned the bot
             return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=type(EntityNotFoundError).__name__)
         try:
             if isinstance(post, str):

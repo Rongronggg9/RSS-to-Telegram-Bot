@@ -113,12 +113,13 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 
 ### Option 4.1: Install from PyPI
 
-[![PyPI](https://img.shields.io/pypi/v/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
+[![PyPI](https://img.shields.io/pypi/v/rsstt?logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/rsstt/)
+[![TestPyPI](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Ftest.pypi.org%2Fpypi%2Frsstt%2Fjson&query=%24.info.version&prefix=v&logo=pypi&logoColor=white&label=TestPyPI)](https://test.pypi.org/project/rsstt/)
+[![PyPI - Implementation](https://img.shields.io/pypi/implementation/rsstt?logo=python&label=&labelColor=white)](https://www.python.org)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rsstt?logo=python&label=&labelColor=white)](https://www.python.org)\
 [![PyPI publish status](https://img.shields.io/github/actions/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/publish-to-pypi.yml?label=publish&logo=pypi&logoColor=white)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-pypi.yml)
 [![TestPyPI publish status](https://img.shields.io/github/actions/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/publish-to-test-pypi.yml?label=publish%20(TestPyPI)&logo=pypi&logoColor=white)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-test-pypi.yml)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
-[![PyPI - Implementation](https://img.shields.io/pypi/implementation/rsstt?logo=python)](https://www.python.org)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/rsstt?logo=python)](https://www.python.org)
 
 > Create a virtual environment (`venv`) and activate it first if needed.  
 > Default config folder is `~/.rsstt`.
@@ -129,6 +130,7 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 ```sh
 pip3 install -U pip setuptools
 pip3 install -U rsstt
+# pip3 install -U --extra-index-url https://test.pypi.org/simple rsstt
 mkdir -p ~/.rsstt
 wget https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/dev/.env.sample -O ~/.rsstt/.env
 vi ~/.rsstt/.env  # fill in env variables
@@ -139,8 +141,8 @@ python3 -m rsstt
 
 [![GitHub repo size](https://img.shields.io/github/repo-size/Rongronggg9/RSS-to-Telegram-Bot?logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/archive/refs/heads/dev.zip)
 [![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/Rongronggg9/RSS-to-Telegram-Bot?include_prereleases&sort=semver&logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/releases)
-[![GitHub last commit (dev)](https://img.shields.io/github/last-commit/Rongronggg9/RSS-to-Telegram-Bot/dev?logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
 [![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/Rongronggg9/RSS-to-Telegram-Bot/latest?include_prereleases&sort=semver&logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
+[![GitHub last commit (dev)](https://img.shields.io/github/last-commit/Rongronggg9/RSS-to-Telegram-Bot/dev?logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
 
 > Default config folder is `./config`, default `.env` path is `./.env` (placing it inside the config folder is also supported).
 

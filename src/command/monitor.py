@@ -28,6 +28,18 @@ __user_unsub_all_lock_bucket: dict[int, asyncio.Lock] = defaultdict(asyncio.Lock
 __user_blocked_counter = Counter()
 
 
+# TODO: move inside MonitoringStat once the minimum Python requirement is 3.10
+# @staticmethod
+def _gen_property(key: str):
+    def getter(self):
+        return self.counter[key]
+
+    def setter(self, value):
+        self.counter[key] = value
+
+    return property(getter, setter)
+
+
 class MonitoringStat(AbstractContextManager):
     # TODO: rewrite it to use real time?
     # TODO: make __monitor directly call this class's method to log and make statistics
@@ -35,16 +47,6 @@ class MonitoringStat(AbstractContextManager):
         counter: MutableMapping[str, int] = Counter()
         monitoring_counts = 0
         summary_period = 10
-
-    @staticmethod
-    def _gen_property(key: str):
-        def getter(self):
-            return self.counter[key]
-
-        def setter(self, value):
-            self.counter[key] = value
-
-        return property(getter, setter)
 
     not_updated: int = _gen_property('not_updated')
     cached: int = _gen_property('cached')

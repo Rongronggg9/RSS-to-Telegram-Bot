@@ -877,7 +877,8 @@ class Media:
 
         link_nodes: list[Text] = []
         for medium, medium_and_type in zip(self._media, media_and_types):
-            if isinstance(medium_and_type, Exception):
+            # Since Python 3.8, asyncio.CancelledError has been a subclass of BaseException rather than Exception
+            if isinstance(medium_and_type, (Exception, asyncio.CancelledError)):
                 if type(medium_and_type) in UserBlockedErrors:  # user blocked, let it go
                     raise medium_and_type
                 logger.debug('Upload media failed:', exc_info=medium_and_type)

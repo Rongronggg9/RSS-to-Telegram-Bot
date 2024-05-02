@@ -153,7 +153,6 @@ async def _request(
     async def _fetch():
         async with aiohttp.ClientSession(
                 connector=proxy_connector,
-                timeout=aiohttp.ClientTimeout(total=timeout),
                 headers=_headers,
                 cookie_jar=YummyCookieJar()
         ) as session:
@@ -204,7 +203,7 @@ async def _request(
         try:
             async with semaphore_to_use:
                 async with locks.overall_web_semaphore:
-                    ret = await asyncio.wait_for(_fetch(), timeout and timeout + 0.1)
+                    ret = await asyncio.wait_for(_fetch(), timeout)
                     if socket_family == AF_INET6 and tries < max_tries \
                             and ret.status in STATUSES_SHOULD_RETRY_IN_IPV4:
                         raise RetryInIpv4(ret.status, ret.reason)

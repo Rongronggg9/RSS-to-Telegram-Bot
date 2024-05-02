@@ -134,7 +134,7 @@ async def run_monitor_task():
 
     with MonitoringStat() as stat:
         task_feed_map = {
-            asyncio.create_task(__monitor(feed, stat)): feed
+            env.loop.create_task(__monitor(feed, stat)): feed
             for feed in feeds
         }
         done, pending = await asyncio.wait(task_feed_map.keys(), timeout=wait_for)

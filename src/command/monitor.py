@@ -180,6 +180,20 @@ def _defer_next_check_as_per_server_side_cache(wf: web.WebFeed) -> Optional[date
     if expires and wf.headers.get('cf-cache-status') in {'HIT', 'MISS', 'EXPIRED', 'REVALIDATED'} and expires > now:
         return expires
 
+    # defer next check as per RSSHub TTL (or Cache-Control max-age)
+    # only apply when TTL > 5min,
+    # as it is the default value of RSSHub and disabling cache won't change it in some legacy versions
+    rss_d = wf.rss_d
+    if rss_d.feed.get('generator') == 'RSSHub' and (updated_str := rss_d.feed.get('updated')):
+        ttl_in_minute_str: str = rss_d.feed.get('ttl', '')
+        ttl_in_second = int(ttl_in_minute_str) * 60 if ttl_in_minute_str.isdecimal() else None
+        if ttl_in_second is None:
+            ttl_in_second = wr.max_age
+        if ttl_in_second and ttl_in_second > 300:
+            updated = web.utils.rfc_2822_8601_to_datetime(updated_str)
+            if updated and (next_check_time := updated + timedelta(seconds=ttl_in_second)) > now:
+                return next_check_time
+
     return None
 
 

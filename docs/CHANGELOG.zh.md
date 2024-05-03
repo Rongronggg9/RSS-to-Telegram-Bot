@@ -14,6 +14,8 @@
 
 ### 增强
 
+- **根据 RSSHub TTL 推迟监控**: 根据 RSSHub 生成的 feed 的 TTL (生存时间) 推迟监控。RSSHub 会缓存 feed 直到 TTL 过期，因此对 TTL 较长的 RSSHub feed 进行激进的监控是不必要的。这旨在减少 RSStT 实例以及 RSSHub 实例的负载。如果 TTL 不可用或小于 5 分钟，则不会应用延迟。考虑到 RSS TTL 被广泛误用的情况，并非由 RSSHub 生成的 feed 不受影响。
+- **根据 Cloudflare 缓存推迟监控**: 同上，但适用于由 Cloudflare 代理的 feed。如果 Cloudflare 代理一个 feed 但不缓存它，将不会对这样的 feed 应用延迟。
 - **更好地处理自定义 #hashtag**: 当设置自定义 hashtag 时，会将破坏 hashtag 的无效字符和标点符号替换为 `_` (下划线)。
 - **改进了监控日志**: 监控日志已经被改进，使其更加信息丰富和易于阅读。
 - **次要的重构**: 重构了一些内部函数以提高可读性和可维护性。

@@ -6,8 +6,6 @@ import asyncio
 import re
 from collections import defaultdict
 from itertools import chain, repeat
-from datetime import datetime
-from email.utils import parsedate_to_datetime
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
 
@@ -76,21 +74,6 @@ def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: in
             + (f'{minutes}min' if minutes > 0 or long else '')
             + (f'{seconds}s' if seconds > 0 or long else '')
     )
-
-
-def get_http_last_modified(headers: Optional[Mapping]) -> datetime:
-    """
-    :param headers: dict of headers
-    :return: last modified time
-    """
-    last_modified = headers.get('Last-Modified') or headers.get('Date') if headers else None
-    try:
-        return parsedate_to_datetime(last_modified) if last_modified else datetime.utcnow()
-    except ValueError:
-        try:
-            return datetime.fromisoformat(last_modified)  # why some websites are so freaky? I can't understand
-        except ValueError:
-            return datetime.utcnow()
 
 
 def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> tuple[tuple[Any, ...], ...]:

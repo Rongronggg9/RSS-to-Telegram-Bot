@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union, Final
+from typing import Union, Final, Optional
 from collections.abc import MutableMapping, Iterable, Mapping
 
 import gc
@@ -201,6 +201,7 @@ async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
     rss_d = wf.rss_d
 
     no_error = True
+    new_next_check_time: Optional[datetime] = None  # clear next_check_time by default
     feed_updated_fields = set()
     try:
         if wf.status == 304:  # cached
@@ -221,18 +222,19 @@ async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
                 await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
                 stat.failed += 1
                 return
-            if feed.error_count >= 10:  # too much error, delay next check
+            if feed.error_count >= 10:  # too much error, defer next check
                 interval = feed.interval or db.EffectiveOptions.default_interval
-                next_check_interval = min(interval, 15) * min(feed.error_count // 10 + 1, 5)
-                if next_check_interval > interval:
-                    feed.next_check_time = now + timedelta(minutes=next_check_interval)
-                    feed_updated_fields.add('next_check_time')
+                if (next_check_interval := min(interval, 15) * min(feed.error_count // 10 + 1, 5)) > interval:
+                    new_next_check_time = now + timedelta(minutes=next_check_interval)
             logger.debug(f'Fetched (failed, {feed.error_count}th retry, {wf.error}): {feed.link}')
             stat.failed += 1
             return
 
-        etag = wf.headers and wf.headers.get('ETag')
-        if etag and etag != feed.etag:
+        wr = wf.web_response
+        assert wr is not None
+        wr.now = now
+
+        if (etag := wr.etag) and etag != feed.etag:
             feed.etag = etag
             feed_updated_fields.add('etag')
 
@@ -258,7 +260,7 @@ async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
             return
 
         logger.debug(f'Updated: {feed.link}')
-        feed.last_modified = inner.utils.get_http_last_modified(wf.headers)
+        feed.last_modified = wr.last_modified
         feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
         feed_updated_fields.update({'last_modified', 'entry_hashes'})
     finally:
@@ -266,12 +268,13 @@ async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
             if feed.error_count > 0:
                 feed.error_count = 0
                 feed_updated_fields.add('error_count')
-            if feed.next_check_time:
-                feed.next_check_time = None
-                feed_updated_fields.add('next_check_time')
             if wf.url != feed.link:
                 new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
                 feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
+
+        if new_next_check_time != feed.next_check_time:
+            feed.next_check_time = new_next_check_time
+            feed_updated_fields.add('next_check_time')
 
         if feed_updated_fields:
             await feed.save(update_fields=feed_updated_fields)

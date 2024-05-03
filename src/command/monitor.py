@@ -168,6 +168,21 @@ async def run_monitor_task():
                 logger.error(f'Monitoring failed due to an unknown error: {feed.link}', exc_info=e)
 
 
+def _defer_next_check_as_per_server_side_cache(wf: web.WebFeed) -> Optional[datetime]:
+    wr = wf.web_response
+    assert wr is not None
+    expires = wr.expires
+    now = wr.now
+
+    # defer next check as per Cloudflare cache
+    # https://developers.cloudflare.com/cache/concepts/cache-responses/
+    # https://developers.cloudflare.com/cache/how-to/edge-browser-cache-ttl/
+    if expires and wf.headers.get('cf-cache-status') in {'HIT', 'MISS', 'EXPIRED', 'REVALIDATED'} and expires > now:
+        return expires
+
+    return None
+
+
 async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
     """
     Monitor the update of a feed.
@@ -237,6 +252,8 @@ async def __monitor(feed: db.Feed, stat: MonitoringStat) -> None:
         if (etag := wr.etag) and etag != feed.etag:
             feed.etag = etag
             feed_updated_fields.add('etag')
+
+        new_next_check_time = _defer_next_check_as_per_server_side_cache(wf)
 
         if not rss_d.entries:  # empty
             logger.debug(f'Fetched (not updated, empty): {feed.link}')

@@ -1,12 +1,14 @@
 from __future__ import annotations
-from typing import Union, Optional, AnyStr
+from typing import Union, Optional, AnyStr, ClassVar
 from typing_extensions import Final
 
 import aiohttp
 import aiohttp.abc
+import email.utils
 import feedparser
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone, timedelta
 from ipaddress import ip_address, ip_network
 from urllib.parse import urlparse
 from multidict import CIMultiDictProxy
@@ -101,6 +103,21 @@ class WebError(Exception):
         return self.i18n_message()
 
 
+def rfc_2822_8601_to_datetime(time_str: Optional[str]) -> Optional[datetime]:
+    """
+    Some websites freakishly violate the standard and use RFC 8601 in HTTP headers, so we have to support both.
+    :param time_str: Time string in RFC 2822 or 8601 format
+    :return: datetime object, if valid
+    """
+    if not time_str:
+        return None
+    with suppress(ValueError):
+        return email.utils.parsedate_to_datetime(time_str)
+    with suppress(ValueError):
+        return datetime.fromisoformat(time_str)
+    return None
+
+
 @dataclass
 class WebResponse:
     url: str  # redirected url
@@ -109,6 +126,93 @@ class WebResponse:
     headers: CIMultiDictProxy[str]
     status: int
     reason: Optional[str]
+
+    _now: Optional[datetime] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+    _date: Optional[datetime] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+    _last_modified: Optional[datetime] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+    _max_age: Optional[int] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+    _age: Optional[int] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+    _age_remaining: Optional[int] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+    _expires: Optional[datetime] = field(default=sentinel, init=False, repr=False, hash=False, compare=False)
+
+    _age_remaining_clamp: ClassVar[range] = range(0, 3600 + 1)  # 1 hour
+
+    @property
+    def etag(self) -> Optional[str]:
+        return self.headers.get('ETag')
+
+    @property
+    def now(self) -> datetime:
+        if self._now is sentinel:
+            self._now = datetime.now(timezone.utc)
+        return self._now
+
+    @now.setter
+    def now(self, value: datetime):
+        self._now = value
+
+    @property
+    def date(self) -> datetime:
+        if self._date is sentinel:
+            self._date = rfc_2822_8601_to_datetime(self.headers.get('Date')) or self.now
+        return self._date
+
+    @property
+    def last_modified(self) -> datetime:
+        if self._last_modified is sentinel:
+            self._last_modified = rfc_2822_8601_to_datetime(self.headers.get('Last-Modified')) or self.date
+        return self._last_modified
+
+    @property
+    def max_age(self) -> Optional[int]:
+        if self._max_age is not sentinel:
+            return self._max_age
+        cache_control = self.headers.get('Cache-Control', '').lower()
+        if not cache_control:
+            self._max_age = None
+        elif 'no-cache' in cache_control or 'no-store' in cache_control:
+            self._max_age = 0
+        elif max_age := cache_control.partition('max-age=')[2].partition(',')[0]:
+            try:
+                self._max_age = int(max_age) if max_age else None
+            except ValueError:
+                self._max_age = None
+        else:
+            self._max_age = None
+        return self._max_age
+
+    @property
+    def age(self) -> Optional[int]:
+        if self._age is sentinel:
+            age = self.headers.get('Age')
+            try:
+                self._age = int(age) if age else None
+            except ValueError:
+                self._age = None
+        return self._age
+
+    @property
+    def age_remaining(self) -> Optional[int]:
+        if self._age_remaining is sentinel:
+            if self.max_age is None:
+                self._age_remaining = None
+            else:
+                self._age_remaining = self.max_age - (self.age or 0)
+                if self._age_remaining < self._age_remaining_clamp.start:
+                    self._age_remaining = self._age_remaining_clamp.start
+                elif self._age_remaining > self._age_remaining_clamp.stop:
+                    self._age_remaining = self._age_remaining_clamp.stop
+        return self._age_remaining
+
+    @property
+    def expires(self) -> Optional[datetime]:
+        if self._expires is sentinel:
+            # max-age overrides Expires: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
+            if self.age_remaining is None:
+                self._expires = rfc_2822_8601_to_datetime(self.headers.get('Expires'))
+            else:
+                self._expires = self.date + timedelta(seconds=self.age_remaining)
+        return self._expires
 
 
 @dataclass
@@ -121,6 +225,8 @@ class WebFeed:
     reason: Optional[str] = None
     rss_d: Optional[feedparser.FeedParserDict] = None
     error: Optional[WebError] = None
+
+    web_response: Optional[WebResponse] = None
 
 
 def proxy_filter(url: str, parse: bool = True) -> bool:

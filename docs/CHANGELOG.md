@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.7.0: #Hashtags from post, Python 3.12 support, and more
 
 ### BREAKING CHANGES
 

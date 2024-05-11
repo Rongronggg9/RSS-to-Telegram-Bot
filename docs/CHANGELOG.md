@@ -55,7 +55,7 @@
 ### Bug fixes
 
 - **Stay in topic group even when the "General" topic is closed**: Now that topic groups are not fully supported, the bot can only send messages in the "General" topic. Previously, the bot would only send an error message to the bot manager if the "General" topic is closed. Now the bot will leave the topic group, without disturbing the bot manager, if the "General" topic is closed. This is a temporary limitation before topic groups are fully supported.
-- **v2.4.1 not released to PyPI**: Due to a previous mistake, v2.4.1 could not be released to PyPI. v2.5.0 fixes the mistake and is released to PyPI. 
+- **v2.4.1 not released to PyPI**: Due to a previous mistake, v2.4.1 could not be released to PyPI. v2.5.0 fixes the mistake and is released to PyPI.
 
 ## v2.4.1: Minor enhancements, bug fixes, and Happy New Year!
 
@@ -283,7 +283,7 @@ Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `de
 
 Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)
 
-**This is a major release. It introduces some major breaking changes. You must migrate to the new version manually.**  
+**This is a major release. It introduces some major breaking changes. You must migrate to the new version manually.**\
 **PLEASE READ THE [MIGRATION GUIDE](migration-guide-v2.md) BEFORE UPDATING!**
 
 ### BREAKING CHANGES

@@ -14,7 +14,7 @@
 
 ### **Q**: How is the performance of the bot?
 
-**A**: The bot is designed to be asynchronous, so it is lightweight and fast. Even if there are over 6000 feeds, the bot can still run on a single core VPS, with an incredibly low load average (~0.2) and approximate 350MB memory usage. The bot can still work fine in such a condition and its stability and usability will not be degraded. 
+**A**: The bot is designed to be asynchronous, so it is lightweight and fast. Even if there are over 6000 feeds, the bot can still run on a single core VPS, with an incredibly low load average (~0.2) and approximate 350MB memory usage. The bot can still work fine in such a condition and its stability and usability will not be degraded.
 
 ### **Q**: It appears to have a slight memory leak problem...
 
@@ -26,14 +26,14 @@
 
 ### **Q**: I want my bot to serve me only. What should I do?
 
-**A**: Set the env variable `MULTIUSER` to `0`.  
-If you need to use the bot in a channel, read the next question.  
+**A**: Set the env variable `MULTIUSER` to `0`.\
+If you need to use the bot in a channel, read the next question.\
 Using the bot in a group is possible even if you don't have the multi-user mode enabled, as long as you are a non-anonymous administrator of the group. If you are an anonymous administrator of the group, read the next question.
 
 ### **Q**: I want my bot to serve the users/channels/groups I specify only. What should I do?
 
-**A**: Firstly, set the env variable `MULTIUSER` to `0`. This will make guests unable to use the bot.  
-If you want to allow a certain user to use the bot, send `/user_info user_id` or `/user_info @username` to the bot and promote their to "User".  
+**A**: Firstly, set the env variable `MULTIUSER` to `0`. This will make guests unable to use the bot.\
+If you want to allow a certain user to use the bot, send `/user_info user_id` or `/user_info @username` to the bot and promote their to "User".\
 If you want to allow a certain channel/group to use the bot, you should promote both the channel/group itself and at least one of its administrators to "User". Only the promoted administrators can operate the bot in the channel/group.
 
 ### **Q**: Why did the bot automatically leave my channel/group?

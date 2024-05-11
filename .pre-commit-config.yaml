@@ -1,0 +1,26 @@
+# This is the configuration file for pre-commit (https://pre-commit.com/).
+# To use:
+# * Install pre-commit (https://pre-commit.com/#installation)
+# * Copy this file as ".pre-commit-config.yaml"
+# * Run "pre-commit install".
+
+default_install_hook_types: [commit-msg, pre-commit]
+ci:
+  autofix_commit_msg: "fix: auto fix by pre-commit hooks"
+  autofix_prs: true
+  autoupdate_branch: dev
+  autoupdate_schedule: monthly
+  autoupdate_commit_msg: "ci(pre-commit): auto update by pre-commit hooks"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+        types: [python]
+      - id: mixed-line-ending
+        args: [ "--fix=lf" ]
+      - id: trailing-whitespace

@@ -61,7 +61,7 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ## Option 3: ~~Heroku~~
 
-> ~~Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.~~  
+> ~~Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.~~\
 > [Heroku no longer offers free plans](https://blog.heroku.com/next-chapter). Deploying RSStT on Heroku could cost you at least $16 per month ($7 for Heroku Dyno and $9 for Heroku Postgres). [Railway.app](#option-2-railwayapp) offers lower price and better performance.
 
 ### Deploy
@@ -121,10 +121,10 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 [![TestPyPI publish status](https://img.shields.io/github/actions/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/publish-to-test-pypi.yml?label=publish%20(TestPyPI)&logo=pypi&logoColor=white)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-test-pypi.yml)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
 
-> Create a virtual environment (`venv`) and activate it first if needed.  
+> Create a virtual environment (`venv`) and activate it first if needed.\
 > Default config folder is `~/.rsstt`.
 
-> `pip3 install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.  
+> `pip3 install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.\
 > `pip3 install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
 
 ```sh

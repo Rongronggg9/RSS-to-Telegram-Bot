@@ -124,13 +124,13 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 > Create a virtual environment (`venv`) and activate it first if needed.\
 > Default config folder is `~/.rsstt`.
 
-> `pip3 install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.\
-> `pip3 install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
+> `python3 -m pip install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.\
+> `python3 -m pip install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
 
 ```sh
-pip3 install -U pip setuptools
-pip3 install -U rsstt
-# pip3 install -U --extra-index-url https://test.pypi.org/simple rsstt
+python3 -m pip install -U pip setuptools
+python3 -m pip install -U rsstt
+# python3 -m pip install -U --extra-index-url https://test.pypi.org/simple rsstt
 mkdir -p ~/.rsstt
 wget https://raw.githubusercontent.com/Rongronggg9/RSS-to-Telegram-Bot/dev/.env.sample -O ~/.rsstt/.env
 vi ~/.rsstt/.env  # fill in env variables
@@ -149,7 +149,7 @@ python3 -m rsstt
 ```sh
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git
 cd RSS-to-Telegram-Bot
-pip3 install -r requirements.txt
+python3 -m pip install -r requirements.txt
 cp .env.sample .env
 vi .env  # fill in env variables
 python3 -u telegramRSSbot.py

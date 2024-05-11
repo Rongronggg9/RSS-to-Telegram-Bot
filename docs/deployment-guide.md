@@ -2,6 +2,7 @@
 
 ## Preparation
 
+> [!TIP]\
 > For more env variables and detailed information, read [Advanced Settings](advanced-settings.md).
 
 1. Turn to [@BotFather](https://t.me/BotFather), send `/newbot` create a new bot, then get its token (env variable: `TOKEN`). After that, send `/setinline`, select your bot, and reply with an inline placeholder you like to enable inline mode for your bot. For example, [@RSStT_Bot](https://t.me/RSStT_Bot) is using `Please input a command to continue...`.
@@ -14,7 +15,8 @@
 [![Build status (master)](https://img.shields.io/github/actions/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/publish-docker-image.yml?branch=master&label=build&logo=docker)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Amaster)
 [![Build status (dev)](https://img.shields.io/github/actions/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/publish-docker-image.yml?branch=dev&label=build%20%28dev%29&logo=docker)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-docker-image.yml?query=branch%3Adev)
 
-> An x86_64 (amd64) or arm64v8 (aarch64) machine is required. If you need a VPS, [Vultr (affiliate link, w/ 14-days-valid $100 trial credit)](https://www.vultr.com/?ref=8947246-8H) High Performance (Intel) NVMe SSD Cloud Servers (starting at $6/month) is recommended.
+> [!TIP]\
+> An x86_64 (amd64) or arm64v8 (aarch64) machine is required. If you need a VPS, [Vultr (affiliate link, w/ 14-days-valid $100 trial credit)](https://www.vultr.com/?ref=8947246-8H) High Performance (Intel) NVMe SSD Cloud Servers (starting at $6/month) are recommended.
 
 ### Deploy
 
@@ -36,7 +38,8 @@ docker-compose up -d
 
 ## Option 2: Railway.app
 
-> ~~Railway accounts without any verified payment method or prepaid balance can only consume 500 execution hours per month, which means that RSStT will be paused after 500 hours of uptime. To get rid of the execution time limit, either associate a credit/debit card to your account or prepaid $5 **once**. You will get $5 free credit each month without execution time limit, which is pretty enough for RSStT. Except the prepaid balance (if you don't want to associate a credit/debit card), hosting RSStT should be free of charge.~~
+> [!TIP]\
+> ~~Railway accounts without any verified payment method or prepaid balance can only consume 500 execution hours per month, which means that RSStT will be paused after 500 hours of uptime. To get rid of the execution time limit, either associate a credit/debit card to your account or prepaid $5 **once**. You will get $5 free credit each month without execution time limit, which is pretty enough for RSStT. Except the prepaid balance (if you don't want to associate a credit/debit card), hosting RSStT should be free of charge.~~\
 > [Railway no longer offers free plans](https://blog.railway.app/p/pricing-and-plans-migration-guide-2023). Deploying RSStT on Railway could cost you at least $5 per month (Hobby Plan).
 
 ### Deploy
@@ -61,6 +64,7 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ## Option 3: ~~Heroku~~
 
+> [!TIP]\
 > ~~Heroku accounts with no verified payment method have only 550 hours of credit per month (about 23 days), and up to 1,000 hours per month with any verified payment methods.~~\
 > [Heroku no longer offers free plans](https://blog.heroku.com/next-chapter). Deploying RSStT on Heroku could cost you at least $16 per month ($7 for Heroku Dyno and $9 for Heroku Postgres). [Railway.app](#option-2-railwayapp) offers lower price and better performance.
 
@@ -86,8 +90,12 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ## Option 4: Install from PyPI / Dirty run from source
 
+> [!IMPORTANT]\
+> It is **highly recommended** to [set up a virtual environment (`venv`)](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).
+
 ### System requirements
 
+> [!NOTE]\
 > RSStT is tested only under the recommended system requirements.
 
 |                      | **Minimum**           | **Recommended** |
@@ -99,6 +107,7 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 
 ### Prerequisites
 
+> [!NOTE]\
 > These fonts are used for HTML table rendering (to enable it, set the environment variable `TABLE_TO_IMAGE` to `1`). You may use WenQuanYi Zen Hei, WenQuanYI Micro Hei, Noto Sans CJK, Microsoft YaHei, or SimHei.
 
 #### Debian / Ubuntu
@@ -121,11 +130,12 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 [![TestPyPI publish status](https://img.shields.io/github/actions/workflow/status/Rongronggg9/RSS-to-Telegram-Bot/publish-to-test-pypi.yml?label=publish%20(TestPyPI)&logo=pypi&logoColor=white)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/actions/workflows/publish-to-test-pypi.yml)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/rsstt?logo=pypi&logoColor=white)](https://pypi.org/project/rsstt/)
 
-> Create a virtual environment (`venv`) and activate it first if needed.\
-> Default config folder is `~/.rsstt`.
+> [!NOTE]\
+> The default config folder is `~/.rsstt`.
 
-> `python3 -m pip install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.\
-> `python3 -m pip install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
+> [!IMPORTANT]
+> * `python3 -m pip install -U rsstt` will install the latest **stable** version from [PyPI](https://pypi.org/project/rsstt), which **may be outdated**.
+> * `python3 -m pip install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
 
 ```sh
 python3 -m pip install -U pip setuptools
@@ -144,7 +154,8 @@ python3 -m rsstt
 [![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/Rongronggg9/RSS-to-Telegram-Bot/latest?include_prereleases&sort=semver&logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
 [![GitHub last commit (dev)](https://img.shields.io/github/last-commit/Rongronggg9/RSS-to-Telegram-Bot/dev?logo=github)](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/commits/dev)
 
-> Default config folder is `./config`, default `.env` path is `./.env` (placing it inside the config folder is also supported).
+> [!NOTE]
+> The default config folder is `./config`, default `.env` path is `./.env` (placing it inside the config folder is also supported).
 
 ```sh
 git clone https://github.com/Rongronggg9/RSS-to-Telegram-Bot.git

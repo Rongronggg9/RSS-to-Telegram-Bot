@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **Unable to handle completely empty posts**: Fix `AttributeError` caused by completely empty posts. They are ignored now.
+
 ## v2.7.0: #Hashtags from post, Python 3.12 support, and more
 
 ### BREAKING CHANGES

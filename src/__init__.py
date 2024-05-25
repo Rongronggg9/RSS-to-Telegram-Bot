@@ -273,6 +273,14 @@ def force_quit(*_):
     os.kill(os.getpid(), signal.SIGKILL)
 
 
+def sig_handler(signum, *_, **__):
+    try:
+        logger.warning(f'Received signal {signal.Signals(signum).name}')
+    except ValueError:
+        logger.warning(f'Received signal {signum}')
+    exit(128 + signum)
+
+
 def main():
     # bot.disconnected usually means the bot is logged out due to a network error or Telegram DC degradation,
     # so we should exit with a non-zero code to indicate an error.
@@ -280,7 +288,7 @@ def main():
     exit_code = 100
 
     try:
-        signal.signal(signal.SIGTERM, lambda *_, **__: exit())  # graceful exit handler
+        signal.signal(signal.SIGTERM, sig_handler)  # graceful exit handler
 
         init()
 

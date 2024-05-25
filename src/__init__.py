@@ -274,7 +274,11 @@ def force_quit(*_):
 
 
 def main():
-    exit_code = 0
+    # bot.disconnected usually means the bot is logged out due to a network error or Telegram DC degradation,
+    # so we should exit with a non-zero code to indicate an error.
+    # This aims to avoid confusion when running the bot in a container or as a service.
+    exit_code = 100
+
     try:
         signal.signal(signal.SIGTERM, lambda *_, **__: exit())  # graceful exit handler
 

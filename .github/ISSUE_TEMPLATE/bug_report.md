@@ -8,11 +8,11 @@ assignees: ''
 ---
 
 ## Describe the bug
-> [!TIP]\
+> [!TIP]<!--- Remove this blockquote before submitting -->\
 > A clear and concise description of what the bug is.
 
 ## To Reproduce
-> [!TIP]\
+> [!TIP]<!--- Remove this blockquote before submitting -->\
 > Steps to reproduce the behavior.
 1. Go to '...'
 2. Click on '...'
@@ -20,19 +20,19 @@ assignees: ''
 4. See error
 
 ## Screenshots
-> [!TIP]\
+> [!TIP]<!--- Remove this blockquote before submitting -->\
 > If applicable, upload screenshots to help explain your problem.
 
 ## Feed URL
-> [!TIP]\
+> [!TIP]<!--- Remove this blockquote before submitting -->\
 > If applicable, provide the feed URL that causes the bug.
 
 ## Expected behavior
-> [!TIP]\
+> [!TIP]<!--- Remove this blockquote before submitting -->\
 > A clear and concise description of what you expected to happen.
 
 ## Important log
-> [!IMPORTANT]\
+> [!IMPORTANT]<!--- Remove this blockquote before submitting -->\
 > Rerun RSStT with `DEBUG=1` set in the environment variables, and paste the log below.
 > If you are using Docker, you can get the log by executing:
 > ```sh

@@ -16,7 +16,7 @@ from itertools import chain
 
 from .. import log
 from ..aio_helper import run_async
-from ..compat import parsing_utils_html_validator_minify
+from ..compat import parsing_utils_html_validator_minify, INT64_T_MAX
 
 logger = log.getLogger('RSStT.parsing')
 
@@ -133,8 +133,8 @@ def is_emoticon(tag: Tag) -> bool:
     src = tag.get('src', '')
     alt, _class = tag.get('alt', ''), tag.get('class', '')
     style, width, height = tag.get('style', ''), tag.get('width', ''), tag.get('height', '')
-    width = int(width) if width and width.isdigit() else float('inf')
-    height = int(height) if height and height.isdigit() else float('inf')
+    width = int(width) if width and width.isdigit() else INT64_T_MAX
+    height = int(height) if height and height.isdigit() else INT64_T_MAX
     return (width <= 30 or height <= 30 or isSmallIcon(style)
             or 'emoji' in _class or 'emoticon' in _class or (alt.startswith(':') and alt.endswith(':'))
             or src.startswith('data:'))

@@ -6,6 +6,7 @@
 
 - **Exit with 0 when disconnected**: If the bot was logged out due to a network error or Telegram DC degradation, it would exit with exit-code 0. This led to confusion when the bot was running in a container or as a service. Now the bot will exit with exit-code 100 when disconnected.
 - **Unable to handle completely empty posts**: Fix `AttributeError` caused by completely empty posts. They are ignored now.
+- **Minor bug fixes**
 
 ## v2.7.0: #Hashtags from post, Python 3.12 support, and more
 

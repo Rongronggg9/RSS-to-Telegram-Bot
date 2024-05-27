@@ -7,6 +7,7 @@ if _version_info < (3, 9):
     raise RuntimeError("This bot requires Python 3.9 or later")
 
 from typing import Callable
+from typing_extensions import Final
 
 import copy
 import functools
@@ -25,6 +26,9 @@ except ImportError:
 
 import ssl
 from contextlib import AbstractContextManager, AbstractAsyncContextManager, suppress
+
+# all supported architectures are 64-bit, so the below constants will be a native int (efficient)
+INT64_T_MAX: Final = 2 ** 63 - 1
 
 # backport `contextlib.nullcontext` for Python 3.9
 if _version_info[1] >= 10:

@@ -11,6 +11,7 @@ from io import BytesIO, SEEK_END
 from asyncstdlib import lru_cache
 
 from .. import env
+from ..compat import INT64_T_MAX
 from .req import get, _get
 from .utils import logger
 
@@ -19,7 +20,6 @@ EOI: Final = b'\xff\xd9'
 IMAGE_MAX_FETCH_SIZE: Final = 1024 * (1 if env.TRAFFIC_SAVING else 5)
 IMAGE_ITER_CHUNK_SIZE: Final = 128
 IMAGE_READ_BUFFER_SIZE: Final = 1
-INFINITY: Final = float('inf')
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -28,7 +28,7 @@ LRU_CACHE_MAXSIZE: Final = 1024
 
 async def __medium_info_callback(response: aiohttp.ClientResponse) -> tuple[int, int]:
     content_type = response.headers.get('Content-Type', '').lower()
-    content_length = int(response.headers.get('Content-Length', INFINITY))
+    content_length = int(response.headers.get('Content-Length', INT64_T_MAX))
     content = response.content
     preloaded_length = content.total_bytes  # part of response body already came with the response headers
     eof_flag = content.at_eof()

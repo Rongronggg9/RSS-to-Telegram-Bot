@@ -296,6 +296,7 @@ def main():
 
         logger.info(
             f"RSS-to-Telegram-Bot ({', '.join(env.VERSION.split())}) started!\n"
+            f"SELF: {env.bot_peer.first_name} @{env.bot_peer.username} ({env.bot_peer.id})\n"  # bot has no last name
             f"MANAGER: {', '.join(map(str, env.MANAGER))}\n"
             f"ERROR_LOGGING_CHAT: {env.ERROR_LOGGING_CHAT}\n"
             f"T_PROXY (for Telegram): {env.TELEGRAM_PROXY or 'not set'}\n"

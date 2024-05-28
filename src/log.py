@@ -98,7 +98,7 @@ class _APSCFilter(logging.Filter):
             return True
         if ' executed successfully' in msg:
             return False
-        if 'Running job "run_monitor_task' in msg:
+        if 'Running job "Monitor.run_periodic_task' in msg:
             self.count = 0
             self.watchdog.feed()
             return False

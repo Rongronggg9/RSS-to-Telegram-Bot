@@ -36,6 +36,7 @@ loop = env.loop
 bot: Optional[TelegramClient] = None
 pre_tasks = []
 
+monitor = command.monitor.Monitor()
 scheduler = AsyncIOScheduler(event_loop=loop)
 
 
@@ -53,6 +54,7 @@ def init():
     pre_tasks.extend((
         loop.create_task(db.init()),
         loop.create_task(tgraph.init()),
+        loop.create_task(monitor.init()),
     ))
 
     if env.PORT:
@@ -257,7 +259,11 @@ async def lazy():
 
 async def post():
     logger.info('Exiting gracefully...')
-    tasks = [asyncio.shield(loop.create_task(db.close())), loop.create_task(tgraph.close())]
+    tasks = [
+        asyncio.shield(loop.create_task(db.close())),
+        loop.create_task(tgraph.close()),
+        loop.create_task(monitor.close()),
+    ]
     if scheduler.running:
         scheduler.shutdown(wait=False)
     if bot and bot.is_connected():
@@ -315,7 +321,7 @@ def main():
 
         loop.create_task(lazy())
 
-        scheduler.add_job(func=command.monitor.run_monitor_task,
+        scheduler.add_job(func=monitor.run_periodic_task,
                           trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
                           max_instances=10,
                           misfire_grace_time=10)

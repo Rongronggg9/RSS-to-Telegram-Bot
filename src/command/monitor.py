@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Union, Final, Optional, ClassVar
-from collections.abc import MutableMapping, Iterable, Mapping
+from collections.abc import MutableMapping, Iterable
 
 import enum
 import gc
@@ -30,23 +30,20 @@ __user_unsub_all_lock_bucket: dict[int, asyncio.Lock] = defaultdict(asyncio.Lock
 __user_blocked_counter = Counter()
 
 
-# TODO: move inside MonitoringStat once the minimum Python requirement is 3.10
+# TODO: move inside MonitoringCounter once the minimum Python requirement is 3.10
 # @staticmethod
 def _gen_property(key: str):
     def getter(self):
-        return self._counter[key]
+        return self[key]
 
     def setter(self, value):
-        self._counter[key] = value
+        self[key] = value
 
     return property(getter, setter)
 
 
-class MonitoringStat:
-    def __init__(self):
-        self._counter: MutableMapping[str, int] = Counter()
-        self._last_summary_time: float = env.loop.time()
-        self._summary_period: float = TIMEOUT  # seconds
+class MonitoringCounter(Counter[str, int]):
+    SUM: int = _gen_property('SUM')
 
     not_updated: int = _gen_property('not_updated')
     cached: int = _gen_property('cached')
@@ -61,40 +58,113 @@ class MonitoringStat:
     deferred: int = _gen_property('deferred')
     resubmitted: int = _gen_property('resubmitted')
 
+
+class MonitoringStat:
+    def __init__(self):
+        self._counter_tier1: MonitoringCounter = MonitoringCounter()  # periodical summary
+        self._counter_tier2: MonitoringCounter = MonitoringCounter()  # unconditional summary
+        self._tier1_last_summary_time: Optional[float] = None
+        self._tier2_last_summary_time: Optional[float] = self._tier1_last_summary_time
+        self._tier1_summary_period: float = TIMEOUT  # seconds
+        # No need to set _tier2_summary_period since _counter_tier2 is unconditionally summarized in print_summary.
+
+    def _sum(self):
+        self._counter_tier2['SUM'] += 1
+
+    def not_updated(self):
+        self._counter_tier2['not_updated'] += 1
+        self._sum()
+
+    def cached(self):
+        self._counter_tier2['cached'] += 1
+        self.not_updated()
+
+    def empty(self):
+        self._counter_tier2['empty'] += 1
+        self.not_updated()
+
+    def failed(self):
+        self._counter_tier2['failed'] += 1
+        self._sum()
+
+    def updated(self):
+        self._counter_tier2['updated'] += 1
+        self._sum()
+
+    def skipped(self):
+        self._counter_tier2['skipped'] += 1
+        self._sum()
+
+    def timeout(self):
+        self._counter_tier2['timeout'] += 1
+        self._sum()
+
+    def cancelled(self):
+        self._counter_tier2['cancelled'] += 1
+        self._sum()
+
+    def unknown_error(self):
+        self._counter_tier2['unknown_error'] += 1
+        self._sum()
+
+    def timeout_unknown_error(self):
+        self._counter_tier2['timeout_unknown_error'] += 1
+        self._sum()
+
+    def deferred(self):
+        self._counter_tier2['deferred'] += 1
+        self._sum()
+
+    def resubmitted(self):
+        self._counter_tier2['resubmitted'] += 1
+        self._sum()
+
     @staticmethod
-    def _stat(counter: Mapping) -> str:
+    def _stat(counter: MonitoringCounter) -> str:
         return ', '.join(filter(None, (
-            f'updated({counter["updated"]})',
-            f'not updated({counter["not_updated"]}, including {counter["cached"]} cached and {counter["empty"]} empty)',
-            f'fetch failed({counter["failed"]})' if counter["failed"] else '',
-            f'skipped({counter["skipped"]})' if counter["skipped"] else '',
-            f'timeout({counter["timeout"]})' if counter["timeout"] else '',
-            f'cancelled({counter["cancelled"]})' if counter["cancelled"] else '',
-            f'unknown error({counter["unknown_error"]})' if counter["unknown_error"] else '',
-            f'timeout w/ unknown error({counter["timeout_unknown_error"]})' if counter["timeout_unknown_error"] else '',
-            f'deferred({counter["deferred"]})' if counter["deferred"] else '',
-            f'resubmitted({counter["resubmitted"]})' if counter["resubmitted"] else ''
+            f'updated({counter.updated})',
+            f'not updated({counter.not_updated}, including {counter.cached} cached and {counter.empty} empty)',
+            f'fetch failed({counter.failed})' if counter.failed else '',
+            f'skipped({counter.skipped})' if counter.skipped else '',
+            f'cancelled({counter.cancelled})' if counter.cancelled else '',
+            f'unknown error({counter.unknown_error})' if counter.unknown_error else '',
+            f'timeout({counter.timeout})' if counter.timeout else '',
+            f'timeout w/ unknown error({counter.timeout_unknown_error})' if counter.timeout_unknown_error else '',
+            f'deferred({counter.deferred})' if counter.deferred else '',
+            f'resubmitted({counter.resubmitted})' if counter.resubmitted else ''
         )))
 
-    def stat(self) -> str:
-        return self._stat(self._counter)
-
-    def print_summary(self):
-        now = env.loop.time()
-        time_diff = round(now - self._last_summary_time)
-        if time_diff < self._summary_period:
-            return
-        if task_count := sum(self._counter.values()):
+    def _summarize(self, counter: MonitoringCounter, default_log_level: int, time_diff: int):
+        if task_count := counter.SUM:
             logger.log(
-                logging.INFO
-                if self.timeout or self.cancelled or self.unknown_error or self.timeout_unknown_error
-                else logging.WARNING,
-                f'Summary of {task_count} monitoring tasks in the past {time_diff}s: {self.stat()}'
+                logging.WARNING
+                if counter.cancelled or counter.unknown_error or counter.timeout or counter.timeout_unknown_error
+                else default_log_level,
+                f'Summary of {task_count} monitoring tasks in the past {time_diff}s: {self._stat(counter)}'
             )
         else:
             logger.debug(f'No monitoring task in the past {time_diff}s.')
-        self._last_summary_time = now
-        self._counter.clear()
+
+    def print_summary(self):
+        now = env.loop.time()
+
+        if self._tier1_last_summary_time is None:
+            self._tier1_last_summary_time = now
+            self._tier2_last_summary_time = now
+            return
+
+        tier2_time_diff = round(now - self._tier2_last_summary_time)
+        self._summarize(self._counter_tier2, logging.DEBUG, tier2_time_diff)
+        self._tier2_last_summary_time = now
+        self._counter_tier1 += self._counter_tier2
+        self._counter_tier2.clear()
+
+        tier1_time_diff = round(now - self._tier1_last_summary_time)
+        if tier1_time_diff < self._tier1_summary_period:
+            return
+        self._summarize(self._counter_tier1, logging.INFO, tier1_time_diff)
+        self._tier1_last_summary_time = now
+        self._counter_tier1.clear()
         gc.collect()
 
 
@@ -196,10 +266,10 @@ class Monitor:
                 try:
                     await task
                 except asyncio.CancelledError as e:
-                    self._stat.timeout += 1
+                    self._stat.timeout()
                     logger.error(f'Monitoring task timed out after {TIMEOUT}s: {feed.link}', exc_info=e)
                 except Exception as e:
-                    self._stat.timeout_unknown_error += 1
+                    self._stat.timeout_unknown_error()
                     logger.error(
                         f'Monitoring task timed out after {TIMEOUT}s and caused an unknown error: {feed.link}',
                         exc_info=e
@@ -209,13 +279,13 @@ class Monitor:
                 try:
                     await task
                 except asyncio.CancelledError as e:
-                    self._stat.cancelled += 1
+                    self._stat.cancelled()
                     logger.error(f'Monitoring task failed due to CancelledError: {feed.link}', exc_info=e)
                 except Exception as e:
-                    self._stat.unknown_error += 1
+                    self._stat.unknown_error()
                     logger.error(f'Monitoring task failed due to an unknown error: {feed.link}', exc_info=e)
         except Exception as e:
-            self._stat.unknown_error += 1
+            self._stat.unknown_error()
             logger.error(f'Monitoring task failed due to an internal error: {feed.link}', exc_info=e)
         finally:
             self._erase_state_for_feed_id(feed_id, TaskState.IN_PROGRESS)
@@ -242,7 +312,7 @@ class Monitor:
             # fall through
         elif task_state:  # defer if any other flag is set
             self._task_defer_map[feed.id] = task_state | TaskState.DEFERRED
-            self._stat.deferred += 1
+            self._stat.deferred()
             logger.debug(f'Deferred ({repr(task_state)}): {feed.id}: {feed.link}')
             return
         self._lock_feed_id(feed.id)
@@ -257,7 +327,7 @@ class Monitor:
         if erased_state == TaskState.DEFERRED:  # deferred with any other flag erased, resubmit it
             self._lock_feed_id(feed_id)
             self._queue.put_nowait(feed_id)
-            self._stat.resubmitted += 1
+            self._stat.resubmitted()
             logger.debug(f'Resubmitted a deferred task ({repr(task_state)}): {feed_id}')
             return
         self._task_defer_map[feed_id] = erased_state  # update the state
@@ -314,18 +384,18 @@ async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
     """
     now = datetime.now(timezone.utc)
     if feed.next_check_time and now < feed.next_check_time:
-        stat.skipped += 1
+        stat.skipped()
         return  # skip this monitor task
 
     subs = await feed.subs.filter(state=1)
     if not subs:  # nobody has subbed it
         logger.warning(f'Feed {feed.id} ({feed.link}) has no active subscribers.')
         await inner.utils.update_interval(feed)
-        stat.skipped += 1
+        stat.skipped()
         return
 
     if all(locks.user_flood_lock(sub.user_id).locked() for sub in subs):
-        stat.skipped += 1
+        stat.skipped()
         return  # all subscribers are experiencing flood wait, skip this monitor task
 
     headers = {
@@ -343,8 +413,7 @@ async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
     try:
         if wf.status == 304:  # cached
             logger.debug(f'Fetched (not updated, cached): {feed.link}')
-            stat.not_updated += 1
-            stat.cached += 1
+            stat.cached()
             return
 
         if rss_d is None:  # error occurred
@@ -357,14 +426,14 @@ async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
                 logger.error(f'Deactivated due to too many ({feed.error_count}) errors '
                              f'(current: {wf.error}): {feed.link}')
                 await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
-                stat.failed += 1
+                stat.failed()
                 return
             if feed.error_count >= 10:  # too much error, defer next check
                 interval = feed.interval or db.EffectiveOptions.default_interval
                 if (next_check_interval := min(interval, 15) * min(feed.error_count // 10 + 1, 5)) > interval:
                     new_next_check_time = now + timedelta(minutes=next_check_interval)
             logger.debug(f'Fetched (failed, {feed.error_count}th retry, {wf.error}): {feed.link}')
-            stat.failed += 1
+            stat.failed()
             return
 
         wr = wf.web_response
@@ -379,8 +448,7 @@ async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
 
         if not rss_d.entries:  # empty
             logger.debug(f'Fetched (not updated, empty): {feed.link}')
-            stat.not_updated += 1
-            stat.empty += 1
+            stat.empty()
             return
 
         title = rss_d.feed.title
@@ -395,7 +463,7 @@ async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
 
         if not updated_entries:  # not updated
             logger.debug(f'Fetched (not updated): {feed.link}')
-            stat.not_updated += 1
+            stat.not_updated()
             return
 
         logger.debug(f'Updated: {feed.link}')
@@ -419,7 +487,7 @@ async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
             await feed.save(update_fields=feed_updated_fields)
 
     await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
-    stat.updated += 1
+    stat.updated()
     return
 
 

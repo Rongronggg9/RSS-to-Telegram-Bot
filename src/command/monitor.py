@@ -216,6 +216,23 @@ class Monitor:
         # plus additional prologue & epilogue to simulate an asynchronous lock.
         # In the meantime, the deferring logic is implemented using this map.
         self._task_defer_map: defaultdict[int, TaskState] = defaultdict(lambda: TaskState.EMPTY)
+        self._lock_up_period: int = 0  # in seconds
+
+        # update _lock_up_period on demand
+        db.effective_utils.EffectiveOptions.add_set_callback('minimal_interval', self._update_lock_up_period_cb)
+
+    def _update_lock_up_period_cb(self, key: str, value: int, expected_key: str = 'minimal_interval'):
+        if key != expected_key:
+            raise KeyError(f'Invalid key: {key}, expected: {expected_key}')
+        if not isinstance(value, int):
+            raise TypeError(f'Invalid type of value: {type(value)}, expected: int')
+        if value <= 1:
+            # The minimal scheduling interval is 1 minute, it is meaningless to lock.
+            self._lock_up_period = 0  # which means locks are disabled
+            return
+        # Convert minutes to seconds, then subtract 10 seconds to prevent locks from being released too late
+        # (i.e., released only after causing a new task being deferred).
+        self._lock_up_period = value * 60 - 10
 
     async def init(self):
         if self._bg_task is not None and not self._bg_task.done():
@@ -365,15 +382,13 @@ class Monitor:
             self._stat.finish()
 
     def _lock_feed_id(self, feed_id: int):
-        minimal_interval = db.EffectiveOptions.minimal_interval
-        if minimal_interval <= 1:
-            # The minimal scheduling interval is 1 minute, it is meaningless to lock.
+        if not self._lock_up_period:  # lock disabled
             return
         # Caller MUST ensure that self._task_defer_map[feed_id] can be overwritten safely.
         self._task_defer_map[feed_id] = TaskState.LOCKED
-        # unlock after minimal_interval
+        # unlock after the lock-up period
         env.loop.call_later(
-            minimal_interval * 60,
+            self._lock_up_period,
             self._erase_state_for_feed_id,
             feed_id, TaskState.LOCKED
         )

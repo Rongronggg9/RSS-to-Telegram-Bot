@@ -67,6 +67,7 @@ class MonitoringStat:
         self._tier2_last_summary_time: Optional[float] = self._tier1_last_summary_time
         self._tier1_summary_period: float = TIMEOUT  # seconds
         # No need to set _tier2_summary_period since _counter_tier2 is unconditionally summarized in print_summary.
+        self._in_progress_count: int = 0
 
     def _sum(self):
         self._counter_tier2['SUM'] += 1
@@ -119,6 +120,12 @@ class MonitoringStat:
         self._counter_tier2['resubmitted'] += 1
         self._sum()
 
+    def start(self):
+        self._in_progress_count += 1
+
+    def finish(self):
+        self._in_progress_count -= 1
+
     @staticmethod
     def _stat(counter: MonitoringCounter) -> str:
         return ', '.join(filter(None, (
@@ -135,15 +142,18 @@ class MonitoringStat:
         )))
 
     def _summarize(self, counter: MonitoringCounter, default_log_level: int, time_diff: int):
+        # NOTE: "task" here means "subtask" in Monitor.
         if task_count := counter.SUM:
             logger.log(
                 logging.WARNING
                 if counter.cancelled or counter.unknown_error or counter.timeout or counter.timeout_unknown_error
                 else default_log_level,
-                f'Summary of {task_count} monitoring tasks in the past {time_diff}s: {self._stat(counter)}'
+                f'Summary of {task_count} finished monitoring tasks ({self._in_progress_count} in progress) '
+                f'in the past {time_diff}s: {self._stat(counter)}'
             )
         else:
-            logger.debug(f'No monitoring task in the past {time_diff}s.')
+            logger.debug(f'No monitoring task has finished ({self._in_progress_count} in progress) '
+                         f'in the past {time_diff}s.')
 
     def print_summary(self):
         now = env.loop.time()
@@ -152,6 +162,9 @@ class MonitoringStat:
             self._tier1_last_summary_time = now
             self._tier2_last_summary_time = now
             return
+
+        if self._in_progress_count < 0:
+            logger.error(f'Unexpected negative in-progress count ({self._in_progress_count})')
 
         tier2_time_diff = round(now - self._tier2_last_summary_time)
         self._summarize(self._counter_tier2, logging.DEBUG, tier2_time_diff)
@@ -344,10 +357,12 @@ class Monitor:
 
     async def _do_monitor_subtask(self, feed: db.Feed):
         self._task_defer_map[feed.id] |= TaskState.IN_PROGRESS
+        self._stat.start()
         try:
             await _do_monitor_a_feed(feed, self._stat)
         finally:
             self._erase_state_for_feed_id(feed.id, TaskState.IN_PROGRESS)
+            self._stat.finish()
 
     def _lock_feed_id(self, feed_id: int):
         minimal_interval = db.EffectiveOptions.minimal_interval

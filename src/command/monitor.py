@@ -198,7 +198,7 @@ class Monitor:
         # In the foreseeable future, we may use a PriorityQueue here to prioritize some jobs
         # It is an unbounded queue, so we can just use {put,get}_nowait() anywhere.
         # For now, there is no need to use a bounded queue since all items are consumed immediately.
-        self._queue: asyncio.Queue[FEED_OR_ID] = asyncio.Queue()
+        self._queue: asyncio.Queue[Iterable[FEED_OR_ID]] = asyncio.Queue()
         # Synchronous operations are atomic from the perspective of asynchronous coroutines, so we can just use a map
         # plus additional prologue & epilogue to simulate an asynchronous lock.
         # In the meantime, the deferring logic is implemented using this map.
@@ -207,7 +207,10 @@ class Monitor:
     async def init(self):
         if self._bg_task is not None and not self._bg_task.done():
             return
-        self._bg_task = env.loop.create_task(self._create_bg_task())
+        self._bg_task = env.loop.create_task(
+            self._bg_queue_consumer(),
+            name='Monitor-bg-task'
+        )
 
     async def close(self):
         # This won't cancel _do_monitor_task() tasks,
@@ -225,70 +228,126 @@ class Monitor:
             except Exception as e:
                 logger.error("Traceback of Monitor's background task termination:", exc_info=e)
 
-    async def _create_bg_task(self):
+    async def _bg_queue_consumer(self):
         while True:
             # Consumes the queue immediately without blocking.
             # Here we don't use get_nowait since we do want to wait for the next feed to be submitted.
             feed = await self._queue.get()
             env.loop.create_task(
                 self._do_monitor_task(feed),
-                name=f'Monitor-task-{feed.id if isinstance(feed, db.Feed) else feed}'
+                name=f'Monitor-task-{env.loop.time()}'
             )
 
-    async def _do_monitor_task(self, feed: FEED_OR_ID):
-        if isinstance(feed, db.Feed):
-            feed_id = feed.id
-            self._task_defer_map[feed_id] |= TaskState.IN_PROGRESS
-        else:
-            feed_id = feed
-            self._task_defer_map[feed_id] |= TaskState.IN_PROGRESS
-            feed = await db.Feed.get_or_none(id=feed_id)
-            if feed is None:
-                logger.error(f'Feed {feed_id} not found, but it was submitted to the monitor queue.')
-                self._task_defer_map[feed_id] = TaskState.EMPTY
-                return
+    async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
+        if not feeds:
+            return
 
-        # Typically, the expected usage of asyncio.wait is to wait for a bunch of tasks to finish or timeout.
-        # The usage here is a bit tricky:
-        # asyncio.timeout/wait_for raises TimeoutError from CancelledError, which breaks some internal
-        # logic of aiohttp, so we have to prevent TimeoutError from being raised in such a circumstance.
-        # It is hard to distinguish TimeoutError raised by asyncio.timeout/wait_for from the one raised by other
+        db_feeds: set[db.Feed] = set()
+        feed_ids: set[int] = set()
+        for feed in feeds:
+            if isinstance(feed, db.Feed):
+                if not self._defer_feed_id(feed.id, feed.link):
+                    db_feeds.add(feed)
+            else:
+                feed_id = feed
+                if not self._defer_feed_id(feed_id):
+                    feed_ids.add(feed_id)
+        if feed_ids:
+            db_feeds_to_merge = await db.Feed.filter(id__in=feed_ids)
+            db_feeds.update(db_feeds_to_merge)
+            if len(db_feeds_to_merge) != len(feed_ids):
+                feed_ids_not_found = feed_ids - {feed.id for feed in db_feeds_to_merge}
+                logger.error(f'Feeds {feed_ids_not_found} not found, but they were submitted to the monitor queue.')
+
+        if db_feeds:
+            await self._do_monitor_task_ensure_db_feeds(db_feeds)
+
+    async def _do_monitor_task_ensure_db_feeds(self, feeds: Iterable[db.Feed]):
+        # A technique to solve these three issues:
+        # 1. asyncio.timeout/wait_for() raises TimeoutError from CancelledError, which breaks some internal logic of
+        # aiohttp, so we have to prevent TimeoutError from being raised in such a circumstance.
+        # 2. It is hard to distinguish TimeoutError raised by asyncio.timeout/wait_for() from the one raised by other
         # routines.
-        # That asyncio.wait returns two sets of done and pending tasks after a timeout without raising TimeoutError
-        # perfectly solves these issues.
-        try:
-            done, pending = await asyncio.wait(
-                (env.loop.create_task(_do_monitor_a_feed(feed, self._stat)),),
-                timeout=TIMEOUT
-            )
-            for task in pending:
-                task.cancel()
-                try:
-                    await task
-                except asyncio.CancelledError as e:
-                    self._stat.timeout()
-                    logger.error(f'Monitoring task timed out after {TIMEOUT}s: {feed.link}', exc_info=e)
-                except Exception as e:
-                    self._stat.timeout_unknown_error()
-                    logger.error(
-                        f'Monitoring task timed out after {TIMEOUT}s and caused an unknown error: {feed.link}',
-                        exc_info=e
-                    )
+        # 3. The previously used `asyncio.wait()` technique pends tasks for TIMEOUT seconds, even if some tasks have
+        # long been done, which is inefficient and causes memory leak until the timeout is reached.
+        #
+        # The technique itself is, however, quite straightforward:
+        # 1. Create a queue to store done tasks.
+        # 2. Make each task put itself into the queue once it is done.
+        # 3. Create a timeout handle to put None into the queue after TIMEOUT seconds.
+        # 4. Consume the queue until None is put into it.
+        # 5. Cancel all remaining tasks.
+        done: asyncio.Queue[Optional[asyncio.Task]] = asyncio.Queue()  # unbounded, safe to use `{put,get}_nowait()`
+        timeout_handle = env.loop.call_later(TIMEOUT, done.put_nowait, None)  # use None to indicate timeout
+        timed_out = False
 
-            for task in done:
-                try:
-                    await task
-                except asyncio.CancelledError as e:
-                    self._stat.cancelled()
-                    logger.error(f'Monitoring task failed due to CancelledError: {feed.link}', exc_info=e)
-                except Exception as e:
-                    self._stat.unknown_error()
-                    logger.error(f'Monitoring task failed due to an unknown error: {feed.link}', exc_info=e)
-        except Exception as e:
-            self._stat.unknown_error()
-            logger.error(f'Monitoring task failed due to an internal error: {feed.link}', exc_info=e)
+        # Put the task into the done queue once it is done (if not timed out).
+        def _on_done(t: asyncio.Task):
+            if not timed_out:
+                done.put_nowait(t)
+
+        subtask_feed_map: dict[asyncio.Task: db.Feed] = {}
+        for feed in feeds:
+            self._lock_feed_id(feed.id)
+            subtask = env.loop.create_task(
+                self._do_monitor_subtask(feed),
+                name=f'Monitor-subtask-{env.loop.time()}-{feed.id}'
+            )
+            subtask.add_done_callback(_on_done)
+            subtask_feed_map[subtask] = feed
+
+        while subtask_feed_map:
+            subtask = await done.get()  # wait for the next subtask to be done
+            if subtask is None:
+                timed_out = True
+                break
+            feed = subtask_feed_map.pop(subtask)  # pop the subtask and retrieve the feed
+            try:
+                # Here we use `await subtask` instead of `subtask.exception()` due to:
+                # 1. The divergence that Future.exception() **returns** exception or None if done but **raises**
+                # CancelledError if canceled causes huge inconvenience.
+                # 2. Ensure the traceback is complete.
+                await subtask
+            except asyncio.CancelledError as e:
+                # Usually, this should not happen, but let's handle it for debugging purposes and prevent it from
+                # breaking the whole monitoring task.
+                self._stat.cancelled()
+                logger.error(f'Monitoring subtask failed due to CancelledError: {feed.link}', exc_info=e)
+            except Exception as e:
+                self._stat.unknown_error()
+                logger.error(f'Monitoring subtask failed due to an unknown error: {feed.link}', exc_info=e)
+
+        timeout_handle.cancel()
+        if not timed_out:
+            return
+
+        for subtask in subtask_feed_map:
+            # Cancel all remaining subtasks together before awaiting any of them to ensure timely cancellation.
+            subtask.cancel()
+            # There is a chance that some subtasks are done right after the timeout_handle.
+            # In such a case, these subtasks will not be canceled (cancelling a done task is a no-op)...
+
+        for subtask, feed in subtask_feed_map.items():
+            try:
+                # ...It may succeed...
+                await subtask
+            except asyncio.CancelledError as e:
+                self._stat.timeout()
+                logger.error(f'Monitoring subtask timed out after {TIMEOUT}s: {feed.link}', exc_info=e)
+            except Exception as e:
+                # ...or fail.
+                self._stat.timeout_unknown_error()
+                logger.error(
+                    f'Monitoring subtask timed out after {TIMEOUT}s and caused an unknown error: {feed.link}',
+                    exc_info=e
+                )
+
+    async def _do_monitor_subtask(self, feed: db.Feed):
+        self._task_defer_map[feed.id] |= TaskState.IN_PROGRESS
+        try:
+            await _do_monitor_a_feed(feed, self._stat)
         finally:
-            self._erase_state_for_feed_id(feed_id, TaskState.IN_PROGRESS)
+            self._erase_state_for_feed_id(feed.id, TaskState.IN_PROGRESS)
 
     def _lock_feed_id(self, feed_id: int):
         minimal_interval = db.EffectiveOptions.minimal_interval
@@ -304,20 +363,6 @@ class Monitor:
             feed_id, TaskState.LOCKED
         )
 
-    def submit_feed(self, feed: db.Feed):
-        task_state = self._task_defer_map[feed.id]
-        if task_state == TaskState.DEFERRED:
-            # This should not happen, but just in case.
-            logger.warning(f'A deferred task ({repr(task_state)}) was never resubmitted: {feed.id}: {feed.link}')
-            # fall through
-        elif task_state:  # defer if any other flag is set
-            self._task_defer_map[feed.id] = task_state | TaskState.DEFERRED
-            self._stat.deferred()
-            logger.debug(f'Deferred ({repr(task_state)}): {feed.id}: {feed.link}')
-            return
-        self._lock_feed_id(feed.id)
-        self._queue.put_nowait(feed)
-
     def _erase_state_for_feed_id(self, feed_id: int, flag_to_erase: TaskState):
         task_state = self._task_defer_map[feed_id]
         if not task_state:
@@ -325,25 +370,43 @@ class Monitor:
             return
         erased_state = task_state & ~flag_to_erase
         if erased_state == TaskState.DEFERRED:  # deferred with any other flag erased, resubmit it
-            self._lock_feed_id(feed_id)
-            self._queue.put_nowait(feed_id)
+            self._task_defer_map[feed_id] = TaskState.EMPTY
+            self.submit_feed(feed_id)
             self._stat.resubmitted()
             logger.debug(f'Resubmitted a deferred task ({repr(task_state)}): {feed_id}')
             return
         self._task_defer_map[feed_id] = erased_state  # update the state
 
+    def _defer_feed_id(self, feed_id: int, feed_link: str = None) -> bool:
+        feed_description = f'{feed_id}: {feed_link}' if feed_link else str(feed_id)
+        task_state = self._task_defer_map[feed_id]
+        if task_state == TaskState.DEFERRED:
+            # This should not happen, but just in case.
+            logger.warning(f'A deferred task ({repr(task_state)}) was never resubmitted: {feed_description}')
+            # fall through
+        elif task_state:  # defer if any other flag is set
+            # Set the DEFERRED flag, this can be done for multiple times safely.
+            self._task_defer_map[feed_id] = task_state | TaskState.DEFERRED
+            self._stat.deferred()
+            logger.debug(f'Deferred ({repr(task_state)}): {feed_description}')
+            return True  # deferred, later operations should be skipped
+        return False  # not deferred
+
+    def submit_feeds(self, feeds: Iterable[FEED_OR_ID]):
+        self._queue.put_nowait(feeds)
+
+    def submit_feed(self, feed: FEED_OR_ID):
+        self.submit_feeds((feed,))
+
     async def run_periodic_task(self):
         self._stat.print_summary()
-        feed_id_to_monitor = db.effective_utils.EffectiveTasks.get_tasks()
-        if not feed_id_to_monitor:
+        feed_ids_to_monitor = db.effective_utils.EffectiveTasks.get_tasks()
+        if not feed_ids_to_monitor:
             return
 
-        feeds = await db.Feed.filter(id__in=feed_id_to_monitor)
+        self.submit_feeds(feed_ids_to_monitor)
 
         logger.debug('Started a periodic monitoring task.')
-
-        for feed in feeds:
-            self.submit_feed(feed)
 
 
 def _defer_next_check_as_per_server_side_cache(wf: web.WebFeed) -> Optional[datetime]:

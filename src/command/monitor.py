@@ -43,7 +43,7 @@ def _gen_property(key: str):
 
 
 class MonitoringCounter(Counter[str, int]):
-    SUM: int = _gen_property('SUM')
+    FINISHED: int = _gen_property('FINISHED')
 
     not_updated: int = _gen_property('not_updated')
     cached: int = _gen_property('cached')
@@ -69,12 +69,8 @@ class MonitoringStat:
         # No need to set _tier2_summary_period since _counter_tier2 is unconditionally summarized in print_summary.
         self._in_progress_count: int = 0
 
-    def _sum(self):
-        self._counter_tier2['SUM'] += 1
-
     def not_updated(self):
         self._counter_tier2['not_updated'] += 1
-        self._sum()
 
     def cached(self):
         self._counter_tier2['cached'] += 1
@@ -86,74 +82,68 @@ class MonitoringStat:
 
     def failed(self):
         self._counter_tier2['failed'] += 1
-        self._sum()
 
     def updated(self):
         self._counter_tier2['updated'] += 1
-        self._sum()
 
     def skipped(self):
         self._counter_tier2['skipped'] += 1
-        self._sum()
 
     def timeout(self):
         self._counter_tier2['timeout'] += 1
-        self._sum()
 
     def cancelled(self):
         self._counter_tier2['cancelled'] += 1
-        self._sum()
 
     def unknown_error(self):
         self._counter_tier2['unknown_error'] += 1
-        self._sum()
 
     def timeout_unknown_error(self):
         self._counter_tier2['timeout_unknown_error'] += 1
-        self._sum()
 
     def deferred(self):
         self._counter_tier2['deferred'] += 1
-        self._sum()
 
     def resubmitted(self):
         self._counter_tier2['resubmitted'] += 1
-        self._sum()
 
     def start(self):
         self._in_progress_count += 1
 
     def finish(self):
         self._in_progress_count -= 1
+        self._counter_tier2['FINISHED'] += 1
 
-    @staticmethod
-    def _stat(counter: MonitoringCounter) -> str:
-        return ', '.join(filter(None, (
-            f'updated({counter.updated})',
-            f'not updated({counter.not_updated}, including {counter.cached} cached and {counter.empty} empty)',
+    def _stat(self, counter: MonitoringCounter) -> str:
+        scheduling_stat = ', '.join(filter(None, (
+            f'in progress({self._in_progress_count})' if self._in_progress_count else '',
+            f'deferred({counter.deferred})' if counter.deferred else '',
+            f'resubmitted({counter.resubmitted})' if counter.resubmitted else '',
+        )))
+        if not counter.FINISHED:
+            return scheduling_stat
+        finished_stat = f'finished({counter.FINISHED}). Details of finished subtasks: ' + ', '.join(filter(None, (
+            f'updated({counter.updated})' if counter.updated else '',
+            f'not updated({counter.not_updated}, including {counter.cached} cached and {counter.empty} empty)'
+            if counter.not_updated
+            else '',
             f'fetch failed({counter.failed})' if counter.failed else '',
             f'skipped({counter.skipped})' if counter.skipped else '',
             f'cancelled({counter.cancelled})' if counter.cancelled else '',
             f'unknown error({counter.unknown_error})' if counter.unknown_error else '',
             f'timeout({counter.timeout})' if counter.timeout else '',
             f'timeout w/ unknown error({counter.timeout_unknown_error})' if counter.timeout_unknown_error else '',
-            f'deferred({counter.deferred})' if counter.deferred else '',
-            f'resubmitted({counter.resubmitted})' if counter.resubmitted else ''
         )))
+        return ', '.join(filter(None, (scheduling_stat, finished_stat)))
 
     def _summarize(self, counter: MonitoringCounter, default_log_level: int, time_diff: int):
-        # NOTE: "task" here means "subtask" in Monitor.
-        if task_count := counter.SUM:
-            logger.log(
-                logging.WARNING
-                if counter.cancelled or counter.unknown_error or counter.timeout or counter.timeout_unknown_error
-                else default_log_level,
-                f'Summary of {task_count} finished monitoring tasks ({self._in_progress_count} in progress) '
-                f'in the past {time_diff}s: {self._stat(counter)}'
-            )
-        else:
-            logger.debug(f'No monitoring task has finished ({self._in_progress_count} in progress) '
-                         f'in the past {time_diff}s.')
+        stat = self._stat(counter) or 'nothing was submitted'
+        logger.log(
+            logging.WARNING
+            if counter.cancelled or counter.unknown_error or counter.timeout or counter.timeout_unknown_error
+            else default_log_level,
+            f'Summary of monitoring subtasks in the past {time_diff}s: {stat}.'
+        )
 
     def print_summary(self):
         now = env.loop.time()
@@ -215,7 +205,7 @@ class Monitor:
         # Synchronous operations are atomic from the perspective of asynchronous coroutines, so we can just use a map
         # plus additional prologue & epilogue to simulate an asynchronous lock.
         # In the meantime, the deferring logic is implemented using this map.
-        self._task_defer_map: defaultdict[int, TaskState] = defaultdict(lambda: TaskState.EMPTY)
+        self._subtask_defer_map: defaultdict[int, TaskState] = defaultdict(lambda: TaskState.EMPTY)
         self._lock_up_period: int = 0  # in seconds
 
         # update _lock_up_period on demand
@@ -231,7 +221,7 @@ class Monitor:
             self._lock_up_period = 0  # which means locks are disabled
             return
         # Convert minutes to seconds, then subtract 10 seconds to prevent locks from being released too late
-        # (i.e., released only after causing a new task being deferred).
+        # (i.e., released only after causing a new subtask being deferred).
         self._lock_up_period = value * 60 - 10
 
     async def init(self):
@@ -373,7 +363,7 @@ class Monitor:
                 )
 
     async def _do_monitor_subtask(self, feed: db.Feed):
-        self._task_defer_map[feed.id] |= TaskState.IN_PROGRESS
+        self._subtask_defer_map[feed.id] |= TaskState.IN_PROGRESS
         self._stat.start()
         try:
             await _do_monitor_a_feed(feed, self._stat)
@@ -384,8 +374,8 @@ class Monitor:
     def _lock_feed_id(self, feed_id: int):
         if not self._lock_up_period:  # lock disabled
             return
-        # Caller MUST ensure that self._task_defer_map[feed_id] can be overwritten safely.
-        self._task_defer_map[feed_id] = TaskState.LOCKED
+        # Caller MUST ensure that self._subtask_defer_map[feed_id] can be overwritten safely.
+        self._subtask_defer_map[feed_id] = TaskState.LOCKED
         # unlock after the lock-up period
         env.loop.call_later(
             self._lock_up_period,
@@ -394,29 +384,29 @@ class Monitor:
         )
 
     def _erase_state_for_feed_id(self, feed_id: int, flag_to_erase: TaskState):
-        task_state = self._task_defer_map[feed_id]
+        task_state = self._subtask_defer_map[feed_id]
         if not task_state:
             logger.warning(f'Unexpected empty state ({repr(task_state)}): {feed_id}')
             return
         erased_state = task_state & ~flag_to_erase
         if erased_state == TaskState.DEFERRED:  # deferred with any other flag erased, resubmit it
-            self._task_defer_map[feed_id] = TaskState.EMPTY
+            self._subtask_defer_map[feed_id] = TaskState.EMPTY
             self.submit_feed(feed_id)
             self._stat.resubmitted()
-            logger.debug(f'Resubmitted a deferred task ({repr(task_state)}): {feed_id}')
+            logger.debug(f'Resubmitted a deferred subtask ({repr(task_state)}): {feed_id}')
             return
-        self._task_defer_map[feed_id] = erased_state  # update the state
+        self._subtask_defer_map[feed_id] = erased_state  # update the state
 
     def _defer_feed_id(self, feed_id: int, feed_link: str = None) -> bool:
         feed_description = f'{feed_id}: {feed_link}' if feed_link else str(feed_id)
-        task_state = self._task_defer_map[feed_id]
+        task_state = self._subtask_defer_map[feed_id]
         if task_state == TaskState.DEFERRED:
             # This should not happen, but just in case.
-            logger.warning(f'A deferred task ({repr(task_state)}) was never resubmitted: {feed_description}')
+            logger.warning(f'A deferred subtask ({repr(task_state)}) was never resubmitted: {feed_description}')
             # fall through
         elif task_state:  # defer if any other flag is set
             # Set the DEFERRED flag, this can be done for multiple times safely.
-            self._task_defer_map[feed_id] = task_state | TaskState.DEFERRED
+            self._subtask_defer_map[feed_id] = task_state | TaskState.DEFERRED
             self._stat.deferred()
             logger.debug(f'Deferred ({repr(task_state)}): {feed_description}')
             return True  # deferred, later operations should be skipped

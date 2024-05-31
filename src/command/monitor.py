@@ -161,6 +161,7 @@ class MonitoringStat:
         self._tier2_last_summary_time = now
         self._counter_tier1 += self._counter_tier2
         self._counter_tier2.clear()
+        gc.collect()
 
         tier1_time_diff = round(now - self._tier1_last_summary_time)
         if tier1_time_diff < self._tier1_summary_period:
@@ -168,7 +169,6 @@ class MonitoringStat:
         self._summarize(self._counter_tier1, logging.INFO, tier1_time_diff)
         self._tier1_last_summary_time = now
         self._counter_tier1.clear()
-        gc.collect()
 
 
 class TaskState(enum.IntFlag):

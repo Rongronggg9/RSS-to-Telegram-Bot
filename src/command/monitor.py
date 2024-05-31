@@ -221,10 +221,9 @@ class Monitor:
         # (i.e., released only after causing a new subtask being deferred).
         self._lock_up_period = value * 60 - 10
 
-    @queued
-    async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
+    async def _ensure_db_feeds(self, feeds: Iterable[FEED_OR_ID]) -> Optional[Iterable[db.Feed]]:
         if not feeds:
-            return
+            return None
 
         db_feeds: set[db.Feed] = set()
         feed_ids: set[int] = set()
@@ -243,12 +242,20 @@ class Monitor:
                 feed_ids_not_found = feed_ids - {feed.id for feed in db_feeds_to_merge}
                 logger.error(f'Feeds {feed_ids_not_found} not found, but they were submitted to the monitor queue.')
 
-        if db_feeds:
-            await self._do_monitor_task_ensure_db_feeds(db_feeds)
+        return db_feeds
 
-    _do_monitor_task_queued_nowait = _do_monitor_task.queued_nowait
+    # In the foreseeable future, we may use a PriorityQueue here to prioritize some jobs.
+    @queued
+    async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
+        # Previously, this was a tail call (self._ensure_db_feeds() calls self._do_monitor_task() at the end).
+        # It turned out that the tail call made the frame of self._ensure_db_feeds(), which keep referencing all db.Feed
+        # objects produced there, persisted until self._do_monitor_task() was done.
+        # The garbage collector was unable to collect any db.Feed objects in such a circumstance.
+        # So it is now a head call to solve this issue.
+        feeds: Iterable[db.Feed] = await self._ensure_db_feeds(feeds)
+        if not feeds:
+            return
 
-    async def _do_monitor_task_ensure_db_feeds(self, feeds: Iterable[db.Feed]):
         # A technique to solve these three issues:
         # 1. asyncio.timeout/wait_for() raises TimeoutError from CancelledError, which breaks some internal logic of
         # aiohttp, so we have to prevent TimeoutError from being raised in such a circumstance.
@@ -281,6 +288,8 @@ class Monitor:
             )
             subtask.add_done_callback(_on_done)
             subtask_feed_map[subtask] = feed
+        # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
+        del feeds
 
         while subtask_feed_map:
             subtask = await done.get()  # wait for the next subtask to be done
@@ -302,6 +311,10 @@ class Monitor:
             except Exception as e:
                 self._stat.unknown_error()
                 logger.error(f'Monitoring subtask failed due to an unknown error: {feed.link}', exc_info=e)
+            # Release references so that they can be garbage collected while waiting for the next subtask to be done.
+            del subtask, feed
+
+        # The below procedure should be fast, so we don't explicitly release any references.
 
         timeout_handle.cancel()
         if not timed_out:
@@ -327,6 +340,8 @@ class Monitor:
                     f'Monitoring subtask timed out after {TIMEOUT}s and caused an unknown error: {feed.link}',
                     exc_info=e
                 )
+
+    _do_monitor_task_queued_nowait = _do_monitor_task.queued_nowait
 
     async def _do_monitor_subtask(self, feed: db.Feed):
         self._subtask_defer_map[feed.id] |= TaskState.IN_PROGRESS

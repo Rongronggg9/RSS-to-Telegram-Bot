@@ -16,6 +16,7 @@ from telethon.errors import BadRequestError
 from . import inner
 from .utils import escape_html, unsub_all_and_leave_chat
 from .. import log, db, env, web, locks
+from ..helpers.queue import queued
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..i18n import i18n
 from ..parsing.post import get_post_from_entry, Post
@@ -198,10 +199,6 @@ class Monitor:
     def __init__(self):
         self._stat = MonitoringStat()
         self._bg_task: Optional[asyncio.Task] = None
-        # In the foreseeable future, we may use a PriorityQueue here to prioritize some jobs
-        # It is an unbounded queue, so we can just use {put,get}_nowait() anywhere.
-        # For now, there is no need to use a bounded queue since all items are consumed immediately.
-        self._queue: asyncio.Queue[Iterable[FEED_OR_ID]] = asyncio.Queue()
         # Synchronous operations are atomic from the perspective of asynchronous coroutines, so we can just use a map
         # plus additional prologue & epilogue to simulate an asynchronous lock.
         # In the meantime, the deferring logic is implemented using this map.
@@ -224,40 +221,7 @@ class Monitor:
         # (i.e., released only after causing a new subtask being deferred).
         self._lock_up_period = value * 60 - 10
 
-    async def init(self):
-        if self._bg_task is not None and not self._bg_task.done():
-            return
-        self._bg_task = env.loop.create_task(
-            self._bg_queue_consumer(),
-            name='Monitor-bg-task'
-        )
-
-    async def close(self):
-        # This won't cancel _do_monitor_task() tasks,
-        # but that's fine since asyncio will cancel them and print traceback when exiting.
-        if self._bg_task is not None and not self._bg_task.done():
-            try:
-                cancelled = self._bg_task.cancel()
-            except Exception as e:
-                logger.error("Failed to terminate Monitor's background task of :", exc_info=e)
-                return  # cannot cancel the task, just return
-            if cancelled:
-                return
-            try:
-                await self._bg_task
-            except Exception as e:
-                logger.error("Traceback of Monitor's background task termination:", exc_info=e)
-
-    async def _bg_queue_consumer(self):
-        while True:
-            # Consumes the queue immediately without blocking.
-            # Here we don't use get_nowait since we do want to wait for the next feed to be submitted.
-            feed = await self._queue.get()
-            env.loop.create_task(
-                self._do_monitor_task(feed),
-                name=f'Monitor-task-{env.loop.time()}'
-            )
-
+    @queued
     async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
         if not feeds:
             return
@@ -281,6 +245,8 @@ class Monitor:
 
         if db_feeds:
             await self._do_monitor_task_ensure_db_feeds(db_feeds)
+
+    _do_monitor_task_queued_nowait = _do_monitor_task.queued_nowait
 
     async def _do_monitor_task_ensure_db_feeds(self, feeds: Iterable[db.Feed]):
         # A technique to solve these three issues:
@@ -413,7 +379,7 @@ class Monitor:
         return False  # not deferred
 
     def submit_feeds(self, feeds: Iterable[FEED_OR_ID]):
-        self._queue.put_nowait(feeds)
+        self._do_monitor_task_queued_nowait(feeds)
 
     def submit_feed(self, feed: FEED_OR_ID):
         self.submit_feeds((feed,))

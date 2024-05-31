@@ -1,0 +1,104 @@
+from __future__ import annotations
+from typing import Callable, Optional, Literal, Awaitable, Union
+from typing_extensions import ParamSpec, TypeVar
+
+import asyncio
+from functools import partial, wraps
+
+from ._helper import QueuedHelper
+
+P = ParamSpec('P')
+R = TypeVar('R')
+QP = ParamSpec('QP')
+
+
+class QueuedDecorator:
+    def __init__(
+            self,
+            queue_constructor: Callable[QP, asyncio.Queue] = asyncio.Queue,
+    ):
+        self._queue_constructor = queue_constructor
+        self._helpers: list[QueuedHelper] = []
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+
+    def init_sync(self, loop: asyncio.AbstractEventLoop):
+        self._loop = loop
+        for helpers in self._helpers:
+            helpers.init(loop=loop)
+
+    async def init(self, loop: asyncio.AbstractEventLoop):
+        self._loop = loop
+        await asyncio.gather(*(helper.init(loop=loop) for helper in self._helpers))
+
+    def close_sync(self):
+        for helper in self._helpers:
+            helper.close_sync()
+
+    async def close(self):
+        await asyncio.gather(*(helper.close() for helper in self._helpers))
+
+    def __call__(
+            self,
+            func: Callable[P, Awaitable[R]] = None,
+            *args: QP.args,
+            maxsize: int = 0,
+            default: Literal['queued', 'queued_nowait', 'raw'] = 'queued',
+            **kwargs: QP.kwargs,
+    ) -> Callable[P, Union[Awaitable[R], Awaitable[None], None]]:
+        """
+        Make any call to the decorated function queued.
+
+        Restrictions on methods:
+        Though ``object.method()`` equals to ``object.__class__.method(object)``, ``object.method.whatever()`` equals to
+        ``object.__class__.method.whatever()``.
+        In the latter case, the object itself (``self``) is not passed to the method.
+        Thus, never call ``object.method.whatever()`` directly, but to define a new method in the class body (e.g.,
+        ``method_nowait = method.queued_nowait``) and call ``object.method_nowait()`` instead.
+
+        There is no such restriction on functions. You can call ``function.whatever()`` directly.
+
+        :param func: The function to be decorated.
+        :param args: The positional arguments to be passed to the queue constructor.
+        :param maxsize: The maximum number of items allowed in the queue.
+        :param default: The default behavior of the decorated function.
+        :param kwargs: The keyword arguments to be passed to the queue constructor.
+        """
+        if func is None:
+            return partial(self, *args, maxsize=maxsize, default=default, **kwargs)
+
+        kwargs['maxsize'] = maxsize
+        helper = QueuedHelper(func, self._queue_constructor, *args, **kwargs)
+        self._helpers.append(helper)
+
+        # Here we must create wrappers instead of just returning helper.
+        # The methods from helper are so-called "bound methods" with `self` bounded, preventing the `self` of wrapped
+        # methods from being passed.
+        if maxsize > 0:
+            @wraps(func)
+            def queued_wrapper(*_args, **_kwargs):
+                return helper.queued(*_args, **_kwargs)
+        else:
+            @wraps(func)
+            def queued_wrapper(*_args, **_kwargs):
+                return helper.queued_nowait_async(*_args, **_kwargs)
+
+        @wraps(func)
+        def queued_nowait_wrapper(*_args, **_kwargs):
+            return helper.queued_nowait(*_args, **_kwargs)
+
+        @wraps(func)
+        def raw_wrapper(*_args, **_kwargs):
+            return helper.raw(*_args, **_kwargs)
+
+        if default == 'queued':
+            wrapper = queued_wrapper
+        elif default == 'queued_nowait':
+            wrapper = queued_nowait_wrapper
+        else:
+            wrapper = raw_wrapper
+
+        wrapper.queued = queued_wrapper
+        wrapper.queued_nowait = queued_nowait_wrapper
+        wrapper.raw = raw_wrapper
+
+        return wrapper

@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from collections import defaultdict, Counter
-from itertools import islice
+from itertools import islice, chain, repeat
 from traceback import format_exc
 from telethon.errors import BadRequestError
 
@@ -401,11 +401,29 @@ class Monitor:
 
     async def run_periodic_task(self):
         self._stat.print_summary()
-        feed_ids_to_monitor = db.effective_utils.EffectiveTasks.get_tasks()
-        if not feed_ids_to_monitor:
+        feed_ids_set = db.effective_utils.EffectiveTasks.get_tasks()
+        if not feed_ids_set:
             return
 
-        self.submit_feeds(feed_ids_to_monitor)
+        # Assuming the method is called once per minute, let's divide feed_ids into 60 chunks and submit one by one
+        # every second.
+        feed_ids: list[int] = list(feed_ids_set)
+        feed_count = len(feed_ids)
+        chunk_count = 60
+        larger_chunk_count = feed_count % chunk_count
+        smaller_chunk_size = feed_count // chunk_count
+        smaller_chunk_count = chunk_count - larger_chunk_count
+        larger_chunk_size = smaller_chunk_size + 1
+        pos = 0
+        for delay, count in enumerate(chain(
+                repeat(larger_chunk_size, larger_chunk_count),
+                repeat(smaller_chunk_size, smaller_chunk_count)
+        )):
+            if count == 0:
+                break
+            env.loop.call_later(delay, self.submit_feeds, feed_ids[pos:pos + count])
+            pos += count
+        assert pos == feed_count
 
         logger.debug('Started a periodic monitoring task.')
 

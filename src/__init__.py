@@ -28,6 +28,7 @@ from random import sample
 from . import log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
+from .helpers.queue import queued
 
 # log
 logger = log.getLogger('RSStT')
@@ -54,7 +55,7 @@ def init():
     pre_tasks.extend((
         loop.create_task(db.init()),
         loop.create_task(tgraph.init()),
-        loop.create_task(monitor.init()),
+        loop.create_task(queued.init(loop=loop)),
     ))
 
     if env.PORT:
@@ -262,7 +263,7 @@ async def post():
     tasks = [
         asyncio.shield(loop.create_task(db.close())),
         loop.create_task(tgraph.close()),
-        loop.create_task(monitor.close()),
+        loop.create_task(queued.close()),
     ]
     if scheduler.running:
         scheduler.shutdown(wait=False)

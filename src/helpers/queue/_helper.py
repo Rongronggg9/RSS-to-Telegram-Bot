@@ -34,21 +34,29 @@ class QueuedHelper(Generic[P, R, QP]):
 
     # noinspection PyAsyncCall
     async def _consumer(self):
+        # These attributes are accessed frequently and are constant during the lifetime of the instance.
+        # Let's cache them to avoid the overhead of attribute access.
+        func = self._func
+        name = self._name
+        queue = self._queue
+        create_task = self._loop.create_task
+        time = self._loop.time
+
         while True:
             try:
-                args, kwargs = await self._queue.get()
+                args, kwargs = await queue.get()
                 # All producer methods always put (args: tuple[Any], kwargs: dict[Any]) into the queue.
                 # Only self.close() or self.close_sync() puts (None, None) into the queue.
                 if args is None:
                     break
-                self._loop.create_task(
-                    self._func(*args, **kwargs),
-                    name=f'{self._name}-{self._loop.time()}'
+                create_task(
+                    func(*args, **kwargs),
+                    name=f'{name}-{time()}'
                 )
                 # Release the references so that they can be garbage collected while waiting for the next task.
                 del args, kwargs
             except Exception as e:
-                logger.error(f"Error in QueuedHelper-{self._name}'s consumer task:", exc_info=e)
+                logger.error(f"Error in QueuedHelper-{name}'s consumer task:", exc_info=e)
 
     def init_sync(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop

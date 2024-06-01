@@ -240,8 +240,8 @@ async def unsubs(user_id: int,
         return None
 
     coroutines = (
-            (tuple(unsub(user_id, feed_url=url, lang=lang) for url in feed_urls) if feed_urls else tuple())
-            + (tuple(unsub(user_id, sub_id=sub_id, lang=lang) for sub_id in sub_ids) if sub_ids else tuple())
+            (tuple(unsub(user_id, feed_url=url, lang=lang) for url in feed_urls) if feed_urls else ())
+            + (tuple(unsub(user_id, sub_id=sub_id, lang=lang) for sub_id in sub_ids) if sub_ids else ())
     )
 
     result = await asyncio.gather(*coroutines)

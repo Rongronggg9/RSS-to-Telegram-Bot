@@ -59,7 +59,7 @@ def calculate_update(old_hashes: Optional[Sequence[str]], entries: Sequence[dict
 
 
 def filter_urls(urls: Optional[Iterable[str]]) -> tuple[str, ...]:
-    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls)) if urls else tuple()
+    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls)) if urls else ()
 
 
 # copied from command.utils

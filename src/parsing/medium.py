@@ -905,14 +905,14 @@ class Media:
         ret = []
         allow_in_group = (
                 ((media,) if self.allow_mixing_images_and_videos and not self.consider_videos_as_gifs else (images,))
-                + (tuple() if self.consider_videos_as_gifs or self.allow_mixing_images_and_videos else (videos,))
+                + (() if self.consider_videos_as_gifs or self.allow_mixing_images_and_videos else (videos,))
                 + (audios,)
-                + ((files,) if self.allow_files_sent_as_album else tuple())
+                + ((files,) if self.allow_files_sent_as_album else ())
         )
         disallow_in_group = (
-                ((videos,) if self.consider_videos_as_gifs else tuple())
+                ((videos,) if self.consider_videos_as_gifs else ())
                 + (gifs,)
-                + (tuple() if self.allow_files_sent_as_album else (files,))
+                + (() if self.allow_files_sent_as_album else (files,))
         )
         for list_to_process in allow_in_group:
             while list_to_process:

@@ -17,6 +17,7 @@ from . import inner
 from .utils import escape_html, unsub_all_and_leave_chat
 from .. import log, db, env, web, locks
 from ..helpers.queue import queued
+from ..helpers.timeout import BatchTimeout
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..i18n import i18n
 from ..parsing.post import get_post_from_entry, Post
@@ -244,6 +245,25 @@ class Monitor:
 
         return db_feeds
 
+    def _on_subtask_canceled(self, err: BaseException, feed: db.Feed):
+        self._stat.cancelled()
+        logger.error(f'Monitoring subtask failed due to CancelledError: {feed.id}: {feed.link}', exc_info=err)
+
+    def _on_subtask_unknown_error(self, err: BaseException, feed: db.Feed):
+        self._stat.unknown_error()
+        logger.error(f'Monitoring subtask failed due to an unknown error: {feed.id}: {feed.link}', exc_info=err)
+
+    def _on_subtask_timeout(self, err: BaseException, feed: db.Feed):
+        self._stat.timeout()
+        logger.error(f'Monitoring subtask timed out after {TIMEOUT}s: {feed.id}: {feed.link}', exc_info=err)
+
+    def _on_subtask_timeout_unknown_error(self, err: BaseException, feed: db.Feed):
+        self._stat.timeout_unknown_error()
+        logger.error(
+            f'Monitoring subtask timed out after {TIMEOUT}s and caused an unknown error: {feed.id}: {feed.link}',
+            exc_info=err
+        )
+
     # In the foreseeable future, we may use a PriorityQueue here to prioritize some jobs.
     @queued
     async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
@@ -256,90 +276,21 @@ class Monitor:
         if not feeds:
             return
 
-        # A technique to solve these three issues:
-        # 1. asyncio.timeout/wait_for() raises TimeoutError from CancelledError, which breaks some internal logic of
-        # aiohttp, so we have to prevent TimeoutError from being raised in such a circumstance.
-        # 2. It is hard to distinguish TimeoutError raised by asyncio.timeout/wait_for() from the one raised by other
-        # routines.
-        # 3. The previously used `asyncio.wait()` technique pends tasks for TIMEOUT seconds, even if some tasks have
-        # long been done, which is inefficient and causes memory leak until the timeout is reached.
-        #
-        # The technique itself is, however, quite straightforward:
-        # 1. Create a queue to store done tasks.
-        # 2. Make each task put itself into the queue once it is done.
-        # 3. Create a timeout handle to put None into the queue after TIMEOUT seconds.
-        # 4. Consume the queue until None is put into it.
-        # 5. Cancel all remaining tasks.
-        done: asyncio.Queue[Optional[asyncio.Task]] = asyncio.Queue()  # unbounded, safe to use `{put,get}_nowait()`
-        timeout_handle = env.loop.call_later(TIMEOUT, done.put_nowait, None)  # use None to indicate timeout
-        timed_out = False
-
-        # Put the task into the done queue once it is done (if not timed out).
-        def _on_done(t: asyncio.Task):
-            if not timed_out:
-                done.put_nowait(t)
-
-        subtask_feed_map: dict[asyncio.Task: db.Feed] = {}
-        for feed in feeds:
-            self._lock_feed_id(feed.id)
-            subtask = env.loop.create_task(
-                self._do_monitor_subtask(feed),
-                name=f'Monitor-subtask-{env.loop.time()}-{feed.id}'
-            )
-            subtask.add_done_callback(_on_done)
-            subtask_feed_map[subtask] = feed
-        # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
-        del feeds
-
-        while subtask_feed_map:
-            subtask = await done.get()  # wait for the next subtask to be done
-            if subtask is None:
-                timed_out = True
-                break
-            feed = subtask_feed_map.pop(subtask)  # pop the subtask and retrieve the feed
-            try:
-                # Here we use `await subtask` instead of `subtask.exception()` due to:
-                # 1. The divergence that Future.exception() **returns** exception or None if done but **raises**
-                # CancelledError if canceled causes huge inconvenience.
-                # 2. Ensure the traceback is complete.
-                await subtask
-            except asyncio.CancelledError as e:
-                # Usually, this should not happen, but let's handle it for debugging purposes and prevent it from
-                # breaking the whole monitoring task.
-                self._stat.cancelled()
-                logger.error(f'Monitoring subtask failed due to CancelledError: {feed.link}', exc_info=e)
-            except Exception as e:
-                self._stat.unknown_error()
-                logger.error(f'Monitoring subtask failed due to an unknown error: {feed.link}', exc_info=e)
-            # Release references so that they can be garbage collected while waiting for the next subtask to be done.
-            del subtask, feed
-
-        # The below procedure should be fast, so we don't explicitly release any references.
-
-        timeout_handle.cancel()
-        if not timed_out:
-            return
-
-        for subtask in subtask_feed_map:
-            # Cancel all remaining subtasks together before awaiting any of them to ensure timely cancellation.
-            subtask.cancel()
-            # There is a chance that some subtasks are done right after the timeout_handle.
-            # In such a case, these subtasks will not be canceled (cancelling a done task is a no-op)...
-
-        for subtask, feed in subtask_feed_map.items():
-            try:
-                # ...It may succeed...
-                await subtask
-            except asyncio.CancelledError as e:
-                self._stat.timeout()
-                logger.error(f'Monitoring subtask timed out after {TIMEOUT}s: {feed.link}', exc_info=e)
-            except Exception as e:
-                # ...or fail.
-                self._stat.timeout_unknown_error()
-                logger.error(
-                    f'Monitoring subtask timed out after {TIMEOUT}s and caused an unknown error: {feed.link}',
-                    exc_info=e
-                )
+        _do_monitor_subtask: BatchTimeout[db.Feed, None]
+        async with BatchTimeout(
+                self._do_monitor_subtask,
+                timeout=TIMEOUT,
+                loop=env.loop,
+                on_canceled=self._on_subtask_canceled,
+                on_error=self._on_subtask_unknown_error,
+                on_timeout=self._on_subtask_timeout,
+                on_timeout_error=self._on_subtask_timeout_unknown_error,
+        ) as _do_monitor_subtask:
+            for feed in feeds:
+                self._lock_feed_id(feed.id)
+                _do_monitor_subtask(feed, _task_name_suffix=feed.id)
+            # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
+            del feeds
 
     _do_monitor_task_queued_nowait = _do_monitor_task.queued_nowait
 

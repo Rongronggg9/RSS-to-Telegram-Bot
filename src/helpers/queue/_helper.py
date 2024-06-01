@@ -30,10 +30,10 @@ class QueuedHelper(Generic[P, R, QP]):
                 tuple[None, None]
             ]
         ]] = None
-        self._bg_task: Optional[asyncio.Task] = None
+        self._consumer_task: Optional[asyncio.Task] = None
 
     # noinspection PyAsyncCall
-    async def _consumer_bg(self):
+    async def _consumer(self):
         while True:
             try:
                 args, kwargs = await self._queue.get()
@@ -48,16 +48,16 @@ class QueuedHelper(Generic[P, R, QP]):
                 # Release the references so that they can be garbage collected while waiting for the next task.
                 del args, kwargs
             except Exception as e:
-                logger.error(f"Error in {self._name}'s background task:", exc_info=e)
+                logger.error(f"Error in QueuedHelper-{self._name}'s consumer task:", exc_info=e)
 
     def init_sync(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
-        if self._bg_task is not None and not self._bg_task.done():
+        if self._consumer_task is not None and not self._consumer_task.done():
             return
         self._queue = self._queue_constructor()
-        self._bg_task = self._loop.create_task(
-            self._consumer_bg(),
-            name=f'QueuedWrapper-{self._name}-bg-task'
+        self._consumer_task = self._loop.create_task(
+            self._consumer(),
+            name=f'QueuedHelper-{self._name}-consumer'
         )
 
     async def init(self, loop: asyncio.AbstractEventLoop):
@@ -66,14 +66,14 @@ class QueuedHelper(Generic[P, R, QP]):
     def close_sync(self) -> bool:
         # This won't cancel tasks put into the queue,
         # but that's fine since asyncio will cancel them and print traceback when exiting.
-        if self._bg_task is None or self._bg_task.done():
+        if self._consumer_task is None or self._consumer_task.done():
             return False
         try:
             if self._queue.empty():
                 self._queue.put_nowait((None, None))  # gracefully stop the bg_task
                 return True
             # The queue is not empty, just cancel the bg_task to prevent it from consuming more.
-            return self._bg_task.cancel()
+            return self._consumer_task.cancel()
         except Exception as e:
             logger.error(f"Failed to terminate {self._name}'s background task of :", exc_info=e)
             return False  # cannot cancel the task, just return
@@ -82,7 +82,7 @@ class QueuedHelper(Generic[P, R, QP]):
         canceled = self.close_sync()
         if canceled:
             try:
-                await self._bg_task
+                await self._consumer_task
             except Exception as e:
                 logger.error(f"Traceback of {self._name}'s background task termination:", exc_info=e)
 

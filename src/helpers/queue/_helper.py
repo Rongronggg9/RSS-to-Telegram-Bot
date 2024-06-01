@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import Callable, Optional, Awaitable, Any, Union
-from typing_extensions import ParamSpec, TypeVar
+from typing import Callable, Optional, Awaitable, Any, Union, Generic, TypeVar
+from typing_extensions import ParamSpec
 
 import asyncio
 from functools import partial
@@ -12,7 +12,7 @@ R = TypeVar('R')
 QP = ParamSpec('QP')
 
 
-class QueuedHelper:
+class QueuedHelper(Generic[P, R, QP]):
     def __init__(
             self,
             func: Callable[P, Awaitable[R]],

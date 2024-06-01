@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import Callable, Optional, Literal, Awaitable, Union
-from typing_extensions import ParamSpec, TypeVar
+from typing import Callable, Optional, Literal, Awaitable, Union, Generic, TypeVar
+from typing_extensions import ParamSpec
 
 import asyncio
 from functools import partial, wraps
@@ -12,7 +12,7 @@ R = TypeVar('R')
 QP = ParamSpec('QP')
 
 
-class QueuedDecorator:
+class QueuedDecorator(Generic[P, R, QP]):
     def __init__(
             self,
             queue_constructor: Callable[QP, asyncio.Queue] = asyncio.Queue,

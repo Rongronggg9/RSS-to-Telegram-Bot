@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional, Sequence, Union, Final, Iterable
 
 import re
-import json
 import string
 from contextlib import suppress
 from bs4.element import Tag
@@ -11,9 +10,9 @@ from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
 from functools import partial
 from urllib.parse import urljoin
-from os import path
 from itertools import chain
 
+from .weibo_emojify_map import EMOJIFY_MAP
 from .. import log
 from ..aio_helper import run_async
 from ..compat import parsing_utils_html_validator_minify, INT64_T_MAX
@@ -83,10 +82,6 @@ CHARACTERS_TO_ESCAPE_IN_HASHTAG: Final[str] = ''.join(
     sorted(set(SPACES + INVALID_CHARACTERS + string.punctuation + string.whitespace))
 )
 
-# load emoji dict
-with open(path.join(path.dirname(__file__), 'emojify.json'), 'r', encoding='utf-8') as emojify_json:
-    EMOJI_DICT = json.load(emojify_json)
-
 replaceInvalidCharacter = partial(re.compile(rf'[{INVALID_CHARACTERS}]').sub, ' ')  # use initially
 replaceSpecialSpace = partial(re.compile(rf'[{SPACES[1:]}]').sub, ' ')  # use carefully
 stripBr = partial(re.compile(r'\s*<br\s*/?\s*>\s*').sub, '<br>')
@@ -121,9 +116,9 @@ def resolve_relative_link(base: Optional[str], url: Optional[str]) -> str:
 
 def emojify(xml):
     xml = emojize(xml, language='alias', variant='emoji_type')
-    for emoticon, emoji in EMOJI_DICT.items():
+    for emoticon_phrase, emoji in EMOJIFY_MAP.items():
         # emojify weibo emoticons, get all here: https://api.weibo.com/2/emotions.json?source=1362404091
-        xml = xml.replace(f'[{emoticon}]', emoji)
+        xml = xml.replace(emoticon_phrase, emoji)
     return xml
 
 

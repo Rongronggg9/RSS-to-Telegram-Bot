@@ -5,6 +5,7 @@
 ### Enhancements
 
 - **Print Telegram user info of bot**: Print the bot's Telegram user info when the bot is started. This is to help bot managers to find the bot's username and user ID when deploying the bot.
+- **Minor refactor**: Some internal functions have been refactored to improve performance and maintainability.
 
 ### Bug fixes
 

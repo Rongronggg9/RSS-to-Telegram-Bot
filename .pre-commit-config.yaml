@@ -3,7 +3,7 @@
 # * Install pre-commit (https://pre-commit.com/#installation)
 # * Run "pre-commit install".
 
-default_install_hook_types: [commit-msg, pre-commit]
+default_install_hook_types: [ commit-msg, pre-commit ]
 ci:
   autofix_commit_msg: "style: [pre-commit.ci] auto fixes"
   autofix_prs: true
@@ -36,6 +36,7 @@ repos:
       - id: debug-statements
       - id: destroyed-symlinks
       - id: detect-aws-credentials
+        args: [ "--allow-missing-credentials" ]
       - id: detect-private-key
       # we'd like all parts of string literal concatenation[1] use the same quotation mark, but this hook messes them up
       # [1]: https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation

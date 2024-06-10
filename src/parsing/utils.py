@@ -82,6 +82,11 @@ CHARACTERS_TO_ESCAPE_IN_HASHTAG: Final[str] = ''.join(
     sorted(set(SPACES + INVALID_CHARACTERS + string.punctuation + string.whitespace))
 )
 
+# false positive:
+# noinspection RegExpUnnecessaryNonCapturingGroup
+EMOJIFY_RE: Final[re.Pattern] = re.compile(rf'\[(?:{"|".join(re.escape(phrase[1:-1]) for phrase in EMOJIFY_MAP)})]')
+emojifyReSub = partial(EMOJIFY_RE.sub, lambda match: EMOJIFY_MAP[match.group(0)])
+
 replaceInvalidCharacter = partial(re.compile(rf'[{INVALID_CHARACTERS}]').sub, ' ')  # use initially
 replaceSpecialSpace = partial(re.compile(rf'[{SPACES[1:]}]').sub, ' ')  # use carefully
 stripBr = partial(re.compile(r'\s*<br\s*/?\s*>\s*').sub, '<br>')
@@ -115,11 +120,9 @@ def resolve_relative_link(base: Optional[str], url: Optional[str]) -> str:
 
 
 def emojify(xml):
-    xml = emojize(xml, language='alias', variant='emoji_type')
-    for emoticon_phrase, emoji in EMOJIFY_MAP.items():
-        # emojify weibo emoticons, get all here: https://api.weibo.com/2/emotions.json?source=1362404091
-        xml = xml.replace(emoticon_phrase, emoji)
-    return xml
+    return emojifyReSub(
+        emojize(xml, language='alias', variant='emoji_type')
+    )
 
 
 def is_emoticon(tag: Tag) -> bool:

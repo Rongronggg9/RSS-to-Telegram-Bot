@@ -16,7 +16,7 @@ from telethon.errors import BadRequestError
 from . import inner
 from .utils import escape_html, unsub_all_and_leave_chat
 from .. import log, db, env, web, locks
-from ..helpers.queue import queued
+from ..helpers.bg import bg
 from ..helpers.timeout import BatchTimeout
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..i18n import i18n
@@ -264,8 +264,11 @@ class Monitor:
             exc_info=err
         )
 
-    # In the foreseeable future, we may use a PriorityQueue here to prioritize some jobs.
-    @queued
+    # In the foreseeable future, we may limit the number of concurrent monitoring tasks and use
+    # helpers.queue.QueuedDecorator(PriorityQueue) to prioritize some jobs.
+    # Since the execution of monitoring tasks is completely unlimited now, we can use the simpler `bg` decorator to
+    # avoid the extra overhead of `queued`.
+    @bg
     async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
         # Previously, this was a tail call (self._ensure_db_feeds() calls self._do_monitor_task() at the end).
         # It turned out that the tail call made the frame of self._ensure_db_feeds(), which keep referencing all db.Feed
@@ -292,7 +295,7 @@ class Monitor:
             # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
             del feeds
 
-    _do_monitor_task_queued_nowait = _do_monitor_task.queued_nowait
+    _do_monitor_task_bg_sync = _do_monitor_task.bg_sync
 
     async def _do_monitor_subtask(self, feed: db.Feed):
         self._subtask_defer_map[feed.id] |= TaskState.IN_PROGRESS
@@ -345,7 +348,7 @@ class Monitor:
         return False  # not deferred
 
     def submit_feeds(self, feeds: Iterable[FEED_OR_ID]):
-        self._do_monitor_task_queued_nowait(feeds)
+        self._do_monitor_task_bg_sync(feeds)
 
     def submit_feed(self, feed: FEED_OR_ID):
         self.submit_feeds((feed,))

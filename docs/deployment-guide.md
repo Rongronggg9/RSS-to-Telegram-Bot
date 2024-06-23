@@ -138,7 +138,7 @@ You know what to do. However, I cannot guarantee that the fonts can be recognize
 > * `python3 -m pip install -U --extra-index-url https://test.pypi.org/simple rsstt` will install the latest **dev** version from [TestPyPI](https://test.pypi.org/project/rsstt), which is **always up-to-date**.
 
 ```sh
-python3 -m pip install -U pip setuptools
+python3 -m pip install -U pip setuptools wheel
 python3 -m pip install -U rsstt
 # python3 -m pip install -U --extra-index-url https://test.pypi.org/simple rsstt
 mkdir -p ~/.rsstt

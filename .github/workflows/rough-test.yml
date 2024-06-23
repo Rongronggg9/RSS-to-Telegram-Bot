@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           set -eux
-          pip install --upgrade pip wheel setuptools
+          python -m pip install --upgrade pip wheel setuptools
           pip install -r requirements.txt
       - name: Setup PostgreSQL
         if: matrix.os == 'ubuntu-latest'

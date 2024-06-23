@@ -5,7 +5,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN \
     set -ex && \
     python -m venv --copies /opt/venv && \
-    pip install --no-cache-dir --upgrade \
+    python -m pip install --no-cache-dir --upgrade \
         pip setuptools wheel
 
 COPY requirements.txt .

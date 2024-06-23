@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Optional, Awaitable, Any, Union, Generic, TypeVar
+from typing import Callable, Optional, Awaitable, Any, Union, Generic, TypeVar, Final
 from typing_extensions import ParamSpec
 
 import asyncio
@@ -20,9 +20,9 @@ class QueuedHelper(Generic[P, R, QP]):
             *args: QP.args,
             **kwargs: QP.kwargs,
     ):
-        self._func = func
-        self._name = func.__qualname__
-        self._queue_constructor = partial(queue_constructor, *args, **kwargs)
+        self._func: Final[Callable[P, Awaitable[R]]] = func
+        self._name: Final[str] = f'{self.__class__.__name__}-{func.__qualname__}'
+        self._queue_constructor: Final[Callable[[], asyncio.Queue]] = partial(queue_constructor, *args, **kwargs)
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._queue: Optional[asyncio.Queue[
             Union[
@@ -31,6 +31,7 @@ class QueuedHelper(Generic[P, R, QP]):
             ]
         ]] = None
         self._consumer_task: Optional[asyncio.Task] = None
+        self._bg_tasks: Final[set[asyncio.Task]] = set()
 
     # noinspection PyAsyncCall
     async def _consumer(self):
@@ -39,6 +40,7 @@ class QueuedHelper(Generic[P, R, QP]):
         func = self._func
         name = self._name
         queue = self._queue
+        bg_tasks = self._bg_tasks
         create_task = self._loop.create_task
         time = self._loop.time
 
@@ -49,14 +51,16 @@ class QueuedHelper(Generic[P, R, QP]):
                 # Only self.close() or self.close_sync() puts (None, None) into the queue.
                 if args is None:
                     break
-                create_task(
+                task = create_task(
                     func(*args, **kwargs),
                     name=f'{name}-{time()}'
                 )
+                bg_tasks.add(task)
+                task.add_done_callback(bg_tasks.discard)
                 # Release the references so that they can be garbage collected while waiting for the next task.
-                del args, kwargs
-            except Exception as e:
-                logger.error(f"Error in QueuedHelper-{name}'s consumer task:", exc_info=e)
+                del args, kwargs, task
+            except Exception as e:  # does not catch CancelledError
+                logger.error(f"Error in {name}'s consumer task:", exc_info=e)
 
     def init_sync(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
@@ -65,34 +69,46 @@ class QueuedHelper(Generic[P, R, QP]):
         self._queue = self._queue_constructor()
         self._consumer_task = self._loop.create_task(
             self._consumer(),
-            name=f'QueuedHelper-{self._name}-consumer'
+            name=f'{self._name}-consumer'
         )
 
     async def init(self, loop: asyncio.AbstractEventLoop):
         self.init_sync(loop)
 
-    def close_sync(self) -> bool:
-        # This won't cancel tasks put into the queue,
-        # but that's fine since asyncio will cancel them and print traceback when exiting.
+    def close_sync(self) -> tuple[bool, list[asyncio.Task]]:
+        canceled_tasks = [
+            task for task in self._bg_tasks
+            if task.cancel()
+        ]
         if self._consumer_task is None or self._consumer_task.done():
-            return False
+            return False, canceled_tasks
         try:
             if self._queue.empty():
                 self._queue.put_nowait((None, None))  # gracefully stop the bg_task
-                return True
+                return True, canceled_tasks
             # The queue is not empty, just cancel the bg_task to prevent it from consuming more.
-            return self._consumer_task.cancel()
+            return self._consumer_task.cancel(), canceled_tasks
         except Exception as e:
-            logger.error(f"Failed to terminate {self._name}'s background task of :", exc_info=e)
-            return False  # cannot cancel the task, just return
+            logger.error(f"Failed to terminate {self._consumer_task}:", exc_info=e)
+            return False, canceled_tasks  # cannot cancel the task, just return
 
     async def close(self):
-        canceled = self.close_sync()
-        if canceled:
+        consumer_canceled, canceled_tasks = self.close_sync()
+        if consumer_canceled and (task := self._consumer_task) is not None:
             try:
-                await self._consumer_task
-            except Exception as e:
-                logger.error(f"Traceback of {self._name}'s background task termination:", exc_info=e)
+                await task
+            except BaseException as e:  # also catches CancelledError
+                logger.error(f"Traceback of the termination of {task}:", exc_info=e)
+        for task in canceled_tasks:
+            try:
+                await task
+            except BaseException as e:
+                logger.error(f"Traceback of the termination of {task}:", exc_info=e)
+        if self._bg_tasks:
+            logger.warning(
+                f'{self._name} has {len(self._bg_tasks)} unfinished background tasks left:\n' +
+                "\n".join(str(task) for task in self._bg_tasks)
+            )
 
     # ----- start producer methods -----
 

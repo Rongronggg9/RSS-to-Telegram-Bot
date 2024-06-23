@@ -28,6 +28,7 @@ from random import sample
 from . import log, db, command
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
+from .helpers.bg import bg
 from .helpers.queue import queued
 
 # log
@@ -55,6 +56,7 @@ def init():
     pre_tasks.extend((
         loop.create_task(db.init()),
         loop.create_task(tgraph.init()),
+        loop.create_task(bg.init(loop=loop)),
         loop.create_task(queued.init(loop=loop)),
     ))
 
@@ -263,6 +265,7 @@ async def post():
     tasks = [
         asyncio.shield(loop.create_task(db.close())),
         loop.create_task(tgraph.close()),
+        loop.create_task(bg.close()),
         loop.create_task(queued.close()),
     ]
     if scheduler.running:

@@ -1,48 +1,35 @@
 from __future__ import annotations
-from typing import Callable, Optional, Literal, Awaitable, Union, Generic, TypeVar
+from typing import Callable, Literal, Awaitable, Union, Generic, TypeVar, ClassVar
 from typing_extensions import ParamSpec
 
 import asyncio
-from functools import partial, wraps
+from functools import partial
 
 from ._helper import QueuedHelper
+from ..bg import BgDecorator
 
 P = ParamSpec('P')
 R = TypeVar('R')
 QP = ParamSpec('QP')
 
 
-class QueuedDecorator(Generic[P, R, QP]):
+class QueuedDecorator(BgDecorator[P, R], Generic[P, R, QP]):
+    _bound_helper: ClassVar[type[QueuedHelper]] = QueuedHelper
+
     def __init__(
             self,
             queue_constructor: Callable[QP, asyncio.Queue] = asyncio.Queue,
     ):
+        super().__init__()
         self._queue_constructor = queue_constructor
-        self._helpers: list[QueuedHelper] = []
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
-
-    def init_sync(self, loop: asyncio.AbstractEventLoop):
-        self._loop = loop
-        for helpers in self._helpers:
-            helpers.init(loop=loop)
-
-    async def init(self, loop: asyncio.AbstractEventLoop):
-        self._loop = loop
-        await asyncio.gather(*(helper.init(loop=loop) for helper in self._helpers))
-
-    def close_sync(self):
-        for helper in self._helpers:
-            helper.close_sync()
-
-    async def close(self):
-        await asyncio.gather(*(helper.close() for helper in self._helpers))
+        self._helpers: list[QueuedHelper]
 
     def __call__(
             self,
             func: Callable[P, Awaitable[R]] = None,
             *args: QP.args,
             maxsize: int = 0,
-            default: Literal['queued', 'queued_nowait', 'raw'] = 'queued',
+            default: Literal['queued', 'queued_nowait', 'bg', 'bg_sync', 'raw'] = 'queued',
             **kwargs: QP.kwargs,
     ) -> Callable[P, Union[Awaitable[R], Awaitable[None], None]]:
         """
@@ -67,38 +54,12 @@ class QueuedDecorator(Generic[P, R, QP]):
             return partial(self, *args, maxsize=maxsize, default=default, **kwargs)
 
         kwargs['maxsize'] = maxsize
-        helper = QueuedHelper(func, self._queue_constructor, *args, **kwargs)
-        self._helpers.append(helper)
+        self._helpers.append(helper := QueuedHelper(func, self._queue_constructor, *args, **kwargs))
 
-        # Here we must create wrappers instead of just returning helper.
-        # The methods from helper are so-called "bound methods" with `self` bounded, preventing the `self` of wrapped
-        # methods from being passed.
-        if maxsize > 0:
-            @wraps(func)
-            def queued_wrapper(*_args, **_kwargs):
-                return helper.queued(*_args, **_kwargs)
-        else:
-            @wraps(func)
-            def queued_wrapper(*_args, **_kwargs):
-                return helper.queued_nowait_async(*_args, **_kwargs)
+        wrappers = self._create_wrappers(helper, func, ('queued_nowait_async', *helper.available_wrapped_methods))
 
-        @wraps(func)
-        def queued_nowait_wrapper(*_args, **_kwargs):
-            return helper.queued_nowait(*_args, **_kwargs)
+        if maxsize <= 0:
+            wrappers['queued'] = wrappers['queued_nowait_async']
+        del wrappers['queued_nowait_async']
 
-        @wraps(func)
-        def raw_wrapper(*_args, **_kwargs):
-            return helper.raw(*_args, **_kwargs)
-
-        if default == 'queued':
-            wrapper = queued_wrapper
-        elif default == 'queued_nowait':
-            wrapper = queued_nowait_wrapper
-        else:
-            wrapper = raw_wrapper
-
-        wrapper.queued = queued_wrapper
-        wrapper.queued_nowait = queued_nowait_wrapper
-        wrapper.raw = raw_wrapper
-
-        return wrapper
+        return self._create_composite_wrapper(wrappers, default)

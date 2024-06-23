@@ -1,18 +1,21 @@
 from __future__ import annotations
-from typing import Callable, Optional, Awaitable, Any, Union, Generic, TypeVar, Final
+from typing import Callable, Optional, Awaitable, Any, Union, Generic, TypeVar, Final, ClassVar
 from typing_extensions import ParamSpec
 
 import asyncio
 from functools import partial
 
-from ._common import logger
+from ._common import logger as queue_logger
+from ..bg import BgHelper
 
 P = ParamSpec('P')
 R = TypeVar('R')
 QP = ParamSpec('QP')
 
 
-class QueuedHelper(Generic[P, R, QP]):
+class QueuedHelper(BgHelper[P, R], Generic[P, R, QP]):
+    _logger: ClassVar = queue_logger
+
     def __init__(
             self,
             func: Callable[P, Awaitable[R]],
@@ -20,10 +23,8 @@ class QueuedHelper(Generic[P, R, QP]):
             *args: QP.args,
             **kwargs: QP.kwargs,
     ):
-        self._func: Final[Callable[P, Awaitable[R]]] = func
-        self._name: Final[str] = f'{self.__class__.__name__}-{func.__qualname__}'
+        super().__init__(func)
         self._queue_constructor: Final[Callable[[], asyncio.Queue]] = partial(queue_constructor, *args, **kwargs)
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._queue: Optional[asyncio.Queue[
             Union[
                 tuple[tuple[Any], dict[Any]],
@@ -31,18 +32,14 @@ class QueuedHelper(Generic[P, R, QP]):
             ]
         ]] = None
         self._consumer_task: Optional[asyncio.Task] = None
-        self._bg_tasks: Final[set[asyncio.Task]] = set()
 
     # noinspection PyAsyncCall
     async def _consumer(self):
         # These attributes are accessed frequently and are constant during the lifetime of the instance.
         # Let's cache them to avoid the overhead of attribute access.
-        func = self._func
         name = self._name
         queue = self._queue
-        bg_tasks = self._bg_tasks
-        create_task = self._loop.create_task
-        time = self._loop.time
+        bg_sync = self.bg_sync
 
         while True:
             try:
@@ -51,19 +48,14 @@ class QueuedHelper(Generic[P, R, QP]):
                 # Only self.close() or self.close_sync() puts (None, None) into the queue.
                 if args is None:
                     break
-                task = create_task(
-                    func(*args, **kwargs),
-                    name=f'{name}-{time()}'
-                )
-                bg_tasks.add(task)
-                task.add_done_callback(bg_tasks.discard)
+                bg_sync(*args, **kwargs)
                 # Release the references so that they can be garbage collected while waiting for the next task.
-                del args, kwargs, task
+                del args, kwargs
             except Exception as e:  # does not catch CancelledError
-                logger.error(f"Error in {name}'s consumer task:", exc_info=e)
+                self._logger.error(f"Error in {name}'s consumer task:", exc_info=e)
 
     def init_sync(self, loop: asyncio.AbstractEventLoop):
-        self._loop = loop
+        super().init_sync(loop)
         if self._consumer_task is not None and not self._consumer_task.done():
             return
         self._queue = self._queue_constructor()
@@ -72,45 +64,35 @@ class QueuedHelper(Generic[P, R, QP]):
             name=f'{self._name}-consumer'
         )
 
-    async def init(self, loop: asyncio.AbstractEventLoop):
-        self.init_sync(loop)
+    def close_sync(self) -> list[asyncio.Task]:
+        canceled_tasks = super().close_sync()
 
-    def close_sync(self) -> tuple[bool, list[asyncio.Task]]:
-        canceled_tasks = [
-            task for task in self._bg_tasks
-            if task.cancel()
-        ]
-        if self._consumer_task is None or self._consumer_task.done():
-            return False, canceled_tasks
-        try:
-            if self._queue.empty():
-                self._queue.put_nowait((None, None))  # gracefully stop the bg_task
-                return True, canceled_tasks
-            # The queue is not empty, just cancel the bg_task to prevent it from consuming more.
-            return self._consumer_task.cancel(), canceled_tasks
-        except Exception as e:
-            logger.error(f"Failed to terminate {self._consumer_task}:", exc_info=e)
-            return False, canceled_tasks  # cannot cancel the task, just return
-
-    async def close(self):
-        consumer_canceled, canceled_tasks = self.close_sync()
-        if consumer_canceled and (task := self._consumer_task) is not None:
+        consumer_task = self._consumer_task
+        if consumer_task is None:
+            pass  # fall through
+        elif consumer_task.cancelled():
+            # The consumer task has been canceled somehow, return it so that the caller can handle it.
+            canceled_tasks.append(consumer_task)
+        elif consumer_task.done():
+            # NOTE: Future.cancelled() == True implies Future.done() == True.
+            pass  # fall through
+        elif not self._queue.empty():
+            # The queue is not empty, so cancel the consumer task to prevent it from consuming more tasks.
+            if consumer_task.cancel():
+                # NOTE: Future.cancel() returns False if the future is already done.
+                canceled_tasks.append(consumer_task)
+        else:
             try:
-                await task
-            except BaseException as e:  # also catches CancelledError
-                logger.error(f"Traceback of the termination of {task}:", exc_info=e)
-        for task in canceled_tasks:
-            try:
-                await task
-            except BaseException as e:
-                logger.error(f"Traceback of the termination of {task}:", exc_info=e)
-        if self._bg_tasks:
-            logger.warning(
-                f'{self._name} has {len(self._bg_tasks)} unfinished background tasks left:\n' +
-                "\n".join(str(task) for task in self._bg_tasks)
-            )
+                # Gracefully stop the consumer task so that we don't need to return it to the caller.
+                self._queue.put_nowait((None, None))
+            except Exception as e:
+                self._logger.error(f"Failed to gracefully stop {consumer_task}:", exc_info=e)
+                if consumer_task.cancel():
+                    canceled_tasks.append(consumer_task)
 
-    # ----- start producer methods -----
+        return canceled_tasks  # cannot cancel the consumer task, just return
+
+    # ----- start wrapped methods -----
 
     # This returns a coroutine!
     def queued(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[None]:
@@ -122,9 +104,3 @@ class QueuedHelper(Generic[P, R, QP]):
 
     def queued_nowait(self, *args: P.args, **kwargs: P.kwargs) -> None:
         self._queue.put_nowait((args, kwargs))
-
-    def raw(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[R]:
-        return self._func(*args, **kwargs)
-
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Union[Awaitable[R], Awaitable[None], None]:
-        raise NotImplementedError

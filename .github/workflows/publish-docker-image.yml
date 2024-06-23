@@ -42,7 +42,7 @@ jobs:
             type=pep440,pattern={{major}}
             type=raw,value=latest,enable=${{ endsWith(github.ref, 'master') }}
       - name: Push to Docker Hub
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           context: .
@@ -61,7 +61,7 @@ jobs:
           tags: type=raw,value=${{ github.ref_name != 'dev' && format('{0}-', github.ref_name) || '' }}exp-deps,enable=true
       - name: Push to Docker Hub (exp-deps)
         if: ${{ startsWith(github.ref, 'refs/heads') && github.ref_name != 'master' }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           context: .

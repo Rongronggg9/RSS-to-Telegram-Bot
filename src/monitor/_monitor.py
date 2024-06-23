@@ -188,6 +188,7 @@ class Monitor(Singleton):
 
     async def run_periodic_task(self):
         self._stat.print_summary()
+        self._notifier.on_periodic_task()
         feed_ids_set = db.effective_utils.EffectiveTasks.get_tasks()
         if not feed_ids_set:
             return

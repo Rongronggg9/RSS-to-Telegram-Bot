@@ -1,28 +1,79 @@
 from __future__ import annotations
-from typing import Iterable, MutableMapping, Union, Final
+from typing import Sequence, MutableMapping, Union, Final
 
 import asyncio
 from collections import defaultdict, Counter
 from telethon.errors import BadRequestError
 from traceback import format_exc
 
-from ._common import logger
+from ._common import logger, TIMEOUT
+from ._stat import NotifyingStat
 from .. import db, env, web
 from ..command import inner
 from ..command.utils import unsub_all_and_leave_chat, escape_html
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
+from ..helpers.bg import bg
 from ..helpers.singleton import Singleton
+from ..helpers.timeout import BatchTimeout
 from ..i18n import i18n
 from ..parsing.post import get_post_from_entry, Post
 
 
 class Notifier(Singleton):
     def __init__(self):
+        self._stat: Final[NotifyingStat] = NotifyingStat()
+
         # it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
         self._user_unsub_all_lock_bucket: Final[dict[int, asyncio.Lock]] = defaultdict(asyncio.Lock)
         self._user_blocked_counter: Final[Counter] = Counter()
 
-    async def notify_all(self, feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapping) -> None:
+    @staticmethod
+    def _describe_subtask(sub: db.Sub, post: Post) -> str:
+        return f'{post.link} (feed: {post.feed_link}, user: {sub.user_id})'
+
+    def _on_subtask_notified(self, *_, **__):
+        self._stat.notified()
+
+    def _on_subtask_deactivated(self, *_, **__):
+        self._stat.deactivated()
+
+    def _on_subtask_canceled(self, err: BaseException, sub: db.Sub, post: Post):
+        self._stat.cancelled()
+        logger.error(
+            f'Notifying subtask failed due to CancelledError: {self._describe_subtask(sub, post)}',
+            exc_info=err,
+        )
+
+    def _on_subtask_unknown_error(self, err: BaseException, sub: db.Sub, post: Post):
+        self._stat.unknown_error()
+        logger.error(
+            f'Notifying subtask failed due to an unknown error: {self._describe_subtask(sub, post)}',
+            exc_info=err,
+        )
+
+    def _on_subtask_timeout(self, err: BaseException, sub: db.Sub, post: Post):
+        self._stat.timeout()
+        logger.error(
+            f'Notifying subtask timed out after {TIMEOUT}s: {self._describe_subtask(sub, post)}',
+            exc_info=err,
+        )
+
+    def _on_subtask_timeout_unknown_error(self, err: BaseException, sub: db.Sub, post: Post):
+        self._stat.timeout_unknown_error()
+        logger.error(
+            f'Notifying subtask timed out after {TIMEOUT}s '
+            f'and caused an unknown error: {self._describe_subtask(sub, post)}',
+            exc_info=err
+        )
+
+    def on_periodic_task(self):
+        self._stat.print_summary()
+
+    @bg
+    async def notify_all(self, feed: db.Feed, subs: Sequence[db.Sub], entry: MutableMapping) -> None:
+        if not subs:
+            return
+
         link = entry.get('link')
         try:
             post = await get_post_from_entry(entry, feed.title, feed.link)
@@ -40,21 +91,33 @@ class Notifier(Singleton):
                 await env.bot.send_message(env.ERROR_LOGGING_CHAT,
                                            'A parsing error message cannot be sent, please check the logs.')
             return
-        res = await asyncio.gather(
-            *(asyncio.wait_for(self._send(sub, post), 8.5 * 60) for sub in subs),
-            return_exceptions=True
-        )
-        for sub, exc in zip(subs, res):
-            if not isinstance(exc, Exception):
-                continue
-            if not isinstance(exc, asyncio.TimeoutError):  # should not happen, but just in case
-                raise exc
-            logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}) due to timeout')
 
+        sub_count = len(subs)
+        feed_description = f'{feed.id}: {feed.link}'
+        del link, feed, entry
+
+        _do_send: BatchTimeout[[db.Sub, Post], None]
+        async with BatchTimeout[[db.Sub, Post], None](
+                func=self._do_send,
+                timeout=TIMEOUT,
+                loop=env.loop,
+                on_success=self._on_subtask_notified,
+                on_canceled=self._on_subtask_canceled,
+                on_error=self._on_subtask_unknown_error,
+                on_timeout=self._on_subtask_timeout,
+                on_timeout_error=self._on_subtask_timeout_unknown_error,
+        ) as _do_send:
+            for sub in subs:
+                _do_send(sub, post)
+            del sub, subs, post
+
+        logger.debug(f'Notified {sub_count} subs: {feed_description}')
+
+    @bg
     async def deactivate_feed_and_notify_all(
             self,
             feed: db.Feed,
-            subs: Iterable[db.Sub],
+            subs: Sequence[db.Sub],
             reason: Union[web.WebError, str] = None
     ) -> None:
         await inner.utils.deactivate_feed(feed)
@@ -62,26 +125,58 @@ class Notifier(Singleton):
         if not subs:  # nobody has subbed it or no active sub exists
             return
 
-        langs: tuple[str, ...] = await asyncio.gather(
-            *(sub.user.get_or_none().values_list('lang', flat=True) for sub in subs)
+        user_id_lang_map: dict[int, str] = dict(
+            await db.User.filter(id__in={sub.user_id for sub in subs}).values_list('id', 'lang')
         )
+        lang_msg_body_map: dict[str, str] = {
+            lang: '\n'.join((
+                i18n[lang]['feed_deactivated_warn'],
+                (
+                    (
+                        reason.i18n_message(lang)
+                        if isinstance(reason, web.WebError)
+                        else reason
+                    )
+                    if reason
+                    else ''
+                )
+            ))
+            for lang in user_id_lang_map.values()
+        }
 
-        await asyncio.gather(
-            *(
-                self._send(
+        sub_count = len(subs)
+        feed_description = f'{feed.id}: {feed.link}'
+        del reason
+
+        _do_send: BatchTimeout[[db.Sub, str], None]
+        async with BatchTimeout[[db.Sub, str], None](
+                func=self._do_send,
+                timeout=TIMEOUT,
+                loop=env.loop,
+                on_success=self._on_subtask_deactivated,
+                on_canceled=self._on_subtask_canceled,
+                on_error=self._on_subtask_unknown_error,
+                on_timeout=self._on_subtask_timeout,
+                on_timeout_error=self._on_subtask_timeout_unknown_error,
+        ) as _do_send:
+            for sub in subs:
+                _do_send(
                     sub=sub,
                     post=(
-                            f'<a href="{feed.link}">{escape_html(sub.title or feed.title)}</a>\n'
-                            + i18n[lang]['feed_deactivated_warn']
-                            + (
-                                f'\n{reason.i18n_message(lang) if isinstance(reason, web.WebError) else reason}'
-                                if reason else ''
-                            )
+                            f'<a href="{feed.link}">{escape_html(sub.title or feed.title)}</a>\n' +
+                            lang_msg_body_map[user_id_lang_map[sub.user_id]]
                     )
                 )
-                for sub, lang in (zip(subs, langs))
-            )
-        )
+            del sub, subs, feed, user_id_lang_map, lang_msg_body_map
+
+        logger.debug(f'Deactivated {sub_count} subs: {feed_description}')
+
+    async def _do_send(self, sub: db.Sub, post: Union[str, Post]) -> None:
+        self._stat.start()
+        try:
+            await self._send(sub, post)
+        finally:
+            self._stat.finish()
 
     async def _send(self, sub: db.Sub, post: Union[str, Post]) -> None:
         user_id = sub.user_id

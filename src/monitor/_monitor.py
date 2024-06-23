@@ -57,7 +57,7 @@ class Monitor(Singleton):
         # (i.e., released only after causing a new subtask being deferred).
         self._lock_up_period = value * 60 - 10
 
-    async def _ensure_db_feeds(self, feeds: Iterable[FEED_OR_ID]) -> Optional[Iterable[db.Feed]]:
+    async def _ensure_db_feeds(self, feeds: Iterable[FEED_OR_ID]) -> Optional[set[db.Feed]]:
         if not feeds:
             return None
 
@@ -104,18 +104,22 @@ class Monitor(Singleton):
     # Since the execution of monitoring tasks is completely unlimited now, we can use the simpler `bg` decorator to
     # avoid the extra overhead of `queued`.
     @bg
-    async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID]):
+    async def _do_monitor_task(self, feeds: Iterable[FEED_OR_ID], description: str):
         # Previously, this was a tail call (self._ensure_db_feeds() calls self._do_monitor_task() at the end).
         # It turned out that the tail call made the frame of self._ensure_db_feeds(), which keep referencing all db.Feed
         # objects produced there, persisted until self._do_monitor_task() was done.
         # The garbage collector was unable to collect any db.Feed objects in such a circumstance.
         # So it is now a head call to solve this issue.
-        feeds: Iterable[db.Feed] = await self._ensure_db_feeds(feeds)
+        feeds: set[db.Feed] = await self._ensure_db_feeds(feeds)
         if not feeds:
             return
 
-        _do_monitor_subtask: BatchTimeout[db.Feed, None]
-        async with BatchTimeout(
+        feed_count = len(feeds)
+        handle_id = id(feeds)
+        logger.debug(f'Start monitoring {feed_count} feeds (handle: {handle_id}): {description}')
+
+        _do_monitor_subtask: BatchTimeout[[db.Feed], None]
+        async with BatchTimeout[[db.Feed], None](
                 func=self._do_monitor_subtask,
                 timeout=TIMEOUT,
                 loop=env.loop,
@@ -127,6 +131,10 @@ class Monitor(Singleton):
             for feed in feeds:
                 self._lock_feed_id(feed.id)
                 _do_monitor_subtask(feed, _task_name_suffix=feed.id)
+            # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
+            del feed, feeds
+
+        logger.debug(f'Finished monitoring {feed_count} feeds (handle: {handle_id}): {description}')
 
     _do_monitor_task_bg_sync = _do_monitor_task.bg_sync
 
@@ -159,7 +167,7 @@ class Monitor(Singleton):
         erased_state = task_state & ~flag_to_erase
         if erased_state == TaskState.DEFERRED:  # deferred with any other flag erased, resubmit it
             self._subtask_defer_map[feed_id] = TaskState.EMPTY
-            self.submit_feed(feed_id)
+            self.submit_feed(feed_id, 'resubmit deferred subtask')
             self._stat.resubmitted()
             logger.debug(f'Resubmitted a deferred subtask ({repr(task_state)}): {feed_id}')
             return
@@ -180,11 +188,11 @@ class Monitor(Singleton):
             return True  # deferred, later operations should be skipped
         return False  # not deferred
 
-    def submit_feeds(self, feeds: Iterable[FEED_OR_ID]):
-        self._do_monitor_task_bg_sync(feeds)
+    def submit_feeds(self, feeds: Iterable[FEED_OR_ID], description: str = ''):
+        self._do_monitor_task_bg_sync(feeds, description)
 
-    def submit_feed(self, feed: FEED_OR_ID):
-        self.submit_feeds((feed,))
+    def submit_feed(self, feed: FEED_OR_ID, description: str = ''):
+        self.submit_feeds((feed,), description)
 
     async def run_periodic_task(self):
         self._stat.print_summary()
@@ -209,11 +217,9 @@ class Monitor(Singleton):
         )):
             if count == 0:
                 break
-            env.loop.call_later(delay, self.submit_feeds, feed_ids[pos:pos + count])
+            env.loop.call_later(delay, self.submit_feeds, feed_ids[pos:pos + count], 'periodic task')
             pos += count
         assert pos == feed_count
-
-        logger.debug('Started a periodic monitoring task.')
 
     async def _do_monitor_a_feed(self, feed: db.Feed, stat: MonitoringStat):
         """

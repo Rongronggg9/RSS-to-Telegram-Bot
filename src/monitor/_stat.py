@@ -181,3 +181,30 @@ class MonitoringStat(Stat[MC]):
             self._describe_abnormal(counter),
         )))
         return ', '.join(filter(None, (scheduling_stat, finished_stat)))
+
+
+class NotifyingCounter(StatCounter):
+    notified: int = _gen_property('notified')
+    deactivated: int = _gen_property('deactivated')
+
+
+NC = TypeVar('NC', bound=NotifyingCounter)
+
+
+class NotifyingStat(Stat[NC]):
+    def __init__(self, _bound_counter_cls: type[NC] = NotifyingCounter):
+        super().__init__(_bound_counter_cls=_bound_counter_cls)
+
+    def notified(self):
+        self._counter_tier2['notified'] += 1
+
+    def deactivated(self):
+        self._counter_tier2['deactivated'] += 1
+
+    def _stat(self, counter: NC) -> str:
+        return ', '.join(filter(None, (
+            self._describe_in_progress(),
+            f'notified({counter.notified})' if counter.notified else '',
+            f'deactivated({counter.deactivated})' if counter.deactivated else '',
+            self._describe_abnormal(counter),
+        )))

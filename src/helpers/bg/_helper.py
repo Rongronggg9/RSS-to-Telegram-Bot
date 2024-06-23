@@ -44,12 +44,14 @@ class BgHelper(Generic[P, R]):
         bg_tasks = self._bg_tasks
         for task in self.close_sync():
             try:
+                # The done callback is NOT ALWAYS called RIGHT AFTER the task is awaited.
+                # Remove the done callback and manually discard it from bg_tasks,
+                # so that it won't lead to unnecessary logs.
+                task.remove_done_callback(self._on_done)
                 await task
-            except BaseException as e:  # also catches CancelledError
-                logger.error(f"Traceback of the termination of {task}:", exc_info=e)
+            except (Exception, asyncio.CancelledError) as e:
+                logger.error(f'Traceback of the termination of {task}:', exc_info=e)
             finally:
-                # The done callback may not be called now.
-                # Manually discard it from bg_tasks so that it won't lead to unnecessary logs.
                 bg_tasks.discard(task)
         if bg_tasks:
             logger.warning(
@@ -57,17 +59,23 @@ class BgHelper(Generic[P, R]):
                 "\n".join(str(task) for task in bg_tasks)
             )
 
+    def _on_done(self, task: asyncio.Task):
+        self._bg_tasks.discard(task)
+        try:
+            task.result()
+        except (Exception, asyncio.CancelledError) as e:
+            self._logger.error(f'Traceback of uncaught exception in {task}:', exc_info=e)
+
     # ----- start wrapped methods -----
 
     def bg_sync(self, *args: P.args, **kwargs: P.kwargs) -> None:
         loop = self._loop
-        bg_tasks = self._bg_tasks
         task = loop.create_task(
             self._func(*args, **kwargs),
             name=f'{self._name}-{loop.time()}'
         )
-        bg_tasks.add(task)
-        task.add_done_callback(bg_tasks.discard)
+        self._bg_tasks.add(task)
+        task.add_done_callback(self._on_done)
 
     async def bg(self, *args: P.args, **kwargs: P.kwargs) -> None:
         return self.bg_sync(*args, **kwargs)

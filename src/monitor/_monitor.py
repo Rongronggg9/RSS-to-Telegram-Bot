@@ -13,8 +13,8 @@ from itertools import islice, chain, repeat
 from traceback import format_exc
 from telethon.errors import BadRequestError
 
-from . import inner
-from .utils import escape_html, unsub_all_and_leave_chat
+from ..command import inner
+from ..command.utils import escape_html, unsub_all_and_leave_chat
 from .. import log, db, env, web, locks
 from ..helpers.bg import bg
 from ..helpers.timeout import BatchTimeout

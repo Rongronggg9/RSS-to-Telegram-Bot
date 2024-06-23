@@ -26,6 +26,7 @@ from telethon.tl import types
 from random import sample
 
 from . import log, db, command
+from .monitor import Monitor
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
 from .helpers.bg import bg
@@ -38,7 +39,7 @@ loop = env.loop
 bot: Optional[TelegramClient] = None
 pre_tasks = []
 
-monitor = command.monitor.Monitor()
+monitor = Monitor()
 scheduler = AsyncIOScheduler(event_loop=loop)
 
 

@@ -15,6 +15,11 @@ QP = ParamSpec('QP')
 
 class QueuedHelper(BgHelper[P, R], Generic[P, R, QP]):
     _logger: ClassVar = queue_logger
+    available_wrapped_methods: ClassVar[tuple[str, ...]] = (
+        'queued',
+        'queued_nowait',
+        *BgHelper.available_wrapped_methods
+    )
 
     def __init__(
             self,

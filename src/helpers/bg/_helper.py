@@ -12,6 +12,11 @@ R = TypeVar('R')
 
 class BgHelper(Generic[P, R]):
     _logger: ClassVar = bg_logger
+    available_wrapped_methods: ClassVar[tuple[str, ...]] = (
+        'bg',
+        'bg_sync',
+        'raw'
+    )
 
     def __init__(
             self,

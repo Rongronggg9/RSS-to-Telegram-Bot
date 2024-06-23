@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Literal, Awaitable, Union, Generic, TypeVar, ClassVar
+from typing import Callable, Literal, Awaitable, Union, Generic, TypeVar
 from typing_extensions import ParamSpec
 
 import asyncio
@@ -8,21 +8,21 @@ from functools import partial
 from ._helper import QueuedHelper
 from ..bg import BgDecorator
 
+H = TypeVar('H', bound=QueuedHelper)
 P = ParamSpec('P')
 R = TypeVar('R')
 QP = ParamSpec('QP')
 
 
-class QueuedDecorator(BgDecorator[P, R], Generic[P, R, QP]):
-    _bound_helper: ClassVar[type[QueuedHelper]] = QueuedHelper
-
+class QueuedDecorator(BgDecorator[P, R, H], Generic[P, R, H, QP]):
     def __init__(
             self,
             queue_constructor: Callable[QP, asyncio.Queue] = asyncio.Queue,
+            _bound_helper_cls: type[H] = QueuedHelper
     ):
-        super().__init__()
+        super().__init__(_bound_helper_cls=_bound_helper_cls)
         self._queue_constructor = queue_constructor
-        self._helpers: list[QueuedHelper]
+        self._helpers: list[H]
 
     def __call__(
             self,
@@ -54,7 +54,7 @@ class QueuedDecorator(BgDecorator[P, R], Generic[P, R, QP]):
             return partial(self, *args, maxsize=maxsize, default=default, **kwargs)
 
         kwargs['maxsize'] = maxsize
-        self._helpers.append(helper := QueuedHelper(func, self._queue_constructor, *args, **kwargs))
+        self._helpers.append(helper := self._bound_helper_cls(func, self._queue_constructor, *args, **kwargs))
 
         wrappers = self._create_wrappers(helper, func, ('queued_nowait_async', *helper.available_wrapped_methods))
 

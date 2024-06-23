@@ -1,31 +1,23 @@
 from __future__ import annotations
-from typing import Union, Optional, ClassVar
-from collections.abc import MutableMapping, Iterable
+from typing import Union, Optional, Final
+from collections.abc import Iterable
 
 import enum
 import asyncio
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
-from collections import defaultdict, Counter
+from collections import defaultdict
 from itertools import islice, chain, repeat
-from traceback import format_exc
-from telethon.errors import BadRequestError
 
 from ._common import logger, TIMEOUT
+from ._notifier import Notifier
 from ._stat import MonitoringStat
-from ..command import inner
-from ..command.utils import escape_html, unsub_all_and_leave_chat
 from .. import db, env, web, locks
+from ..command import inner
 from ..helpers.bg import bg
+from ..helpers.singleton import Singleton
 from ..helpers.timeout import BatchTimeout
-from ..errors_collection import EntityNotFoundError, UserBlockedErrors
-from ..i18n import i18n
-from ..parsing.post import get_post_from_entry, Post
 from ..parsing.utils import html_space_stripper
-
-# it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
-__user_unsub_all_lock_bucket: dict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
-__user_blocked_counter = Counter()
 
 
 class TaskState(enum.IntFlag):
@@ -38,27 +30,15 @@ class TaskState(enum.IntFlag):
 FEED_OR_ID = Union[int, db.Feed]
 
 
-class Monitor:
-    _singleton: ClassVar[Monitor] = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._singleton is None:
-            return object.__new__(cls)
-        raise RuntimeError('A singleton instance already exists, use get_instance() instead.')
-
-    @classmethod
-    def get_instance(cls):
-        if cls._singleton is None:
-            cls._singleton = cls()  # implicitly calls __new__ then __init__
-        return cls._singleton
-
+class Monitor(Singleton):
     def __init__(self):
-        self._stat = MonitoringStat()
+        self._stat: Final[MonitoringStat] = MonitoringStat()
+        self._notifier: Final[Notifier] = Notifier()
         self._bg_task: Optional[asyncio.Task] = None
         # Synchronous operations are atomic from the perspective of asynchronous coroutines, so we can just use a map
         # plus additional prologue & epilogue to simulate an asynchronous lock.
         # In the meantime, the deferring logic is implemented using this map.
-        self._subtask_defer_map: defaultdict[int, TaskState] = defaultdict(lambda: TaskState.EMPTY)
+        self._subtask_defer_map: Final[defaultdict[int, TaskState]] = defaultdict(lambda: TaskState.EMPTY)
         self._lock_up_period: int = 0  # in seconds
 
         # update _lock_up_period on demand
@@ -154,7 +134,7 @@ class Monitor:
         self._subtask_defer_map[feed.id] |= TaskState.IN_PROGRESS
         self._stat.start()
         try:
-            await _do_monitor_a_feed(feed, self._stat)
+            await self._do_monitor_a_feed(feed, self._stat)
         finally:
             self._erase_state_for_feed_id(feed.id, TaskState.IN_PROGRESS)
             self._stat.finish()
@@ -234,6 +214,121 @@ class Monitor:
 
         logger.debug('Started a periodic monitoring task.')
 
+    async def _do_monitor_a_feed(self, feed: db.Feed, stat: MonitoringStat):
+        """
+        Monitor the update of a feed.
+
+        :param feed: Feed object to be monitored
+        :return: None
+        """
+        now = datetime.now(timezone.utc)
+        if feed.next_check_time and now < feed.next_check_time:
+            stat.skipped()
+            return  # skip this monitor task
+
+        subs = await feed.subs.filter(state=1)
+        if not subs:  # nobody has subbed it
+            logger.warning(f'Feed {feed.id} ({feed.link}) has no active subscribers.')
+            await inner.utils.update_interval(feed)
+            stat.skipped()
+            return
+
+        if all(locks.user_flood_lock(sub.user_id).locked() for sub in subs):
+            stat.skipped()
+            return  # all subscribers are experiencing flood wait, skip this monitor task
+
+        headers = {
+            'If-Modified-Since': format_datetime(feed.last_modified or feed.updated_at)
+        }
+        if feed.etag:
+            headers['If-None-Match'] = feed.etag
+
+        wf = await web.feed_get(feed.link, headers=headers, verbose=False)
+        rss_d = wf.rss_d
+
+        no_error = True
+        new_next_check_time: Optional[datetime] = None  # clear next_check_time by default
+        feed_updated_fields = set()
+        try:
+            if wf.status == 304:  # cached
+                logger.debug(f'Fetched (not updated, cached): {feed.link}')
+                stat.cached()
+                return
+
+            if rss_d is None:  # error occurred
+                no_error = False
+                feed.error_count += 1
+                feed_updated_fields.add('error_count')
+                if feed.error_count % 20 == 0:  # error_count is always > 0
+                    logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
+                if feed.error_count >= 100:
+                    logger.error(f'Deactivated due to too many ({feed.error_count}) errors '
+                                 f'(current: {wf.error}): {feed.link}')
+                    await self._notifier.deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
+                    stat.failed()
+                    return
+                if feed.error_count >= 10:  # too much error, defer next check
+                    interval = feed.interval or db.EffectiveOptions.default_interval
+                    if (next_check_interval := min(interval, 15) * min(feed.error_count // 10 + 1, 5)) > interval:
+                        new_next_check_time = now + timedelta(minutes=next_check_interval)
+                logger.debug(f'Fetched (failed, {feed.error_count}th retry, {wf.error}): {feed.link}')
+                stat.failed()
+                return
+
+            wr = wf.web_response
+            assert wr is not None
+            wr.now = now
+
+            if (etag := wr.etag) and etag != feed.etag:
+                feed.etag = etag
+                feed_updated_fields.add('etag')
+
+            new_next_check_time = _defer_next_check_as_per_server_side_cache(wf)
+
+            if not rss_d.entries:  # empty
+                logger.debug(f'Fetched (not updated, empty): {feed.link}')
+                stat.empty()
+                return
+
+            title = rss_d.feed.title
+            title = html_space_stripper(title) if title else ''
+            if title != feed.title:
+                logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
+                feed.title = title
+                feed_updated_fields.add('title')
+
+            new_hashes, updated_entries = inner.utils.calculate_update(feed.entry_hashes, rss_d.entries)
+            updated_entries = tuple(updated_entries)
+
+            if not updated_entries:  # not updated
+                logger.debug(f'Fetched (not updated): {feed.link}')
+                stat.not_updated()
+                return
+
+            logger.debug(f'Updated: {feed.link}')
+            feed.last_modified = wr.last_modified
+            feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
+            feed_updated_fields.update({'last_modified', 'entry_hashes'})
+        finally:
+            if no_error:
+                if feed.error_count > 0:
+                    feed.error_count = 0
+                    feed_updated_fields.add('error_count')
+                if wf.url != feed.link:
+                    new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
+                    feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
+
+            if new_next_check_time != feed.next_check_time:
+                feed.next_check_time = new_next_check_time
+                feed_updated_fields.add('next_check_time')
+
+            if feed_updated_fields:
+                await feed.save(update_fields=feed_updated_fields)
+
+        await asyncio.gather(*(self._notifier.notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
+        stat.updated()
+        return
+
 
 def _defer_next_check_as_per_server_side_cache(wf: web.WebFeed) -> Optional[datetime]:
     wr = wf.web_response
@@ -262,230 +357,3 @@ def _defer_next_check_as_per_server_side_cache(wf: web.WebFeed) -> Optional[date
                 return next_check_time
 
     return None
-
-
-async def _do_monitor_a_feed(feed: db.Feed, stat: MonitoringStat):
-    """
-    Monitor the update of a feed.
-
-    :param feed: Feed object to be monitored
-    :return: None
-    """
-    now = datetime.now(timezone.utc)
-    if feed.next_check_time and now < feed.next_check_time:
-        stat.skipped()
-        return  # skip this monitor task
-
-    subs = await feed.subs.filter(state=1)
-    if not subs:  # nobody has subbed it
-        logger.warning(f'Feed {feed.id} ({feed.link}) has no active subscribers.')
-        await inner.utils.update_interval(feed)
-        stat.skipped()
-        return
-
-    if all(locks.user_flood_lock(sub.user_id).locked() for sub in subs):
-        stat.skipped()
-        return  # all subscribers are experiencing flood wait, skip this monitor task
-
-    headers = {
-        'If-Modified-Since': format_datetime(feed.last_modified or feed.updated_at)
-    }
-    if feed.etag:
-        headers['If-None-Match'] = feed.etag
-
-    wf = await web.feed_get(feed.link, headers=headers, verbose=False)
-    rss_d = wf.rss_d
-
-    no_error = True
-    new_next_check_time: Optional[datetime] = None  # clear next_check_time by default
-    feed_updated_fields = set()
-    try:
-        if wf.status == 304:  # cached
-            logger.debug(f'Fetched (not updated, cached): {feed.link}')
-            stat.cached()
-            return
-
-        if rss_d is None:  # error occurred
-            no_error = False
-            feed.error_count += 1
-            feed_updated_fields.add('error_count')
-            if feed.error_count % 20 == 0:  # error_count is always > 0
-                logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
-            if feed.error_count >= 100:
-                logger.error(f'Deactivated due to too many ({feed.error_count}) errors '
-                             f'(current: {wf.error}): {feed.link}')
-                await __deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
-                stat.failed()
-                return
-            if feed.error_count >= 10:  # too much error, defer next check
-                interval = feed.interval or db.EffectiveOptions.default_interval
-                if (next_check_interval := min(interval, 15) * min(feed.error_count // 10 + 1, 5)) > interval:
-                    new_next_check_time = now + timedelta(minutes=next_check_interval)
-            logger.debug(f'Fetched (failed, {feed.error_count}th retry, {wf.error}): {feed.link}')
-            stat.failed()
-            return
-
-        wr = wf.web_response
-        assert wr is not None
-        wr.now = now
-
-        if (etag := wr.etag) and etag != feed.etag:
-            feed.etag = etag
-            feed_updated_fields.add('etag')
-
-        new_next_check_time = _defer_next_check_as_per_server_side_cache(wf)
-
-        if not rss_d.entries:  # empty
-            logger.debug(f'Fetched (not updated, empty): {feed.link}')
-            stat.empty()
-            return
-
-        title = rss_d.feed.title
-        title = html_space_stripper(title) if title else ''
-        if title != feed.title:
-            logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
-            feed.title = title
-            feed_updated_fields.add('title')
-
-        new_hashes, updated_entries = inner.utils.calculate_update(feed.entry_hashes, rss_d.entries)
-        updated_entries = tuple(updated_entries)
-
-        if not updated_entries:  # not updated
-            logger.debug(f'Fetched (not updated): {feed.link}')
-            stat.not_updated()
-            return
-
-        logger.debug(f'Updated: {feed.link}')
-        feed.last_modified = wr.last_modified
-        feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
-        feed_updated_fields.update({'last_modified', 'entry_hashes'})
-    finally:
-        if no_error:
-            if feed.error_count > 0:
-                feed.error_count = 0
-                feed_updated_fields.add('error_count')
-            if wf.url != feed.link:
-                new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
-                feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
-
-        if new_next_check_time != feed.next_check_time:
-            feed.next_check_time = new_next_check_time
-            feed_updated_fields.add('next_check_time')
-
-        if feed_updated_fields:
-            await feed.save(update_fields=feed_updated_fields)
-
-    await asyncio.gather(*(__notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
-    stat.updated()
-    return
-
-
-async def __notify_all(feed: db.Feed, subs: Iterable[db.Sub], entry: MutableMapping):
-    link = entry.get('link')
-    try:
-        post = await get_post_from_entry(entry, feed.title, feed.link)
-    except Exception as e:
-        logger.error(f'Failed to parse the post {link} (feed: {feed.link}) from entry:', exc_info=e)
-        try:
-            error_message = Post(f'Something went wrong while parsing the post {link} '
-                                 f'(feed: {feed.link}). '
-                                 f'Please check:<br><br>' +
-                                 format_exc().replace('\n', '<br>'),
-                                 feed_title=feed.title, link=link)
-            await error_message.send_formatted_post(env.ERROR_LOGGING_CHAT, send_mode=2)
-        except Exception as e:
-            logger.error(f'Failed to send parsing error message for {link} (feed: {feed.link}):', exc_info=e)
-            await env.bot.send_message(env.ERROR_LOGGING_CHAT,
-                                       'A parsing error message cannot be sent, please check the logs.')
-        return
-    res = await asyncio.gather(
-        *(asyncio.wait_for(__send(sub, post), 8.5 * 60) for sub in subs),
-        return_exceptions=True
-    )
-    for sub, exc in zip(subs, res):
-        if not isinstance(exc, Exception):
-            continue
-        if not isinstance(exc, asyncio.TimeoutError):  # should not happen, but just in case
-            raise exc
-        logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}) due to timeout')
-
-
-async def __send(sub: db.Sub, post: Union[str, Post]):
-    user_id = sub.user_id
-    try:
-        try:
-            await env.bot.get_input_entity(user_id)  # verify that the input entity can be gotten first
-        except ValueError:  # cannot get the input entity, the user may have banned the bot
-            return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=type(EntityNotFoundError).__name__)
-        try:
-            if isinstance(post, str):
-                await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
-                return
-            await post.send_formatted_post_according_to_sub(sub)
-            if __user_blocked_counter[user_id]:  # reset the counter if success
-                del __user_blocked_counter[user_id]
-        except UserBlockedErrors as e:
-            return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=type(e).__name__)
-        except BadRequestError as e:
-            if e.message == 'TOPIC_CLOSED':
-                return await __locked_unsub_all_and_leave_chat(user_id=user_id, err_msg=e.message)
-    except Exception as e:
-        logger.error(f'Failed to send {post.link} (feed: {post.feed_link}, user: {sub.user_id}):', exc_info=e)
-        try:
-            error_message = Post('Something went wrong while sending this post '
-                                 f'(feed: {post.feed_link}, user: {sub.user_id}). '
-                                 'Please check:<br><br>' +
-                                 format_exc().replace('\n', '<br>'),
-                                 title=post.title, feed_title=post.feed_title, link=post.link, author=post.author,
-                                 feed_link=post.feed_link)
-            await error_message.send_formatted_post(env.ERROR_LOGGING_CHAT, send_mode=2)
-        except Exception as e:
-            logger.error(f'Failed to send sending error message for {post.link} '
-                         f'(feed: {post.feed_link}, user: {sub.user_id}):',
-                         exc_info=e)
-            await env.bot.send_message(env.ERROR_LOGGING_CHAT,
-                                       'An sending error message cannot be sent, please check the logs.')
-
-
-async def __locked_unsub_all_and_leave_chat(user_id: int, err_msg: str):
-    user_unsub_all_lock = __user_unsub_all_lock_bucket[user_id]
-    if user_unsub_all_lock.locked():
-        return  # no need to unsub twice!
-    async with user_unsub_all_lock:
-        if __user_blocked_counter[user_id] < 5:
-            __user_blocked_counter[user_id] += 1
-            return  # skip once
-        # fail for 5 times, consider been banned
-        del __user_blocked_counter[user_id]
-        logger.error(f'User blocked ({err_msg}): {user_id}')
-        await unsub_all_and_leave_chat(user_id)
-
-
-async def __deactivate_feed_and_notify_all(feed: db.Feed,
-                                           subs: Iterable[db.Sub],
-                                           reason: Union[web.WebError, str] = None):
-    await inner.utils.deactivate_feed(feed)
-
-    if not subs:  # nobody has subbed it or no active sub exists
-        return
-
-    langs: tuple[str, ...] = await asyncio.gather(
-        *(sub.user.get_or_none().values_list('lang', flat=True) for sub in subs)
-    )
-
-    await asyncio.gather(
-        *(
-            __send(
-                sub=sub,
-                post=(
-                        f'<a href="{feed.link}">{escape_html(sub.title or feed.title)}</a>\n'
-                        + i18n[lang]['feed_deactivated_warn']
-                        + (
-                            f'\n{reason.i18n_message(lang) if isinstance(reason, web.WebError) else reason}'
-                            if reason else ''
-                        )
-                )
-            )
-            for sub, lang in (zip(subs, langs))
-        )
-    )

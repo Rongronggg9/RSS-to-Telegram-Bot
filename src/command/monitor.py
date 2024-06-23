@@ -281,7 +281,7 @@ class Monitor:
 
         _do_monitor_subtask: BatchTimeout[db.Feed, None]
         async with BatchTimeout(
-                self._do_monitor_subtask,
+                func=self._do_monitor_subtask,
                 timeout=TIMEOUT,
                 loop=env.loop,
                 on_canceled=self._on_subtask_canceled,
@@ -292,8 +292,6 @@ class Monitor:
             for feed in feeds:
                 self._lock_feed_id(feed.id)
                 _do_monitor_subtask(feed, _task_name_suffix=feed.id)
-            # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
-            del feeds
 
     _do_monitor_task_bg_sync = _do_monitor_task.bg_sync
 

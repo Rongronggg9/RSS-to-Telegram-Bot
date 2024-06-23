@@ -61,7 +61,7 @@ class BatchTimeout(AbstractAsyncContextManager, Generic[P, R]):
         :param on_timeout_error: Callback when a task raises an exception after reaching the timeout.
         """
         self._func = func
-        self._name = func.__qualname__
+        self._name = f'{self.__class__.__name__}-{func.__qualname__}'
         self._timeout = timeout
         self._loop: Optional[asyncio.AbstractEventLoop] = loop or asyncio.get_running_loop()
 
@@ -88,7 +88,7 @@ class BatchTimeout(AbstractAsyncContextManager, Generic[P, R]):
             raise RuntimeError("The context manager has not been entered.")
         task = self._loop.create_task(
             self._func(*args, **kwargs),
-            name=f'BatchTimeout-{self._name}-{self._loop.time()}-{_task_name_suffix}'
+            name=f'{self._name}-{self._loop.time()}-{_task_name_suffix}'
         )
         task.add_done_callback(self._on_done)
         self._task_params_map[task] = (args, kwargs)
@@ -102,7 +102,9 @@ class BatchTimeout(AbstractAsyncContextManager, Generic[P, R]):
     # noinspection PyProtocol
     async def __aexit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
-            return False  # re-raise the exception
+            for task in self._task_params_map:
+                task.cancel()
+            # fall through to consume the queue and call registered callbacks accordingly
 
         # These attributes are accessed frequently and are constant.
         # Let's cache them to avoid the overhead of attribute access.

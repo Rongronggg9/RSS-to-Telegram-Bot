@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Optional, Literal, Awaitable, Union, Generic, TypeVar, ClassVar
+from typing import Callable, Optional, Literal, Awaitable, Union, Generic, TypeVar
 from typing_extensions import ParamSpec
 
 import asyncio
@@ -7,16 +7,17 @@ from functools import partial, wraps
 
 from ._helper import BgHelper
 
+H = TypeVar('H', bound=BgHelper)
 P = ParamSpec('P')
 R = TypeVar('R')
 
 
-class BgDecorator(Generic[P, R]):
-    _bound_helper: ClassVar[type[BgHelper]] = BgHelper
+class BgDecorator(Generic[P, R, H]):
+    def __init__(self, _bound_helper_cls: type[H] = BgHelper):
+        self._bound_helper_cls = _bound_helper_cls
 
-    def __init__(self):
         self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._helpers: list[BgHelper] = []
+        self._helpers: list[H] = []
 
     def init_sync(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
@@ -36,7 +37,7 @@ class BgDecorator(Generic[P, R]):
 
     @staticmethod
     def _create_wrappers(
-            helper: BgHelper,
+            helper: H,
             func: Callable[P, Awaitable[R]],
             available_wrapped_methods: tuple[str, ...],
     ) -> dict[str, Union[Callable[P, Awaitable[R]], Callable[P, Awaitable[None]], Callable[P, None]]]:
@@ -87,6 +88,6 @@ class BgDecorator(Generic[P, R]):
         if func is None:
             return partial(self, default=default)
 
-        self._helpers.append(helper := self._bound_helper(func))
+        self._helpers.append(helper := self._bound_helper_cls(func))
         wrappers = self._create_wrappers(helper, func, helper.available_wrapped_methods)
         return self._create_composite_wrapper(wrappers, default)

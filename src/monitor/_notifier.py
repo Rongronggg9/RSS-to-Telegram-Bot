@@ -61,32 +61,31 @@ class Notifier:
     def _on_subtask_deactivated(self, *_, **__):
         self._stat.deactivated()
 
-    def _on_subtask_canceled(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
+    def _on_subtask_canceled(self, err: BaseException, sub: db.Sub, *_, **__):
         self._stat.cancelled()
         logger.error(
-            f'Notifier subtask failed due to CancelledError: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask failed due to CancelledError: {self._describe_subtask(sub)}',
             exc_info=err,
         )
 
-    def _on_subtask_unknown_error(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
+    def _on_subtask_unknown_error(self, err: BaseException, sub: db.Sub, *_, **__):
         self._stat.unknown_error()
         logger.error(
-            f'Notifier subtask failed due to an unknown error: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask failed due to an unknown error: {self._describe_subtask(sub)}',
             exc_info=err,
         )
 
-    def _on_subtask_timeout(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
+    def _on_subtask_timeout(self, err: BaseException, sub: db.Sub, *_, **__):
         self._stat.timeout()
         logger.error(
-            f'Notifier subtask timed out after {TIMEOUT}s: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask timed out after {TIMEOUT}s: {self._describe_subtask(sub)}',
             exc_info=err,
         )
 
-    def _on_subtask_timeout_unknown_error(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
+    def _on_subtask_timeout_unknown_error(self, err: BaseException, sub: db.Sub, *_, **__):
         self._stat.timeout_unknown_error()
         logger.error(
-            f'Notifier subtask timed out after {TIMEOUT}s '
-            f'and caused an unknown error: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask timed out after {TIMEOUT}s and caused an unknown error: {self._describe_subtask(sub)}',
             exc_info=err,
         )
 
@@ -157,8 +156,8 @@ class Notifier:
         if not subs:
             return
 
-        _notify_sub: BatchTimeout[[db.Sub, Post], None]
-        async with BatchTimeout[[db.Sub, Post], None](
+        _notify_sub: BatchTimeout[[db.Sub], None]
+        async with BatchTimeout[[db.Sub], None](
                 func=self._notify_sub,
                 timeout=TIMEOUT,
                 loop=env.loop,

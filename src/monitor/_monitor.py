@@ -11,7 +11,7 @@ from itertools import islice, chain, repeat
 
 from ._common import logger, TIMEOUT
 from ._notifier import Notifier
-from ._stat import MonitoringStat
+from ._stat import MonitorStat
 from .. import db, env, web, locks
 from ..command import inner
 from ..helpers.bg import bg
@@ -32,7 +32,7 @@ FEED_OR_ID = Union[int, db.Feed]
 
 class Monitor(Singleton):
     def __init__(self):
-        self._stat: Final[MonitoringStat] = MonitoringStat()
+        self._stat: Final[MonitorStat] = MonitorStat()
         self._notifier: Final[Notifier] = Notifier()
         self._bg_task: Optional[asyncio.Task] = None
         # Synchronous operations are atomic from the perspective of asynchronous coroutines, so we can just use a map
@@ -142,7 +142,7 @@ class Monitor(Singleton):
         self._subtask_defer_map[feed.id] |= TaskState.IN_PROGRESS
         self._stat.start()
         try:
-            await self._do_monitor_a_feed(feed, self._stat)
+            await self._do_monitor_a_feed(feed)
         finally:
             self._erase_state_for_feed_id(feed.id, TaskState.IN_PROGRESS)
             self._stat.finish()
@@ -221,13 +221,14 @@ class Monitor(Singleton):
             pos += count
         assert pos == feed_count
 
-    async def _do_monitor_a_feed(self, feed: db.Feed, stat: MonitoringStat):
+    async def _do_monitor_a_feed(self, feed: db.Feed):
         """
         Monitor the update of a feed.
 
         :param feed: Feed object to be monitored
         :return: None
         """
+        stat = self._stat
         now = datetime.now(timezone.utc)
         if feed.next_check_time and now < feed.next_check_time:
             stat.skipped()

@@ -117,7 +117,7 @@ class Stat(ABC, Generic[SC]):
         self._counter_tier1.clear()
 
 
-class MonitoringCounter(StatCounter):
+class MonitorCounter(StatCounter):
     not_updated: int = _gen_property('not_updated')
     cached: int = _gen_property('cached')
     empty: int = _gen_property('empty')
@@ -128,13 +128,13 @@ class MonitoringCounter(StatCounter):
     resubmitted: int = _gen_property('resubmitted')
 
 
-MC = TypeVar('MC', bound=MonitoringCounter)
+MC = TypeVar('MC', bound=MonitorCounter)
 
 
-class MonitoringStat(Stat[MC]):
+class MonitorStat(Stat[MC]):
     _do_gc_after_summarizing_tier2 = True
 
-    def __init__(self, _bound_counter_cls: type[MC] = MonitoringCounter):
+    def __init__(self, _bound_counter_cls: type[MC] = MonitorCounter):
         super().__init__(_bound_counter_cls=_bound_counter_cls)
 
     def not_updated(self):

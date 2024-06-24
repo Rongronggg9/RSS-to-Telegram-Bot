@@ -33,7 +33,6 @@ FEED_OR_ID = Union[int, db.Feed]
 class Monitor(Singleton):
     def __init__(self):
         self._stat: Final[MonitorStat] = MonitorStat()
-        self._notifier: Final[Notifier] = Notifier()
         self._bg_task: Optional[asyncio.Task] = None
         # Synchronous operations are atomic from the perspective of asynchronous coroutines, so we can just use a map
         # plus additional prologue & epilogue to simulate an asynchronous lock.
@@ -196,7 +195,7 @@ class Monitor(Singleton):
 
     async def run_periodic_task(self):
         self._stat.print_summary()
-        self._notifier.on_periodic_task()
+        Notifier.on_periodic_task()
         feed_ids_set = db.effective_utils.EffectiveTasks.get_tasks()
         if not feed_ids_set:
             return
@@ -272,7 +271,7 @@ class Monitor(Singleton):
                 if feed.error_count >= 100:
                     logger.error(f'Deactivated due to too many ({feed.error_count}) errors '
                                  f'(current: {wf.error}): {feed.link}')
-                    await self._notifier.deactivate_feed_and_notify_all(feed, subs, reason=wf.error)
+                    await Notifier(feed=feed, subs=subs, reason=wf.error).notify_all()
                     stat.failed()
                     return
                 if feed.error_count >= 10:  # too much error, defer next check
@@ -306,7 +305,7 @@ class Monitor(Singleton):
                 feed_updated_fields.add('title')
 
             new_hashes, updated_entries = inner.utils.calculate_update(feed.entry_hashes, rss_d.entries)
-            updated_entries = tuple(updated_entries)
+            updated_entries = list(updated_entries)
 
             if not updated_entries:  # not updated
                 logger.debug(f'Fetched (not updated): {feed.link}')
@@ -333,7 +332,8 @@ class Monitor(Singleton):
             if feed_updated_fields:
                 await feed.save(update_fields=feed_updated_fields)
 
-        await asyncio.gather(*(self._notifier.notify_all(feed, subs, entry) for entry in reversed(updated_entries)))
+        updated_entries.reverse()  # send the earliest entry first
+        await Notifier(feed=feed, subs=subs, entries=updated_entries).notify_all()
         stat.updated()
         return
 

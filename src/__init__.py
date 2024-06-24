@@ -26,8 +26,11 @@ from telethon.tl import types
 from random import sample
 
 from . import log, db, command
+from .monitor import Monitor
 from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
+from .helpers.bg import bg
+from .helpers.queue import queued
 
 # log
 logger = log.getLogger('RSStT')
@@ -36,6 +39,7 @@ loop = env.loop
 bot: Optional[TelegramClient] = None
 pre_tasks = []
 
+monitor = Monitor()
 scheduler = AsyncIOScheduler(event_loop=loop)
 
 
@@ -53,6 +57,8 @@ def init():
     pre_tasks.extend((
         loop.create_task(db.init()),
         loop.create_task(tgraph.init()),
+        loop.create_task(bg.init(loop=loop)),
+        loop.create_task(queued.init(loop=loop)),
     ))
 
     if env.PORT:
@@ -257,7 +263,12 @@ async def lazy():
 
 async def post():
     logger.info('Exiting gracefully...')
-    tasks = [asyncio.shield(loop.create_task(db.close())), loop.create_task(tgraph.close())]
+    tasks = [
+        asyncio.shield(loop.create_task(db.close())),
+        loop.create_task(tgraph.close()),
+        loop.create_task(bg.close()),
+        loop.create_task(queued.close()),
+    ]
     if scheduler.running:
         scheduler.shutdown(wait=False)
     if bot and bot.is_connected():
@@ -315,7 +326,7 @@ def main():
 
         loop.create_task(lazy())
 
-        scheduler.add_job(func=command.monitor.run_monitor_task,
+        scheduler.add_job(func=monitor.run_periodic_task,
                           trigger=CronTrigger(minute='*', second=env.CRON_SECOND, timezone='UTC'),
                           max_instances=10,
                           misfire_grace_time=10)

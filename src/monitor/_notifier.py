@@ -28,8 +28,13 @@ class Notifier(Singleton):
         self._user_blocked_counter: Final[Counter] = Counter()
 
     @staticmethod
-    def _describe_subtask(sub: db.Sub, post: Post) -> str:
-        return f'{post.link} (feed: {post.feed_link}, user: {sub.user_id})'
+    def _describe_subtask(sub: db.Sub, post: Union[str, Post]) -> str:
+        buf = f'{sub.id} (feed: {sub.feed_id}, user: {sub.user_id})'
+        return (
+            f'{buf}: {post.link}'
+            if isinstance(post, Post)
+            else buf
+        )
 
     def _on_subtask_notified(self, *_, **__):
         self._stat.notified()
@@ -37,33 +42,33 @@ class Notifier(Singleton):
     def _on_subtask_deactivated(self, *_, **__):
         self._stat.deactivated()
 
-    def _on_subtask_canceled(self, err: BaseException, sub: db.Sub, post: Post):
+    def _on_subtask_canceled(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.cancelled()
         logger.error(
             f'Notifying subtask failed due to CancelledError: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )
 
-    def _on_subtask_unknown_error(self, err: BaseException, sub: db.Sub, post: Post):
+    def _on_subtask_unknown_error(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.unknown_error()
         logger.error(
             f'Notifying subtask failed due to an unknown error: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )
 
-    def _on_subtask_timeout(self, err: BaseException, sub: db.Sub, post: Post):
+    def _on_subtask_timeout(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.timeout()
         logger.error(
             f'Notifying subtask timed out after {TIMEOUT}s: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )
 
-    def _on_subtask_timeout_unknown_error(self, err: BaseException, sub: db.Sub, post: Post):
+    def _on_subtask_timeout_unknown_error(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.timeout_unknown_error()
         logger.error(
             f'Notifying subtask timed out after {TIMEOUT}s '
             f'and caused an unknown error: {self._describe_subtask(sub, post)}',
-            exc_info=err
+            exc_info=err,
         )
 
     def on_periodic_task(self):
@@ -189,7 +194,7 @@ class Notifier(Singleton):
             try:
                 if isinstance(post, str):
                     await env.bot.send_message(user_id, post, parse_mode='html', silent=not sub.notify)
-                    return
+                    return None
                 await post.send_formatted_post_according_to_sub(sub)
                 if self._user_blocked_counter[user_id]:  # reset the counter if success
                     del self._user_blocked_counter[user_id]
@@ -214,6 +219,7 @@ class Notifier(Singleton):
                              exc_info=e)
                 await env.bot.send_message(env.ERROR_LOGGING_CHAT,
                                            'An sending error message cannot be sent, please check the logs.')
+        return None
 
     async def _locked_unsub_all_and_leave_chat(self, user_id: int, err_msg: str) -> None:
         user_unsub_all_lock = self._user_unsub_all_lock_bucket[user_id]

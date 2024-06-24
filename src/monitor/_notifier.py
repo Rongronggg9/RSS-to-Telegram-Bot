@@ -7,7 +7,7 @@ from telethon.errors import BadRequestError
 from traceback import format_exc
 
 from ._common import logger, TIMEOUT
-from ._stat import NotifyingStat
+from ._stat import NotifierStat
 from .. import db, env, web
 from ..command import inner
 from ..command.utils import unsub_all_and_leave_chat, escape_html
@@ -21,7 +21,7 @@ from ..parsing.post import get_post_from_entry, Post
 
 class Notifier(Singleton):
     def __init__(self):
-        self._stat: Final[NotifyingStat] = NotifyingStat()
+        self._stat: Final[NotifierStat] = NotifierStat()
 
         # it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
         self._user_unsub_all_lock_bucket: Final[dict[int, asyncio.Lock]] = defaultdict(asyncio.Lock)
@@ -45,28 +45,28 @@ class Notifier(Singleton):
     def _on_subtask_canceled(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.cancelled()
         logger.error(
-            f'Notifying subtask failed due to CancelledError: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask failed due to CancelledError: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )
 
     def _on_subtask_unknown_error(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.unknown_error()
         logger.error(
-            f'Notifying subtask failed due to an unknown error: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask failed due to an unknown error: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )
 
     def _on_subtask_timeout(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.timeout()
         logger.error(
-            f'Notifying subtask timed out after {TIMEOUT}s: {self._describe_subtask(sub, post)}',
+            f'Notifier subtask timed out after {TIMEOUT}s: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )
 
     def _on_subtask_timeout_unknown_error(self, err: BaseException, sub: db.Sub, post: Union[str, Post]):
         self._stat.timeout_unknown_error()
         logger.error(
-            f'Notifying subtask timed out after {TIMEOUT}s '
+            f'Notifier subtask timed out after {TIMEOUT}s '
             f'and caused an unknown error: {self._describe_subtask(sub, post)}',
             exc_info=err,
         )

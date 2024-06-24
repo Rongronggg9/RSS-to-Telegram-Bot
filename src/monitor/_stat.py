@@ -183,16 +183,16 @@ class MonitoringStat(Stat[MC]):
         return ', '.join(filter(None, (scheduling_stat, finished_stat)))
 
 
-class NotifyingCounter(StatCounter):
+class NotifierCounter(StatCounter):
     notified: int = _gen_property('notified')
     deactivated: int = _gen_property('deactivated')
 
 
-NC = TypeVar('NC', bound=NotifyingCounter)
+NC = TypeVar('NC', bound=NotifierCounter)
 
 
-class NotifyingStat(Stat[NC]):
-    def __init__(self, _bound_counter_cls: type[NC] = NotifyingCounter):
+class NotifierStat(Stat[NC]):
+    def __init__(self, _bound_counter_cls: type[NC] = NotifierCounter):
         super().__init__(_bound_counter_cls=_bound_counter_cls)
 
     def notified(self):

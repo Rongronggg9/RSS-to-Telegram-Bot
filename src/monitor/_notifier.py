@@ -19,6 +19,8 @@ from ..helpers.timeout import BatchTimeout
 from ..i18n import i18n
 from ..parsing.post import get_post_from_entry, Post
 
+null_ctx_obj: Final[nullcontext] = nullcontext()
+
 
 class Notifier:
     _stat: ClassVar[NotifierStat] = NotifierStat()
@@ -49,7 +51,8 @@ class Notifier:
         self._get_post_lock: Union[dict[int, asyncio.Lock], dict[int, nullcontext]] = (
             defaultdict(asyncio.Lock)
             if self._sub_count > 1
-            else defaultdict(nullcontext)
+            # Reuse the same null ctx obj.
+            else defaultdict(lambda: null_ctx_obj)
         )
 
     def _describe_subtask(self, sub: db.Sub, *_, **__) -> str:
@@ -298,8 +301,8 @@ class Notifier:
 
     @bg
     async def notify_all(self) -> None:
-        if self._reason is not None:
-            await self._deactivate_feed_and_notify_all()
-        else:
+        return (
             await self._notify_all()
-        return None
+            if self._reason is None
+            else await self._deactivate_feed_and_notify_all()
+        )

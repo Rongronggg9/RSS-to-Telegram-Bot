@@ -8,21 +8,21 @@ from functools import partial
 from ._helper import QueuedHelper
 from ..bg import BgDecorator
 
-H = TypeVar('H', bound=QueuedHelper)
+QueuedHelperT_co = TypeVar('QueuedHelperT_co', bound=QueuedHelper, covariant=True)
 P = ParamSpec('P')
 R = TypeVar('R')
 QP = ParamSpec('QP')
 
 
-class QueuedDecorator(BgDecorator[P, R, H], Generic[P, R, H, QP]):
+class QueuedDecorator(BgDecorator[P, R, QueuedHelperT_co], Generic[P, R, QueuedHelperT_co, QP]):
     def __init__(
             self,
             queue_constructor: Callable[QP, asyncio.Queue] = asyncio.Queue,
-            _bound_helper_cls: type[H] = QueuedHelper
+            _bound_helper_cls: type[QueuedHelperT_co] = QueuedHelper
     ):
         super().__init__(_bound_helper_cls=_bound_helper_cls)
         self._queue_constructor = queue_constructor
-        self._helpers: list[H]
+        self._helpers: list[QueuedHelperT_co]
 
     def __call__(
             self,

@@ -7,17 +7,17 @@ from functools import partial, wraps
 
 from ._helper import BgHelper
 
-H = TypeVar('H', bound=BgHelper)
+BgHelperT_co = TypeVar('BgHelperT_co', bound=BgHelper, covariant=True)
 P = ParamSpec('P')
 R = TypeVar('R')
 
 
-class BgDecorator(Generic[P, R, H]):
-    def __init__(self, _bound_helper_cls: type[H] = BgHelper):
+class BgDecorator(Generic[P, R, BgHelperT_co]):
+    def __init__(self, _bound_helper_cls: type[BgHelperT_co] = BgHelper):
         self._bound_helper_cls = _bound_helper_cls
 
         self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._helpers: list[H] = []
+        self._helpers: list[BgHelperT_co] = []
 
     def init_sync(self, loop: asyncio.AbstractEventLoop):
         self._loop = loop
@@ -37,7 +37,7 @@ class BgDecorator(Generic[P, R, H]):
 
     @staticmethod
     def _create_wrappers(
-            helper: H,
+            helper: BgHelperT_co,
             func: Callable[P, Awaitable[R]],
             available_wrapped_methods: tuple[str, ...],
     ) -> dict[str, Union[Callable[P, Awaitable[R]], Callable[P, Awaitable[None]], Callable[P, None]]]:

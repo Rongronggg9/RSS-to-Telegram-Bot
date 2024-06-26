@@ -29,17 +29,17 @@ class StatCounter(Counter[str, int]):
     timeout_unknown_error: int = _gen_property('timeout_unknown_error')
 
 
-SC = TypeVar('SC', bound=StatCounter)
+StatCounterT_co = TypeVar('StatCounterT_co', bound=StatCounter, covariant=True)
 
 
-class Stat(ABC, Generic[SC]):
+class Stat(ABC, Generic[StatCounterT_co]):
     _do_gc_after_summarizing_tier2: ClassVar[bool] = False
 
-    def __init__(self, _bound_counter_cls: type[SC] = StatCounter):
+    def __init__(self, _bound_counter_cls: type[StatCounterT_co] = StatCounter):
         self._bound_counter_cls = _bound_counter_cls
 
-        self._counter_tier1: SC = self._bound_counter_cls()  # periodical summary
-        self._counter_tier2: SC = self._bound_counter_cls()  # unconditional summary
+        self._counter_tier1: StatCounterT_co = self._bound_counter_cls()  # periodical summary
+        self._counter_tier2: StatCounterT_co = self._bound_counter_cls()  # unconditional summary
         self._tier1_last_summary_time: Optional[float] = None
         self._tier2_last_summary_time: Optional[float] = self._tier1_last_summary_time
         self._tier1_summary_period: float = float(TIMEOUT)  # seconds
@@ -69,7 +69,7 @@ class Stat(ABC, Generic[SC]):
         return f'in progress({self._in_progress_count})' if self._in_progress_count else ''
 
     @staticmethod
-    def _describe_abnormal(counter: SC) -> str:
+    def _describe_abnormal(counter: StatCounterT_co) -> str:
         return ', '.join(filter(None, (
             f'cancelled({counter.cancelled})' if counter.cancelled else '',
             f'unknown error({counter.unknown_error})' if counter.unknown_error else '',
@@ -78,10 +78,10 @@ class Stat(ABC, Generic[SC]):
         )))
 
     @abstractmethod
-    def _stat(self, counter: SC) -> str:
+    def _stat(self, counter: StatCounterT_co) -> str:
         pass
 
-    def _summarize(self, counter: MC, default_log_level: int, time_diff: int):
+    def _summarize(self, counter: MonitorCounterT_co, default_log_level: int, time_diff: int):
         stat = self._stat(counter) or 'nothing was submitted'
         logger.log(
             logging.WARNING
@@ -128,13 +128,13 @@ class MonitorCounter(StatCounter):
     resubmitted: int = _gen_property('resubmitted')
 
 
-MC = TypeVar('MC', bound=MonitorCounter)
+MonitorCounterT_co = TypeVar('MonitorCounterT_co', bound=MonitorCounter, covariant=True)
 
 
-class MonitorStat(Stat[MC]):
+class MonitorStat(Stat[MonitorCounterT_co]):
     _do_gc_after_summarizing_tier2 = True
 
-    def __init__(self, _bound_counter_cls: type[MC] = MonitorCounter):
+    def __init__(self, _bound_counter_cls: type[MonitorCounterT_co] = MonitorCounter):
         super().__init__(_bound_counter_cls=_bound_counter_cls)
 
     def not_updated(self):
@@ -163,7 +163,7 @@ class MonitorStat(Stat[MC]):
     def resubmitted(self):
         self._counter_tier2['resubmitted'] += 1
 
-    def _stat(self, counter: MC) -> str:
+    def _stat(self, counter: MonitorCounterT_co) -> str:
         scheduling_stat = ', '.join(filter(None, (
             self._describe_in_progress(),
             f'deferred({counter.deferred})' if counter.deferred else '',
@@ -188,11 +188,11 @@ class NotifierCounter(StatCounter):
     deactivated: int = _gen_property('deactivated')
 
 
-NC = TypeVar('NC', bound=NotifierCounter)
+NotifierCounterT_co = TypeVar('NotifierCounterT_co', bound=NotifierCounter, covariant=True)
 
 
-class NotifierStat(Stat[NC]):
-    def __init__(self, _bound_counter_cls: type[NC] = NotifierCounter):
+class NotifierStat(Stat[NotifierCounterT_co]):
+    def __init__(self, _bound_counter_cls: type[NotifierCounterT_co] = NotifierCounter):
         super().__init__(_bound_counter_cls=_bound_counter_cls)
 
     def notified(self):
@@ -201,7 +201,7 @@ class NotifierStat(Stat[NC]):
     def deactivated(self):
         self._counter_tier2['deactivated'] += 1
 
-    def _stat(self, counter: NC) -> str:
+    def _stat(self, counter: NotifierCounterT_co) -> str:
         return ', '.join(filter(None, (
             self._describe_in_progress(),
             f'notified({counter.notified})' if counter.notified else '',

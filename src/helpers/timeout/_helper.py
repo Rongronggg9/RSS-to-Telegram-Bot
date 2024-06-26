@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Optional, Awaitable, Generic, TypeVar, Any
+from typing import Callable, Optional, Awaitable, Generic, TypeVar, Any, Union
 from typing_extensions import ParamSpec
 
 import asyncio
@@ -20,10 +20,10 @@ class BatchTimeout(AbstractAsyncContextManager, Generic[P, R]):
             timeout: float,
             loop: asyncio.AbstractEventLoop = None,
             on_success: Callable[[R, P], None] = noop,
-            on_canceled: Callable[[BaseException, P], None] = noop,
-            on_error: Callable[[BaseException, P], None] = noop,
-            on_timeout: Callable[[BaseException, P], None] = noop,
-            on_timeout_error: Callable[[BaseException, P], None] = noop,
+            on_canceled: Callable[[asyncio.CancelledError, P], None] = noop,
+            on_error: Callable[[Exception, P], None] = noop,
+            on_timeout: Callable[[asyncio.CancelledError, P], None] = noop,
+            on_timeout_error: Callable[[Union[asyncio.CancelledError, Exception], P], None] = noop,
     ):
         """
         A context manager aims to solve these issues:

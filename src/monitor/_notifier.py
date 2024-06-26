@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Sequence, MutableMapping, Union, Final, ClassVar, Optional
+from typing import Sequence, MutableMapping, Union, Final, ClassVar, Optional, Any
 
 import asyncio
 from collections import defaultdict, Counter
@@ -14,7 +14,7 @@ from ..command.utils import unsub_all_and_leave_chat, escape_html
 from ..compat import nullcontext
 from ..errors_collection import EntityNotFoundError, UserBlockedErrors
 from ..helpers.bg import bg
-from ..helpers.pipeline import SameFuncPipelineContextManager
+from ..helpers.pipeline import SameFuncPipelineContextManager, StopPipeline
 from ..helpers.timeout import BatchTimeout
 from ..i18n import i18n
 from ..parsing.post import get_post_from_entry, Post
@@ -55,6 +55,8 @@ class Notifier:
             else defaultdict(lambda: null_ctx_obj)
         )
 
+        self._raise_stop_pipeline_after_leave_chat: bool = False
+
     def _describe_subtask(self, sub: db.Sub, *_, **__) -> str:
         return f'{sub.id} (feed: {sub.feed_id}, user: {sub.user_id}): {self._feed.link}'
 
@@ -92,20 +94,30 @@ class Notifier:
             exc_info=err,
         )
 
+    def _on_notify_sub_with_entry_idx_finish(self, _any: Any, idx: int, *_, **__):
+        self._posts_got_counter[idx] += 1
+        if self._posts_got_counter[idx] >= self._sub_count and self._cached_posts.get(idx):
+            # Release references so that it can be garbage collected while some other posts are being notified.
+            self._cached_posts[idx] = None
+
+    def _on_notify_sub_with_entry_idx_error(self, err: BaseException, idx: int, sub: db.Sub, *_, **__):
+        post = self._cached_posts.get(idx)
+        link = post and post.link
+        logger.error(
+            f'Error occurred while the notifier was sending {link} to sub {self._describe_subtask(sub)}',
+            exc_info=err,
+        )
+        self._on_notify_sub_with_entry_idx_finish(_any=None, idx=idx)
+
     @classmethod
     def on_periodic_task(cls):
         cls._stat.print_summary()
 
     async def _get_post(self, idx: int) -> Union[Post, None, False]:
-        cached_posts = self._cached_posts
-        posts_got_counter = self._posts_got_counter
-
-        if (cached := cached_posts.get(idx)) is not None:
-            got_count = posts_got_counter[idx] = posts_got_counter[idx] + 1
-            if got_count >= self._sub_count and cached is not False:
-                # Release references so that it can be garbage collected while some other posts are being notified.
-                cached_posts[idx] = None
+        if (cached := self._cached_posts.get(idx)) is not None:
             return cached
+        else:
+            assert self._posts_got_counter[idx] == 0
 
         feed = self._feed
         entry = self._entries[idx]
@@ -128,14 +140,10 @@ class Notifier:
                     env.ERROR_LOGGING_CHAT,
                     'A parsing error message cannot be sent, please check the logs.',
                 )
-            cached_posts[idx] = False
+            self._cached_posts[idx] = False
             return False
         else:
-            if self._sub_count > 1:
-                # Only cache the post when it may be used by other subs.
-                cached_posts[idx] = post
-            assert posts_got_counter[idx] == 0
-            posts_got_counter[idx] = 1
+            self._cached_posts[idx] = post
             return post
 
     async def _notify_sub_with_entry_idx(self, idx: int, sub: db.Sub) -> None:
@@ -145,8 +153,10 @@ class Notifier:
             await self._do_send(sub, post)
 
     async def _notify_sub(self, sub: db.Sub) -> None:
-        async with SameFuncPipelineContextManager(
+        async with SameFuncPipelineContextManager[[int, db.Sub], None](
                 func=self._notify_sub_with_entry_idx,
+                on_success=self._on_notify_sub_with_entry_idx_finish,
+                on_error=self._on_notify_sub_with_entry_idx_error,
         ) as _notify_sub_with_entry_idx:
             for idx in range(self._entry_count):
                 _notify_sub_with_entry_idx(idx, sub)
@@ -158,6 +168,8 @@ class Notifier:
 
         if not subs:
             return
+
+        self._raise_stop_pipeline_after_leave_chat = True
 
         _notify_sub: BatchTimeout[[db.Sub], None]
         async with BatchTimeout[[db.Sub], None](
@@ -298,6 +310,8 @@ class Notifier:
             del self._user_blocked_counter[user_id]
             logger.error(f'User blocked ({err_msg}): {user_id}')
             await unsub_all_and_leave_chat(user_id)
+            if self._raise_stop_pipeline_after_leave_chat:
+                raise StopPipeline()
 
     @bg
     async def notify_all(self) -> None:

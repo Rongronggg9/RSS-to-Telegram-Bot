@@ -1,14 +1,14 @@
 # Changelog
 
-## Unreleased
+## v2.8.0: Retain post order, rewritten monitor, and more
 
 ### Highlights
 
 - **Retain post order**: Retain the order of posts in a feed when sending them. Previously, all new posts were sent simultaneously, losing their order within the feed. Note: Posts from different feeds are still sent simultaneously, so it is expected to see them interlaced.
+- **Rewritten monitor**: The feed monitor has been rewritten for flexibility and robustness. It is now more memory-efficient and can smooth out spikes in CPU usage.
 
 ### Enhancements
 
-- **Rewritten monitor**: The feed monitor has been rewritten for flexibility and robustness. It is now more memory-efficient and can smooth out spikes in CPU usage.
 - **Print Telegram user info of bot**: Print the bot's Telegram user info when the bot is started. This is to help bot managers to find the bot's username and user ID when deploying the bot.
 - **Minor refactor**: Some internal functions have been refactored to improve performance and maintainability.
 

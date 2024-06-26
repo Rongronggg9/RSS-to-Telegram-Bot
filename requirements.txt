@@ -24,7 +24,7 @@ aerich==0.7.2
 aiohttp[speedups]==3.9.5
 aiohttp-socks==0.8.4
 aiohttp-retry==2.8.3
-python-socks[asyncio]==2.4.4
+python-socks[asyncio]==2.5.0
 dnspython[idna]==2.6.1
 
 # utils

@@ -5,6 +5,7 @@
 ### Bug fixes
 
 - **`/version` not working**: When installed from PyPI (e.g. `pip install rsstt`), the `/version` command might cause an error. This was a regression introduced in v2.7.0.
+- **Bot managers can set monitoring intervals shorter than limit**: Due to the breaking change introduced in v2.8.0, the privilege of bot managers to set intervals shorter than the minimal monitoring interval became useless. While v2.8.0 only applied this limitation when monitoring the updates of feeds, this release also applies it to the attempts by bot managers to change the monitoring interval for a subscription. Note: bot managers can always lower the minimal monitoring interval by adjusting `minimal_interval` in `/set_option` (see also [Advanced Settings](advanced-settings.md)), but doing so will also permit anyone who is able to use the bot to set shorter intervals.
 
 ## v2.8.0: Retain post order, rewritten monitor, and more
 

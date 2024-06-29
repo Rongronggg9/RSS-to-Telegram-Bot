@@ -363,7 +363,7 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
     if not interval:
         await event.respond(i18n[lang]['cmd_set_interval_usage_prompt_html'], parse_mode='html')
         return
-    if interval < minimal_interval and chat_id not in env.MANAGER:
+    if interval < minimal_interval:
         await event.respond(i18n[lang]['set_interval_failure_too_small_html'] % minimal_interval,
                             parse_mode='html')
         return

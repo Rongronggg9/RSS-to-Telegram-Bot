@@ -8,6 +8,7 @@ import sys
 import colorlog
 import re
 import argparse
+from contextlib import suppress
 from telethon import TelegramClient
 from telethon.tl.types import User, InputPeerUser
 from python_socks import parse_proxy_url
@@ -66,13 +67,24 @@ def __compare_version(version1: str, version2: str) -> tuple[int, list[Union[int
     """loose comparison, only compare the numeric parts"""
     parts1 = __decompose_version(version1)
     parts2 = __decompose_version(version2)
+
+    if not parts1:
+        return -1, parts1, parts2
+    if not parts2:
+        return 1, parts1, parts2
+
     marker = 0
     for part1, part2 in zip(parts1, parts2):
-        if not (isinstance(part1, int) and isinstance(part2, int)):
-            break
         if part1 == part2:
             continue
-        marker = 1 if part1 > part2 else -1
+        part1_is_int = isinstance(part1, int)
+        part2_is_int = isinstance(part2, int)
+        if part1_is_int and part2_is_int:
+            marker = 1 if part1 > part2 else -1
+        elif part1_is_int and part1 > 0:
+            marker = 1
+        elif part2_is_int and part2 > 0:
+            marker = -1
         break
     return marker, parts1, parts2
 
@@ -140,31 +152,41 @@ def __get_version():
             version = 'dirty'
 
     if version == 'dirty':
-        from subprocess import Popen, PIPE, DEVNULL
+        import subprocess
 
-        # noinspection PyBroadException
-        try:
-            with Popen(['git', 'describe', '--tags', '--dirty', '--broken', '--always'],
-                       shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as git:
-                git.wait(3)
-                version = git.stdout.read().decode().strip()
-            with Popen(['git', 'branch', '--show-current'],
-                       shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as git:
-                git.wait(3)
-                if branch := git.stdout.read().decode().strip():
-                    version += f'@{branch}'
-        except Exception:
-            version = 'dirty'
+        with suppress(Exception):
+            # vMAJ.MIN.PAT-N-gHASH[-(broken|dirty)][@BRANCH]
+            version = '@'.join(
+                subprocess.run(
+                    args,
+                    cwd=self_path,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    check=True,
+                    timeout=3,
+                ).stdout.strip()
+                for args in (
+                    ['git', 'describe', '--tags', '--long', '--dirty', '--broken', '--always'],
+                    ['git', 'branch', '--show-current'],
+                )
+            )
 
     try:
         sign, version_decomposed, version_pkg_decomposed = __compare_version(version.lstrip('v'), __version__)
         if sign <= -1:  # outdated version: older than pkg ver
             version = __version__
             if isinstance(version_decomposed[-1], str) and not isinstance(version_pkg_decomposed[-1], str):
-                version += re.sub(r'^-\d+(?=-)', '', version_decomposed[-1])  # trim ahead commit count
+                # -N-gHASH[-(broken|dirty)][@BRANCH]
+                # ^^
+                version += re.sub(r'^-\d+(?=-)', '', version_decomposed[-1])  # trim the marked part
             version = f'v{version}'
-    except ValueError:
+    except (TypeError, ValueError):
         version = f'v{__version__}'
+
+    # empty guard
+    if not version:
+        version = 'dirty'
 
     return version
 

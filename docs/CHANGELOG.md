@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **`/version` not working**: When installed from PyPI (e.g. `pip install rsstt`), the `/version` command might cause an error. This was a regression introduced in v2.7.0.
+
 ## v2.8.0: Retain post order, rewritten monitor, and more
 
 ### Highlights

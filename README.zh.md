@@ -102,8 +102,26 @@
 
 想要预览 RSStT 发送的消息的模样吗？这里有一个[使用 RSStT 的频道列表](docs/channels-using-rsstt.md)
 
-## 许可证
+## 许可
 
-本项目根据 [AGPLv3](LICENSE) 授权。严禁闭源的分发或机器人托管。如果你修改了代码并分发或托管它，请确保任何可以使用你的 bot 的用户都可以获得源代码 (通过在 [`src/i18n/__init__.py`](src/i18n/__init__.py) 中编辑仓库 URL)。
+<img src="https://www.gnu.org/graphics/agplv3-with-text-162x68.png" alt="AGPLv3 logo" width="100" align="right">
 
-本仓库原是 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 的一个 fork。自本项目的早期开始，它们就已经是完全不同的项目了。
+本项目按 [AGPLv3+](LICENSE) 许可。严禁闭源的分发或机器人托管。如果你分发或托管本项目时带有代码修改，请确保源代码对任何可以使用该 bot 的用户来说均是可取得的 (通过在 [`src/i18n/__init__.py`](src/i18n/__init__.py) 中编辑仓库 URL)。
+
+    RSS to Telegram Bot
+    Copyright (C) 2020-2024  Rongrong <i@rong.moe>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+本仓库是在 2020 年从 [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) 分叉 (fork) 出来的。自 2021 年的某个时间起，它们不再具有共同的代码库，应当被视为完全不同的项目。

@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-class StopPipeline(Exception):
-    def __init__(self, exception: Exception = None, *args):
+class StopPipeline(BaseException):
+    def __init__(self, exception: BaseException = None, *args):
         super().__init__(*args)
         self.exception = exception

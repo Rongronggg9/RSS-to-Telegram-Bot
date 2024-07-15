@@ -101,8 +101,26 @@ If you use the [public bot](https://t.me/RSStT_Bot) in your Channel, consider me
 
 Want to preview what the messages sent by RSStT look like? Here is a [list of channels using RSStT](docs/channels-using-rsstt.md).
 
-## License
+## Licensing
 
-This project is licensed under [AGPLv3](LICENSE). Closed-source distribution or bot-hosting are strictly prohibited. If you modify the code and distribute or host it, make sure any users who can use your bot can get the source code (by editing the repo URL in [`src/i18n/__init__.py`](src/i18n/__init__.py)).
+<img src="https://www.gnu.org/graphics/agplv3-with-text-162x68.png" alt="AGPLv3 logo" width="100" align="right">
 
-The repository was formerly a fork of [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot). They have been entirely different projects since the early days of this project.
+This project is licensed under [AGPLv3+](LICENSE). Closed-source distribution or bot-hosting are strictly prohibited. If you distribute or host it with code modifications, make sure the source code is available to anyone who can use the bot (by editing the repo URL in [`src/i18n/__init__.py`](src/i18n/__init__.py)).
+
+    RSS to Telegram Bot
+    Copyright (C) 2020-2024  Rongrong <i@rong.moe>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+The repository was forked from [BoKKeR/RSS-to-Telegram-Bot](https://github.com/BoKKeR/RSS-to-Telegram-Bot) in 2020. Since some time in 2021, they share no common codebase and should be considered as completely different projects.

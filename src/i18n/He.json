@@ -143,33 +143,33 @@
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">קרא את מדריך הגדרות העיצוב כאן.</a>"
     },
     "l10n_cmd_set_default": {
-        "set_user_default_description": "Set the default settings for subscriptions.\n\nThe unset settings of a subscription will fall back to the settings on this page. It is useful if you want to set the same settings for most of your subscriptions.",
-        "reset_all_button": "Reset all subscriptions to my default",
-        "reset_all_confirm_prompt": "Are you sure you want to reset all subscriptions to your default?",
-        "reset_all_confirm": "Yes, reset all subscriptions to my default",
-        "reset_all_cancel": "No, cancel",
-        "reset_all_successful": "Reset all subscriptions to default successfully"
+        "set_user_default_description": "הגדר את הגדרות ברירת המחדל עבור מנויים.\n \n ההגדרות הלא מוגדרות של מנוי יחזרו להגדרות בדף זה. זה שימושי אם אתה רוצה להגדיר את אותן הגדרות עבור רוב המנויים שלך.",
+        "reset_all_button": "אפס את כל המנויים לברירת המחדל שלי",
+        "reset_all_confirm_prompt": "האם אתה בטוח שברצונך לאפס את כל המינויים לברירת המחדל שלך?",
+        "reset_all_confirm": "כן, אפס את כל המינויים לברירת המחדל שלי",
+        "reset_all_cancel": "לא, בטל",
+        "reset_all_successful": "כל המנויים אופסו לברירת המחדל בהצלחה"
     },
     "l10n_sub_info": {
-        "subscription_info": "Subscription info",
-        "feed_title": "Feed title",
-        "subscription_title": "Custom title",
-        "feed_url": "Feed URL",
-        "hashtags": "Hashtags",
-        "default_emoji_header_description": "%s means that the subscription is using your default settings. You can change them by using /set_default."
+        "subscription_info": "פרטי מנוי",
+        "feed_title": "כותרת הפיד",
+        "subscription_title": "כותרת מותאמת אישית",
+        "feed_url": "קישור הפיד",
+        "hashtags": "האשטגים",
+        "default_emoji_header_description": "%s אומר שהמינוי משתמש בהגדרות ברירת המחדל שלך. אתה יכול לשנות אותם באמצעות /set_default."
     },
     "l10n_monitor_warn": {
-        "feed_deactivated_warn": "The monitoring task had failed 100 consecutive times. Your subscription to the RSS feed has been deactivated.\nTo reactivate it, please use the /activate_subs command."
+        "feed_deactivated_warn": "משימת הניטור נכשלה 100 פעמים רצופות. המנוי שלך לעדכון RSS הושבת.\n כדי להפעיל אותו מחדש, אנא השתמש בפקודה /activate_subs."
     },
     "l10n_cmd_activate": {
-        "choose_sub_to_be_activated": "The subscriptions below are deactivated, choose one to activate.\nAfter being activated, their updates will be monitored.",
-        "activate_all_subs": "Activate all my subscriptions",
-        "all_subs_are_activated": "All subscriptions are activated."
+        "choose_sub_to_be_activated": "המנויים למטה מושבתים, בחר אחד להפעלה.\n לאחר ההפעלה, העדכונים שלהם יהיו במעקב.",
+        "activate_all_subs": "הפעל את כל המנויים שלי",
+        "all_subs_are_activated": "כל המנויים הופעלו."
     },
     "l10n_cmd_deactivate": {
         "choose_sub_to_be_deactivated": "The subscriptions below are activated, choose one to deactivate.\nAfter being deactivated, their updates will be suspended from monitoring. If you don't need the subscription anymore, please consider unsubscribing it instead of deactivating it.",
-        "deactivate_all_subs": "Deactivate all my subscriptions",
-        "all_subs_are_deactivated": "All subscriptions are deactivated."
+        "deactivate_all_subs": "השבת את כל המנויים שלי",
+        "all_subs_are_deactivated": "כל המנויים הושבתו."
     },
     "l10n_cmd_set_title": {
         "cmd_set_title_usage_prompt_html": "Command usage: <code>/set_title sub_id title</code>\n\nNote: omit <code>title</code> to clear custom title (only if previously set, otherwise get this prompt).",

@@ -32,7 +32,7 @@ from ...aio_helper import run_async
 from ...i18n import i18n
 from .utils import update_interval, list_sub, filter_urls, logger, escape_html, \
     check_sub_limit, calculate_update
-from ...parsing.utils import html_space_stripper
+from ...parsing.utils import ensure_plain
 
 FeedSnifferCache = TTLCache(maxsize=256, ttl=60 * 60 * 24)
 
@@ -94,7 +94,7 @@ async def sub(user_id: int,
 
             # need to use get_or_create because we've changed feed_url to the redirected one
             title = rss_d.feed.title
-            title = html_space_stripper(title) if title else ''
+            title = await ensure_plain(title) if title else ''
             feed, created_new_feed = await db.Feed.get_or_create(defaults={'title': title}, link=feed_url)
             if created_new_feed or feed.state == 0:
                 feed.state = 1

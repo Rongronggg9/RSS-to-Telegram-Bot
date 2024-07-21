@@ -15,11 +15,12 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Optional, Sequence, Union, Final, Iterable
+from typing import Optional, Sequence, Union, Final, Iterable, Awaitable
 
 import re
 import string
 from contextlib import suppress
+from bs4 import BeautifulSoup
 from bs4.element import Tag
 from html import unescape
 from emoji import emojize
@@ -165,11 +166,23 @@ async def html_validator(html: str) -> str:
     return await run_async(_html_validator, html, prefer_pool='thread')
 
 
-def html_space_stripper(s: str, enable_emojify: bool = False) -> str:
+def ensure_plain_sync(s: str, enable_emojify: bool = False) -> str:
     if not s:
         return s
-    s = stripAnySpace(replaceSpecialSpace(replaceInvalidCharacter(unescape(s)))).strip()
+    s = stripAnySpace(
+        replaceSpecialSpace(
+            replaceInvalidCharacter(
+                BeautifulSoup(s, 'lxml').get_text()
+                if '<' in s and '>' in s
+                else unescape(s)
+            )
+        )
+    ).strip()
     return emojify(s) if enable_emojify else s
+
+
+def ensure_plain(s: str, enable_emojify: bool = False) -> Awaitable[str]:
+    return run_async(ensure_plain_sync, s, enable_emojify, prefer_pool='thread')
 
 
 async def parse_entry(entry, feed_link: Optional[str] = None):
@@ -200,11 +213,11 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
     EntryParsed.content = await html_validator(content)
     EntryParsed.link = entry.get('link') or entry.get('guid')
     author = entry['author'] if ('author' in entry and type(entry['author']) is str) else None
-    author = html_space_stripper(author) if author else None
+    author = await ensure_plain(author) if author else None
     EntryParsed.author = author or None  # reject empty string
     # hmm, some entries do have no title, should we really set up a feed hospital?
     title = entry.get('title')
-    title = html_space_stripper(title, enable_emojify=True) if title else None
+    title = await ensure_plain(title, enable_emojify=True) if title else None
     EntryParsed.title = title or None  # reject empty string
     if (tags := entry.get('tags')) and isinstance(tags, list):
         EntryParsed.tags = list(filter(None, (tag.get('term') for tag in tags)))

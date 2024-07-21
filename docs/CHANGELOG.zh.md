@@ -2,6 +2,10 @@
 
 ## 未发布
 
+### 增强
+
+- **净化文章标题和作者**: 文章 (RSS item 或 Atom entry) 的标题和作者现在被净化以防止意外的格式问题。特别是，预期外的空格和换行符被移除，任何 HTML 元素都被剥离。这有助于在 Telegram 消息以及 Telegraph 文章中正确显示它们。
+
 ### Bug 修复
 
 - **`/version` 不工作**: 当从 PyPI 安装时 (例如 `pip install rsstt`), `/version` 命令可能会导致错误。这是在 v2.7.0 中引入的一个回归 (regression)。

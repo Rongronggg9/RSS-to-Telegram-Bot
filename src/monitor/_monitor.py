@@ -33,7 +33,7 @@ from ..command import inner
 from ..helpers.bg import bg
 from ..helpers.singleton import Singleton
 from ..helpers.timeout import BatchTimeout
-from ..parsing.utils import html_space_stripper
+from ..parsing.utils import ensure_plain
 
 
 class TaskState(enum.IntFlag):
@@ -314,7 +314,7 @@ class Monitor(Singleton):
                 return
 
             title = rss_d.feed.title
-            title = html_space_stripper(title) if title else ''
+            title = await ensure_plain(title) if title else ''
             if title != feed.title:
                 logger.debug(f'Feed title changed ({feed.title} -> {title}): {feed.link}')
                 feed.title = title

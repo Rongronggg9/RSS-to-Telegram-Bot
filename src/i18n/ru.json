@@ -137,7 +137,10 @@
         "length_limit_only_effective_if_send_mode_auto": "Ограничение по длине работает только для режима авто.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Текущий режим отправки никогда не покажет медиа в сообщениях Telegram.",
         "use_user_default_button": "Использовать мои настройки",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Руководство по настройке оформления.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Руководство по настройке оформления.</a>",
+        "display_entry_tags": "Хэштеги из материала (запись в ленте)",
+        "display_entry_tags_1": "Включён",
+        "display_entry_tags_-1": "Выключен"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Установить настройки по умолчанию для подписок.\n\nНеустановленные настройки подписок будут браться из значений на этой странице. Это удобно, если вы хотите задать одинаковые настройки для многих подписок сразу.",

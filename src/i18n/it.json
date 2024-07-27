@@ -63,7 +63,7 @@
     "l10n_cmd_sub": {
         "sub_reply_feed_url_prompt_html": "Si prega di rispondere a questo messaggio con l'URL di un feed RSS. \nOppure, puoi usare <code>/sub url1 url2 url3 …</code> per iscriverti in massa.",
         "sub_usage_in_channel_html": "Per favore usa <code>/sub url1 url2 url3 …</code> per iscriverti.",
-        "sub_successful": "Iscritta con successo",
+        "sub_successful": "Iscritto con successo",
         "sub_failed": "Iscrizione fallita"
     },
     "l10n_cmd_unsub": {

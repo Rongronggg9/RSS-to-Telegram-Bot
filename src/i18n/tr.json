@@ -116,7 +116,7 @@
         "display_author_0": "Otomatik",
         "display_author_1": "Etkinleştir",
         "display_via": "Kaynak",
-        "display_via_-4": "Besleme başlığı yok, sadece bağlantı",
+        "display_via_-4": "Besleme başlığı yok, sonunda çıplak URL var",
         "display_via_-3": "Özet akışı başlığı yok, bağlantı gönderi başlığı olarak görüntüleniyor",
         "display_via_-2": "Tamamen devre dışı bırak",
         "display_via_-1": "Besleme başlığı yok, sadece bağlantı",

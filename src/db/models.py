@@ -118,8 +118,10 @@ class Sub(Model, Base):
                                                         '0=deactivated, 1=activated')
     user: fields.ForeignKeyRelation['User'] = \
         fields.ForeignKeyField('models.User', related_name='subs', to_field='id', on_delete=fields.CASCADE)
+    user_id: int  # type hint stub
     feed: fields.ForeignKeyRelation['Feed'] = \
         fields.ForeignKeyField('models.Feed', related_name='subs', to_field='id', on_delete=fields.CASCADE)
+    feed_id: int  # type hint stub
     title = fields.CharField(max_length=1024, null=True, description='Sub title, overriding feed title if set')
     tags = fields.CharField(max_length=255, null=True, description='Tags of the sub')
     interval = fields.SmallIntField(null=True, description='Interval of the sub monitor task, '

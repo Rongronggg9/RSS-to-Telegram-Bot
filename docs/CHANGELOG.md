@@ -5,6 +5,7 @@
 ### Enhancements
 
 - **Sanitize post title and author**: The title and author of a post (RSS item or Atom entry) are now sanitized to prevent unexpected formatting issues. In particular, unexpected whitespaces and linebreaks are removed, and any HTML elements are stripped. This helps display them correctly in Telegram messages as well as Telegraph posts.
+- **Minor refactor**: Some internal functions have been refactored to improve readability and maintainability.
 
 ### Bug fixes
 

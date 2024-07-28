@@ -17,10 +17,10 @@
 from __future__ import annotations
 from typing import Union, Optional
 
-from telethon import events, Button
-from telethon.tl.patched import Message
+from telethon import Button
 
 from . import inner, misc
+from .types import *
 from .utils import command_gatekeeper, parse_customization_callback_data, parse_callback_data_with_page, \
     escape_html, parse_command_get_sub_or_user_and_param, get_callback_tail
 from .. import db, env
@@ -28,15 +28,17 @@ from ..i18n import i18n
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event, Message, events.CallbackQuery.Event],
-                                           *_,
-                                           lang: Optional[str] = None,
-                                           page: Optional[int] = None,
-                                           chat_id: Optional[int] = None,
-                                           **__):  # command: /set ; callback data: get_set_page|{page_number}
+async def cmd_set_or_callback_get_set_page(
+        event: TypeEventCollectionMsgOrCb,
+        *_,
+        lang: Optional[str] = None,
+        page: Optional[int] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # command: /set ; callback data: get_set_page|{page_number}
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
-    is_callback = isinstance(event, events.CallbackQuery.Event)
+    is_callback = isinstance(event, TypeEventCb)
     if not page:
         _, page = parse_callback_data_with_page(event.data) if is_callback else (None, 1)
 
@@ -46,22 +48,29 @@ async def cmd_set_or_callback_get_set_page(event: Union[events.NewMessage.Event,
         buttons = None
     else:
         msg = i18n[lang]['set_choose_sub_prompt']
-        buttons = await inner.utils.get_sub_choosing_buttons(chat_id, page_number=page, lang=lang,
-                                                             callback='set',
-                                                             get_page_callback='get_set_page',
-                                                             tail=callback_tail)
+        buttons = await inner.utils.get_sub_choosing_buttons(
+            chat_id, page_number=page, lang=lang,
+            callback='set',
+            get_page_callback='get_set_page',
+            tail=callback_tail,
+        )
 
-    await event.edit(msg, buttons=buttons) if is_callback \
-        else await event.respond(msg, buttons=buttons)
+    await (
+        event.edit(msg, buttons=buttons)
+        if is_callback
+        else event.respond(msg, buttons=buttons)
+    )
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_set(event: events.CallbackQuery.Event,
-                       set_user_default: bool,
-                       *_,
-                       lang: Optional[str] = None,
-                       chat_id: Optional[int] = None,
-                       **__):
+async def callback_set(
+        event: TypeEventCb,
+        set_user_default: bool,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):
     # callback data = set={sub_id}[,{action}[,{param}]][|{page_number}]
     # or set_default[={action}[,{param}]]
     """
@@ -83,10 +92,10 @@ async def callback_set(event: events.CallbackQuery.Event,
         await cmd_set_or_callback_get_set_page.__wrapped__(event, lang=lang, page=page, chat_id=chat_id)
         return
 
-    sub_or_user: Union[db.Sub, db.User] = (
-        await db.User.get_or_none(id=chat_id)
+    sub_or_user: Union[db.Sub, db.User] = await (
+        db.User.get_or_none(id=chat_id)
         if set_user_default
-        else await db.Sub.get_or_none(id=sub_id, user=chat_id).prefetch_related('feed', 'user')
+        else db.Sub.get_or_none(id=sub_id, user=chat_id).prefetch_related('feed', 'user')
     )
     if sub_or_user is None:
         await event.edit(i18n[lang]['subscription_not_exist'])
@@ -94,8 +103,12 @@ async def callback_set(event: events.CallbackQuery.Event,
 
     if (
             action is None
-            or (action in {'interval', 'length_limit'} and (isinstance(param, int) or param == 'default'))
-            or action == 'activate' and not set_user_default
+            or
+            (
+                    action in {'interval', 'length_limit'}
+                    and (isinstance(param, int) or param == 'default')
+            )
+            or (action == 'activate' and not set_user_default)
             or action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES
     ):
         if action == 'interval' and (isinstance(param, int) or param == 'default'):
@@ -104,42 +117,57 @@ async def callback_set(event: events.CallbackQuery.Event,
             await inner.customization.set_length_limit(sub_or_user, param if param != 'default' else -100)
         elif action == 'activate' and not set_user_default:
             await inner.customization.set_sub_activate(sub_or_user)
-        elif action == 'display_media' and not set_user_default and \
-                (sub_or_user.send_mode if sub_or_user.send_mode != -100 else sub_or_user.user.send_mode) in {1, -1}:
+        elif (
+                action == 'display_media'
+                and not set_user_default
+                and
+                (
+                        sub_or_user.send_mode
+                        if sub_or_user.send_mode != -100
+                        else sub_or_user.user.send_mode
+                ) in {1, -1}
+        ):
             await event.answer(i18n[lang]['display_media_only_effective_if_send_mode_auto_and_telegram'],
                                alert=True)
             return
         elif action is not None and action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES:
             await inner.customization.set_exhaustive_option(sub_or_user, action)
 
-        info = (
-            i18n[lang]['set_user_default_description']
-            + '\n\n'
-            + i18n[lang]['read_formatting_settings_guidebook_html']
+        info = '\n\n'.join((
+            i18n[lang]['set_user_default_description'],
+            i18n[lang]['read_formatting_settings_guidebook_html']
             if set_user_default
-            else await inner.customization.get_sub_info(
-                sub_or_user, lang, additional_guide=True
-            )
+            else await inner.customization.get_sub_info(sub_or_user, lang, additional_guide=True),
+        ))
+        buttons = await inner.customization.get_customization_buttons(
+            sub_or_user, lang=lang, page=page, tail=callback_tail,
         )
-        buttons = await inner.customization.get_customization_buttons(sub_or_user, lang=lang, page=page,
-                                                                      tail=callback_tail)
         await event.edit(info, buttons=buttons, parse_mode='html', link_preview=False)
         return
 
     if action == 'interval':
         msg = i18n[lang]['set_interval_prompt']
-        buttons = await inner.customization.get_set_interval_buttons(sub_or_user, lang=lang, page=page,
-                                                                     tail=callback_tail)
+        buttons = await inner.customization.get_set_interval_buttons(
+            sub_or_user, lang=lang, page=page, tail=callback_tail,
+        )
         await event.edit(msg, buttons=buttons)
         return
     if action == 'length_limit':
-        if not set_user_default and \
-                (sub_or_user.send_mode if sub_or_user.send_mode != -100 else sub_or_user.user.send_mode) != 0:
+        if (
+                not set_user_default
+                and
+                (
+                        sub_or_user.send_mode
+                        if sub_or_user.send_mode != -100
+                        else sub_or_user.user.send_mode
+                ) != 0
+        ):
             await event.answer(i18n[lang]['length_limit_only_effective_if_send_mode_auto'], alert=True)
             return
         msg = i18n[lang]['set_length_limit_prompt']
-        buttons = await inner.customization.get_set_length_limit_buttons(sub_or_user, lang=lang, page=page,
-                                                                         tail=callback_tail)
+        buttons = await inner.customization.get_set_length_limit_buttons(
+            sub_or_user, lang=lang, page=page, tail=callback_tail,
+        )
         await event.edit(msg, buttons=buttons)
         return
 
@@ -147,25 +175,29 @@ async def callback_set(event: events.CallbackQuery.Event,
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_set_default(event: Union[events.NewMessage.Event, Message],
-                          *_,
-                          lang: Optional[str] = None,
-                          chat_id: Optional[int] = None,
-                          **__):  # cmd: set_default
+async def cmd_set_default(
+        event: TypeEventMsgHint,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # cmd: set_default
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
     user = await db.User.get_or_none(id=chat_id)
-    msg = i18n[lang]['set_user_default_description'] + '\n\n' + i18n[lang]['read_formatting_settings_guidebook_html']
+    msg = f"{i18n[lang]['set_user_default_description']}\n\n{i18n[lang]['read_formatting_settings_guidebook_html']}"
     buttons = await inner.customization.get_customization_buttons(user, lang=lang, tail=callback_tail)
     await event.respond(msg, buttons=buttons, parse_mode='html', link_preview=False)
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_reset(event: events.CallbackQuery.Event,
-                         *_,
-                         lang: Optional[str] = None,
-                         chat_id: Optional[int] = None,
-                         **__):  # callback data = reset={sub_id}
+async def callback_reset(
+        event: TypeEventCb,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data = reset={sub_id}
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
     sub_id, _, _, page = parse_customization_callback_data(event.data)
@@ -189,11 +221,13 @@ async def callback_reset(event: events.CallbackQuery.Event,
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_reset_all_confirm(event: events.CallbackQuery.Event,
-                                     *_,
-                                     lang: Optional[str] = None,
-                                     chat_id: Optional[int] = None,
-                                     **__):  # callback data = reset_all_confirm
+async def callback_reset_all_confirm(
+        event: TypeEventCb,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data = reset_all_confirm
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
     if await inner.utils.have_subs(chat_id):
@@ -201,19 +235,21 @@ async def callback_reset_all_confirm(event: events.CallbackQuery.Event,
             i18n[lang]['reset_all_confirm_prompt'],
             buttons=[
                 [Button.inline(i18n[lang]['reset_all_confirm'], data=f'reset_all{callback_tail}')],
-                [Button.inline(i18n[lang]['reset_all_cancel'], data=f'set_default{callback_tail}')]
-            ]
+                [Button.inline(i18n[lang]['reset_all_cancel'], data=f'set_default{callback_tail}')],
+            ],
         )
         return
     await event.edit(i18n[lang]['no_subscription'])
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_reset_all(event: events.CallbackQuery.Event,
-                             *_,
-                             lang: Optional[str] = None,
-                             chat_id: Optional[int] = None,
-                             **__):  # callback data = reset_all
+async def callback_reset_all(
+        event: TypeEventCb,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data = reset_all
     chat_id = chat_id or event.chat_id
     subs = await db.Sub.filter(user=chat_id)
     tasks = []
@@ -224,43 +260,53 @@ async def callback_reset_all(event: events.CallbackQuery.Event,
         sub.interval = None
         sub.length_limit = sub.notify = sub.send_mode = sub.link_preview = sub.display_author = sub.display_media = \
             sub.display_title = sub.display_entry_tags = sub.display_via = sub.style = -100
-    await db.Sub.bulk_update(subs, ('interval', 'length_limit', 'notify', 'send_mode', 'link_preview', 'display_author',
-                                    'display_media', 'display_title', 'display_entry_tags', 'display_via', 'style'))
+    await db.Sub.bulk_update(
+        subs,
+        (
+            'interval', 'length_limit', 'notify', 'send_mode', 'link_preview', 'display_author', 'display_media',
+            'display_title', 'display_entry_tags', 'display_via', 'style',
+        )
+    )
     for task in tasks:
         env.loop.create_task(task)
     await event.edit(i18n[lang]['reset_all_successful'])
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_activate_or_deactivate_subs(event: Union[events.NewMessage.Event, Message],
-                                          activate: bool,
-                                          *_,
-                                          lang: Optional[str] = None,
-                                          chat_id: Optional[int] = None,
-                                          **__):  # cmd: activate_subs | deactivate_subs
+async def cmd_activate_or_deactivate_subs(
+        event: TypeEventMsgHint,
+        activate: bool,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # cmd: activate_subs | deactivate_subs
     await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, chat_id=chat_id, page=1)
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQuery.Event,
-                                                                events.NewMessage.Event,
-                                                                Message],
-                                                   activate: bool,
-                                                   *_,
-                                                   lang: Optional[str] = None,
-                                                   page: Optional[int] = None,
-                                                   chat_id: Optional[int] = None,
-                                                   **__):  # callback data: get_(activate|deactivate)_page|{page}
+async def callback_get_activate_or_deactivate_page(
+        event: TypeEventCollectionMsgOrCb,
+        activate: bool,
+        *_,
+        lang: Optional[str] = None,
+        page: Optional[int] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data: get_(activate|deactivate)_page|{page}
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
-    event_is_msg = not isinstance(event, events.CallbackQuery.Event)
+    event_is_msg = not isinstance(event, TypeEventCb)
     if page is None:
         page = 1 if event_is_msg else int(parse_callback_data_with_page(event.data)[1])
     have_subs = await inner.utils.have_subs(chat_id)
     if not have_subs:
         no_subscription_msg = i18n[lang]['no_subscription']
-        await (event.respond(no_subscription_msg) if event_is_msg
-               else event.edit(no_subscription_msg))
+        await (
+            event.respond(no_subscription_msg)
+            if event_is_msg
+            else event.edit(no_subscription_msg)
+        )
         return
     sub_buttons = await inner.utils.get_sub_choosing_buttons(
         chat_id,
@@ -270,41 +316,51 @@ async def callback_get_activate_or_deactivate_page(event: Union[events.CallbackQ
         lang=lang,
         rows=11,
         state=0 if activate else 1,
-        tail=callback_tail
+        tail=callback_tail,
     )
-    msg = i18n[lang]['choose_sub_to_be_activated' if sub_buttons else 'all_subs_are_activated'] if activate \
+    msg = (
+        i18n[lang]['choose_sub_to_be_activated' if sub_buttons else 'all_subs_are_activated']
+        if activate
         else i18n[lang]['choose_sub_to_be_deactivated' if sub_buttons else 'all_subs_are_deactivated']
+    )
     activate_or_deactivate_all_subs_str = 'activate_all_subs' if activate else 'deactivate_all_subs'
     buttons = (
-            (
-                (Button.inline(i18n[lang][activate_or_deactivate_all_subs_str],
-                               data=activate_or_deactivate_all_subs_str + callback_tail),),
-            )
-            + sub_buttons
+        (Button.inline(
+            i18n[lang][activate_or_deactivate_all_subs_str],
+            data=f'{activate_or_deactivate_all_subs_str}{callback_tail}',
+        ),),
+        *sub_buttons,
     ) if sub_buttons else None
-    await (event.respond(msg, buttons=buttons) if event_is_msg
-           else event.edit(msg, buttons=buttons))
+    await (
+        event.respond(msg, buttons=buttons)
+        if event_is_msg
+        else event.edit(msg, buttons=buttons)
+    )
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_activate_or_deactivate_all_subs(event: events.CallbackQuery.Event,
-                                                   activate: bool,
-                                                   *_,
-                                                   lang: Optional[str] = None,
-                                                   chat_id: Optional[int] = None,
-                                                   **__):  # callback data: (activate|deactivate)_all_subs
+async def callback_activate_or_deactivate_all_subs(
+        event: TypeEventCb,
+        activate: bool,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data: (activate|deactivate)_all_subs
     chat_id = chat_id or event.chat_id
     await inner.utils.activate_or_deactivate_all_subs(chat_id, activate=activate)
     await callback_get_activate_or_deactivate_page.__wrapped__(event, activate, lang=lang, chat_id=chat_id, page=1)
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
-                                              activate: bool,
-                                              *_,
-                                              lang: Optional[str] = None,
-                                              chat_id: Optional[int] = None,
-                                              **__):  # callback data: (activate|deactivate)_sub={id}|{page}
+async def callback_activate_or_deactivate_sub(
+        event: TypeEventCb,
+        activate: bool,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data: (activate|deactivate)_sub={id}|{page}
     chat_id = chat_id or event.chat_id
     sub_id, page = parse_callback_data_with_page(event.data)
     sub_id = int(sub_id)
@@ -316,10 +372,12 @@ async def callback_activate_or_deactivate_sub(event: events.CallbackQuery.Event,
 
 
 @command_gatekeeper(only_manager=False)
-async def callback_del_subs_title(event: events.CallbackQuery.Event,
-                                  *_,
-                                  chat_id: Optional[int] = None,
-                                  **__):  # callback data: del_subs_title={id_start}-{id_end}|{id_start}-{id_end}|...
+async def callback_del_subs_title(
+        event: TypeEventCb,
+        *_,
+        chat_id: Optional[int] = None,
+        **__,
+):  # callback data: del_subs_title={id_start}-{id_end}|{id_start}-{id_end}|...
     chat_id = chat_id or event.chat_id
     id_ranges_str = event.data.decode().strip().split('=')[-1].split('%')[0].split('|')
     subs = []
@@ -333,11 +391,13 @@ async def callback_del_subs_title(event: events.CallbackQuery.Event,
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_set_title(event: Union[events.NewMessage.Event, Message],
-                        *_,
-                        lang: Optional[str] = None,
-                        chat_id: Optional[int] = None,
-                        **__):
+async def cmd_set_title(
+        event: TypeEventMsgHint,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
     sub, title = await parse_command_get_sub_or_user_and_param(event.raw_text, chat_id, max_split=2)
@@ -350,27 +410,33 @@ async def cmd_set_title(event: Union[events.NewMessage.Event, Message],
         return
     await inner.customization.set_sub_title(sub, title)
     await event.respond(
-        (
-                ((i18n[lang]['set_title_success'] + '\n' + f'<code>{escape_html(title)}</code>')
-                 if title
-                 else i18n[lang]['set_title_success_cleared'])
-                + '\n\n' +
-                await inner.customization.get_sub_info(sub, lang=lang)
-        ),
-        buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}' + callback_tail),),
-        parse_mode='html', link_preview=False)
+        '\n\n'.join((
+            (
+                f"{i18n[lang]['set_title_success']}\n<code>{escape_html(title)}</code>"
+                if title
+                else i18n[lang]['set_title_success_cleared']
+            ),
+            await inner.customization.get_sub_info(sub, lang=lang),
+        )),
+        buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}{callback_tail}'),),
+        parse_mode='html',
+        link_preview=False,
+    )
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
-                           *_,
-                           lang: Optional[str] = None,
-                           chat_id: Optional[int] = None,
-                           **__):
+async def cmd_set_interval(
+        event: TypeEventMsgHint,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
-    sub_or_user, interval = await parse_command_get_sub_or_user_and_param(event.raw_text, chat_id,
-                                                                          allow_setting_user_default=True)
+    sub_or_user, interval = await parse_command_get_sub_or_user_and_param(
+        event.raw_text, chat_id, allow_setting_user_default=True,
+    )
     interval = int(interval) if interval and interval.isdigit() and int(interval) >= 1 else None
     minimal_interval = db.EffectiveOptions.minimal_interval
     if not sub_or_user:
@@ -380,32 +446,37 @@ async def cmd_set_interval(event: Union[events.NewMessage.Event, Message],
         await event.respond(i18n[lang]['cmd_set_interval_usage_prompt_html'], parse_mode='html')
         return
     if interval < minimal_interval:
-        await event.respond(i18n[lang]['set_interval_failure_too_small_html'] % minimal_interval,
-                            parse_mode='html')
+        await event.respond(
+            i18n[lang]['set_interval_failure_too_small_html'] % minimal_interval, parse_mode='html',
+        )
         return
     await inner.customization.set_interval(sub_or_user, interval)
     await event.respond(
         (
-            ((i18n[lang]['set_interval_success_html'] % (interval,))
-             + '\n\n' +
-             await inner.customization.get_sub_info(sub_or_user, lang=lang))
+            '{msg}\n\n{sub_info}'.format(
+                msg=i18n[lang]['set_interval_success_html'] % interval,
+                sub_info=await inner.customization.get_sub_info(sub_or_user, lang=lang),
+            )
             if isinstance(sub_or_user, db.Sub)
-            else i18n[lang]['set_default_interval_success_html'] % (interval,)
+            else i18n[lang]['set_default_interval_success_html'] % interval
         ),
-        buttons=(Button.inline(i18n[lang]['other_settings_button'],
-                               data=(
-                                       (f'set={sub_or_user.id}' if isinstance(sub_or_user, db.Sub) else 'set_default')
-                                       + callback_tail)
-                               ),),
-        parse_mode='html', link_preview=False)
+        buttons=(Button.inline(
+            i18n[lang]['other_settings_button'],
+            data=(f'set={sub_or_user.id}' if isinstance(sub_or_user, db.Sub) else 'set_default') + callback_tail
+        ),),
+        parse_mode='html',
+        link_preview=False,
+    )
 
 
 @command_gatekeeper(only_manager=False)
-async def cmd_set_hashtags(event: Union[events.NewMessage.Event, Message],
-                           *_,
-                           lang: Optional[str] = None,
-                           chat_id: Optional[int] = None,
-                           **__):
+async def cmd_set_hashtags(
+        event: TypeEventMsgHint,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):
     chat_id = chat_id or event.chat_id
     callback_tail = get_callback_tail(event, chat_id)
     sub, hashtags = await parse_command_get_sub_or_user_and_param(event.raw_text, chat_id, max_split=2)
@@ -422,13 +493,15 @@ async def cmd_set_hashtags(event: Union[events.NewMessage.Event, Message],
         await event.respond(i18n[lang]['set_hashtags_failure_too_many'])
         return
     await event.respond(
-        (
-                ((i18n[lang]['set_hashtags_success_html'] + '\n'
-                  + f'<b>{inner.utils.construct_hashtags(sub.tags)}</b>')
-                 if sub.tags
-                 else i18n[lang]['set_hashtags_success_cleared'])
-                + '\n\n' +
-                await inner.customization.get_sub_info(sub, lang=lang)
-        ),
+        '\n\n'.join((
+            (
+                f"{i18n[lang]['set_hashtags_success_html']}\n<b>{inner.utils.construct_hashtags(sub.tags)}</b>"
+                if sub.tags
+                else i18n[lang]['set_hashtags_success_cleared']
+            ),
+            await inner.customization.get_sub_info(sub, lang=lang),
+        )),
         buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}' + callback_tail),),
-        parse_mode='html', link_preview=False)
+        parse_mode='html',
+        link_preview=False,
+    )

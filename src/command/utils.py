@@ -37,6 +37,7 @@ from telethon.errors import (
 from .. import env, log, db, locks, errors_collection
 from ..i18n import i18n
 from . import inner
+from .types import *
 from ..errors_collection import UserBlockedErrors
 from ..compat import cached_async
 
@@ -136,12 +137,7 @@ def parse_customization_callback_data(
 
 
 async def respond_or_answer(
-        event: Union[
-            events.NewMessage.Event, Message,
-            events.CallbackQuery.Event,
-            events.InlineQuery.Event,
-            events.ChatAction.Event,
-        ],
+        event: TypeEventCollectionAll,
         msg: str,
         alert: bool = True,
         cache_time: int = 120,
@@ -160,12 +156,12 @@ async def respond_or_answer(
     """
     with suppress(*UserBlockedErrors):  # silently ignore
         # noinspection PyProtectedMember
-        if isinstance(event, events.CallbackQuery.Event) and not event._answered:
+        if isinstance(event, TypeEventCb) and not event._answered:
             # answering callback query is of a tolerant rate limit, no lock needed
             with suppress(QueryIdInvalidError):  # callback query expired, respond instead
                 await event.answer(msg, alert=alert, cache_time=cache_time)
                 return  # return if answering successfully
-        elif isinstance(event, events.InlineQuery.Event):
+        elif isinstance(event, TypeEventInline):
             # noinspection PyProtectedMember
             if event._answered:
                 return
@@ -181,7 +177,7 @@ async def respond_or_answer(
             **kwargs,
             reply_to=(
                 event.message
-                if isinstance(event, events.NewMessage.Event) and event.is_group
+                if isinstance(event, TypeEventMsg) and event.is_group
                 else None
             ),
         )
@@ -272,12 +268,7 @@ def command_gatekeeper(
     @wraps(func)
     async def wrapper(
             # Note: `events.ChatAction.Event` only have ChatGetter, do not have SenderGetter like others
-            event: Union[
-                events.NewMessage.Event, Message,
-                events.CallbackQuery.Event,
-                events.InlineQuery.Event,
-                events.ChatAction.Event
-            ],
+            event: TypeEventCollectionAll,
             *args,
             **kwargs,
     ):
@@ -293,9 +284,9 @@ def command_gatekeeper(
         chat_id = event.chat_id
         flood_lock = locks.user_flood_lock(chat_id)
         pending_callbacks = locks.user_pending_callbacks(chat_id)
-        is_callback = isinstance(event, events.CallbackQuery.Event)
-        is_inline = isinstance(event, events.InlineQuery.Event)
-        is_chat_action = isinstance(event, events.ChatAction.Event)
+        is_callback = isinstance(event, TypeEventCb)
+        is_inline = isinstance(event, TypeEventInline)
+        is_chat_action = isinstance(event, TypeEventChatAction)
 
         def describe_user():
             chat_info = None
@@ -713,7 +704,7 @@ class NewFileMessage(events.NewMessage):
             pattern=pattern,
         )
 
-    def filter(self, event: Union[events.NewMessage.Event, Message]):
+    def filter(self, event: TypeEventMsgHint):
         document: types.Document = event.message.document
         if not document:
             return
@@ -756,7 +747,7 @@ class ReplyMessage(events.NewMessage):
             pattern=pattern,
         )
 
-    async def __reply_verify(self, event: Union[events.NewMessage.Event, Message]):
+    async def __reply_verify(self, event: TypeEventMsgHint):
         if event.is_reply:
             reply_to_msg: Optional[Message] = await event.get_reply_message()
             if reply_to_msg is not None and self.reply_to_peer_id == reply_to_msg.sender_id:
@@ -788,7 +779,7 @@ class PrivateMessage(events.NewMessage):
         )
 
     @staticmethod
-    def __in_private_chat(event: Union[events.NewMessage.Event, Message]):
+    def __in_private_chat(event: TypeEventMsgHint):
         return event.is_private
 
 
@@ -799,7 +790,7 @@ class AddedToGroupAction(events.ChatAction):
         super().__init__(chats, blacklist_chats=blacklist_chats, func=self.__added_to_group)
 
     @staticmethod
-    def __added_to_group(event: events.ChatAction.Event):
+    def __added_to_group(event: TypeEventChatAction):
         if not event.is_group:
             return False
         if event.created:
@@ -864,7 +855,7 @@ async def set_bot_commands(
 
 
 async def send_success_and_failure_msg(
-        message: Union[Message, events.NewMessage.Event, events.CallbackQuery.Event],
+        message: TypeEventCollectionMsgOrCb,
         success_msg: str,
         failure_msg: str,
         success_count: int,
@@ -873,7 +864,7 @@ async def send_success_and_failure_msg(
         lang: Optional[str] = None,
         edit: bool = False,
         **__,
-) -> Union[Message, events.NewMessage.Event, events.CallbackQuery.Event]:
+) -> TypeEventCollectionMsgOrCb:
     success_msg_raw = success_msg
     failure_msg_raw = failure_msg
     success_msg_short = (
@@ -920,10 +911,7 @@ def get_group_migration_help_msg(
 
 
 def get_callback_tail(
-        event: Union[
-            events.NewMessage.Event, Message,
-            events.CallbackQuery.Event,
-        ],
+        event: TypeEventCollectionMsgOrCb,
         chat_id: int,
 ) -> str:
     if not event.is_private or event.chat.id == chat_id:
@@ -934,7 +922,7 @@ def get_callback_tail(
     return f'%{ori_chat_id}' if ori_chat_id < 0 else f'%+{ori_chat_id}'
 
 
-async def check_sub_limit(event: Union[events.NewMessage.Event, Message], user_id: int, lang: Optional[str] = None):
+async def check_sub_limit(event: TypeEventMsgHint, user_id: int, lang: Optional[str] = None):
     limit_reached, curr_count, limit, _ = await inner.utils.check_sub_limit(user_id)
     if limit_reached:
         logger.warning(f'Refused user {user_id} to add new subscriptions due to limit reached ({curr_count}/{limit})')

@@ -300,7 +300,8 @@ def command_gatekeeper(
                 f'{sender_fullname} ({sender_id}',
                 f', {participant_type}' if participant_type and chat_info else '',
                 f', {type(event.query.peer_type).__name__}' if is_inline else '',
-                f') in {chat_info}' if chat_info else '',
+                ')',
+                f' in {chat_info}' if chat_info else '',
             ))
 
         async def user_and_chat_permission_check():

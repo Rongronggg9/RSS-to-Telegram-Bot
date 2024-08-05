@@ -37,7 +37,10 @@ CPU_COUNT = os.cpu_count()
 AVAIL_CPU_COUNT = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else CPU_COUNT
 PROCESS_COUNT = min(AVAIL_CPU_COUNT, 3) if env.MULTIPROCESSING else 1
 
-THREAD_POOL_WEIGHT = 1
+# Though multithreading in CPython cannot improve performance due to GIL, having more threads is still useful for
+# improving responsiveness under high loads.
+# TODO: consider using a PriorityQueue to prioritize tasks from interactive operations.
+THREAD_POOL_WEIGHT = 2
 PROCESS_POOL_WEIGHT = PROCESS_COUNT - 1
 
 POOL_TYPE = Literal['thread', 'process']

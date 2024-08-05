@@ -292,6 +292,7 @@ PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
 USER_AGENT: Final = os.environ.get('USER_AGENT') or f'RSStT/{__version__} RSS Reader'
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
+VERIFY_TLS: Final = __bool_parser(os.environ.get('VERIFY_TLS'), default_value=True)
 
 HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
 HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)

@@ -80,9 +80,6 @@ class AiohttpUvloopTransportHotfix(AbstractAsyncContextManager):
             self.transport.abort()
 
 
-# Reuse SSLContext as aiohttp does:
-# https://github.com/aio-libs/aiohttp/blob/b51610b93b2ae15c4062e3a1680a536ba5f4c5c4/aiohttp/connector.py#L906
-@functools.lru_cache(None)
 def ssl_create_default_context():
     """
     Python 3.10+ disabled some legacy cipher, while some websites still use them.

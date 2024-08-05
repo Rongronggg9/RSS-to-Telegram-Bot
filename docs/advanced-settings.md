@@ -35,6 +35,7 @@
 | `PROXY_BYPASS_DOMAINS`      | Bypass proxy for listed domains                       | `example.com;example.net` [^1] |                             |
 | `USER_AGENT`                | User-Agent                                            | `Mozilla/5.0`                  | `RSStT/$VERSION RSS Reader` |
 | `IPV6_PRIOR`                | Enforce fetching feeds over IPv6 firstly or not? [^4] | `1`                            | `0`                         |
+| `VERIFY_TLS`                | Verify TLS certificate or not?                        | `0`                            | `1`                         |
 | `TRAFFIC_SAVING`            | Enable network traffic saving mode or not? [^5]       | `1`                            | `0`                         |
 | `LAZY_MEDIA_VALIDATION`     | Let Telegram DC to validate media or not? [^6]        | `1`                            | `0`                         |
 | `HTTP_TIMEOUT`              | HTTP request timeout in seconds                       | `60`                           | `12`                        |

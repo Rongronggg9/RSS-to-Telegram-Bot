@@ -40,6 +40,10 @@ from ..aio_helper import run_async
 from ..errors_collection import RetryInIpv4
 from .utils import YummyCookieJar, WebResponse, proxy_filter, logger, sentinel
 
+# Reuse SSLContext as aiohttp does:
+# https://github.com/aio-libs/aiohttp/blob/f1e4213fb06634584f8d7a1eb90f5397736a18cc/aiohttp/connector.py#L959
+__SSL_CONTEXT: Final = ssl_create_default_context() if env.VERIFY_TLS else False
+
 DEFAULT_READ_BUFFER_SIZE: Final = 2 ** 16
 
 PROXY: Final = env.R_PROXY.replace('socks5h', 'socks5').replace('sock4a', 'socks4') if env.R_PROXY else None
@@ -209,11 +213,10 @@ async def _request(
 
         if retry_in_v4_flag or tries > MAX_TRIES:
             socket_family = AF_INET
-        ssl_context = ssl_create_default_context()
         proxy_connector = (
-            ProxyConnector.from_url(PROXY, family=socket_family, ssl=ssl_context)
+            ProxyConnector.from_url(PROXY, family=socket_family, ssl=__SSL_CONTEXT)
             if (PROXY and proxy_filter(host, parse=False))
-            else aiohttp.TCPConnector(family=socket_family, ssl=ssl_context)
+            else aiohttp.TCPConnector(family=socket_family, ssl=__SSL_CONTEXT)
         )
 
         try:

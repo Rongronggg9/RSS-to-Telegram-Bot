@@ -13,7 +13,7 @@ rapidfuzz==3.9.5
 emoji==2.12.1
 minify-html==0.15.0
 minify-html-onepass==0.15.0
-matplotlib==3.9.1
+matplotlib==3.9.1.post1
 
 # db
 asyncpg==0.29.0

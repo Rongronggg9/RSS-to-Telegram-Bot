@@ -155,16 +155,22 @@ async def _request(
     host = urlparse(url).hostname
     semaphore_to_use = locks.hostname_semaphore(host, parse=False) if semaphore in (None, True) \
         else (semaphore or nullcontext())
-    v6_rr_set = None
-    try:
-        v6_rr_set = (await asyncio.wait_for(resolve(host, 'AAAA', lifetime=1), 1.1)).rrset if env.IPV6_PRIOR else None
-    except DNSException:
-        pass
-    except asyncio.TimeoutError:
-        pass
-    except Exception as e:
-        logger.debug(f'Error occurred when querying {url} AAAA:', exc_info=e)
-    socket_family = AF_INET6 if v6_rr_set else 0
+
+    # Happy Eyeballs, available since aiohttp 3.10, cause AssertionError when setting both proxy and socket family.
+    # Make them mutually exclusive (proxy takes precedence) since it is always meaningless to set them together.
+    # TODO: Is it time to deprecate IPV6_PRIOR and completely rely on Happy Eyeballs (RFC 8305)?
+    use_proxy: bool = PROXY and proxy_filter(host, parse=False)
+    socket_family = 0
+    if env.IPV6_PRIOR and not use_proxy:
+        try:
+            if (
+                    await asyncio.wait_for(resolve(host, 'AAAA', lifetime=1), 1.1)
+            ).rrset:
+                socket_family = AF_INET6
+        except (DNSException, asyncio.TimeoutError):
+            pass
+        except Exception as e:
+            logger.debug(f'Error occurred when querying {url} AAAA:', exc_info=e)
 
     _headers = HEADER_TEMPLATE.copy()
     if headers:
@@ -215,7 +221,7 @@ async def _request(
             socket_family = AF_INET
         proxy_connector = (
             ProxyConnector.from_url(PROXY, family=socket_family, ssl=__SSL_CONTEXT)
-            if (PROXY and proxy_filter(host, parse=False))
+            if use_proxy
             else aiohttp.TCPConnector(family=socket_family, ssl=__SSL_CONTEXT)
         )
 

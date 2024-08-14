@@ -246,7 +246,7 @@ def command_gatekeeper(
         allow_in_others_private_chat: bool = False,
         allow_in_old_fashioned_groups: bool = False,
         ignore_tg_lang: bool = False,
-        timeout: Optional[int] = 60,
+        timeout: Optional[int] = 120,
         quiet: bool = False,
 ):
     if func is None:

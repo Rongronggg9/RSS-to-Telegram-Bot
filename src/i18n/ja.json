@@ -137,7 +137,10 @@
         "length_limit_only_effective_if_send_mode_auto": "長さ制限は、送信モードが自動の場合にのみ有効です。",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "現在の送信モードでは、Telegram メッセージにメディアが表示されることはありません。",
         "use_user_default_button": "私のデフォルト値を使用する",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">フォーマット設定のガイドを読む。</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">フォーマット設定のガイドを読む。</a>",
+        "display_entry_tags": "記事からのハッシュタグ (フィードエントリ)",
+        "display_entry_tags_-1": "無効",
+        "display_entry_tags_1": "有効"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "購読のデフォルト設定を設定します。\n\n購読の未設定の設定は、このページの設定にフォールバックします。ほとんどの購読に同じ設定を適用したい場合に便利です。",

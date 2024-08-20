@@ -9,6 +9,7 @@
 ### 增强
 
 - **净化文章标题和作者**: 文章 (RSS item 或 Atom entry) 的标题和作者现在被净化以防止意外的格式问题。特别是，预期外的空格和换行符被移除，任何 HTML 元素都被剥离。这有助于在 Telegram 消息以及 Telegraph 文章中正确显示它们。
+- **改善在 Railway.app 上的稳健性**: 一些特定于 Railway 的环境变量被识别以提高在 Railway.app 上的稳健性。特别是，当 `DATABASE_URL` 不可用或无效时，将使用 `DATABASE_PRIVATE_URL` 和 `DATABASE_PUBLIC_URL`。这应该解决在 Railway.app 上的大多数数据库连接问题。
 - **次要的重构**: 重构了一些内部函数以提高可读性和可维护性。
 
 ### Bug 修复

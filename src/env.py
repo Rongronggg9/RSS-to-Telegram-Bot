@@ -19,6 +19,7 @@ from typing import Optional, Union
 from typing_extensions import Final
 
 import asyncio
+import yarl
 import os
 import sys
 import colorlog
@@ -316,11 +317,41 @@ IMAGES_WESERV_NL: Final = (
 )
 del _images_weserv_nl
 
+
 # ----- db config -----
-_database_url = os.environ.get('DATABASE_URL') or f'sqlite://{config_folder_path}/db.sqlite3'
-DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
-                       else _database_url)
-del _database_url
+def __get_database_url() -> str:
+    # Railway.app provides DATABASE_PRIVATE_URL, DATABASE_URL and/or DATABASE_PUBLIC_URL.
+    # DATABASE_PRIVATE_URL is for private networking, while DATABASE_PUBLIC_URL is for public networking.
+    # If private networking is disabled, the former still exists but is invalid (i.e., missing host).
+    # If public networking is disabled, both host and port are missing in the latter, resulting in an invalid URL too.
+    # A legacy Postgres addon may provide only DATABASE_URL (for PUBLIC networking) and DATABASE_PRIVATE_URL,
+    # while a modern one may provide only DATABASE_URL (for PRIVATE networking) and DATABASE_PUBLIC_URL.
+    # Thus, we need to select a valid one from them.
+    urls: tuple[str, ...] = tuple(filter(None, map(os.environ.get, (
+        'DATABASE_URL',  # Generic, Railway.app compatible
+        'DATABASE_PRIVATE_URL',  # Railway.app specific
+        'DATABASE_PUBLIC_URL',  # Railway.app specific
+    ))))
+    if not urls:
+        return f'sqlite://{config_folder_path}/db.sqlite3'
+    err: Optional[BaseException] = None
+    for url in urls:
+        try:
+            y_url = yarl.URL(url)
+        except ValueError as _err:
+            err = _err
+        else:
+            return str(
+                # Tortoise-ORM does not recognize 'postgresql' scheme
+                y_url.with_scheme('postgres')
+                if y_url.scheme == 'postgresql'
+                else y_url
+            )
+    else:
+        logger.critical('INVALID DATABASE URL!', exc_info=err)
+
+
+DATABASE_URL: Final = __get_database_url()
 
 # ----- misc config -----
 TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))

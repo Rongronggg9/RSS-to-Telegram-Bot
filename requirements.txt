@@ -37,5 +37,5 @@ asyncstdlib==3.12.4
 cachetools==5.4.0
 CJKwrap==2.2
 typing-extensions==4.12.2
-uvloop==0.19.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
+uvloop==0.20.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
 isal==1.7.0; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'

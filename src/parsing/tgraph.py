@@ -31,7 +31,7 @@ from aiohttp_socks import ProxyConnector
 
 from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
-from ..web.media import construct_weserv_url, upload_to_telegraph
+from ..web.media import construct_weserv_url
 from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]
@@ -309,18 +309,12 @@ class TelegraphIfy:
                     if not isAbsoluteHttpLink(attr_content):
                         tag.replaceWithChildren()
                         continue
-                    if (
-                            tag.name in {'video', 'img'}
-                            and not attr_content.startswith(env.IMG_RELAY_SERVER)
-                            and not attr_content.startswith(env.IMAGES_WESERV_NL)
-                    ):
-                        if uploaded_url := await upload_to_telegraph(attr_content):
-                            attr_content = uploaded_url
-                        elif tag.name == 'video':
+                    if not attr_content.startswith(env.IMG_RELAY_SERVER):
+                        if tag.name == 'video':
                             attr_content = env.IMG_RELAY_SERVER + attr_content
-                        elif attr_content.split('.', 1)[1].split('/', 1)[0] == 'sinaimg.cn':
-                            attr_content = env.IMG_RELAY_SERVER + attr_content
-                        else:  # other images
+                        if tag.name == 'img' and not attr_content.startswith(env.IMAGES_WESERV_NL):
+                            if attr_content.split('.', 1)[1].split('/', 1)[0] == 'sinaimg.cn':
+                                attr_content = env.IMG_RELAY_SERVER + attr_content
                             attr_content = construct_weserv_url(attr_content)
                     tag.attrs = {attr_name: attr_content}
 

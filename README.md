@@ -56,7 +56,6 @@
     - Automatically show the author-name (customizable)
     - Automatically split too-long messages
     - Messages can be sent as Telegraph posts (customizable)
-      - Most images and videos will be uploaded to Telegraph, so that Instant View will load rapidly
 - [Various customizable formatting settings](docs/formatting-settings.md)
     - Hashtags, custom title, etc.
 - Individual proxy settings for Telegram and RSS feeds

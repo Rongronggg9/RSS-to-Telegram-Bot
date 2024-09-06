@@ -56,7 +56,6 @@
     - 自动显示作者名 (可自定义)
     - 自动切分超长消息
     - 消息可作为 Telegraph 文章发送 (可自定义)
-      - 大部分图片和视频会被上传至 Telegraph，以便 Instant View 可迅速加载
 - [丰富的自定义格式设定](docs/formatting-settings.md)
     - Hashtag、自定义标题，等等
 - 为 Telegram 和 RSS 源配置独立的代理设置

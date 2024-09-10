@@ -32,7 +32,7 @@ yarl==1.11.0
 colorlog==6.8.2
 APScheduler==3.10.4
 python-dotenv==1.0.1
-multidict==6.0.5
+multidict==6.1.0
 asyncstdlib==3.12.5
 cachetools==5.5.0
 CJKwrap==2.2

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.9.0: Telegraph-related revert, skip cert verification, and more
 
 ### BREAKING CHANGES
 

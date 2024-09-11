@@ -20,7 +20,7 @@
         "internal_error": "خطأ داخلي",
         "status_code_error": "HTTP status code error",
         "uncaught_internal_error": "Uncaught internal error",
-        "operation_timeout_error": "Operation timeout",
+        "operation_timeout_error": "انتهى وقت العملية",
         "action_invalid": "الإجراء غير صحيح",
         "sub_limit_reached": "تم بلوغ الحد الأقصى لعدد الإشتراكات",
         "flood_wait_prompt": "أنت تقوم بالعديد من العمليات في وقت قصير لدرجة ان البوت قد تجاوز rate limit لـ Telegram. من فضلك تمهل.",
@@ -151,7 +151,7 @@
         "subscription_info": "معلومات الاشتراك",
         "feed_title": "عنوان Feed",
         "subscription_title": "عنوان مخصص",
-        "feed_url": "Feed URL",
+        "feed_url": "عنوان URL للتغذية",
         "hashtags": "وسوم",
         "default_emoji_header_description": "%s يعني أن الاشتراك يستخدم إعداداتك الافتراضية. يمكنك تغييرها باستخدام /set_default."
     },

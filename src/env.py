@@ -333,7 +333,7 @@ def __get_database_url() -> str:
         'DATABASE_PUBLIC_URL',  # Railway.app specific
     ))))
     if not urls:
-        return f'sqlite://{config_folder_path}/db.sqlite3'
+        return f'sqlite:{config_folder_path}/db.sqlite3'
     err: Optional[BaseException] = None
     for url in urls:
         try:

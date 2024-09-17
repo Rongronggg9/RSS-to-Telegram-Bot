@@ -20,8 +20,9 @@ from typing_extensions import Final
 from collections.abc import Awaitable
 
 import asyncio
-import time
 import aiographfix as aiograph
+import re
+import time
 from io import BytesIO
 from bs4 import BeautifulSoup
 from contextlib import suppress
@@ -39,6 +40,29 @@ if env.TABLE_TO_IMAGE:
     from .table_drawer import convert_table_to_png
 else:
     convert_table_to_png = None
+
+DOMAIN_PATTERN_TEMPLATE: Final[str] = r'^https?://(?:[^./]+\.)?(?:{domains})\.?(?:/|:|$)'
+BLOCKED_BY_WESERV_DOMAIN: Final[set[str]] = {
+    'sinaimg.cn',
+    'wp.com',
+}
+BLOCKED_BY_WESERV_RE: Final[re.Pattern] = re.compile(
+    DOMAIN_PATTERN_TEMPLATE.format(
+        domains='|'.join(map(re.escape, BLOCKED_BY_WESERV_DOMAIN)),
+    ),
+    re.I,
+)
+ALLOW_REFERER_DOMAIN: Final[set[str]] = set(filter(None, {
+    'wp.com',
+    env.IMG_RELAY_SERVER.partition('://')[2].partition('/')[0].strip('.'),
+    env.IMAGES_WESERV_NL.partition('://')[2].partition('/')[0].strip('.'),
+}))
+ALLOW_REFERER_RE: Final[re.Pattern] = re.compile(
+    DOMAIN_PATTERN_TEMPLATE.format(
+        domains='|'.join(map(re.escape, ALLOW_REFERER_DOMAIN)),
+    ),
+    re.I,
+)
 
 logger = log.getLogger('RSStT.tgraph')
 
@@ -309,13 +333,15 @@ class TelegraphIfy:
                     if not isAbsoluteHttpLink(attr_content):
                         tag.replaceWithChildren()
                         continue
-                    if not attr_content.startswith(env.IMG_RELAY_SERVER):
+                    if not ALLOW_REFERER_RE.match(attr_content):
                         if tag.name == 'video':
                             attr_content = env.IMG_RELAY_SERVER + attr_content
-                        if tag.name == 'img' and not attr_content.startswith(env.IMAGES_WESERV_NL):
-                            if attr_content.split('.', 1)[1].split('/', 1)[0] == 'sinaimg.cn':
-                                attr_content = env.IMG_RELAY_SERVER + attr_content
-                            attr_content = construct_weserv_url(attr_content)
+                        elif tag.name == 'img':
+                            attr_content = (
+                                env.IMG_RELAY_SERVER + attr_content
+                                if BLOCKED_BY_WESERV_RE.match(attr_content)
+                                else construct_weserv_url(attr_content)
+                            )
                     tag.attrs = {attr_name: attr_content}
 
         if self.feed_title:

@@ -2,6 +2,10 @@
 
 ## 未发布
 
+### 增强
+
+- **生成 Telegraph 文章时，不再代理来自 `*.wp.com` 的图像**: `*.wp.com` 位于 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`) 的阻断列表中。因此，在生成 Telegraph 文章时，这些图像不再被代理。来自 `*.wp.com` 的所有图片都可以用任何 refer 头访问，因此它们现在保持原样。
+
 ### Bug 修复
 
 - **无法识别规范的 `DATABASE_URL`**: 自 v2.9.0 起, 在连接到相应的数据库之前，`DATABASE_URL` 被规范化。然而，在检查 scheme (数据库类型) 的合法性时，无法识别指向本地路径的规范 URL。现在，此类 URL 的规范 (`scheme:/path/to/file.db`) 和传统 (`scheme:///path/to/file.db`) 形式都被正确识别。

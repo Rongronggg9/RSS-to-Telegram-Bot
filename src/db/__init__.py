@@ -88,7 +88,7 @@ async def __upgrade_migrations_in_db():
 async def init():
     global DB_TYPE
     try:
-        DB_TYPE = DBType(env.DATABASE_URL.partition('://')[0])
+        DB_TYPE = DBType(env.DATABASE_URL.partition(':')[0])
     except ValueError:
         logger.critical(f'INVALID DB SCHEME (EXPECTED: {", ".join(t.value for t in DBType)}): {env.DATABASE_URL}')
         exit(1)

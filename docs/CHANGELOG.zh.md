@@ -1,5 +1,11 @@
 # 更新日志
 
+## 未发布
+
+### Bug 修复
+
+- **无法识别规范的 `DATABASE_URL`**: 自 v2.9.0 起, 在连接到相应的数据库之前，`DATABASE_URL` 被规范化。然而，在检查 scheme (数据库类型) 的合法性时，无法识别指向本地路径的规范 URL。现在，此类 URL 的规范 (`scheme:/path/to/file.db`) 和传统 (`scheme:///path/to/file.db`) 形式都被正确识别。
+
 ## v2.9.0: 与 Telegraph 相关的 revert、跳过证书校验和更多
 
 ### 重大变更

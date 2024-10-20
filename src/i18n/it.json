@@ -4,17 +4,17 @@
         "iso_639_code": "it",
         "language_name": "Italian",
         "lang_native_name": "Italiano",
-        "select_lang_prompt": "Si prega di selezionare una lingua.",
-        "welcome_prompt": "Benvenuti su RSS to Telegram Bot (Lettore Feeds RSS).",
-        "rsstt_slogan": "RSS to Telegram Bot (Lettore Feeds RSS), un bot di Telegram che si occupa della tua esperienza di lettura."
+        "select_lang_prompt": "Prego selezionare una lingua.",
+        "welcome_prompt": "Benvenuti su RSS to Telegram Bot.",
+        "rsstt_slogan": "RSS to Telegram Bot, un bot di Telegram che si occupa della tua esperienza di lettura."
     },
     "l10n_sub_status": {
-        "no_subscription": "Non hai abbonamenti",
+        "no_subscription": "Non hai iscrizioni",
         "already_subscribed": "Già iscritto",
-        "subscription_not_exist": "L'abbonamento non esiste"
+        "subscription_not_exist": "L'iscrizione non esiste"
     },
     "l10n_error_reasons": {
-        "feed_invalid": "Il feed RSS non è valido",
+        "feed_invalid": "Feed RSS non valido",
         "url_invalid": "L'URL non è valido",
         "network_error": "Errore di rete",
         "internal_error": "Errore interno",
@@ -68,7 +68,7 @@
     },
     "l10n_cmd_unsub": {
         "unsub_choose_sub_prompt_html": "Per favore, scegli un abbonamento che vuoi cancellare. \nOppure, puoi usare <code>/unsub url1 url2 url3 …</code> per cancellarti in blocco.",
-        "unsub_successful": "Disabbonati con successo",
+        "unsub_successful": "Iscrizione annullata con successo",
         "unsub_failed": "Disicrizione fallita"
     },
     "l10n_cmd_unsub_all": {

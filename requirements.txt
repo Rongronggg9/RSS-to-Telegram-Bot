@@ -16,7 +16,7 @@ minify-html-onepass==0.15.0
 matplotlib==3.9.2
 
 # db
-asyncpg==0.29.0
+asyncpg==0.30.0
 tortoise-orm[accel]==0.21.7
 aerich==0.7.2
 

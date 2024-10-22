@@ -144,7 +144,7 @@
         "reset_all_button": "",
         "reset_all_confirm_prompt": "",
         "reset_all_confirm": "",
-        "reset_all_cancel": "",
+        "reset_all_cancel": "Nie, anuluj",
         "reset_all_successful": ""
     },
     "l10n_sub_info": {
@@ -206,7 +206,7 @@
         "user_state_description_-1": "",
         "user_state_0": "",
         "user_state_description_0": "",
-        "user_state_1": "",
+        "user_state_1": "Użytkownik",
         "user_state_description_1": "",
         "set_user_state_as": "",
         "reset_sub_limit_to_default": "",
@@ -215,8 +215,8 @@
     },
     "l10n_cmd_descriptions": {
         "commands": "",
-        "cmd_description_sub": "",
-        "cmd_description_unsub": "",
+        "cmd_description_sub": "Subskrybuj",
+        "cmd_description_unsub": "Usuń subskrypcję",
         "cmd_description_unsub_all": "",
         "cmd_description_list": "",
         "cmd_description_set": "",

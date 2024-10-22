@@ -106,10 +106,10 @@
         "link_preview": "Προεπισκόπηση συνδέσμου",
         "link_preview_-1": "Απενεργοποίηση",
         "link_preview_0": "Αυτόματο",
-        "link_preview_1": "Ενεργοποιηση",
+        "link_preview_1": "Ενεργοποίηση",
         "display_media": "Πολυμέσα",
         "display_media_-1": "Απενεργοποίηση",
-        "display_media_0": "Ενεργοποίησή",
+        "display_media_0": "Ενεργοποίηση",
         "display_media_1": "Μόνο πολυμέσα",
         "display_author": "Συντάκτης",
         "display_author_-1": "Απενεργοποίηση",
@@ -137,7 +137,9 @@
         "length_limit_only_effective_if_send_mode_auto": "Το όριο μήκους ισχύει μόνο όταν η λειτουργία αποστολής είναι αυτόματη.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Η τρέχουσα λειτουργία αποστολής δεν θα εμφανίζει ποτέ πολυμέσα στα μηνύματα του Telegram.",
         "use_user_default_button": "Χρησιμοποιήστε την προεπιλογή μου",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Διαβάστε τον οδηγό ρυθμίσεων μορφοποίησης εδώ.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Διαβάστε τον οδηγό ρυθμίσεων μορφοποίησης εδώ.</a>",
+        "display_entry_tags_-1": "Απενεργοποίηση",
+        "display_entry_tags_1": "Ενεργοποίηση"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Ορίστε τις προεπιλεγμένες ρυθμίσεις για τις συνδρομές.\n\nΟι μη καθορισμένες ρυθμίσεις μιας συνδρομής θα επιστρέψουν στις ρυθμίσεις αυτής της σελίδας.  Είναι χρήσιμο εάν θέλετε να ορίσετε τις ίδιες ρυθμίσεις για τις περισσότερες από τις συνδρομές σας.",

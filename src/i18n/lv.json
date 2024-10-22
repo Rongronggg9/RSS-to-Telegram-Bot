@@ -218,8 +218,8 @@
     },
     "l10n_cmd_descriptions": {
         "commands": "",
-        "cmd_description_sub": "",
-        "cmd_description_unsub": "",
+        "cmd_description_sub": "Abonēt",
+        "cmd_description_unsub": "Pārtraukt abonementu",
         "cmd_description_unsub_all": "",
         "cmd_description_list": "",
         "cmd_description_set": "",

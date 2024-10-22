@@ -108,8 +108,8 @@
         "link_preview_0": "Автоматически",
         "link_preview_1": "Включен",
         "display_media": "Медиа",
-        "display_media_-1": "Выключены",
-        "display_media_0": "Включены",
+        "display_media_-1": "Выключен",
+        "display_media_0": "Включен",
         "display_media_1": "Только медиа, без содержимого",
         "display_author": "Автор",
         "display_author_-1": "Выключен",
@@ -139,7 +139,7 @@
         "use_user_default_button": "Использовать мои настройки",
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">Руководство по настройке оформления.</a>",
         "display_entry_tags": "Хэштеги из материала (запись в ленте)",
-        "display_entry_tags_1": "Включён",
+        "display_entry_tags_1": "Включен",
         "display_entry_tags_-1": "Выключен"
     },
     "l10n_cmd_set_default": {

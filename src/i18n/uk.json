@@ -137,7 +137,9 @@
         "length_limit_only_effective_if_send_mode_auto": "Обмеження за довжиною працює тільки для режиму авто.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Поточний режим відправки ніколи не покаже медіа в повідомленнях Telegram.",
         "use_user_default_button": "Використовувати мої установки",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Посібник з налаштування оформлення.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Посібник з налаштування оформлення.</a>",
+        "display_entry_tags_-1": "Вимкнено",
+        "display_entry_tags_1": "Увімкнено"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Встановити стандартні налаштування для підписок.\n\nНевстановлені налаштування підписок братимуться зі значень на цій сторінці. Це зручно, якщо ви хочете встановити однакові налаштування для багатьох підписок відразу.",

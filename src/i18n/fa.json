@@ -98,7 +98,7 @@
         "monitor_interval": "بازه ی مانیتور کردن",
         "send_mode": "نوع ارسال",
         "send_mode_-1": "فقط تیتر و منبع",
-        "send_mode_0": "خودکار",
+        "send_mode_0": "اوتوماتیک",
         "send_mode_1": "متد Force Telegraph",
         "send_mode_2": "متد Force Telegram messages",
         "length_limit": "محدودیت طول پیام ( فقط مود اوتوماتیک )",
@@ -137,7 +137,9 @@
         "length_limit_only_effective_if_send_mode_auto": "محدودیت طول تنها زمانی موثر است که حالت ارسال بر روی خودکار تنظیم شده باشد.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "حالت ارسال فعلی هرگز رسانه های تصویری را در حالت ارسال پیام های تلگرام نمایش نمی دهد.",
         "use_user_default_button": "تنظیمات اولیه",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">راهنمای تنظیمات قالب بندی را از اینجا بخوانید.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">راهنمای تنظیمات قالب بندی را از اینجا بخوانید.</a>",
+        "display_entry_tags_-1": "غیرفعال",
+        "display_entry_tags_1": "فعال"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "تنظیمات پیش فرض را برای اشتراک ها تنظیم کنید.\n\nتنظیمات ست نشده یک اشتراک به تنظیمات این صفحه بازمی گردد. اگر می خواهید تنظیمات مشابهی را برای اکثر اشتراک های خود تنظیم کنید مفید است.",

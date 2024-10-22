@@ -137,7 +137,9 @@
         "length_limit_only_effective_if_send_mode_auto": "길이 제한은 전송 모드가 자동인 경우에만 적용됩니다.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "현재 전송 모드에서는 Telegram 메시지에 미디어가 표시되지 않습니다.",
         "use_user_default_button": "기본값 사용",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">서식 설정 가이드북을 읽어보세요.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">서식 설정 가이드북을 읽어보세요.</a>",
+        "display_entry_tags_-1": "비활성화",
+        "display_entry_tags_1": "활성화"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "구독의 기본 설정을 설정합니다.\n\n설정되지 않은 구독의 설정은 이 페이지의 설정으로 돌아갑니다. 대부분의 구독에 동일한 설정을 지정하려는 경우에 유용합니다.",
@@ -206,7 +208,7 @@
         "user_state_description_-1": "",
         "user_state_0": "",
         "user_state_description_0": "",
-        "user_state_1": "",
+        "user_state_1": "사용자",
         "user_state_description_1": "",
         "set_user_state_as": "",
         "reset_sub_limit_to_default": "",
@@ -215,8 +217,8 @@
     },
     "l10n_cmd_descriptions": {
         "commands": "",
-        "cmd_description_sub": "",
-        "cmd_description_unsub": "",
+        "cmd_description_sub": "구독",
+        "cmd_description_unsub": "구독 취소",
         "cmd_description_unsub_all": "",
         "cmd_description_list": "",
         "cmd_description_set": "",

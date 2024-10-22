@@ -137,7 +137,9 @@
         "length_limit_only_effective_if_send_mode_auto": "Luzeera mugak soilik bidalketa modua automatikoa denean funtzionatzen du.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Momentuko bidalketa moduak inoiz ez du Telegram-eko mezuetan multimedia erakutsiko.",
         "use_user_default_button": "Erabili nire defektuzko balioa",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Irakurri ezarpenen gida hemen.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Irakurri ezarpenen gida hemen.</a>",
+        "display_entry_tags_-1": "Desaktibatuta",
+        "display_entry_tags_1": "Aktibatuta"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Ezarri harpidetzetarako defektuzko ezarpenak.\n\nKonfiguratu gabeko harpidetzaren ezarpena orri honetako ezarpenetara bihurtuko da. Erabilgarria izan daiteke harpidetza guztien ezarpenak berdinak izatea nahi baduzu.",

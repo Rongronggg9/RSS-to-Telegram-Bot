@@ -139,8 +139,8 @@
         "use_user_default_button": "Utilitza el meu valor per defecte",
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">Llegiu la guia de configuració de format aquí.</a>",
         "display_entry_tags": "Hashtags de la publicació (entrada del feed)",
-        "display_entry_tags_-1": "Desactivar",
-        "display_entry_tags_1": "Activar"
+        "display_entry_tags_-1": "Inhabilitat",
+        "display_entry_tags_1": "Habilitat"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Estableix la configuració predeterminada per a les subscripcions.\n\nLa configuració no establerta d'una subscripció tornarà a la configuració d'aquesta pàgina. És útil si voleu establir la mateixa configuració per a la majoria de les vostres subscripcions.",

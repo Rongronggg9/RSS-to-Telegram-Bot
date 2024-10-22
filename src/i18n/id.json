@@ -137,7 +137,10 @@
         "length_limit_only_effective_if_send_mode_auto": "Batas panjang efektif hanya saat mode pengirimannya otomatis.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Mode pengiriman saat ini tidak akan menampilkan media pada pesan Telegram.",
         "use_user_default_button": "Gunakan default saya",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Baca panduan pengaturan pemformatan di sini.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Baca panduan pengaturan pemformatan di sini.</a>",
+        "display_entry_tags": "Tagar dari postingan (entri umpan)",
+        "display_entry_tags_-1": "Nonaktifkan",
+        "display_entry_tags_1": "Aktifkan"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Atur pengaturan default untuk langganan.\n\nPengaturan langganan yang belum ditetapkan akan kembali ke pengaturan pada halaman ini. Hal ini berguna jika Anda ingin mengatur pengaturan yang sama untuk sebagian besar langganan Anda.",
@@ -164,34 +167,34 @@
         "all_subs_are_activated": "Semua langganan diaktifkan."
     },
     "l10n_cmd_deactivate": {
-        "choose_sub_to_be_deactivated": "",
+        "choose_sub_to_be_deactivated": "Langganan di bawah ini diaktifkan, pilih satu untuk dinonaktifkan.\nSetelah dinonaktifkan, pembaruannya akan ditangguhkan dari pemantauan. Jika Anda tidak memerlukan langganan lagi, harap pertimbangkan untuk berhenti berlangganan daripada menonaktifkannya.",
         "deactivate_all_subs": "Nonaktifkan semua langganan saya",
         "all_subs_are_deactivated": "Semua langganan dinonaktifkan."
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "",
-        "set_title_success": "",
-        "set_title_success_cleared": ""
+        "cmd_set_title_usage_prompt_html": "Penggunaan perintah:  /set_title sub_id title \n\nCatatan: hilangkan  title  untuk menghapus judul khusus (hanya jika disetel sebelumnya, jika tidak, dapatkan perintah ini).",
+        "set_title_success": "Judul khusus langganan telah diubah menjadi: ",
+        "set_title_success_cleared": "Judul kustom langganan telah dihapus."
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "",
-        "set_interval_success_html": "",
-        "set_default_interval_success_html": "",
+        "cmd_set_interval_usage_prompt_html": "Penggunaan perintah:  /set_interval sub_id monitor_interval \n\nCatatan:  monitor_interval  harus berupa bilangan bulat positif dalam hitungan menit (tidak perlu menyertakan satuan).",
+        "set_interval_success_html": "Interval monitor langganan telah diubah menjadi  %d menit>.",
+        "set_default_interval_success_html": "Interval monitor default telah diubah menjadi  %d menit>.",
         "set_interval_failure_too_small_html": ""
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "",
-        "set_hashtags_success_html": "",
-        "set_hashtags_success_cleared": "",
-        "set_hashtags_failure_too_many": ""
+        "cmd_set_hashtags_usage_prompt_html": "Penggunaan perintah:  /set_hashtags sub_id #hashtag1 #hashtag2 … \n\nCatatan: jika tidak ada hashtag yang disediakan, hashtag yang ada akan dihapus (hanya jika sudah disetel sebelumnya, jika tidak, dapatkan perintah ini).",
+        "set_hashtags_success_html": "Tagar khusus langganan telah diubah menjadi: ",
+        "set_hashtags_success_cleared": "Tagar khusus langganan telah dihapus.",
+        "set_hashtags_failure_too_many": "Terlalu banyak tagar. Harap hapus beberapa tagar dan coba lagi."
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "",
         "cmd_set_option_usage_prompt_html": "",
-        "current_options": "",
-        "option_value_type": "",
-        "option_key_invalid": "",
-        "option_value_invalid": "",
+        "current_options": "Opsi saat ini",
+        "option_value_type": "Jenis nilai",
+        "option_key_invalid": "Kunci opsi tidak valid",
+        "option_value_invalid": "Nilai opsi tidak valid, silakan periksa jenisnya",
         "option_updated": "",
         "cmd_user_info_usage_prompt_html": "Penggunaan perintah: <code>/user_info id_pengguna</code> atau <code>/user_info @username</code>",
         "user_not_found": "Pengguna tidak ditemukan. Gunakan ID pengguna dia.",
@@ -202,14 +205,14 @@
         "sub_limit_default": "bawaan",
         "participant_count": "Jumlah anggota",
         "user_state": "Status pengguna",
-        "user_state_-1": "",
+        "user_state_-1": "Dilarang",
         "user_state_description_-1": "tidak dapat menggunakan bot",
         "user_state_0": "Tamu",
         "user_state_description_0": "dapat menggunakan bot hanya jika mode multi-pengguna aktif",
         "user_state_1": "Pengguna",
         "user_state_description_1": "dapat menggunakan bot",
         "set_user_state_as": "Tetapkan status pengguna sebagai",
-        "reset_sub_limit_to_default": "",
+        "reset_sub_limit_to_default": "Setel ulang batas jumlah langganan ke default",
         "set_sub_limit_to": "Tetapkan batas jumlah langganan menjadi…",
         "cmd_set_sub_limit_prompt_html": "Penggunaan perintah: <code>/set_sub_limit id_pengguna batas_jumlah_langganan</code>\n\nCatatan: <code>batas_jumlah_langganan</code> harus bilangan bulat, <code>-1</code> untuk tidak terbatas."
     },
@@ -219,8 +222,8 @@
         "cmd_description_unsub": "Hentikan langganan",
         "cmd_description_unsub_all": "Hentikan semua langganan",
         "cmd_description_list": "Periksa daftar langganan",
-        "cmd_description_set": "",
-        "cmd_description_set_default": "",
+        "cmd_description_set": "Sesuaikan langganan",
+        "cmd_description_set_default": "Sesuaikan pengaturan default",
         "cmd_description_import": "Impor langganan dari berkas OPML",
         "cmd_description_export": "Ekspor langganan ke berkas OPML",
         "cmd_description_activate_subs": "Aktifkan langganan",
@@ -228,7 +231,7 @@
         "cmd_description_version": "Periksa versi bot",
         "cmd_description_lang": "Pilih bahasa",
         "cmd_description_help": "Lihat bantuan",
-        "cmd_description_test": "",
+        "cmd_description_test": "Uji coba (hanya manajer bot)",
         "cmd_description_set_option": "Atur opsi bot (hanya pengelola bot)",
         "cmd_description_user_info": "Lihat/ubah informasi pengguna (hanya pengelola bot)",
         "usage_in_channel_or_group_prompt_html": ""

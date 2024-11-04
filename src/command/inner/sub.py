@@ -99,7 +99,7 @@ async def sub(user_id: int,
             if created_new_feed or feed.state == 0:
                 feed.state = 1
                 feed.error_count = 0
-                feed.next_check_time = None
+                feed.next_check_time = wf.calc_next_check_as_per_server_side_cache()
                 etag = wr.etag
                 if etag:
                     feed.etag = etag

@@ -20,6 +20,7 @@ from collections.abc import Iterable
 
 import enum
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
 from collections import defaultdict
@@ -271,9 +272,9 @@ class Monitor(Singleton):
         wf = await web.feed_get(feed.link, headers=headers, verbose=False)
         rss_d = wf.rss_d
 
-        no_error = True
+        new_error_count = 0
         new_next_check_time: Optional[datetime] = None  # clear next_check_time by default
-        feed_updated_fields = set()
+        feed_updated_fields: set[str] = set()
         try:
             if wf.status == 304:  # cached
                 logger.debug(f'Fetched (not updated, cached): {feed.link}')
@@ -281,22 +282,25 @@ class Monitor(Singleton):
                 return
 
             if rss_d is None:  # error occurred
-                no_error = False
-                feed.error_count += 1
-                feed_updated_fields.add('error_count')
-                if feed.error_count % 20 == 0:  # error_count is always > 0
-                    logger.warning(f'Fetch failed ({feed.error_count}th retry, {wf.error}): {feed.link}')
-                if feed.error_count >= 100:
-                    logger.error(f'Deactivated due to too many ({feed.error_count}) errors '
-                                 f'(current: {wf.error}): {feed.link}')
+                new_error_count = feed.error_count + 1
+                if new_error_count >= 100:
+                    logger.error(
+                        f'Deactivated due to too many ({new_error_count}) errors (current: {wf.error}): {feed.link}'
+                    )
                     await Notifier(feed=feed, subs=subs, reason=wf.error).notify_all()
                     stat.failed()
                     return
-                if feed.error_count >= 10:  # too much error, defer next check
+                if new_error_count >= 10:  # too much error, defer next check
                     interval = feed.interval or db.EffectiveOptions.default_interval
-                    if (next_check_interval := min(interval, 15) * min(feed.error_count // 10 + 1, 5)) > interval:
-                        new_next_check_time = now + timedelta(minutes=next_check_interval)
-                logger.debug(f'Fetched (failed, {feed.error_count}th retry, {wf.error}): {feed.link}')
+                    # Equals: interval * (2 ** exp), clamp to 1 day
+                    next_check_delay = min(interval << (new_error_count // 10), 1440)
+                    new_next_check_time = now + timedelta(minutes=next_check_delay)
+                logger.log(
+                    logging.WARNING
+                    if new_error_count % 20 == 0
+                    else logging.DEBUG,
+                    f'Fetch failed ({new_error_count}th retry, {wf.error}): {feed.link}',
+                )
                 stat.failed()
                 return
 
@@ -304,7 +308,8 @@ class Monitor(Singleton):
             assert wr is not None
             wr.now = now
 
-            if (etag := wr.etag) and etag != feed.etag:
+            # Update even when etag is None, allowing clearing etag when the server no longer sends it.
+            if (etag := wr.etag) != feed.etag:
                 feed.etag = etag
                 feed_updated_fields.add('etag')
 
@@ -335,17 +340,20 @@ class Monitor(Singleton):
             feed.entry_hashes = list(islice(new_hashes, max(len(rss_d.entries) * 2, 100))) or None
             feed_updated_fields.update({'last_modified', 'entry_hashes'})
         finally:
-            if no_error:
-                if feed.error_count > 0:
-                    feed.error_count = 0
-                    feed_updated_fields.add('error_count')
-                if wf.url != feed.link:
-                    new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
-                    feed = new_url_feed if isinstance(new_url_feed, db.Feed) else feed
+            if feed.error_count != new_error_count:
+                feed.error_count = new_error_count
+                feed_updated_fields.add('error_count')
 
-            if new_next_check_time != feed.next_check_time:
+            if feed.next_check_time != new_next_check_time:
                 feed.next_check_time = new_next_check_time
                 feed_updated_fields.add('next_check_time')
+
+            if new_error_count == 0 and wf.url != feed.link:
+                new_url_feed = await inner.sub.migrate_to_new_url(feed, wf.url)
+                if isinstance(new_url_feed, db.Feed):
+                    feed = new_url_feed
+                    # Update has been done during the migration, skip it.
+                    feed_updated_fields.clear()
 
             if feed_updated_fields:
                 await feed.save(update_fields=feed_updated_fields)

@@ -133,7 +133,8 @@ class Monitor(Singleton):
         handle_id = id(feeds)
         logger.debug(f'Start monitoring {feed_count} feeds (handle: {handle_id}): {description}')
 
-        _do_monitor_subtask: BatchTimeout[[db.Feed], None]
+        now = datetime.now(timezone.utc)
+        _do_monitor_subtask: BatchTimeout[[db.Feed, datetime], None]
         async with BatchTimeout[[db.Feed], None](
                 func=self._do_monitor_subtask,
                 timeout=TIMEOUT,
@@ -145,19 +146,20 @@ class Monitor(Singleton):
         ) as _do_monitor_subtask:
             for feed in feeds:
                 self._lock_feed_id(feed.id)
-                _do_monitor_subtask(feed, _task_name_suffix=feed.id)
-            # Release unnecessary references to db.Feed objects so that they can be garbage collected later.
-            del feed, feeds
+                _do_monitor_subtask(feed, now, _task_name_suffix=feed.id)
+            # It could take a long time waiting for all subtasks to finish or time out.
+            # Release unnecessary references to heavy objects so that they can be garbage collected ASAP.
+            del feed, feeds, now
 
         logger.debug(f'Finished monitoring {feed_count} feeds (handle: {handle_id}): {description}')
 
     _do_monitor_task_bg_sync = _do_monitor_task.bg_sync
 
-    async def _do_monitor_subtask(self, feed: db.Feed):
+    async def _do_monitor_subtask(self, feed: db.Feed, now: datetime):
         self._subtask_defer_map[feed.id] |= TaskState.IN_PROGRESS
         self._stat.start()
         try:
-            await self._do_monitor_a_feed(feed)
+            await self._do_monitor_a_feed(feed, now)
         finally:
             self._erase_state_for_feed_id(feed.id, TaskState.IN_PROGRESS)
             self._stat.finish()
@@ -236,15 +238,15 @@ class Monitor(Singleton):
             pos += count
         assert pos == feed_count
 
-    async def _do_monitor_a_feed(self, feed: db.Feed):
+    async def _do_monitor_a_feed(self, feed: db.Feed, now: datetime):
         """
         Monitor the update of a feed.
 
         :param feed: Feed object to be monitored
+        :param now: A datetime object representing the current time
         :return: None
         """
         stat = self._stat
-        now = datetime.now(timezone.utc)
         if feed.next_check_time and now < feed.next_check_time:
             stat.skipped()
             return  # skip this monitor task

@@ -230,12 +230,10 @@ class WebFeed:
         # defer next check as per Cloudflare cache
         # https://developers.cloudflare.com/cache/concepts/cache-responses/
         # https://developers.cloudflare.com/cache/how-to/edge-browser-cache-ttl/
-        if (
-                self.headers.get('cf-cache-status') in {'HIT', 'MISS', 'EXPIRED', 'REVALIDATED'}
-                and
-                wr.expires > now
-        ):
-            return wr.expires
+        if self.headers.get('cf-cache-status') in {'HIT', 'MISS', 'EXPIRED', 'REVALIDATED'}:
+            expires = wr.expires
+            if expires and expires > now:
+                return expires
 
         # defer next check as per RSSHub TTL (or Cache-Control max-age)
         # only apply when TTL > 5min,

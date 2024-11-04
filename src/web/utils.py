@@ -138,7 +138,7 @@ def rfc_2822_8601_to_datetime(time_str: Optional[str]) -> Optional[datetime]:
 @dataclass
 class WebResponse:
     AGE_REMAINING_CLAMP_MIN: ClassVar[int] = 0
-    AGE_REMAINING_CLAMP_MAX: ClassVar[int] = 3600  # 1 hour
+    AGE_REMAINING_CLAMP_MAX: ClassVar[int] = 21600  # 6 hours
 
     url: str  # redirected url
     ori_url: str  # original url
@@ -202,6 +202,8 @@ class WebResponse:
         # max-age overrides Expires: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expires
         if self.age_remaining is None:
             return rfc_2822_8601_to_datetime(self.headers.get('Expires'))
+        elif self.age_remaining <= 0:
+            return None
         else:
             return self.date + timedelta(seconds=self.age_remaining)
 

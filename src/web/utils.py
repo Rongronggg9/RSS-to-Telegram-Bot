@@ -221,6 +221,44 @@ class WebFeed:
 
     web_response: Optional[WebResponse] = None
 
+    def calc_next_check_as_per_server_side_cache(self) -> Optional[datetime]:
+        wr = self.web_response
+        if wr is None:
+            return None
+        now = wr.now
+
+        # defer next check as per Cloudflare cache
+        # https://developers.cloudflare.com/cache/concepts/cache-responses/
+        # https://developers.cloudflare.com/cache/how-to/edge-browser-cache-ttl/
+        if (
+                self.headers.get('cf-cache-status') in {'HIT', 'MISS', 'EXPIRED', 'REVALIDATED'}
+                and
+                wr.expires > now
+        ):
+            return wr.expires
+
+        # defer next check as per RSSHub TTL (or Cache-Control max-age)
+        # only apply when TTL > 5min,
+        # as it is the default value of RSSHub and disabling cache won't change it in some legacy versions
+        rss_d = self.rss_d
+        if (
+                rss_d.feed.get('generator') == 'RSSHub'
+                and
+                (updated_str := rss_d.feed.get('updated'))
+        ):
+            ttl_in_minute_str: str = rss_d.feed.get('ttl', '')
+            ttl_in_second = (
+                                int(ttl_in_minute_str) * 60
+                                if ttl_in_minute_str.isdecimal()
+                                else wr.max_age
+                            ) or -1
+            if ttl_in_second > 300:
+                updated = rfc_2822_8601_to_datetime(updated_str)
+                if updated and (next_check_time := updated + timedelta(seconds=ttl_in_second)) > now:
+                    return next_check_time
+
+        return None
+
 
 def proxy_filter(url: str, parse: bool = True) -> bool:
     if not (env.PROXY_BYPASS_PRIVATE or env.PROXY_BYPASS_DOMAINS):

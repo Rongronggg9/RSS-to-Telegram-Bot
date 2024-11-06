@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 from typing import Any, Union, Optional
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Sequence
 
 import asyncio
 import re
@@ -141,7 +141,7 @@ def get_lang_buttons(callback=str, current_lang: str = None, tail: str = '') \
         for n in sorted(lang_n_per_row.keys(), reverse=True)
         for i in range(0, len(lang_n_per_row[n]), n)
     )
-    langs = tuple(chain(*lang_n_per_row.values()))
+    langs = tuple(chain.from_iterable(lang_n_per_row.values()))
     return buttons, langs
 
 

@@ -96,8 +96,15 @@ INVALID_CHARACTERS: Final[str] = (
 )
 INVALID_CHARACTERS_IN_HASHTAG: Final[str] = ''.join(
     sorted(
-        # Known characters that break hashtags. Though '・' breaks hashtags, it is not the case of '·'.
-        set(chain(SPACES, INVALID_CHARACTERS, string.punctuation, string.whitespace, '・'))
+        # Known characters that break hashtags.
+        set(chain(
+            SPACES, INVALID_CHARACTERS, string.punctuation, string.whitespace,
+            '・',  # Though '・' breaks hashtags, it is not the case of '·'.
+        ))
+        # Characters included in `string.punctuation` but valid in hashtags.
+        - set(
+            '@'  # Used in "chat-specific hashtags".
+        )
     )
 )
 

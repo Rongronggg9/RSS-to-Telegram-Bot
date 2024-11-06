@@ -94,9 +94,11 @@ INVALID_CHARACTERS: Final[str] = (
     '\u2028'  # LINE SEPARATOR
     '\u2029'  # PARAGRAPH SEPARATOR
 )
-CHARACTERS_TO_ESCAPE_IN_HASHTAG: Final[str] = ''.join(
-    # all characters here will be replaced with '_'
-    sorted(set(SPACES + INVALID_CHARACTERS + string.punctuation + string.whitespace))
+INVALID_CHARACTERS_IN_HASHTAG: Final[str] = ''.join(
+    sorted(
+        # Known characters that break hashtags. Though '・' breaks hashtags, it is not the case of '·'.
+        set(chain(SPACES, INVALID_CHARACTERS, string.punctuation, string.whitespace, '・'))
+    )
 )
 
 escapeSpecialCharInReSet = partial(
@@ -155,7 +157,7 @@ stripAnySpace = partial(
     ' ',
 )
 escapeHashtag = partial(
-    re.compile(rf'[{__merge_chars_into_ranged_set(CHARACTERS_TO_ESCAPE_IN_HASHTAG)}]+').sub,
+    re.compile(rf'[{__merge_chars_into_ranged_set(INVALID_CHARACTERS_IN_HASHTAG)}]+').sub,
     '_',
 )
 isAbsoluteHttpLink = re.compile(r'^https?://').match

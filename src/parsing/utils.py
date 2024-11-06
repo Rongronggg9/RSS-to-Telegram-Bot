@@ -347,4 +347,4 @@ def escape_hashtags(tags: Optional[Iterable[str]]) -> Iterable[str]:
 
 
 def merge_tags(*tag_lists: Optional[Iterable[str]]) -> list[str]:
-    return list(dict.fromkeys(chain(*tag_lists)))
+    return list(dict.fromkeys(chain.from_iterable(tag_lists)))

@@ -619,7 +619,7 @@ def command_gatekeeper(
                             cache_time=15,
                         )
                         logger.warning(
-                            f'Refused Refused {describe_user()} to use {command} because they is not a participant'
+                            f'Refused {describe_user()} to use {command} because they is not a participant'
                         )
                         raise events.StopPropagation
                 else:  # an anonymous admin

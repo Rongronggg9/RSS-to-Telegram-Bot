@@ -29,7 +29,7 @@ dnspython[idna]==2.7.0
 
 # utils
 yarl==1.17.1
-propcache==0.2.0
+propcache==0.2.1
 colorlog==6.9.0
 APScheduler==3.11.0
 python-dotenv==1.0.1

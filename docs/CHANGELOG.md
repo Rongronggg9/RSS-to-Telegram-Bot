@@ -4,7 +4,9 @@
 
 ### Enhancements
 
+- **Support for chat-specific #hashtags**: Telegram recently added a feature called "chat-specific hashtags," formatting as `#hashtag@username`. However, escaping '@' broke these hashtags. Properly supports such hashtags by allowing '@' in hashtags.
 - **No longer proxies images from `*.wp.com` when generating Telegraph posts**: `*.wp.com` is in the blocklist of `wsrv.nl` (environment variable `IMAGES_WESERV_NL`). Thus, these images are no longer proxied when generating Telegraph posts. All images from `*.wp.com` can be accessed with any referer header, so they are now kept as is.
+- **Minor enhancements**: Some internal functions have been refined to enhance compatibility with various feeds.
 - **Minor refactor**: Some internal functions have been refactored to improve performance, readability and maintainability.
 
 ### Bug fixes

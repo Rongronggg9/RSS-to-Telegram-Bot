@@ -1,6 +1,6 @@
 # telegram and telegraph
 cryptg==0.5.0.post0
-telethon==1.37.0
+telethon==1.38.1
 aiographfix==0.2.2
 
 # feed parsing

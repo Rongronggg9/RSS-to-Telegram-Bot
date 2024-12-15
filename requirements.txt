@@ -18,7 +18,7 @@ matplotlib==3.9.3
 # db
 asyncpg==0.30.0
 tortoise-orm[accel]==0.22.2
-aerich==0.7.2
+aerich==0.8.0
 
 # network
 aiohttp[speedups]==3.10.10

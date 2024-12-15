@@ -27,7 +27,7 @@ from emoji import emojize
 from telethon.tl.types import TypeMessageEntity
 from functools import partial
 from urllib.parse import urljoin
-from itertools import chain, count, groupby
+from itertools import chain, count, groupby, islice, zip_longest
 
 from .weibo_emojify_map import EMOJIFY_MAP
 from .. import log
@@ -172,7 +172,14 @@ isSmallIcon = re.compile(r'(width|height): ?(([012]?\d|30)(\.\d)?px|([01](\.\d)?
 
 
 class Enclosure:
-    def __init__(self, url: str, length: Union[int, str], _type: str, duration: str = None, thumbnail: str = None):
+    def __init__(
+            self,
+            url: str,
+            length: Union[int, str] = None,
+            _type: str = '',
+            duration: str = None,
+            thumbnail: str = None,
+    ):
         self.url = url
         self.length = (
             int(length)
@@ -294,27 +301,43 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
                 )
 
     # Media RSS
+    # TODO: utilize <media:group> once feedparser supports them, see https://github.com/kurtmckee/feedparser/issues/195
     if (media_content := entry.get('media_content')) and isinstance(media_content, list) and len(media_content) > 0:
-        for media in media_content:
+        if not ((media_thumbnail := entry.get('media_thumbnail')) and isinstance(media_thumbnail, list)):
+            media_thumbnail = ()
+        for media, thumbnail in zip_longest(
+                media_content,
+                islice(media_thumbnail, len(media_content)),
+                fillvalue={},
+        ):
+            if (media_type := media.get('type') or media.get('medium')) and 'flash' in media_type:
+                # Skip application/x-shockwave-flash if it has no thumbnail
+                if not (thumbnail_url := thumbnail.get('url')):
+                    continue
+                # Or replace it with is thumbnail otherwise
+                enclosures.append(
+                    Enclosure(
+                        url=resolve_relative_link(feed_link, thumbnail_url),
+                        _type=thumbnail.get('type', 'image'),
+                    )
+                )
+                continue
             if not (media_url := media.get('url')):
                 continue
-            if (media_type := media.get('type') or media.get('medium')) and 'flash' in media_type:
-                # Skip application/x-shockwave-flash or so on
-                continue
             enclosures.append(
-                Enclosure(url=resolve_relative_link(feed_link, media_url),
-                          length=media.get('fileSize'),
-                          _type=media_type,
-                          duration=media.get('duration')),
+                Enclosure(
+                    url=resolve_relative_link(feed_link, media_url),
+                    length=media.get('fileSize'),
+                    _type=media_type,
+                    duration=media.get('duration'),
+                    thumbnail=thumbnail.get('url'),
+                ),
             )
 
     if len(enclosures) == 1:
         single = enclosures[0]
         if single.duration is None and (itunes_duration := entry.get('itunes_duration')):
             single.duration = itunes_duration
-
-        if (media_thumbnail := entry.get('media_thumbnail', ({},))[0]) and isinstance(media_thumbnail, dict):
-            single.thumbnail = media_thumbnail.get('url')
 
     EntryParsed.enclosures = enclosures or None
 

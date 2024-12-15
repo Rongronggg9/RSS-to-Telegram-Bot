@@ -22,7 +22,7 @@ aerich==0.7.2
 
 # network
 aiohttp[speedups]==3.10.10
-aiohttp-socks==0.9.0
+aiohttp-socks==0.9.1
 aiohttp-retry==2.9.1
 python-socks[asyncio]==2.5.3
 dnspython[idna]==2.7.0

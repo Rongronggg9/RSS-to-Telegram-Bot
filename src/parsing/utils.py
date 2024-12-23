@@ -258,8 +258,8 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
         enclosures: list[Enclosure] = None
 
     content = (
-            entry.get('content')  # Atom
-            or entry.get('summary', '')  # Atom summary or RSS description
+            entry.get('content')  # Atom: <content>; JSON Feed: .content_html, .content_text
+            or entry.get('summary', '')  # Atom: <summary>; RSS: <description>
     )
 
     if isinstance(content, list) and len(content) > 0:  # Atom
@@ -270,6 +270,9 @@ async def parse_entry(entry, feed_link: Optional[str] = None):
                 break
         else:
             content = content[0]
+        content = content.get('value', '')
+    elif isinstance(content, dict):  # JSON Feed
+        # TODO: currently feedparser always prefer content_text rather than content_html, we'd like to change that
         content = content.get('value', '')
 
     EntryParsed.content = await html_validator(content)

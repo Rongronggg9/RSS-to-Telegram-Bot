@@ -39,6 +39,7 @@ from ..web.media import construct_weserv_url_convert_to_2560, construct_weserv_u
 
 logger = log.getLogger('RSStT.medium')
 
+# TODO: separate quirks into another module
 sinaimg_sizes: Final = ('large', 'mw2048', 'mw1024', 'mw720', 'middle')
 sinaimg_size_parser: Final = re.compile(r'(?P<domain>^https?://(wx|tvax?)\d\.sinaimg\.\w+/)'
                                         r'(?P<size>\w+)'
@@ -59,7 +60,14 @@ lizhi_parser: Final = re.compile(r'(?P<url_prefix>^https?://cdn)'
                                  r'(?P<server_id>[125]?)'
                                  r'(?P<url_infix>\.lizhi\.fm/[\w/]+)'
                                  r'(?P<size_suffix>([uh]d\.mp3|sd\.m4a)$)').match
-isTelegramCannotFetch: Final = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
+# Telegram DC can never fetch resources from these domain(s) directly.
+# Send via IMAGE_RELAY_SERVER.
+mustRelay: Final = re.compile(r'^https?://(\w+\.)?telesco\.pe').match
+# Telegram DC can sometimes fetch mismatched resources from these domain(s).
+# Send via weserv to ensure the fetched media is in the desired format.
+# However, these domain(s) are dramatically listed in the blocklist of weserv,
+# so we had to wrap them with IMAGE_RELAY_SERVER.
+mustWeservViaRelay: Final = re.compile(r'^https?://(\w+\.)?img\.alicdn\.com').match
 
 IMAGE: Final = 'image'
 VIDEO: Final = 'video'
@@ -430,7 +438,7 @@ class Medium(AbstractMedium):
                     if flush:
                         flushed_log()
                     self._server_change_count = 0
-                    if isTelegramCannotFetch(self.chosen_url):
+                    if mustRelay(self.chosen_url):
                         await self.change_server()
                     return True
 
@@ -567,32 +575,37 @@ class Image(Medium):
 
     def __init__(self, urls: Union[str, list[str]]):
         super().__init__(urls)
-        new_urls = []
+        new_urls_d = {}  # dict in Python 3.7+ is ordered
         for url in self.urls:
-            sinaimg_match = sinaimg_size_parser(url)
-            pixiv_match = pixiv_size_parser(url) if not sinaimg_match else None
-            if sinaimg_match:
-                parsed_sinaimg = sinaimg_match.groupdict()  # is a sinaimg img
+            if sinaimg_match := sinaimg_size_parser(url):
+                parsed_sinaimg = sinaimg_match.groupdict()
                 for size_name in sinaimg_sizes:
                     new_url = parsed_sinaimg['domain'] + size_name + parsed_sinaimg['filename']
-                    if new_url not in new_urls:
-                        new_urls.append(new_url)
-            elif pixiv_match:
-                parsed_pixiv = pixiv_match.groupdict()  # is a pixiv img
+                    new_urls_d[new_url] = None
+            elif pixiv_match := pixiv_size_parser(url):
+                parsed_pixiv = pixiv_match.groupdict()
                 for size_name in pixiv_sizes:
                     new_url = parsed_pixiv['url_prefix'] + size_name + parsed_pixiv['url_infix'] \
                               + parsed_pixiv['filename'] \
                               + ('_master1200.jpg' if size_name == 'master' else parsed_pixiv['file_ext'])
-                    if new_url not in new_urls:
-                        new_urls.append(new_url)
-            if url not in new_urls:
-                new_urls.append(url)
-        self.urls = new_urls
-        self.type_fallback_urls = new_urls.copy()
-        urls_not_weserv = [url for url in self.urls if not url.startswith(env.IMAGES_WESERV_NL)]
-        self.urls.extend(construct_weserv_url_convert_to_2560(urls_not_weserv[i])
-                         for i in range(min(len(urls_not_weserv), 3)))  # use for final fallback
-        self.chosen_url = self.urls[0]
+                    new_urls_d[new_url] = None
+            elif mustWeservViaRelay(url):
+                new_url = construct_weserv_url_convert_to_2560(f'{env.IMG_RELAY_SERVER}{url}')
+                new_urls_d[new_url] = None
+                # Fall through
+            new_urls_d[url] = None
+        self.type_fallback_urls = new_urls = list(new_urls_d)
+        # Construct up to three weserv URL as a last resort
+        for url, _ in zip(
+                filter(
+                    lambda u: not u.startswith(env.IMAGES_WESERV_NL),
+                    new_urls,
+                ),
+                range(3),
+        ):
+            new_urls_d[construct_weserv_url_convert_to_2560(url)] = None
+        self.urls = new_urls = list(new_urls_d)
+        self.chosen_url = new_urls[0]
 
     def get_multimedia_html(self) -> str:
         return f'<img src="{self.original_urls[0]}" />'

@@ -60,7 +60,7 @@ class YummyCookieJar(aiohttp.abc.AbstractCookieJar):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__real_cookie_jar = aiohttp.DummyCookieJar(*args, **kwargs)
+        self.__real_cookie_jar: aiohttp.abc.AbstractCookieJar = aiohttp.DummyCookieJar(*args, **kwargs)
         self.__init_args = args
         self.__init_kwargs = kwargs
         self.__is_dummy = True
@@ -85,6 +85,10 @@ class YummyCookieJar(aiohttp.abc.AbstractCookieJar):
 
     def filter_cookies(self, *args, **kwargs):
         return self.__real_cookie_jar.filter_cookies(*args, **kwargs)
+
+    @property
+    def quote_cookie(self) -> bool:
+        return self.__real_cookie_jar.quote_cookie
 
 
 class WebError(Exception):

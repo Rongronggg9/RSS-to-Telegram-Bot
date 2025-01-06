@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Final
 from collections.abc import Sequence
 
 from contextlib import suppress
@@ -25,13 +25,28 @@ from telethon.tl.types import TypeMessageEntity
 
 from .utils import surrogate_len, copy_entity, copy_entities, merge_contiguous_entities, filter_entities_by_range
 
+SEPARATORS: Final[Sequence[str]] = (
+    '\n',
+    '。', '. ',
+    '？', '? ',
+    '！', '! ',
+    '：', ': ',
+    '；', '; ',
+    '，', ', ',
+    '\t',
+    ' ', '\xa0',
+    '',
+)
+
 
 def get_plain_text_length(html: str) -> int:
     return len(parse(html)[0])
 
 
-def split_entities(pos: int, entities: Sequence[TypeMessageEntity]) -> tuple[list[TypeMessageEntity],
-                                                                             list[TypeMessageEntity]]:
+def split_entities(
+        pos: int,
+        entities: Sequence[TypeMessageEntity],
+) -> tuple[list[TypeMessageEntity], list[TypeMessageEntity]]:
     before = []
     after = []
     for entity in entities:
@@ -52,9 +67,12 @@ def split_entities(pos: int, entities: Sequence[TypeMessageEntity]) -> tuple[lis
     return before, after
 
 
-def split_text(text: str,
-               length_limit_queue: Optional[Sequence[int]] = None,
-               length_limit_tail: int = 4096) -> list[str]:
+# Unused. Only for reference.
+def split_text(
+        text: str,
+        length_limit_queue: Optional[Sequence[int]] = None,
+        length_limit_tail: int = 4096,
+) -> list[str]:
     if length_limit_queue is None:
         length_limit_queue = []
     ret = []
@@ -64,7 +82,7 @@ def split_text(text: str,
         if len(text) <= curr_length_limit:
             ret.append(text)
             break
-        for sep in ('\n', '。', '. ', '；', '; ', '，', ', ', '？', '? ', '！', '! ', '：', ': ', '\t', ' ', '\xa0', ''):
+        for sep in SEPARATORS:
             sep_pos = text.rfind(sep, int(curr_length_limit * 0.5), curr_length_limit)
             if sep_pos != -1:
                 ret.append(text[:sep_pos + len(sep)])
@@ -74,13 +92,27 @@ def split_text(text: str,
     return ret
 
 
+def is_entities_within_limit(
+        format_entities: Sequence[TypeMessageEntity],
+) -> bool:
+    # A message can contain up to 100 formatting entities, and they must consume no more than 10,000 Bytes.
+    # Here the limit is set to 9,500 Bytes to avoid potential problems.
+    return len(format_entities) <= 100 and sum(
+        map(
+            len,
+            map(bytes, format_entities),
+        )
+    ) < 9500
+
+
 # noinspection PyProtectedMember
-def text_and_format_entities_split(plain_text: str,
-                                   format_entities: Sequence[TypeMessageEntity],
-                                   length_limit_head: int = 4096,
-                                   head_count: int = -1,
-                                   length_limit_tail: int = 4096) \
-        -> list[tuple[str, list[TypeMessageEntity]]]:
+def text_and_format_entities_split(
+        plain_text: str,
+        format_entities: Sequence[TypeMessageEntity],
+        length_limit_head: int = 4096,
+        head_count: int = -1,
+        length_limit_tail: int = 4096,
+) -> list[tuple[str, list[TypeMessageEntity]]]:
     format_entities = merge_contiguous_entities(copy_entities(format_entities))  # sort and merge
 
     chunks = []
@@ -91,10 +123,7 @@ def text_and_format_entities_split(plain_text: str,
     while pending_text:
         curr_length_limit = length_limit_head if head_count <= -1 or len(chunks) < head_count else length_limit_tail
         curr_length_limit = min(curr_length_limit, len(pending_text))
-        # note: Telegram only allows up to 10000-Byte formatting entities per message
-        # here the limit is set to 9500 Bytes to avoid possible problems
-        if len(pending_text) == curr_length_limit and len(pending_entities) <= 100 and len(
-                b''.join(x._bytes() for x in pending_entities)) < 9500:
+        if len(pending_text) == curr_length_limit and is_entities_within_limit(pending_entities):
             if surrogate_len_sum > 0:
                 for entity in pending_entities:
                     entity.offset -= surrogate_len_sum
@@ -102,15 +131,15 @@ def text_and_format_entities_split(plain_text: str,
             break
         for curr_length_limit in range(curr_length_limit, 0, -100):
             with suppress(OverflowError):
-                for sep in ('\n', '。', '. ', '；', '; ', '，', ', ', '？', '? ', '！', '! ', '：', ': ', '\t',
-                            ' ', '\xa0', ''):
+                for sep in SEPARATORS:
                     sep_pos = pending_text.rfind(sep, int(curr_length_limit * 0.5), curr_length_limit)
                     if sep_pos != -1:
                         curr_text = pending_text[:sep_pos + len(sep)]
                         surrogate_end_pos = surrogate_len_sum + surrogate_len(curr_text)
-                        _curr_entities = filter_entities_by_range(surrogate_len_sum, surrogate_end_pos,
-                                                                  pending_entities)
-                        if len(_curr_entities) > 100 or len(b''.join(x._bytes() for x in _curr_entities)) >= 9500:
+                        _curr_entities = filter_entities_by_range(
+                            surrogate_len_sum, surrogate_end_pos, pending_entities,
+                        )
+                        if not is_entities_within_limit(_curr_entities):
                             raise OverflowError('Too many entities')
                         curr_entities, pending_entities = split_entities(surrogate_end_pos, pending_entities)
                         if surrogate_len_sum > 0:
@@ -130,16 +159,20 @@ def text_and_format_entities_split(plain_text: str,
     return stripped_chunks
 
 
-def html_to_telegram_split(html: str,
-                           length_limit_head: int = 4096,
-                           head_count: int = -1,
-                           length_limit_tail: int = 4096) -> list[tuple[str, list[TypeMessageEntity]]]:
+def html_to_telegram_split(
+        html: str,
+        length_limit_head: int = 4096,
+        head_count: int = -1,
+        length_limit_tail: int = 4096,
+) -> list[tuple[str, list[TypeMessageEntity]]]:
     full_text, all_entities = parse(html)
     return text_and_format_entities_split(full_text, all_entities, length_limit_head, head_count, length_limit_tail)
 
 
-def text_and_format_entities_concat(*plain_text_and_format_entities: tuple[str, list[TypeMessageEntity]]) \
-        -> tuple[str, list[TypeMessageEntity]]:
+# Unused. Only for reference.
+def text_and_format_entities_concat(
+        *plain_text_and_format_entities: tuple[str, list[TypeMessageEntity]],
+) -> tuple[str, list[TypeMessageEntity]]:
     plain_text = ''
     format_entities = []
     surrogate_len_sum = 0

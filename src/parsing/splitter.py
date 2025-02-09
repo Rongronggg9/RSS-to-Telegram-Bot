@@ -117,11 +117,17 @@ def text_and_format_entities_split(
 
     chunks = []
 
-    pending_text = plain_text
-    pending_entities = format_entities[:]
-    surrogate_len_sum = 0
+    pending_text: str = plain_text
+    pending_entities: Sequence[TypeMessageEntity] = format_entities[:]
+    surrogate_len_sum: int = 0
+    prev_len_chunks: int = -1
     while pending_text:
-        curr_length_limit = length_limit_head if head_count <= -1 or len(chunks) < head_count else length_limit_tail
+        len_chunks: int = len(chunks)
+        if len(chunks) == prev_len_chunks:
+            raise RuntimeError('Stuck while splitting text and format entities')
+
+        prev_len_chunks = len_chunks
+        curr_length_limit: int = length_limit_head if head_count <= -1 or len_chunks < head_count else length_limit_tail
         curr_length_limit = min(curr_length_limit, len(pending_text))
         if len(pending_text) == curr_length_limit and is_entities_within_limit(pending_entities):
             if surrogate_len_sum > 0:

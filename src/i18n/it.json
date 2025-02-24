@@ -79,7 +79,7 @@
     },
     "l10n_cmd_import": {
         "send_opml_prompt": "Per favore inviatemi il file OPML da importare (il nome dell'estensione deve essere .opml).",
-        "import_for_channel_or_group_prompt": "Se desideri importare abbonamenti per il tuo canale/gruppo, compila il campo con l'ID del canale/gruppo (deve iniziare con '-100') o @username",
+        "import_for_channel_or_group_prompt": "Se desideri importare abbonamenti per il tuo canale/gruppo, compila il campo con l'ID del canale/gruppo (deve iniziare con '-100') o @username.",
         "send_opml_reply_placeholder": "Il file OPML da importare (l'estensione deve essere .opml)",
         "fetch_file_failed": "Recupero del file fallito",
         "opml_import_processing": "Se il numero di feed è elevato o i server dei feed sono lenti, il tempo di attesa potrebbe essere alto. Siediti e rilassati.",

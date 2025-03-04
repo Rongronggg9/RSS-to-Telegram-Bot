@@ -29,6 +29,7 @@ from telethon.tl.types import InputMediaPhotoExternal, InputMediaDocumentExterna
     MessageMediaPhoto, MessageMediaDocument, InputFile, InputFileBig, InputMediaUploadedPhoto
 from telethon.errors import FloodWaitError, SlowModeWaitError, ServerError, BadRequestError
 from urllib.parse import urlparse
+from random import sample
 
 from .. import env, log, web, locks
 from .html_node import Code, Link, Br, Text, HtmlTree
@@ -806,6 +807,64 @@ class Media:
             return
         self._media.append(medium)
 
+    async def sample_images(self, max_count=10):
+        """
+        When image count exceeds max_count, sample images from start, middle, and end
+        
+        :param max_count: Maximum image count
+        """
+        # Find all image type media
+        images = [m for m in self._media if isinstance(m, Image) and not m.drop_silently]
+        
+        # If image count does not exceed max_count, no need to sample
+        if len(images) <= max_count:
+            return
+            
+        async with self.modify_lock:
+            # Divide images into three parts: start, middle, and end
+            img_count = len(images)
+            head_size = max(1, max_count // 3)  # Image count in start part
+            tail_size = max(1, max_count // 3)  # Image count in end part
+            middle_size = max_count - head_size - tail_size  # Image count in middle part
+            
+            # Ensure total does not exceed max_count
+            if head_size + middle_size + tail_size > max_count:
+                middle_size = max_count - head_size - tail_size
+            
+            # If middle part is insufficient, adjust head and tail size
+            if middle_size < 0:
+                reduced = abs(middle_size) // 2 + (1 if abs(middle_size) % 2 else 0)
+                head_size = max(1, head_size - reduced)
+                tail_size = max(1, tail_size - (abs(middle_size) - reduced))
+                middle_size = 0
+            
+            # Calculate index range for each part
+            head_indices = list(range(0, min(img_count // 3, img_count - 1)))
+            tail_indices = list(range(max(img_count * 2 // 3, 1), img_count))
+            middle_indices = list(range(len(head_indices), img_count - len(tail_indices)))
+            
+            # Sample
+            selected_head = sample(head_indices, min(head_size, len(head_indices))) if head_indices else []
+            selected_tail = sample(tail_indices, min(tail_size, len(tail_indices))) if tail_indices else []
+            selected_middle = sample(middle_indices, min(middle_size, len(middle_indices))) if middle_indices and middle_size > 0 else []
+            
+            # If some part is insufficient, supplement from other parts
+            remaining = max_count - len(selected_head) - len(selected_middle) - len(selected_tail)
+            if remaining > 0:
+                remaining_indices = [i for i in range(img_count) 
+                                     if i not in selected_head and i not in selected_middle and i not in selected_tail]
+                if remaining_indices:
+                    extra_selected = sample(remaining_indices, min(remaining, len(remaining_indices)))
+                    selected_head.extend(extra_selected)
+            
+            # Merge all selected indices
+            selected_indices = set(selected_head + selected_middle + selected_tail)
+            
+            # Mark unselected images as not to send
+            for i, img in enumerate(images):
+                if i not in selected_indices:
+                    img.drop_silently = True
+    
     def url_exists(self, url: str, loose: bool = False) -> Optional[Medium]:
         # must check if medium is Medium and not UploadedImage
         if not loose:
@@ -879,6 +938,8 @@ class Media:
         :param chat_id: chat_id to upload to. If None, the origin media will be returned.
         :return: ((uploaded/original medium, medium type), invalid media html node)
         """
+        await self.sample_images(max_count=10)
+        
         await self.validate()
 
         media_and_types: tuple[

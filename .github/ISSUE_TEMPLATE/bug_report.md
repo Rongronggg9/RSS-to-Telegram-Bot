@@ -7,19 +7,38 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Describe the bug
+> [!TIP]<!--- Remove this blockquote before submitting -->\
+> A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
+## To Reproduce
+> [!TIP]<!--- Remove this blockquote before submitting -->\
+> Steps to reproduce the behavior.
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
+2. Click on '...'
+3. Scroll down to '...'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Screenshots
+> [!TIP]<!--- Remove this blockquote before submitting -->\
+> If applicable, upload screenshots to help explain your problem.
 
-**Important log**
-You may execute `docker logs [container name]` to get log.
-Choose that is important and paste it here.
+## Feed URL
+> [!TIP]<!--- Remove this blockquote before submitting -->\
+> If applicable, provide the feed URL that causes the bug.
+
+## Expected behavior
+> [!TIP]<!--- Remove this blockquote before submitting -->\
+> A clear and concise description of what you expected to happen.
+
+## Important log
+> [!IMPORTANT]<!--- Remove this blockquote before submitting -->\
+> Rerun RSStT with `DEBUG=1` set in the environment variables, and paste the log below.
+> If you are using Docker, you can get the log by executing:
+> ```sh
+> docker logs <container name>
+> ```
+
+```
+PASTE LOG HERE
+```

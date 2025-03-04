@@ -1,11 +1,28 @@
+#  RSS to Telegram Bot
+#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 from typing import Union, Optional
 from typing_extensions import Final
 from collections.abc import Awaitable
 
 import asyncio
-import time
 import aiographfix as aiograph
+import re
+import time
 from io import BytesIO
 from bs4 import BeautifulSoup
 from contextlib import suppress
@@ -15,13 +32,37 @@ from aiohttp_socks import ProxyConnector
 
 from .. import env, log
 from .utils import is_emoticon, emojify, resolve_relative_link, isAbsoluteHttpLink
-from ..aio_helper import run_async_on_demand
+from ..web.media import construct_weserv_url
+from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]
 if env.TABLE_TO_IMAGE:
     from .table_drawer import convert_table_to_png
 else:
     convert_table_to_png = None
+
+DOMAIN_PATTERN_TEMPLATE: Final[str] = r'^https?://(?:[^./]+\.)?(?:{domains})\.?(?:/|:|$)'
+BLOCKED_BY_WESERV_DOMAIN: Final[set[str]] = {
+    'sinaimg.cn',
+    'wp.com',
+}
+BLOCKED_BY_WESERV_RE: Final[re.Pattern] = re.compile(
+    DOMAIN_PATTERN_TEMPLATE.format(
+        domains='|'.join(map(re.escape, BLOCKED_BY_WESERV_DOMAIN)),
+    ),
+    re.I,
+)
+ALLOW_REFERER_DOMAIN: Final[set[str]] = set(filter(None, {
+    'wp.com',
+    env.IMG_RELAY_SERVER.partition('://')[2].partition('/')[0].strip('.'),
+    env.IMAGES_WESERV_NL.partition('://')[2].partition('/')[0].strip('.'),
+}))
+ALLOW_REFERER_RE: Final[re.Pattern] = re.compile(
+    DOMAIN_PATTERN_TEMPLATE.format(
+        domains='|'.join(map(re.escape, ALLOW_REFERER_DOMAIN)),
+    ),
+    re.I,
+)
 
 logger = log.getLogger('RSStT.tgraph')
 
@@ -202,8 +243,7 @@ class TelegraphIfy:
         self.task = env.loop.create_task(self.generate_page())
 
     async def generate_page(self):
-        soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
-                                         prefer_pool='thread', condition=len(self.html) > 64 * 1024)
+        soup = await run_async(BeautifulSoup, self.html, 'lxml', prefer_pool='thread')
 
         for tag in soup.find_all(recursive=True):
             with suppress(ValueError, AttributeError):
@@ -293,8 +333,15 @@ class TelegraphIfy:
                     if not isAbsoluteHttpLink(attr_content):
                         tag.replaceWithChildren()
                         continue
-                    if tag.name in {'video', 'img'} and not attr_content.startswith(env.IMG_RELAY_SERVER):
-                        attr_content = env.IMG_RELAY_SERVER + attr_content
+                    if not ALLOW_REFERER_RE.match(attr_content):
+                        if tag.name == 'video':
+                            attr_content = env.IMG_RELAY_SERVER + attr_content
+                        elif tag.name == 'img':
+                            attr_content = (
+                                env.IMG_RELAY_SERVER + attr_content
+                                if BLOCKED_BY_WESERV_RE.match(attr_content)
+                                else construct_weserv_url(attr_content)
+                            )
                     tag.attrs = {attr_name: attr_content}
 
         if self.feed_title:

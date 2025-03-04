@@ -1,15 +1,34 @@
+#  RSS to Telegram Bot
+#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
-from typing import AnyStr, Any, Union, Optional
-from collections.abc import Iterable, Mapping
+from typing import Any, Union, Optional
+from collections.abc import Iterable, Sequence
 
 import asyncio
 import re
-from itertools import chain
-from datetime import datetime
-from email.utils import parsedate_to_datetime
-from zlib import crc32
+from collections import defaultdict
+from itertools import chain, repeat
 from telethon import Button
 from telethon.tl.types import KeyboardButtonCallback
+
+try:
+    from isal.isal_zlib import crc32
+except ImportError:
+    from zlib import crc32
 
 from ... import db, log, env
 from ...i18n import i18n
@@ -28,17 +47,35 @@ def parse_hashtags(text: str) -> list[str]:
 def construct_hashtags(tags: Union[Iterable[str], str]) -> str:
     if isinstance(tags, str):
         tags = parse_hashtags(tags)
-    return ' '.join(f'#{tag}' for tag in tags)
+    return '#' + ' #'.join(tags)
 
 
-def get_hash(string: AnyStr) -> str:
-    if isinstance(string, str):
-        string = string.encode('utf-8')
-    return hex(crc32(string))[2:]
+def calculate_update(old_hashes: Optional[Sequence[str]], entries: Sequence[dict]) \
+        -> tuple[Iterable[str], Iterable[dict]]:
+    new_hashes_d = {
+        hex(crc32(guid.encode('utf-8')))[2:]: entry
+        for guid, entry in (
+            (
+                entry.get('guid') or entry.get('link') or entry.get('title') or entry.get('summary')
+                or (
+                    # the first non-empty content.value
+                    next(filter(None, map(lambda content: content.get('value'), entry.get('content', []))), '')
+                ),
+                entry
+            )
+            for entry in entries
+        )
+        if guid
+    }
+    if old_hashes:
+        new_hashes_d.update(zip(old_hashes, repeat(None)))
+    new_hashes = new_hashes_d.keys()
+    updated_entries = filter(None, new_hashes_d.values())
+    return new_hashes, updated_entries
 
 
 def filter_urls(urls: Optional[Iterable[str]]) -> tuple[str, ...]:
-    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls)) if urls else tuple()
+    return tuple(filter(lambda x: x.startswith('http://') or x.startswith('https://'), urls)) if urls else ()
 
 
 # copied from command.utils
@@ -60,21 +97,6 @@ def formatting_time(days: int = 0, hours: int = 0, minutes: int = 0, seconds: in
     )
 
 
-def get_http_last_modified(headers: Optional[Mapping]) -> datetime:
-    """
-    :param headers: dict of headers
-    :return: last modified time
-    """
-    last_modified = headers.get('Last-Modified') or headers.get('Date') if headers else None
-    try:
-        return parsedate_to_datetime(last_modified) if last_modified else datetime.utcnow()
-    except ValueError:
-        try:
-            return datetime.fromisoformat(last_modified)  # why some websites are so freaky? I can't understand
-        except ValueError:
-            return datetime.utcnow()
-
-
 def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> tuple[tuple[Any, ...], ...]:
     """
     :param to_arrange: `Iterable` containing objects to arrange
@@ -92,38 +114,34 @@ def arrange_grid(to_arrange: Iterable, columns: int = 8, rows: int = 13) -> tupl
     ) if counts > 0 else ()
 
 
-def get_lang_buttons(callback=str, current_lang: str = None) \
+def get_lang_buttons(callback=str, current_lang: str = None, tail: str = '') \
         -> tuple[tuple[tuple[KeyboardButtonCallback, ...], ...], tuple[str, ...]]:
-    lang_3_per_row = [lang for lang in i18n.lang_3_per_row if lang != current_lang]
-    lang_2_per_row = [lang for lang in i18n.lang_2_per_row if lang != current_lang]
-    lang_1_per_row = [lang for lang in i18n.lang_1_per_row if lang != current_lang]
+    def push(n_: int):
+        if len(carry) >= n_:
+            lang_n_per_row[n_].extend(carry)
+            carry.clear()
 
-    _ = len(lang_3_per_row) % 3
-    if _ != 0:
-        lang_2_per_row.extend(lang_3_per_row[-_:])
-        lang_2_per_row.sort()
-        lang_3_per_row = lang_3_per_row[:-_]
+    lang_n_per_row = defaultdict(list)
+    carry = []
+    for n in sorted(i18n.lang_n_per_row.keys(), reverse=True):
+        for lang in i18n.lang_n_per_row[n]:
+            if lang == current_lang:
+                continue
+            push(n)
+            carry.append(lang)
+        push(n)
+        lang_n_per_row[n].sort()
+    push(1)
 
-    _ = len(lang_2_per_row) % 2
-    if _ != 0:
-        lang_1_per_row.extend(lang_2_per_row[-_:])
-        lang_1_per_row.sort()
-        lang_2_per_row = lang_2_per_row[:-_]
-
-    buttons = (
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
-                          for lang in lang_3_per_row),
-                         columns=3)
-            +
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
-                          for lang in lang_2_per_row),
-                         columns=2)
-            +
-            arrange_grid((Button.inline(i18n[lang]['lang_native_name'], data=f'{callback}={lang}')
-                          for lang in lang_1_per_row),
-                         columns=1)
+    buttons = tuple(
+        tuple(map(
+            lambda l: Button.inline(i18n[l]['lang_native_name'], data=f'{callback}={l}{tail}'),
+            lang_n_per_row[n][i:i + n]
+        ))
+        for n in sorted(lang_n_per_row.keys(), reverse=True)
+        for i in range(0, len(lang_n_per_row[n]), n)
     )
-    langs = tuple(chain(lang_3_per_row, lang_2_per_row, lang_1_per_row))
+    langs = tuple(chain.from_iterable(lang_n_per_row.values()))
     return buttons, langs
 
 
@@ -306,7 +324,7 @@ async def check_sub_limit(user_id: int, force_count_current: bool = False) -> tu
     curr_count: int = -1
     limit: int = -1
     is_default_limit: bool = False
-    if user_id != env.MANAGER:
+    if user_id not in env.MANAGER:
         # noinspection PyTypeChecker
         limit: Optional[int] = await db.User.get_or_none(id=user_id).values_list('sub_limit', flat=True)
         if limit is None:

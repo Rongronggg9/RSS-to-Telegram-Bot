@@ -65,6 +65,6 @@
 
 |                       |              RSStT              |              flowerss              |
 |:---------------------:|:-------------------------------:|:----------------------------------:|
-|   Telegram message    | ![](resources/RSStT_tgmsg.jpg)  | ![](resources/flowerss_tgmsg.jpg)  | 
-|       Telegraph       | ![](resources/RSStT_tgraph.jpg) | ![](resources/flowerss_tgraph.jpg) | 
-| Only title and source |  ![](resources/RSStT_t&s.jpg)   |  ![](resources/flowerss_t&s.jpg)   | 
+|   Telegram message    | ![](resources/RSStT_tgmsg.jpg)  | ![](resources/flowerss_tgmsg.jpg)  |
+|       Telegraph       | ![](resources/RSStT_tgraph.jpg) | ![](resources/flowerss_tgraph.jpg) |
+| Only title and source |  ![](resources/RSStT_t&s.jpg)   |  ![](resources/flowerss_t&s.jpg)   |

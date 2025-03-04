@@ -1,13 +1,33 @@
+#  RSS to Telegram Bot
+#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 from typing import Optional, Any, NoReturn, Union
 from typing_extensions import Final
 from collections.abc import Callable
 
+from collections import defaultdict
 from contextlib import suppress
 from math import ceil
 from random import shuffle
 
 from . import models
+from .. import log
+
+logger = log.getLogger('RSStT.db')
 
 
 class __EffectiveOptions:
@@ -38,6 +58,7 @@ class __EffectiveOptions:
             "channel_or_group_sub_limit": -1,
             "sub_limit_reached_message": "",
         }
+        self.__callbacks: defaultdict[str, list[Callable[[str, Any], NoReturn]]] = defaultdict(list)
 
     @property
     def options(self) -> dict[str, Union[str, int]]:
@@ -104,6 +125,10 @@ class __EffectiveOptions:
         value = self.cast(key, value)
         await models.Option.update_or_create(defaults={'value': str(value)}, key=key)
         self.__options[key] = value
+        if key not in self.__callbacks:
+            return
+        for callback in self.__callbacks[key]:
+            callback(key, value)
 
     async def cache(self) -> NoReturn:
         """
@@ -113,13 +138,27 @@ class __EffectiveOptions:
         options = {o.key: o.value for o in options}
 
         for key, value in self.__default_options.items():
-            if key in options:
-                self.__options[key] = self.cast(key, options[key], ignore_type_error=True)
-            else:
-                self.__options[key] = value
-                # await models.Option.create(key=key, value=value)  # init option
+            if key in options:  # retrieved from db
+                value = self.cast(key, options[key], ignore_type_error=True)  # cast using the type of default value
+            self.__options[key] = value
+            # await models.Option.create(key=key, value=value)  # init option
+            if key not in self.__callbacks:
+                continue
+            for callback in self.__callbacks[key]:
+                callback(key, value)
 
         self.__cached = True
+
+    def add_set_callback(self, key: str, callback: Callable[[str, Any], NoReturn]) -> NoReturn:
+        """
+        Register a callback to be called when an option is set.
+
+        :param key: option key
+        :param callback: callback function
+        """
+        if key not in self.__default_options:
+            raise KeyError("Invalid option key")
+        self.__callbacks[key].append(callback)
 
 
 EffectiveOptions = __EffectiveOptions()

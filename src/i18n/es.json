@@ -137,7 +137,10 @@
         "length_limit_only_effective_if_send_mode_auto": "El límite de longitud sólo funciona cuando el modo de envío es automático.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "El modo de envío actual nunca mostrará medios en los mensajes de Telegram.",
         "use_user_default_button": "Utiliza mi valor por defecto",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Lee la guía de ajustes de formato aquí.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Lee la guía de ajustes de formato aquí.</a>",
+        "display_entry_tags_-1": "Desactivado",
+        "display_entry_tags_1": "Activado",
+        "display_entry_tags": "Hashtags del post (entrada del feed)"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Establece la configuración por defecto de las suscripciones.\n\nLa configuración no establecida de una suscripción volverá a la configuración de esta página. Es útil si quieres establecer la misma configuración para la mayoría de tus suscripciones.",

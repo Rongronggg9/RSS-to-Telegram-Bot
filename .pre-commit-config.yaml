@@ -1,0 +1,64 @@
+# This is the configuration file for pre-commit (https://pre-commit.com/).
+# To use:
+# * Install pre-commit (https://pre-commit.com/#installation)
+# * Run "pre-commit install".
+
+default_install_hook_types: [ commit-msg, pre-commit ]
+ci:
+  autofix_commit_msg: "style: [pre-commit.ci] auto fixes"
+  autofix_prs: true
+  autoupdate_branch: dev
+  autoupdate_schedule: monthly
+  autoupdate_commit_msg: "ci: [pre-commit.ci] autoupdate"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [ "--enforce-all" ]
+        exclude_types: [ image ]
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-illegal-windows-names
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-xml
+      - id: check-yaml
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: detect-aws-credentials
+        args: [ "--allow-missing-credentials" ]
+      - id: detect-private-key
+      # we'd like all parts of string literal concatenation[1] use the same quotation mark, but this hook messes them up
+      # [1]: https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation
+      #- id: double-quote-string-fixer
+      - id: end-of-file-fixer
+      # must opt in by setting 'files'
+      #- id: file-contents-sorter
+      - id: fix-byte-order-marker
+      # unnecessary for Python 3
+      #- id: fix-encoding-pragma
+      # unnecessary when forbid-submodules is enabled
+      #- id: forbid-new-submodules
+      # enable it for the time being, we can disable it later if we do need to use submodules
+      - id: forbid-submodules
+      - id: mixed-line-ending
+        args: [ "--fix=lf" ]
+      - id: name-tests-test
+      # unneeded
+      #- id: no-commit-to-branch
+      # messing up commits made by weblate
+      #- id: pretty-format-json
+      # no need to sort it
+      #- id: requirements-txt-fixer
+      # must opt in by setting 'files'
+      #- id: sort-simple-yaml
+      - id: trailing-whitespace

@@ -1,6 +1,214 @@
 # Changelog
 
-## Published to PyPI, HTML table converter, and more (v2.2.1)
+## Unreleased
+
+### Enhancements
+
+- **Support for chat-specific #hashtags**: Telegram recently added a feature called "chat-specific hashtags," formatting as `#hashtag@username`. However, escaping '@' broke these hashtags. Properly supports such hashtags by allowing '@' in hashtags.
+- **No longer proxies images from `*.wp.com` when generating Telegraph posts**: `*.wp.com` is in the blocklist of `wsrv.nl` (environment variable `IMAGES_WESERV_NL`). Thus, these images are no longer proxied when generating Telegraph posts. All images from `*.wp.com` can be accessed with any referer header, so they are now kept as is.
+- **Minor enhancements**: Some internal functions have been refined to enhance compatibility with various feeds.
+- **Minor refactor**: Some internal functions have been refactored to improve performance, readability and maintainability.
+
+### Bug fixes
+
+- **Canonical `DATABASE_URL` not recognized**: Since v2.9.0, `DATABASE_URL` is canonicalized before connecting to the corresponding database. However, a canonical URL pointing to a local path cannot be recognized when checking the validity of the scheme (database type). Both canonical (`scheme:/path/to/file.db`) and traditional (`scheme:///path/to/file.db`) forms of such URLs are recognized correctly now.
+- **Monitoring not deferred as per server-side cache when subscribing**: Since v2.7.0, monitoring tasks will be deferred when aggressive server-side caches (e.g., Cloudflare and RSSHub, which make it futile to check for updates before cache expiration) are detected. However, the first monitoring task for a newly subscribed feed was not being deferred. This has been fixed and the first monitoring task now waits for the server-side cache to expire.
+- **Minor bug fixes**
+
+## v2.9.0: Telegraph-related revert, skip cert verification, and more
+
+### BREAKING CHANGES
+
+Media (image and video) are no longer uploaded when generating Telegraph posts due to [Telegraph disabling media upload](https://t.me/durov/343). (first introduced in v2.6.0)
+
+### Addition
+
+- **Disable TLS certificate verification**: The environment variable `VERIFY_TLS` has been added to disable (when set to `0`) or enable (when set to `1`, default) TLS certificate verification. This is useful when subscribing to feeds with their TLS misconfigured. Note: Disabling TLS certificate verification is not recommended and should only be used as a last resort.
+
+### Enhancements
+
+- **Sanitize post title and author**: The title and author of a post (RSS item or Atom entry) are now sanitized to prevent unexpected formatting issues. In particular, unexpected whitespaces and linebreaks are removed, and any HTML elements are stripped. This helps display them correctly in Telegram messages as well as Telegraph posts.
+- **Improve robustness on Railway.app**: Some Railway-specific environment variables are recognized to improve robustness on Railway.app. In particular, `DATABASE_PRIVATE_URL` and `DATABASE_PUBLIC_URL` will be used when `DATABASE_URL` is unavailable or invalid. This should solve most database connection issues on Railway.app.
+- **Minor refactor**: Some internal functions have been refactored to improve readability and maintainability.
+
+### Bug fixes
+
+- **`/version` not working**: When installed from PyPI (e.g. `pip install rsstt`), the `/version` command might cause an error. This was a regression introduced in v2.7.0.
+- **Bot managers can set monitoring intervals shorter than limit**: Due to the breaking change introduced in v2.8.0, the privilege of bot managers to set intervals shorter than the minimal monitoring interval became useless. While v2.8.0 only applied this limitation when monitoring the updates of feeds, this release also applies it to the attempts by bot managers to change the monitoring interval for a subscription. Note: bot managers can always lower the minimal monitoring interval by adjusting `minimal_interval` in `/set_option` (see also [Advanced Settings](advanced-settings.md)), but doing so will also permit anyone who is able to use the bot to set shorter intervals.
+- **Minor bug fixes**
+
+## v2.8.0: Retain post order, rewritten monitor, and more
+
+### BREAKING CHANGES
+
+- **Minimal monitoring interval is enforced**: The minimal monitoring interval (`minimal_interval` in `/set_option`) is now applied to all subscriptions regardless of their interval set in the database. Previously, setting a minimal monitoring interval would only affect future attempts to change the monitoring interval for a subscription and would not be applied to bot managers. As a result, pre-existing subscriptions and subscriptions of bot managers escaped. The new behavior is more consistent and predictable. If you are a bot manager of a self-hosted instance and rely on the old behavior that bot managers were able to set shorter intervals than the minimal monitoring interval, you probably need to adjust `minimal_interval` in `/set_option` (see also [Advanced Settings](advanced-settings.md)).
+
+### Highlights
+
+- **Retain post order**: Retain the order of posts in a feed when sending them. Previously, all new posts were sent simultaneously, losing their order within the feed. Note: Posts from different feeds are still sent simultaneously, so it is expected to see them interlaced.
+- **Rewritten monitor**: The feed monitor has been rewritten for flexibility and robustness. It is now more memory-efficient and can smooth out spikes in CPU usage.
+
+### Enhancements
+
+- **Print Telegram user info of bot**: Print the bot's Telegram user info when the bot is started. This is to help bot managers to find the bot's username and user ID when deploying the bot.
+- **Minor refactor**: Some internal functions have been refactored to improve performance and maintainability.
+
+### Bug fixes
+
+- **Exit with 0 when disconnected**: If the bot was logged out due to a network error or Telegram DC degradation, it would exit with exit-code 0. This led to confusion when the bot was running in a container or as a service. Now the bot will exit with exit-code 100 when disconnected.
+- **Unable to handle completely empty posts**: Fix `AttributeError` caused by completely empty posts. They are ignored now.
+- **Minor bug fixes**
+
+## v2.7.0: #Hashtags from post, Python 3.12 support, and more
+
+### BREAKING CHANGES
+
+- **Migrate to `aerich` 0.7.2**: A breaking change introduced in `aerich` (a dependency of RSStT) 0.7.x has prevented RSStT from upgrading it for a long time. A lot of effort has been made, so the migration is expected to be seamless and shouldn't break anything. However, it is encouraged to make a database backup before upgrading RSStT. If you encounter any issues due to the migration, please file a bug report.
+
+### Highlights
+
+- **#Hashtags from post (feed entry)**: If enabled in `/set` or `/set_default`, hashtags from posts (feed entries), merged with the custom hashtags of the feed, will be added to the message. The term "hashtags from post" refers to `<category>` elements in RSS `<item>` or Atom `<entry>`. This feature is disabled by default. Thanks [@maooyer](https://github.com/maooyer) for their first contribution in [#449](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/pull/449).
+- **Support Python 3.12**: Minor fixes have been made to support Python 3.12. The official Docker image is now based on Python 3.12 as well.
+- **Helper scripts to make contributions easier**: When performing contributions that update database models, creating database migration files is not an easy job. [scripts/aerich_helper.py](../scripts/aerich_helper.py) is a helper script that can simplify the process. Passing `--help` to the script to see a detailed usage guide.
+
+### Enhancements
+
+- **Defer monitoring as per RSSHub TTL**: Defer monitoring as per the TTL (Time To Live) of feeds generated by RSSHub. RSSHub caches feed until the TTL expires, so aggressively monitoring RSSHub feeds with a long TTL is unnecessary. This aims to reduce the load of RSStT instances, as well as RSSHub instances. No delay will be applied if TTL is unavailable or less than 5 minutes. Feeds not generated by RSSHub are unaffected, considering the widespread misuse of RSS TTL.
+- **Defer monitoring as per Cloudflare cache**: Ditto, but for feeds proxied by Cloudflare. If Cloudflare proxies a feed without caching it, no delay will be applied to the feed.
+- **Better handling custom #hashtags**: Invalid characters and punctuations that break hashtags are now replaced with `_` (underscore) when setting custom hashtags.
+- **Refine monitoring logging**: The monitoring log has been refined to be more informative and easier to read.
+- **Minor refactor**: Some internal functions have been refactored to improve readability and maintainability.
+
+## v2.6.0: Upload media to Telegraph, management enhancements
+
+### Highlights
+
+- **Upload media to Telegraph**: When generating Telegraph posts, images as well as videos will be uploaded to Telegraph. This is to solve anti-hotlinking issues and improve the load performance of posts. This feature depends on the latest version of the media relay server ([Rongronggg9/rsstt-img-relay](https://github.com/Rongronggg9/rsstt-img-relay)). Those images and videos that are too large to be uploaded will still be proxied by `wsrv.nl` (environment variable `IMAGES_WESERV_NL`) or media relay server (environment variable `IMG_RELAY_SERVER`). Thanks [#431](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/pull/431) for inspiration.
+
+### Addition
+
+- **Multiple managers**: The environment variable `MANAGER` now accepts a single user ID as well as a list separated by `;`, `,`, `(space)`, `(linebreak)`, or `(tab)`. Each user in the list will be able to manage the bot **equally**.
+- **Customizable error logging chat**: Previously, some error logs were always sent to the bot manager. To make it more flexible, a new environment variable `ERROR_LOGGING_CHAT`, accepting a **single** user/channel/group ID, has been added. If set, these error logs will be sent to the specified chat. Otherwise, the first user ID in `MANAGER` will be selected as default.
+
+### Enhancements
+
+- **Strip whitespaces in `<li>`**: Strip whitespaces (including linebreaks) in `<li>` (list item) to improve readability. Only the leading and trailing whitespaces (including linebreaks) are stripped.
+- **Only set "force reply" in groups**: Only set `ReplyKeyboardForceReply` to `True` in groups. Previously, it was also set in private chats. See also "Bug fixes" below.
+- **Minor refactor**: Some internal functions have been refactored to improve readability and maintainability.
+
+### Bug fixes
+
+- **(`/sub`) "force reply" not cleared**: Both `/sub` and `/import` set `ReplyKeyboardForceReply` to `True` to force the user to reply to the bot. However, due to a bug of Telegram, it keeps effective even if the user has made a reply, making the reply bar always reappear. Previously, a workaround has been applied to `/import` by deleting the prompt message containing `ReplyKeyboardForceReply` after the user has made a reply (see also [#170](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/170)). But `/sub` was forgotten at that time. Now the workaround has been applied to `/sub` too.
+- **"Remote" `/lang` unavailable**: Fix a bug preventing users from using the `/lang` command "remotely".
+
+## v2.5.0: Responsiveness improvement, tiny enhancements and fixes
+
+### Addition
+
+- **Set niceness for subprocesses/threads**: (Unix only) Nice subprocesses and/or threads to improve the responsiveness of the main process. This is tunable via the environment variable `EXECUTOR_NICENESS_INCREMENT`.
+
+### Enhancements
+
+- **HTML list support improvement**: Now `<menu>` and `<dir>` are treated the same as `<ul>` (unordered list). In addition, orphan `<li>` (list item) without a valid list parent tag are no longer ignored but treated as an item in an single unordered list.
+
+### Bug fixes
+
+- **Stay in topic group even when the "General" topic is closed**: Now that topic groups are not fully supported, the bot can only send messages in the "General" topic. Previously, the bot would only send an error message to the bot manager if the "General" topic is closed. Now the bot will leave the topic group, without disturbing the bot manager, if the "General" topic is closed. This is a temporary limitation before topic groups are fully supported.
+- **v2.4.1 not released to PyPI**: Due to a previous mistake, v2.4.1 could not be released to PyPI. v2.5.0 fixes the mistake and is released to PyPI.
+
+## v2.4.1: Minor enhancements, bug fixes, and Happy New Year!
+
+### Enhancements
+
+- **`wsrv.nl` via relay**: Try to use `wsrv.nl` (environment variable `IMAGES_WESERV_NL`) via the media relay server (environment variable `IMG_RELAY_SERVER`). This is a workaround for images from domains/TLDs banned by `wsrv.nl` or CDNs that ban `wsrv.nl`. It can hopefully reduce the frequency of seeing "invalid media" in messages since RSStT uses `wsrv.nl` heavily to convert images into formats accepted by Telegram DCs. See also [#369](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/issues/369).
+- **Append enclosures to Telegraph post**: Append enclosures (if any) to Telegraph post if any. Previously, enclosures can only be sent in Telegram messages, but not in Telegraph posts.
+- **Dependencies update**: Bumped most outdated dependencies to the latest version. An optional dependency `isal` has been added to slightly improve the performance of entry hashing.
+- **L10n update**: Localizations have been updated.
+- **Misc refactoring**: Some code has been refactored to improve readability and maintainability.
+
+### Bug fixes
+
+- **"Remote" `/test` unavailable**: Fix a bug preventing the bot manager from using the `/test` command "remotely".
+- **Resized images still too big**: Fix a bug causing images resized by `wsrv.nl` to be sometimes too big (exceed the 5MiB limitation of Telegram DC) to send.
+- **Sinaimg images not parsed properly**: Fix the URL regex of Sinaimg images. It can hopefully reduce the frequency of seeing "invalid media" in messages.
+- **WEBP fully fetched regardless of fetch limit**: Fix a bug causing WEBP without `Content-Length` header to be fully fetched regardless of the fetch limit.
+- **Entry hashing for monitor and sub not unified**: Unify the entry hashing for monitor and sub. Previously, the entry hashing for monitor and sub is not unified, which may cause the bot to send persisting entries (posts) after a feed is subscribed for the first time.
+
+## v2.4.0: Significant performance improvement, native blockquote and syntax highlighting
+
+### BREAKING CHANGES
+
+- **Drop Python 3.7 & 3.8 support**: The minimum Python version requirement is now 3.9.
+
+### Highlights
+
+#### Performance enhancements
+
+- **Reuse SSL context**: Reuse SSL context as `aiohttp` does. This improves performance (reduce load average by ~40%) and reduces memory usage.
+- **Lazy CookieJar**: Lazy creating CookieJar until there is really a Cookie. This improves performance (reduce load average by ~15%) and reduces memory usage.
+
+### Additions
+
+- **Native blockquote**: `<blockquote>` is now rendered as a native Telegram blockquote rather than a text block wrapped with horizontal rules.
+- **Syntax highlighting**: `<pre>` is now rendered as a native Telegram code block with syntax highlighting, as long as the language is specified in the `class` attribute.
+
+### Enhancements
+
+- **Custom-title-aware OPML**: When importing and exporting OPML, the bot will try to distinguish if a feed is of a custom title, and preserve it if so.
+- **`/lang` and `/test` as "remote" commands**: `/lang` and `/test` are now recognized as "remote" commands, which means you can use them in the private chat to make the operation actually apply to the channel/group you've specified in the command. Note: `/test` is only available to the bot manager.
+- **`/user_info` UX enhancement**: `/user_info` now has a better UX. Note: `/user_info` is only available to the bot manager.
+- **Minor enhancements**: The Docker image is now based on Debian bookworm.
+
+### Bug fixes
+
+- **Unexpected feed migration**: Fix a bug causing the bot to migrate feeds to a new URL unexpectedly. More specifically, the bot will now only migrate a feed if a redirection is considered permanent (HTTP status code 301 or 308).
+- **WEBP sent with wrong color space**: Fix a bug causing WEBP images sent with a wrong color space.
+- **Incorrect OPML format**: Fix incorrect OPML format making some RSS readers unable to import the OPML file exported by the bot.
+- **Mistaken watchdog feed timing**: Fix a bug causing the watchdog to be feed at the wrong time.
+- **Uncaught errors**: Fix some uncaught errors causing messages failed to be sent.
+
+## v2.3.0: Improved performance, subscription quantity limit, and more
+
+This is a long-awaited release. Nice to meet you again in the changelog! This is the last release that supports Python 3.7, and there will not be any patch version for the v2.3.x series. Any fixes will only be applied to the next release, which will bump the minimum Python version requirement to 3.9.
+
+### Performance enhancements
+
+- **Support for Python 3.11**: Released in 2022-10-24, Python 3.11 is [10–60% (on average 25%) faster](https://docs.python.org/3.11/whatsnew/3.11.html#faster-cpython) than Python 3.10. RSStT now supports Python 3.11 and the official Docker image is based on Python 3.11.
+- **CPU**: Decrease the load average by ~30% (depends on the usage scenario). Thanks to a dependency migration from pure Python `fuzzwuzz` to C-extension `rapidfuzz` and a lot of performance tuning.
+- **Memory**: (Docker image only) Reduce memory consumption and improve memory allocation performance by adopting `jemalloc`.
+- **Multicore CPU**: If the environment variable `MULTIPROCESSING` is set to `1`, multiple processes will be started. The number of processes is equal to the cores of CPU, but the maximum is 3. One is the main process, the others (if any) are used to parse RSS feeds, etc. Note that it is only valid when there are more than 1 CPU core, otherwise only 1 process (main process) will be started. It may help improve the performance on multicore CPUs but consumes more memory. Usually you don't need to enable it. However, if there are tons of subscriptions or your VPS comes with multiple cores but the performance of each is poor, you may want to enable this feature.
+- **Bandwidth usage**: Work around an [upstream (`uvloop`) bug](https://github.com/MagicStack/uvloop/issues/471#issuecomment-1136536769) that causes the bot to use too much bandwidth. Compared to previous releases, it cuts down up to 75% bandwidth usage when `uvloop` enabled.
+- **Startup time**: Decrease the startup time by increasing the startup concurrency and putting some unimportant startup tasks into the background.
+- **Minor enhancements**: Some internal functions have been optimized to improve performance.
+
+### Additions
+
+#### Highlights
+
+- **Subscription quantity limit**: The maximum number of subscriptions per user is now configurable (default: unlimited). By using the `/set_option` command, you can set `user_sub_limit` and `channel_or_group_sub_limit`. To check or set the limit of a specific user/channel/group, use the `/user_info` command.
+- **Monitor watchdog**: A watchdog has been implemented to check if the feed monitor is properly running. If not, the watchdog will exit the bot. Docker, Railway or Heroku will have it automatically restarted.
+
+#### Other additions
+
+- **Leave chat if been banned**: If the bot has not the permission to send messages in a channel/group, it will leave the chat.
+- **`<q>` tag as quotation marks**: A `<q>` tag is now converted to quotation marks (`<q>I am a quote,</q> said Q.` -> `“I am a quote,” said Q.`).
+- **New l10n**: Multiple translations have been added.
+
+### Enhancements & bug fixes
+
+- **Accept 4-char usernames**: You can now use the 4-char username of your channel/group in "remote" commands.
+- **Ignore inline query header in commands**: Formerly, if the bot is not properly set up as an inline bot, commands would be sent with an inline query header (`@bot_username`), causing the bot not to respond. Now the bot will ignore the inline query header and respond to commands correctly.
+- **Skip monitoring tasks if flood waiting**: If the bot is unable to send messages to all subscribers of a feed due to rate limit, it will skip the monitoring task for that feed once.
+- **Exit gracefully**: If the bot receives SIGINT or SIGTERM, it will exit gracefully by closing the database connections first. Formerly, unclosed database connections would block the bot from exiting.
+- **Encoding detection**: Fix a bug resulting in incorrect encoding detection for some feeds.
+- **Drop `sr-only` elements**: Drop `sr-only` elements from the RSS feed. They are only for screen readers and should not be rendered.
+- **Fix mistaken command regex**: Fix some mistaken command regexes preventing the bot from responding commands correctly.
+
+### Minor bug fixes & changes
+
+More unmentioned minor bugs have been fixed in the release. The changelog does not include all the changes. For more details, please refer to the [compare view](https://github.com/Rongronggg9/RSS-to-Telegram-Bot/compare/v2.2.1...v2.3.0).
+
+## v2.2.1: Published to PyPI, HTML table converter, and more
 
 ### Additions
 
@@ -9,7 +217,7 @@
 - **Published to PyPI**: RSStT is now available on [PyPI](https://pypi.org/project/rsstt/). You may install it with `pip install rsstt`. For more details, refer to the [Deployment Guide](deployment-guide.md).
 - **HTML table converter**: An HTML table converter has been implemented to convert HTML tables to images. It requires the environment variable `TABLE_TO_IMAGE` to be set to `1`, and CJK fonts to be installed. Please do note that the converter is not perfect, cannot handle rich-text formatting, may not work for all HTML tables, and can potentially lead to a higher performance cost and longer processing time.
 
-### Other additions
+#### Other additions
 
 - **New l10n**: The Indonesian (`id`, Bahasa Indonesia) translation has been added.
 - **Add `.env.sample`**: A sample `.env` file has been added.
@@ -28,7 +236,7 @@
 - **Deps bump**: Fixed an upstream bug preventing users from resetting all subscriptions to the user's default settings on a PostgreSQL-based instance.
 - **Minor bug fixes**
 
-## Channel remote management, more formatting options, and more (v2.2.0)
+## v2.2.0: Channel remote management, more formatting options, and more
 
 ### Additions
 
@@ -70,7 +278,7 @@
 - **Extracting image dimension from Exif thumbnail**: Some images may contain a thumbnail in the Exif data. The bot will now avoid extracting the dimension from the thumbnail.
 - **Minor bug fixes**
 
-## Custom format, new l10n, improved media fallback, and more (v2.1.0)
+## v2.1.0: Custom format, new l10n, improved media fallback, and more
 
 Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `dev` branch. If you are using it, you may have noticed the new features. Since new commands are added, please use `/lang` command once again and select your language to let the bot update your command list.
 
@@ -130,11 +338,11 @@ Official public bot [@RSStT_Bot](https://t.me/RSStT_Bot) is always using the `de
 - **Improper white-space and linebreak policy**: The bot can now avoid unintended white spaces and linebreaks in messages, especially for weird feeds. This also applies to the feed/post title and post author.
 - **Minor bug fixes**
 
-## Multi-user, i18n, improved user-friendliness, and more (v2.0.0)
+## v2.0.0: Multi-user, i18n, improved user-friendliness, and more
 
 Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)
 
-**This is a major release. It introduces some major breaking changes. You must migrate to the new version manually.**  
+**This is a major release. It introduces some major breaking changes. You must migrate to the new version manually.**\
 **PLEASE READ THE [MIGRATION GUIDE](migration-guide-v2.md) BEFORE UPDATING!**
 
 ### BREAKING CHANGES
@@ -170,7 +378,7 @@ Official public bot: [@RSStT_Bot](https://t.me/RSStT_Bot)
 - **Proxy bypassing**: If env variable `PROXY_BYPASS_PRIVATE` is set, the bot will bypass proxy for private IPs. And will bypass proxy for domains listed in env variable `PROXY_BYPASS_DOMAINS`.
 - **Bugfixes**: A few bugfixes.
 
-## Rushed release to fix login (v1.6.1)
+## v1.6.1: Rushed release to fix login
 
 **This is a rushed release. It bumps the dependency `telethon` to the latest version. Please upgrade to this version immediately to avoid being unable to login due to the outdated dependency.**
 
@@ -188,7 +396,7 @@ The bot is currently being actively developed on the `multiuser` branch but has 
 - Introduce some workarounds to avoid being flood-controlled frequently
 - Introduce some deps to speed up HTTP requests
 
-## Switching to MTProto, OPML support, and more (v1.6.0)
+## v1.6.0: Switching to MTProto, OPML support, and more
 
 ### BREAKING CHANGES
 
@@ -226,7 +434,7 @@ The bot is currently being actively developed on the `multiuser` branch but has 
 - Bump Python to 3.9 (docker build)
 - Minor fixes
 
-## Complete rewrite of the post parser (v1.5.0)
+## v1.5.0: Complete rewrite of the post parser
 
 - The Post parser is completely rewritten, more stable, and can keep text formatting as much as possible
 - GIF Support
@@ -243,6 +451,6 @@ The bot is currently being actively developed on the `multiuser` branch but has 
 - Change the user-agent, because some websites have banned the UA of Requests
 - Logging improvement
 
-## Initial release (v1.0.0)
+## v1.0.0: Initial release
 
 initial public release

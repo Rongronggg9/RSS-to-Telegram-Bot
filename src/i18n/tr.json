@@ -116,7 +116,7 @@
         "display_author_0": "Otomatik",
         "display_author_1": "Etkinleştir",
         "display_via": "Kaynak",
-        "display_via_-4": "Besleme başlığı yok, sadece bağlantı",
+        "display_via_-4": "Besleme başlığı yok, sonunda çıplak URL var",
         "display_via_-3": "Özet akışı başlığı yok, bağlantı gönderi başlığı olarak görüntüleniyor",
         "display_via_-2": "Tamamen devre dışı bırak",
         "display_via_-1": "Besleme başlığı yok, sadece bağlantı",
@@ -137,7 +137,10 @@
         "length_limit_only_effective_if_send_mode_auto": "Uzunluk sınırı yalnızca gönderme modu otomatik olduğunda geçerlidir.",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "Geçerli gönderme modu, Telegram mesajlarında hiçbir zaman medyayı göstermez.",
         "use_user_default_button": "Varsayılanımı kullan",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Biçimlendirme ayarları kılavuzunu buradan okuyun.</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">Biçimlendirme ayarları kılavuzunu buradan okuyun.</a>",
+        "display_entry_tags": "Gönderideki hashtag'ler (besleme girişi)",
+        "display_entry_tags_-1": "Devre dışı bırak",
+        "display_entry_tags_1": "Etkinleştir"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Abonelikler için varsayılan ayarları belirleyin.\n\nBir aboneliğin ayarlanmamış ayarları, bu sayfadaki ayarlara geri döner. Aboneliklerinizin çoğu için aynı ayarları yapmak istiyorsanız kullanışlıdır.",

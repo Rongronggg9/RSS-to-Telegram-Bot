@@ -1,0 +1,6 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "onCreateCommand": {
+    "install-python-packages": "pip install -r requirements.txt"
+  }
+}

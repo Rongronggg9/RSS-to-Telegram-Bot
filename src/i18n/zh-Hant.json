@@ -9,8 +9,8 @@
         "rsstt_slogan": "RSS to Telegram Bot，關心您的閱讀體驗的 Telegram RSS 機器人。"
     },
     "l10n_sub_status": {
-        "no_subscription": "無訂閲",
-        "already_subscribed": "已被訂閲",
+        "no_subscription": "無訂閱",
+        "already_subscribed": "已被訂閱",
         "subscription_not_exist": "訂閱不存在"
     },
     "l10n_error_reasons": {
@@ -35,12 +35,12 @@
         "permission_denied_not_chat_admin": "此命令只能由該群組/頻道的管理員使用。",
         "permission_denied_not_in_private_chat": "此命令只能在私人聊天中使用。",
         "permission_denied_not_member": "您不在此群組/頻道中，因此無法使用該機器人。",
-        "permission_denied_bot_not_member": "該機器人不再在此群組/頻道中，因此不會在這里工作。",
+        "permission_denied_bot_not_member": "該機器人不再在此群組/頻道中，因此不會在這裡工作。",
         "permission_denied_switch_pm": "在與機器人的私人聊天中繼續…",
         "permission_denied_input_command": "請輸入命令以繼續…",
         "permission_denied_no_direct_use": "不應直接使用此命令。請改用 %s 。",
-        "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升爲管理員 (無需權限)，以授權機器人驗證您的身份。",
-        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級爲超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」。\n2. 將「新成員的聊天記錄」更改爲「可見」。\n3. 保存聊天記錄可見性設置。\n4. 保存所有設置。\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改爲「隱藏」。\n6. 現在您應該能夠使用機器人了。",
+        "promote_to_admin_prompt": "如果您是該群組的匿名管理員，請將機器人提升為管理員 (無需權限)，以授權機器人驗證您的身份。",
+        "group_upgrade_needed_prompt": "糟糕，您的群組尚未升級為超級群組。通常，Telegram 伺服器應在某個時候自動執行此升級，但如果沒有，則必須手動升級它，然後才能使用機器人。\n請按照以下步驟操作：\n1. 轉到群組資訊，然後按兩下「管理組」。\n2. 將「新成員的聊天記錄」更改為「可見」。\n3. 保存聊天記錄可見性設置。\n4. 保存所有設置。\n5. (可選) 如果需要，您可以再次將「新成員的聊天記錄」更改為「隱藏」。\n6. 現在您應該能夠使用機器人了。",
         "sub_limit_reached_prompt": "訂閱的數量已經到達機器人管理員實施的限額 (%d/%d)。在進一步新增訂閱前，請先退訂 (/unsub) 一些訂閱。"
     },
     "l10n_misc": {
@@ -49,25 +49,25 @@
         "next_page": "下一頁",
         "back": "後退",
         "cancel": "取消",
-        "subscribe": "新增訂閲",
-        "unsubscribe": "退訂訂閲",
+        "subscribe": "新增訂閱",
+        "unsubscribe": "退訂訂閱",
         "subscription_list": "訂閱清單",
         "processing": "正在處理中，請稍等片刻…",
         "canceled_by_user": "由用戶取消。",
-        "n_subscriptions_in_total": "共有 %d 個訂閲",
+        "n_subscriptions_in_total": "共有 %d 個訂閱",
         "other_settings_button": "其他設置…",
         "user": "用戶",
         "channel": "頻道",
         "group": "群組"
     },
     "l10n_cmd_sub": {
-        "sub_reply_feed_url_prompt_html": "請以 RSS 源的 URL 回復這條消息。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批量訂閱。",
+        "sub_reply_feed_url_prompt_html": "請以 RSS 源的 URL 回覆這條消息。\n或者，您可以使用 <code>/sub url1 url2 url3 …</code> 批次訂閱。",
         "sub_usage_in_channel_html": "請使用 <code>/sub url1 url2 url3 …</code> 以訂閱。",
         "sub_successful": "訂閱成功",
         "sub_failed": "訂閱失敗"
     },
     "l10n_cmd_unsub": {
-        "unsub_choose_sub_prompt_html": "請選擇您要退訂的訂閱。\n或者，您可以使用 <code>/unsub url1 url2 url3 …</code> 以批量退訂訂閲。",
+        "unsub_choose_sub_prompt_html": "請選擇您要退訂的訂閱。\n或者，您可以使用 <code>/unsub url1 url2 url3 …</code> 以批次退訂訂閱。",
         "unsub_successful": "退訂成功",
         "unsub_failed": "退訂失敗"
     },
@@ -78,17 +78,17 @@
         "unsub_all_successful": "已成功退訂所有訂閱"
     },
     "l10n_cmd_import": {
-        "send_opml_prompt": "請傳送要匯入的 OPML 檔 (擴展名必須爲 .opml)。",
-        "import_for_channel_or_group_prompt": "如果要爲頻道/群組匯入訂閱，請在說明文字處填入頻道/群組 ID (必須以 '-100' 爲開頭) 或 @username。",
-        "send_opml_reply_placeholder": "OPML 檔 (擴展名必須爲 .opml)",
+        "send_opml_prompt": "請傳送要匯入的 OPML 檔 (副檔名必須為 .opml)。",
+        "import_for_channel_or_group_prompt": "如果要為頻道/群組匯入訂閱，請在說明文字處填入頻道/群組 ID (必須以 '-100' 為開頭) 或 @username。",
+        "send_opml_reply_placeholder": "OPML 檔 (副檔名必須為 .opml)",
         "fetch_file_failed": "提取文件失敗",
-        "opml_import_processing": "如果訂閲數目很大或訂閲所在之伺服器速度較慢，則可能需要等待較長時間，坐下來放鬆一下。",
+        "opml_import_processing": "如果訂閱數目很大或訂閱所在之伺服器速度較慢，則可能需要等待較長時間，坐下來放鬆一下。",
         "opml_parse_error": "OPML 解析錯誤",
-        "keep_subs_title_button": "保留匯入訂閱的自定義標題",
-        "delete_subs_title_button": "刪除匯入訂閱的自定義標題"
+        "keep_subs_title_button": "保留匯入訂閱的自訂標題",
+        "delete_subs_title_button": "刪除匯入訂閱的自訂標題"
     },
     "l10n_cmd_set": {
-        "set_choose_sub_prompt": "請選擇您要定制的訂閱。",
+        "set_choose_sub_prompt": "請選擇您要訂製的訂閱。",
         "status": "狀態",
         "status_activated": "啟動",
         "status_deactivated": "停用",
@@ -99,8 +99,8 @@
         "send_mode": "傳送方式",
         "send_mode_-1": "僅標題和來源",
         "send_mode_0": "自動",
-        "send_mode_1": "强制 Telegraph",
-        "send_mode_2": "强制 Telegram 消息",
+        "send_mode_1": "強制 Telegraph",
+        "send_mode_2": "強制 Telegram 消息",
         "length_limit": "長度限制 (僅限自動模式)",
         "length_limit_unlimited": "無限",
         "link_preview": "連結預覽",
@@ -116,44 +116,47 @@
         "display_author_0": "自動",
         "display_author_1": "啟用",
         "display_via": "來源",
-        "display_via_-4": "無源標題，裸 URL 附于尾部",
-        "display_via_-3": "無源標題，連結顯示爲文章標題",
+        "display_via_-4": "無源標題，裸 URL 附於尾部",
+        "display_via_-3": "無源標題，連結顯示為文章標題",
         "display_via_-2": "完全禁用",
-        "display_via_-1": "無源標題，超連結附于尾部",
+        "display_via_-1": "無源標題，超連結附於尾部",
         "display_via_0": "源標題和連結",
-        "display_via_1": "源標題和顯示爲文章標題的連結",
+        "display_via_1": "源標題和顯示為文章標題的連結",
         "display_title": "文章標題",
         "display_title_-1": "禁用",
         "display_title_0": "自動",
         "display_title_1": "啟用",
+        "display_entry_tags": "來自文章 (源條目) 的 hashtag",
+        "display_entry_tags_-1": "禁用",
+        "display_entry_tags_1": "啟用",
         "style": "樣式",
         "style_0": "",
         "style_1": "",
-        "set_custom_title_button": "自定義標題…",
-        "set_custom_interval_button": "自定義間隔 (以分鐘爲單位)…",
-        "set_custom_hashtags_button": "自定義 hashtag…",
+        "set_custom_title_button": "自訂標題…",
+        "set_custom_interval_button": "自訂間隔 (以分鐘為單位)…",
+        "set_custom_hashtags_button": "自訂 hashtag…",
         "set_interval_prompt": "請選擇監視間隔。",
         "set_length_limit_prompt": "請選擇長度限制。\n\n如果文章的長度超過限制或無法在單個消息中傳送，則將通過 Telegraph 傳送。\n如果通過 Telegraph 傳送失敗，則只會傳送其標題和來源。",
-        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在傳送方式爲自動時有效。",
+        "length_limit_only_effective_if_send_mode_auto": "長度限制僅在傳送方式為自動時有效。",
         "display_media_only_effective_if_send_mode_auto_and_telegram": "現在的傳送方式永遠不會在 Telegram 消息中顯示媒體。",
         "use_user_default_button": "使用我的預設值",
-        "read_formatting_settings_guidebook_html": "<a href=\"%s\">在這裏閱讀格式設置手冊。</a>"
+        "read_formatting_settings_guidebook_html": "<a href=\"%s\">在這裡閱讀格式設置手冊。</a>"
     },
     "l10n_cmd_set_default": {
-        "set_user_default_description": "定制訂閲的預設設置。\n\n訂閲中尚未修改過的設置會退回到本頁上的設置。如果您想對許多訂閲使用同樣的設置，這就很有用。",
-        "reset_all_button": "重設所有訂閲到預設值",
-        "reset_all_confirm_prompt": "是否確實要重設所有訂閲到預設值？",
-        "reset_all_confirm": "是，重設所有訂閲到預設值",
+        "set_user_default_description": "訂製訂閱的預設設置。\n\n訂閱中尚未修改過的設置會退回到本頁上的設置。如果您想對許多訂閱使用同樣的設置，這就很有用。",
+        "reset_all_button": "重設所有訂閱到預設值",
+        "reset_all_confirm_prompt": "是否確實要重設所有訂閱到預設值？",
+        "reset_all_confirm": "是，重設所有訂閱到預設值",
         "reset_all_cancel": "否，取消",
-        "reset_all_successful": "已成功重設所有訂閲到預設值"
+        "reset_all_successful": "已成功重設所有訂閱到預設值"
     },
     "l10n_sub_info": {
         "subscription_info": "訂閱資訊",
         "feed_title": "源標題",
-        "subscription_title": "自定義標題",
+        "subscription_title": "自訂標題",
         "feed_url": "源 URL",
         "hashtags": "Hashtag",
-        "default_emoji_header_description": "%s 意味著訂閲正使用預設的設置。您可以使用 /set_default 來改變它們。"
+        "default_emoji_header_description": "%s 意味著訂閱正使用預設的設置。您可以使用 /set_default 來改變它們。"
     },
     "l10n_monitor_warn": {
         "feed_deactivated_warn": "監視任務連續 100 次失敗。您對該 RSS 源的訂閱已停用。\n要重新啟動它，請使用 /activate_subs 命令。"
@@ -164,26 +167,26 @@
         "all_subs_are_activated": "所有訂閱均已啟動。"
     },
     "l10n_cmd_deactivate": {
-        "choose_sub_to_be_deactivated": "以下訂閱已啟動，請選擇要停用的訂閱。\n停用后，其更新將被暫停監視。如果您不再需要該訂閱，請考慮退訂而不是停用它。",
+        "choose_sub_to_be_deactivated": "以下訂閱已啟動，請選擇要停用的訂閱。\n停用後，其更新將被暫停監視。如果您不再需要該訂閱，請考慮退訂而不是停用它。",
         "deactivate_all_subs": "停用我的所有訂閱",
         "all_subs_are_deactivated": "所有訂閱均已停用。"
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閲編號 標題</code>\n\n注: 省略 <code>標題</code> 以清除自定義標題 (僅當先前設置過才能清除，否則就會收到此提示)。",
-        "set_title_success": "訂閱的自定義標題已修改爲: ",
-        "set_title_success_cleared": "訂閱的自定義標題已清除。"
+        "cmd_set_title_usage_prompt_html": "命令用法: <code>/set_title 訂閱編號 標題</code>\n\n註: 省略 <code>標題</code> 以清除自訂標題 (僅當先前設置過才能清除，否則就會收到此提示)。",
+        "set_title_success": "訂閱的自訂標題已修改為: ",
+        "set_title_success_cleared": "訂閱的自訂標題已清除。"
     },
     "l10n_cmd_set_interval": {
-        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閲編號 監視間隔</code>\n\n注: <code>監視間隔</code> 必須是正整數，單位爲分鐘 (無需包含單位)。",
-        "set_interval_success_html": "訂閱的監視間隔已修改爲 <b>%d 分鐘</b>。",
-        "set_default_interval_success_html": "預設的監視間隔已修改爲 <b>%d 分鐘</b>。",
+        "cmd_set_interval_usage_prompt_html": "命令用法: <code>/set_interval 訂閱編號 監視間隔</code>\n\n註: <code>監視間隔</code> 必須是正整數，單位為分鐘 (無需包含單位)。",
+        "set_interval_success_html": "訂閱的監視間隔已修改為 <b>%d 分鐘</b>。",
+        "set_default_interval_success_html": "預設的監視間隔已修改為 <b>%d 分鐘</b>。",
         "set_interval_failure_too_small_html": "監視間隔必須大於 <b>%d 分鐘</b>。"
     },
     "l10n_cmd_set_hashtags": {
-        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閲編號 #hashtag1 #hashtag2 …</code>\n\n注: 如果沒有 hashtag 提供，已存在的 hashtag 就會被清除 (僅當先前設置過才能清除，否則就會收到此提示)。",
-        "set_hashtags_success_html": "訂閱的自定義 hashtag 已修改爲: ",
-        "set_hashtags_success_cleared": "訂閱的自定義 hashtag 已清除。",
-        "set_hashtags_failure_too_many": "Hashtag 太多，請刪除一些后重試。"
+        "cmd_set_hashtags_usage_prompt_html": "命令用法: <code>/set_hashtags 訂閱編號 #hashtag1 #hashtag2 …</code>\n\n註: 如果沒有 hashtag 提供，已存在的 hashtag 就會被清除 (僅當先前設置過才能清除，否則就會收到此提示)。",
+        "set_hashtags_success_html": "訂閱的自訂 hashtag 已修改為: ",
+        "set_hashtags_success_cleared": "訂閱的自訂 hashtag 已清除。",
+        "set_hashtags_failure_too_many": "Hashtag 太多，請刪除一些後重試。"
     },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "命令用法: <code>/test RSS_URL 條目編號起點(可選) 條目編號終點(可選)</code>",
@@ -205,25 +208,25 @@
         "user_state_-1": "被封鎖",
         "user_state_description_-1": "不能使用機器人",
         "user_state_0": "訪客",
-        "user_state_description_0": "只在多用戶模式啓用時可使用機器人",
+        "user_state_description_0": "只在多用戶模式啟用時可使用機器人",
         "user_state_1": "用戶",
         "user_state_description_1": "可使用機器人",
-        "set_user_state_as": "更改用戶狀態爲",
-        "reset_sub_limit_to_default": "重設訂閱限額爲預設值",
-        "set_sub_limit_to": "設置訂閱限額爲…",
-        "cmd_set_sub_limit_prompt_html": "命令用法: <code>/set_sub_limit 用戶ID 訂閱限額</code>\n\n注: <code>訂閱限額</code> 必須是正整數，<code>-1</code> 表示無限額。"
+        "set_user_state_as": "更改用戶狀態為",
+        "reset_sub_limit_to_default": "重設訂閱限額為預設值",
+        "set_sub_limit_to": "設置訂閱限額為…",
+        "cmd_set_sub_limit_prompt_html": "命令用法: <code>/set_sub_limit 用戶ID 訂閱限額</code>\n\n註: <code>訂閱限額</code> 必須是正整數，<code>-1</code> 表示無限額。"
     },
     "l10n_cmd_descriptions": {
         "commands": "命令",
-        "cmd_description_sub": "新增訂閲",
-        "cmd_description_unsub": "退訂訂閲",
-        "cmd_description_unsub_all": "退訂所有訂閲",
+        "cmd_description_sub": "新增訂閱",
+        "cmd_description_unsub": "退訂訂閱",
+        "cmd_description_unsub_all": "退訂所有訂閱",
         "cmd_description_list": "查看訂閱清單",
-        "cmd_description_set": "定制訂閲",
-        "cmd_description_set_default": "定制預設",
+        "cmd_description_set": "訂製訂閱",
+        "cmd_description_set_default": "訂製預設",
         "cmd_description_import": "從 OPML 檔匯入訂閱",
         "cmd_description_export": "將訂閱匯出到 OPML 檔",
-        "cmd_description_activate_subs": "啟動訂閲",
+        "cmd_description_activate_subs": "啟動訂閱",
         "cmd_description_deactivate_subs": "停用訂閱",
         "cmd_description_version": "檢查機器人版本",
         "cmd_description_lang": "選擇語言",
@@ -231,6 +234,6 @@
         "cmd_description_test": "測試 (僅限機器人管理員)",
         "cmd_description_set_option": "設置機器人選項 (僅限機器人管理員)",
         "cmd_description_user_info": "查看/更改用戶資訊 (僅限機器人管理員)",
-        "usage_in_channel_or_group_prompt_html": "<b>在頻道/群組中的用法:</b>\n1. 將機器人新增至頻道/群組中。\n2a. 直接<b>在頻道/群組中</b>傳送命令。\n2b. 或者，您可以<b>在和機器人的私人聊天中</b>像這樣傳送命令: <code>/sub @username https://example.com</code> 或者 <code>/sub -10010000000000 https://example.com</code>。\n(<code>@username</code> 是頻道/群組的用戶名稱，<code>@</code> 是不可或缺的; <code>-10010000000000</code> 是頻道/群組的 ID，且必須以 <code>-100</code> 爲開頭)"
+        "usage_in_channel_or_group_prompt_html": "<b>在頻道/群組中的用法:</b>\n1. 將機器人新增至頻道/群組中。\n2a. 直接<b>在頻道/群組中</b>傳送命令。\n2b. 或者，您可以<b>在和機器人的私人聊天中</b>像這樣傳送命令: <code>/sub @username https://example.com</code> 或者 <code>/sub -10010000000000 https://example.com</code>。\n(<code>@username</code> 是頻道/群組的使用者名稱，<code>@</code> 是不可或缺的; <code>-10010000000000</code> 是頻道/群組的 ID，且必須以 <code>-100</code> 為開頭)"
     }
 }

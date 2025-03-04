@@ -1,19 +1,36 @@
+#  RSS to Telegram Bot
+#  Copyright (C) 2020-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Union
 from typing_extensions import Final
 
 import asyncio
+import yarl
 import os
 import sys
 import colorlog
 import re
 import argparse
+from contextlib import suppress
 from telethon import TelegramClient
 from telethon.tl.types import User, InputPeerUser
 from python_socks import parse_proxy_url
 from dotenv import load_dotenv
 from pathlib import Path
-from distutils.version import StrictVersion
 from functools import partial
 
 from .version import __version__
@@ -37,6 +54,56 @@ def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
 
 def __list_parser(var: Optional[str]) -> list[str]:
     return re.split(r'[\s,;，；]+', var.strip()) if var else []
+
+
+def __decompose_version(version: str) -> list[Union[int, str]]:
+    def buf_put(as_int: bool):
+        nonlocal buf
+        if not buf:
+            raise ValueError(f'Empty part in version string: {version}')
+        parts.append(int(buf) if as_int else buf)
+        buf = ''
+
+    parts = []
+    buf = ''
+    for i, char in enumerate(version):
+        if char == '.':
+            buf_put(as_int=True)
+            continue
+        if not char.isdecimal():
+            buf_put(as_int=True)
+            parts.append(version[i:])
+            break
+        buf += char
+    if buf:
+        buf_put(as_int=True)
+    return parts
+
+
+def __compare_version(version1: str, version2: str) -> tuple[int, list[Union[int, str]], list[Union[int, str]]]:
+    """loose comparison, only compare the numeric parts"""
+    parts1 = __decompose_version(version1)
+    parts2 = __decompose_version(version2)
+
+    if not parts1:
+        return -1, parts1, parts2
+    if not parts2:
+        return 1, parts1, parts2
+
+    marker = 0
+    for part1, part2 in zip(parts1, parts2):
+        if part1 == part2:
+            continue
+        part1_is_int = isinstance(part1, int)
+        part2_is_int = isinstance(part2, int)
+        if part1_is_int and part2_is_int:
+            marker = 1 if part1 > part2 else -1
+        elif part1_is_int and part1 > 0:
+            marker = 1
+        elif part2_is_int and part2 > 0:
+            marker = -1
+        break
+    return marker, parts1, parts2
 
 
 # ----- setup logging -----
@@ -81,57 +148,67 @@ dot_env_paths = (os.path.join(config_folder_path, '.env'),
                  os.path.join(os.path.abspath('.'), '.env'))
 if is_self_run_as_a_whole_package:
     dot_env_paths = (os.path.normpath(os.path.join(self_path, '..', '.env')),) + dot_env_paths
-for dot_env_path in sorted(set(dot_env_paths), key=dot_env_paths.index):
+for dot_env_path in dict.fromkeys(dot_env_paths):  # remove duplicates while keeping the order
     if os.path.isfile(dot_env_path):
         load_dotenv(dot_env_path, override=True)
         logger.info(f'Found .env file at "{dot_env_path}", loaded')
 
+
 # ----- get version -----
-_version = 'dirty'
+def __get_version():
+    version = 'dirty'
+    if is_self_run_as_a_whole_package:
+        # noinspection PyBroadException
+        try:
+            with open(os.path.normpath(os.path.join(self_path, '..', '.version')), 'r') as v:
+                version = v.read().strip()
+        except Exception:
+            version = 'dirty'
 
-if is_self_run_as_a_whole_package:
-    # noinspection PyBroadException
+        if not version or version == '@':
+            version = 'dirty'
+
+    if version == 'dirty':
+        import subprocess
+
+        with suppress(Exception):
+            # vMAJ.MIN.PAT-N-gHASH[-(broken|dirty)][@BRANCH]
+            version = '@'.join(
+                subprocess.run(
+                    args,
+                    cwd=self_path,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                    check=True,
+                    timeout=3,
+                ).stdout.strip()
+                for args in (
+                    ['git', 'describe', '--tags', '--long', '--dirty', '--broken', '--always'],
+                    ['git', 'branch', '--show-current'],
+                )
+            )
+
     try:
-        with open(os.path.normpath(os.path.join(self_path, '..', '.version')), 'r') as v:
-            _version = v.read().strip()
-    except Exception:
-        _version = 'dirty'
+        sign, version_decomposed, version_pkg_decomposed = __compare_version(version.lstrip('v'), __version__)
+        if sign <= -1:  # outdated version: older than pkg ver
+            version = __version__
+            if isinstance(version_decomposed[-1], str) and not isinstance(version_pkg_decomposed[-1], str):
+                # -N-gHASH[-(broken|dirty)][@BRANCH]
+                # ^^
+                version += re.sub(r'^-\d+(?=-)', '', version_decomposed[-1])  # trim the marked part
+            version = f'v{version}'
+    except (TypeError, ValueError):
+        version = f'v{__version__}'
 
-    if not _version or _version == '@':
-        _version = 'dirty'
+    # empty guard
+    if not version:
+        version = 'dirty'
 
-if _version == 'dirty':
-    from subprocess import Popen, PIPE, DEVNULL
+    return version
 
-    # noinspection PyBroadException
-    try:
-        with Popen(['git', 'describe', '--tags', '--dirty', '--broken', '--always'],
-                   shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __git:
-            __git.wait(3)
-            _version = __git.stdout.read().decode().strip()
-        with Popen(['git', 'branch', '--show-current'],
-                   shell=False, stdout=PIPE, stderr=DEVNULL, bufsize=-1) as __git:
-            __git.wait(3)
-            __git = __git.stdout.read().decode().strip()
-            if __git:
-                _version += f'@{__git}'
-    except Exception:
-        _version = 'dirty'
 
-_version_match = re.match(r'^v?\d+\.\d+(\.\w+(\.\w+)?)?', _version)
-if _version_match:
-    try:
-        if StrictVersion(_version_match[0].lstrip('v')) < StrictVersion(__version__):
-            _version = _version[_version_match.end():]
-            _version = re.sub(r'(?<!\d{4})-\d+-(?!\d{2})', '', _version, count=1)
-            _version = f'v{__version__}-{_version}' if _version else f'v{__version__}'
-    except ValueError:
-        _version = f'v{__version__}'
-else:
-    _version = f'v{__version__}' + (f'-{_version}' if _version and _version != 'dirty' else '')
-
-VERSION: Final = _version
-del _version, _version_match
+VERSION: Final = __get_version()
 
 # ----- basic config -----
 SAMPLE_APIS: Final = {
@@ -156,12 +233,8 @@ API_HASH: Final = os.environ.get('API_HASH')
 TOKEN: Final = os.environ.get('TOKEN')
 
 try:
-    _chatid = os.environ.get('CHATID')
-    _chatid = int(_chatid) if isinstance(_chatid, str) and _chatid.lstrip('-').isdecimal() else _chatid
-    _manager = os.environ.get('MANAGER') or _chatid
-    MANAGER: Final = int(_manager) if isinstance(_manager, str) and _manager.lstrip('-').isdecimal() else _manager
-    del _chatid
-    del _manager
+    _manager = tuple(map(int, __list_parser(os.environ.get('MANAGER') or os.environ.get('CHATID'))))
+    MANAGER: Final = set(_manager)  # optimize membership test
 
     if not all((TOKEN, MANAGER)):
         logger.critical('"TOKEN" OR "MANAGER" NOT SET! PLEASE CHECK YOUR SETTINGS!')
@@ -169,6 +242,11 @@ try:
 except Exception as e:
     logger.critical('INVALID "MANAGER"! PLEASE CHECK YOUR SETTINGS!', exc_info=e)
     exit(1)
+
+_error_logging_chat = os.environ.get('ERROR_LOGGING_CHAT')
+ERROR_LOGGING_CHAT: Final = int(_error_logging_chat) if _error_logging_chat else _manager[0]
+del _error_logging_chat
+del _manager
 
 MANAGER_PRIVILEGED: Final = __bool_parser(os.environ.get('MANAGER_PRIVILEGED'))
 
@@ -213,8 +291,9 @@ REQUESTS_PROXIES: Final = {'all': R_PROXY} if R_PROXY else {}
 
 PROXY_BYPASS_PRIVATE: Final = __bool_parser(os.environ.get('PROXY_BYPASS_PRIVATE'))
 PROXY_BYPASS_DOMAINS: Final = __list_parser(os.environ.get('PROXY_BYPASS_DOMAINS'))
-USER_AGENT: Final = os.environ.get('USER_AGENT') or f'RSStT/{__version__} RSS Reader'
+USER_AGENT: Final = os.environ.get('USER_AGENT') or f'RSStT/{__version__} RSS Reader (+https://git.io/RSStT)'
 IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
+VERIFY_TLS: Final = __bool_parser(os.environ.get('VERIFY_TLS'), default_value=True)
 
 HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
 HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)
@@ -229,8 +308,8 @@ IMG_RELAY_SERVER: Final = (
 )
 del _img_relay_server
 
-# ----- images.weserv.nl config -----
-_images_weserv_nl = os.environ.get('IMAGES_WESERV_NL') or 'https://images.weserv.nl/'
+# ----- wsrv.nl config -----
+_images_weserv_nl = os.environ.get('IMAGES_WESERV_NL') or 'https://wsrv.nl/'
 IMAGES_WESERV_NL: Final = (
         ('' if _images_weserv_nl.startswith('http') else 'https://')
         + _images_weserv_nl
@@ -238,11 +317,41 @@ IMAGES_WESERV_NL: Final = (
 )
 del _images_weserv_nl
 
+
 # ----- db config -----
-_database_url = os.environ.get('DATABASE_URL') or f'sqlite://{config_folder_path}/db.sqlite3'
-DATABASE_URL: Final = (_database_url.replace('postgresql', 'postgres', 1) if _database_url.startswith('postgresql')
-                       else _database_url)
-del _database_url
+def __get_database_url() -> str:
+    # Railway.app provides DATABASE_PRIVATE_URL, DATABASE_URL and/or DATABASE_PUBLIC_URL.
+    # DATABASE_PRIVATE_URL is for private networking, while DATABASE_PUBLIC_URL is for public networking.
+    # If private networking is disabled, the former still exists but is invalid (i.e., missing host).
+    # If public networking is disabled, both host and port are missing in the latter, resulting in an invalid URL too.
+    # A legacy Postgres addon may provide only DATABASE_URL (for PUBLIC networking) and DATABASE_PRIVATE_URL,
+    # while a modern one may provide only DATABASE_URL (for PRIVATE networking) and DATABASE_PUBLIC_URL.
+    # Thus, we need to select a valid one from them.
+    urls: tuple[str, ...] = tuple(filter(None, map(os.environ.get, (
+        'DATABASE_URL',  # Generic, Railway.app compatible
+        'DATABASE_PRIVATE_URL',  # Railway.app specific
+        'DATABASE_PUBLIC_URL',  # Railway.app specific
+    ))))
+    if not urls:
+        return f'sqlite:{config_folder_path}/db.sqlite3'
+    err: Optional[BaseException] = None
+    for url in urls:
+        try:
+            y_url = yarl.URL(url)
+        except ValueError as _err:
+            err = _err
+        else:
+            return str(
+                # Tortoise-ORM does not recognize 'postgresql' scheme
+                y_url.with_scheme('postgres')
+                if y_url.scheme == 'postgresql'
+                else y_url
+            )
+    else:
+        logger.critical('INVALID DATABASE URL!', exc_info=err)
+
+
+DATABASE_URL: Final = __get_database_url()
 
 # ----- misc config -----
 TABLE_TO_IMAGE: Final = __bool_parser(os.environ.get('TABLE_TO_IMAGE'))
@@ -250,6 +359,7 @@ TRAFFIC_SAVING: Final = __bool_parser(os.environ.get('TRAFFIC_SAVING'))
 LAZY_MEDIA_VALIDATION: Final = __bool_parser(os.environ.get('LAZY_MEDIA_VALIDATION'))
 NO_UVLOOP: Final = __bool_parser(os.environ.get('NO_UVLOOP'))
 MULTIPROCESSING: Final = __bool_parser(os.environ.get('MULTIPROCESSING'))
+EXECUTOR_NICENESS_INCREMENT: Final = int(os.environ.get('EXECUTOR_NICENESS_INCREMENT') or (2 * hasattr(os, 'nice')))
 DEBUG: Final = __bool_parser(os.environ.get('DEBUG'))
 __configure_logging(  # config twice to make .env file work
     level=colorlog.DEBUG if DEBUG else colorlog.INFO,

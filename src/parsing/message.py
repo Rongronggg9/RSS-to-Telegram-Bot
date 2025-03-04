@@ -1,9 +1,26 @@
+#  RSS to Telegram Bot
+#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 from typing import Union, Optional
 from collections.abc import Sequence
 
 import asyncio
 from telethon.tl import types, functions
+from telethon.errors.rpcbaseerrors import TimedOutError
 from telethon.errors.rpcerrorlist import SlowModeWaitError, FloodWaitError, ServerError
 from telethon.utils import get_message_id
 from collections import defaultdict
@@ -95,6 +112,7 @@ class MessageDispatcher:
 
 class Message:
     no_retry = False
+    max_tries = 2 * 2  # telethon internally tries twice
     __overall_concurrency = 30
     __overall_semaphore = asyncio.BoundedSemaphore(__overall_concurrency)
 
@@ -113,7 +131,7 @@ class Message:
         self.media_type = media_type
         self.link_preview = link_preview
         self.silent = silent
-        self.retries = 0
+        self.tries = 0
 
         self.attributes = (
             (types.DocumentAttributeVideo(0, 0, 0),)
@@ -138,6 +156,7 @@ class Message:
                     # only acquire overall semaphore when sending
                     async with self.__overall_semaphore:
                         if self.media_type == MEDIA_GROUP:
+                            # Extracted from telethon.client.uploads.UploadMethods._send_album()
                             media = []
                             for medium in self.media:
                                 _, fm, _ = await env.bot._file_to_media(medium)
@@ -146,10 +165,12 @@ class Message:
                             media[-1].entities = self.format_entities or None
                             entity = await env.bot.get_input_entity(self.user_id)
                             reply_to = get_message_id(reply_to)
-                            request = functions.messages.SendMultiMediaRequest(entity,
-                                                                               reply_to_msg_id=reply_to,
-                                                                               multi_media=media,
-                                                                               silent=self.silent)
+                            request = functions.messages.SendMultiMediaRequest(
+                                entity,
+                                reply_to=None if reply_to is None else types.InputReplyToMessage(reply_to),
+                                multi_media=media,
+                                silent=self.silent
+                            )
                             result = await env.bot(request)
                             random_ids = [m.random_id for m in media]
                             return env.bot._get_response_message(random_ids, result, entity)
@@ -166,16 +187,19 @@ class Message:
             #     logger.error(f'Msg dropped due to lock acquisition timeout ({self.user_id})')
             #     return None
             except (FloodWaitError, SlowModeWaitError) as e:
-                # telethon has retried for us, but we release locks and retry again here to see if it will be better
-                if self.retries >= 1:
+                # telethon internally catches these errors and retries for us
+                self.tries += 2
+                if self.tries >= self.max_tries:
                     logger.error(f'Msg dropped due to too many flood control retries ({self.user_id})')
                     return None
-
-                self.retries += 1
                 await locks.user_flood_wait_background(self.user_id, seconds=e.seconds)  # acquire a flood wait
             except ServerError as e:
-                # telethon has retried for us, so we just retry once more
-                if self.retries >= 1:
+                # telethon internally catches this error and retries for us
+                self.tries += 2
+                if self.tries >= self.max_tries:
                     raise e
-
-                self.retries += 1
+            except TimedOutError as e:
+                # telethon does not catch this error or retry for us, so we do it ourselves
+                self.tries += 1
+                if self.tries >= self.max_tries:
+                    raise e

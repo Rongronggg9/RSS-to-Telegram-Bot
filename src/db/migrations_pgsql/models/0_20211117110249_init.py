@@ -1,5 +1,25 @@
--- upgrade --
-CREATE TABLE IF NOT EXISTS "aerich" (
+#  RSS to Telegram Bot
+#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from tortoise import BaseDBAsyncClient
+
+
+async def upgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        CREATE TABLE IF NOT EXISTS "aerich" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "version" VARCHAR(255) NOT NULL,
     "app" VARCHAR(20) NOT NULL,
@@ -86,4 +106,9 @@ COMMENT ON COLUMN "sub"."display_author" IS 'Display author or not?-1=disable, 0
 COMMENT ON COLUMN "sub"."display_via" IS 'Display via or not?-2=completely disable, -1=disable but display link, 0=auto, 1=force display';
 COMMENT ON COLUMN "sub"."display_title" IS 'Display title or not?-1=disable, 0=auto, 1=force display';
 COMMENT ON COLUMN "sub"."style" IS 'Style of posts: 0=RSStT, 1=flowerss';
-COMMENT ON TABLE "sub" IS 'Sub model.';
+COMMENT ON TABLE "sub" IS 'Sub model.';"""
+
+
+async def downgrade(db: BaseDBAsyncClient) -> str:
+    return """
+        """

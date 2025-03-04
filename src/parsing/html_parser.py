@@ -1,3 +1,19 @@
+#  RSS to Telegram Bot
+#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 from collections.abc import Iterator, Iterable, Awaitable
 from typing import Union, Optional
@@ -13,7 +29,7 @@ from .. import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
 from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
-from ..aio_helper import run_async_on_demand
+from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]
 if env.TABLE_TO_IMAGE:
@@ -55,8 +71,7 @@ class Parser:
         self._parse_item_count = 0
 
     async def parse(self):
-        self.soup = await run_async_on_demand(BeautifulSoup, self.html, 'lxml',
-                                              prefer_pool='thread', condition=len(self.html) > 64 * 1024)
+        self.soup = await run_async(BeautifulSoup, self.html, 'lxml', prefer_pool='thread')
         self.html_tree = HtmlTree(await self._parse_item(self.soup))
         self.parsed = True
 
@@ -65,8 +80,11 @@ class Parser:
             raise RuntimeError('You must parse the HTML first')
         return stripNewline(stripLineEnd(self.html_tree.get_html().strip()))
 
-    async def _parse_item(self, soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]]) \
-            -> Optional[Text]:
+    async def _parse_item(
+            self,
+            soup: Union[PageElement, BeautifulSoup, Tag, NavigableString, Iterable[PageElement]],
+            in_list: bool = False
+    ) -> Optional[Text]:
         self._parse_item_count += 1
         if self._parse_item_count % 64 == 0:
             await asyncio.sleep(0)  # yield to other coroutines, avoid blocking
@@ -111,7 +129,7 @@ class Parser:
                 columns = row.findAll(('td', 'th'))
                 if len(rows) > 1 and len(columns) > 1:  # allow single-row or single-column tables
                     if env.TABLE_TO_IMAGE:
-                        self.media.add(UploadedImage(convert_table_to_png(str(soup))))
+                        self.media.add(UploadedImage(convert_table_to_png(str(soup)), 'table.png'))
                     return None
                 for j, column in enumerate(columns):  # transpose single-row tables into single-column tables
                     row_content = await self._parse_item(column)
@@ -125,7 +143,15 @@ class Parser:
             parent = soup.parent.name
             text = await self._parse_item(soup.children)
             if text:
-                return Text([Br(), text, Br()]) if parent != 'li' else text
+                if parent == 'li':
+                    return text
+                text_l = [text]
+                ps, ns = soup.previous_sibling, soup.next_sibling
+                if not (isinstance(ps, Tag) and ps.name == 'blockquote'):
+                    text_l.insert(0, Br())
+                if not (isinstance(ns, Tag) and ns.name == 'blockquote'):
+                    text_l.append(Br())
+                return Text(text_l) if len(text_l) > 1 else text
             return None
 
         if tag == 'blockquote':
@@ -135,7 +161,7 @@ class Parser:
             quote.strip()
             if quote.is_empty():
                 return None
-            return Text([Hr(), quote, Hr()])
+            return Blockquote(quote)
 
         if tag == 'q':
             quote = await self._parse_item(soup.children)
@@ -153,7 +179,17 @@ class Parser:
             return Pre(await self._parse_item(soup.children))
 
         if tag == 'code':
-            return Code(await self._parse_item(soup.children))
+            class_ = soup.get('class')
+            if isinstance(class_, list):
+                try:
+                    class_ = next(filter(lambda x: x.startswith('language-'), class_))
+                except StopIteration:
+                    class_ = None
+            elif class_ and isinstance(class_, str) and not class_.startswith('language-'):
+                class_ = f'language-{class_}'
+            else:
+                class_ = None
+            return Code(await self._parse_item(soup.children), param=class_)
 
         if tag == 'br':
             return Br()
@@ -265,21 +301,29 @@ class Parser:
             title = urlparse(src).hostname if env.TRAFFIC_SAVING else await web.get_page_title(src)
             return Text([Br(2), effective_link(f'iframe ({title})', src), Br(2)])
 
-        if tag == 'ol' or tag == 'ul':
+        if (ordered := tag == 'ol') or tag in ('ul', 'menu', 'dir'):
             texts = []
             list_items = soup.findAll('li', recursive=False)
             if not list_items:
                 return None
             for list_item in list_items:
-                text = await self._parse_item(list_item)
-                if text and text.get_html().strip():
-                    texts.append(ListItem(text))
+                text = await self._parse_item(list_item, in_list=True)
+                if text:
+                    texts.append(text)
             if not texts:
                 return None
-            if tag == 'ol':
-                return OrderedList([Br(), *texts, Br()])
-            if tag == 'ul':
-                return UnorderedList([Br(), *texts, Br()])
+            return OrderedList([Br(), *texts, Br()]) if ordered else UnorderedList([Br(), *texts, Br()])
+
+        if tag == 'li':
+            # <li> tags should be wrapped in <ol> or <ul>, but some feeds do not obey this rule
+            # we do an "ugly fix" here to ensure that linebreaks are not missing
+            text = await self._parse_item(soup.children)
+            if not text:
+                return None
+            text.strip(deeper=True)
+            if not text.get_html().strip():
+                return None
+            return ListItem(text) if in_list else UnorderedList([Br(), ListItem(text), Br()])
 
         text = await self._parse_item(soup.children)
         return text or None

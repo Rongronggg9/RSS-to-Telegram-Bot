@@ -39,4 +39,4 @@ cachetools==5.5.2
 CJKwrap==2.2
 typing-extensions==4.12.2
 uvloop==0.21.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-isal==1.7.1; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'
+isal==1.7.2; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'

@@ -1,5 +1,5 @@
 #  RSS to Telegram Bot
-#  Copyright (C) 2024  Rongrong <i@rong.moe>
+#  Copyright (C) 2020-2025  Rongrong <i@rong.moe>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -108,7 +108,7 @@ RUN \
         echo "dirty-build@$(date -Iseconds)" | tee .version; else echo "build@$(date -Iseconds)" | tee -a .version; \
     fi && \
     mkdir /app-minimal && \
-    cp -r .version LICENSE src telegramRSSbot.py /app-minimal && \
+    cp -aL .version LICENSE src telegramRSSbot.py scripts/health_check.py /app-minimal && \
     cd / && \
     rm -rf /app && \
     rm -f /app-minimal/*.md && \
@@ -130,16 +130,21 @@ RUN \
     && \
     rm -rf /var/lib/apt/lists/*
 
+# PORT: default port for health check, can be safely overridden.
+#   Note: We don't expose this port in the Dockerfile. If users want to expose
+#   this port, they should do so in their docker-compose.yml or docker run
+#   command.
 # PYTHONMALLOC: enable pymalloc together with jemalloc, see also
 #   https://lirias.kuleuven.be/retrieve/695404
 #   https://dl.acm.org/doi/abs/10.1007/978-3-031-15074-6_14
-#   Note: do not compare pymalloc_jemalloc to the baseline (i.e., pymalloc),
+#   Note: Do not compare pymalloc_jemalloc to the baseline (i.e., pymalloc),
 #     compare pymalloc_jemalloc to jemalloc (i.e., jemalloc+malloc) instead.
 # LD_PRELOAD: enable jemalloc to prevent memory fragmentation issues.
 # MALLOC_CONF: jemalloc tuning, see also
 #   https://github.com/home-assistant/core/pull/70899
 #   https://github.com/jemalloc/jemalloc/blob/5.2.1/TUNING.md
 ENV \
+    PORT=8848 \
     PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     RAPIDFUZZ_IMPLEMENTATION=cpp \
@@ -153,5 +158,8 @@ COPY --from=app-builder /app-minimal /app
 
 # verify cryptg installation
 RUN python -c 'import logging; logging.basicConfig(level=logging.DEBUG); import telethon; import cryptg'
+
+HEALTHCHECK --start-period=1m \
+    CMD ["python", "-u", "health_check.py"]
 
 ENTRYPOINT ["python", "-u", "telegramRSSbot.py"]

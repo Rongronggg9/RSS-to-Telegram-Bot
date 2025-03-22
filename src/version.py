@@ -1,5 +1,5 @@
 #  RSS to Telegram Bot
-#  Copyright (C) 2022-2024  Rongrong <i@rong.moe>
+#  Copyright (C) 2022-2025  Rongrong <i@rong.moe>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -14,4 +14,4 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__version__ = "2.9.0"
+__version__ = "2.10.0"

@@ -2,10 +2,15 @@
 
 ## 未发布
 
+### 亮点
+
+- **容器健康检查**: 官方 Docker 镜像现在包含自动健康检查，用于确定容器是否正常运行。健康检查状态可以在 `docker ps` 中查看。结合 [`autoheal`](https://github.com/willfarrell/docker-autoheal) 或其他监控工具，当容器不健康时可以自动重启容器。
+- **支持特定于聊天的 #hashtag**: Telegram 最近添加了一个名为“特定于聊天的 hashtag”的功能，格式为 `#hashtag@username`。然而，转义 `@` 会破坏这些 hashtag。通过在 hashtag 中允许 `@` 来正确地支持这类 hashtag。
+
 ### 增强
 
-- **支持特定于聊天的 #hashtag**: Telegram 最近添加了一个名为“特定于聊天的 hashtag”的功能，格式为 `#hashtag@username`。然而，转义 `@` 会破坏这些 hashtag。通过在 hashtag 中允许 `@` 来正确地支持这类 hashtag。
 - **生成 Telegraph 文章时，不再代理来自 `*.wp.com` 的图像**: `*.wp.com` 位于 `wsrv.nl` (环境变量 `IMAGES_WESERV_NL`) 的阻断列表中。因此，在生成 Telegraph 文章时，这些图像不再被代理。来自 `*.wp.com` 的所有图片都可以用任何 refer 头访问，因此它们现在保持原样。
+- **UA 中的仓库链接**: 默认的 User-Agent 现在包含一个指向仓库的链接，这可以帮助网站管理员识别流量来源并将 RSStT 添加到白名单中。
 - **次要的增强**: 改进了一些内部函数以增强与各种 feed 的兼容性。
 - **次要的重构**: 重构了一些内部函数以提高性能、可读性和可维护性。
 

@@ -2,10 +2,15 @@
 
 ## Unreleased
 
+### Highlights
+
+- **Container health check**: The official Docker image includes an automatic health check to determine if the container is running properly. The health check status can be checked in `docker ps`. This feature, combined with [`autoheal`](https://github.com/willfarrell/docker-autoheal) or some other monitoring tool, can restart the container automatically when it is unhealthy.
+- **Support for chat-specific #hashtags**: Telegram recently added a feature called "chat-specific hashtags," formatting as `#hashtag@username`. However, escaping '@' broke these hashtags. Properly supports such hashtags by allowing '@' in hashtags.
+
 ### Enhancements
 
-- **Support for chat-specific #hashtags**: Telegram recently added a feature called "chat-specific hashtags," formatting as `#hashtag@username`. However, escaping '@' broke these hashtags. Properly supports such hashtags by allowing '@' in hashtags.
 - **No longer proxies images from `*.wp.com` when generating Telegraph posts**: `*.wp.com` is in the blocklist of `wsrv.nl` (environment variable `IMAGES_WESERV_NL`). Thus, these images are no longer proxied when generating Telegraph posts. All images from `*.wp.com` can be accessed with any referer header, so they are now kept as is.
+- **Link to repo in UA**: The default User-Agent now contains a link to the repository, which can help webmasters identify the source of traffic and add RSStT into their allowlists.
 - **Minor enhancements**: Some internal functions have been refined to enhance compatibility with various feeds.
 - **Minor refactor**: Some internal functions have been refactored to improve performance, readability and maintainability.
 

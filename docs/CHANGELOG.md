@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.10.0: Container health check, chat-specific #hashtags, and more
 
 ### Highlights
 

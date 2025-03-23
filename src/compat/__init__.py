@@ -21,8 +21,11 @@ import sys
 if sys.version_info < (3, 9):
     raise RuntimeError("This bot requires Python 3.9 or later")
 
+import feedparser.mixin
+import feedparser.urls
 import listparser.opml
 
+from .lxml_uri_resolver import resolve_relative_uris
 from .listparser_opml_mixin import OpmlMixin
 from .utils import (
     INT64_T_MAX,
@@ -44,6 +47,10 @@ __all__ = [
     "bozo_exception_removal_wrapper",
 ]
 
-# Monkey-patching `listparser.opml.OpmlMixin` to support `text` and `title_orig`
+# Monkey-patch `feedparser` to use lxml for performant URI resolution.
+feedparser.urls.resolve_relative_uris = resolve_relative_uris
+feedparser.mixin.resolve_relative_uris = resolve_relative_uris
+
+# Monkey-patch `listparser.opml.OpmlMixin` to support `text` and `title_orig`.
 # https://github.com/kurtmckee/listparser/issues/71
 listparser.opml.OpmlMixin.start_opml_outline = OpmlMixin.start_opml_outline

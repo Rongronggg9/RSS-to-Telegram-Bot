@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Enhancements
+
+- **Improve feed parsing performance**: Relative URIs are now resolved using `lxml` and `yarl`, cutting down the overhead of feed parsing by more than 50%.
+
 ## v2.10.0: Container health check, chat-specific #hashtags, and more
 
 ### Highlights

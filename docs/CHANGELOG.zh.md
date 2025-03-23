@@ -2,6 +2,10 @@
 
 ## 未发布
 
+### 增强
+
+- **提高 feed 解析性能**：现在使用 `lxml` 和 `yarl` 解析相对 URI，将 feed 解析的开销减少了超过 50%。
+
 ### Bug 修复
 
 - **格式不正确的 `<`**: 修复了在 `<code>` 或 `<pre>` 中的 `<` 被渲染为 `&LT` 的问题。这是一个上游问题，参见 [wilsonzlin/minify-html#109](https://github.com/wilsonzlin/minify-html/issues/109)。

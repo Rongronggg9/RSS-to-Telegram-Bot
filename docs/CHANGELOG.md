@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Enhancements
+
+- **Improve feed parsing performance**: Relative URIs are now resolved using `lxml` and `yarl`, cutting down the overhead of feed parsing by more than 50%.
+
 ### Bug fixes
 
 - **Malformed `<`**: Fixed an issue where `<` in `<code>` or `<pre>` was rendered as `&LT`. This was an upstream issue, see also [wilsonzlin/minify-html#109](https://github.com/wilsonzlin/minify-html/issues/109).

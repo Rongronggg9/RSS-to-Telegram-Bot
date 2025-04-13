@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- **Malformed `<`**: Fixed an issue where `<` in `<code>` or `<pre>` was rendered as `&LT`. This was an upstream issue, see also [wilsonzlin/minify-html#109](https://github.com/wilsonzlin/minify-html/issues/109).
+
 ## v2.10.0: Container health check, chat-specific #hashtags, and more
 
 ### Highlights

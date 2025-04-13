@@ -23,7 +23,9 @@ jobs:
       - name: Set up Python ${{ matrix.version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.version }}
+          python-version: |
+            3.9
+            ${{ matrix.version }}
           cache: 'pip'
       - name: Install dependencies
         shell: bash
@@ -103,8 +105,8 @@ jobs:
           cp .env_sqlite .env
           CURR_REF="$(git rev-parse HEAD)"
           git checkout stale/aerich-0.6
-          pip install -qr requirements.txt
-          python3 -u telegramRSSbot.py
+          pip3.9 install -qr requirements.txt
+          python3.9 -u telegramRSSbot.py
           git checkout "$CURR_REF"
           pip install -qr requirements.txt
           python3 -u telegramRSSbot.py
@@ -118,8 +120,8 @@ jobs:
           cp .env_postgresql .env
           CURR_REF="$(git rev-parse HEAD)"
           git checkout stale/aerich-0.6
-          pip install -qr requirements.txt
-          python3 -u telegramRSSbot.py
+          pip3.9 install -qr requirements.txt
+          python3.9 -u telegramRSSbot.py
           git checkout "$CURR_REF"
           pip install -qr requirements.txt
           python3 -u telegramRSSbot.py

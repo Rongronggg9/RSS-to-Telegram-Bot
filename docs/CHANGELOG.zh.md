@@ -1,5 +1,11 @@
 # 更新日志
 
+## 未发布
+
+### Bug 修复
+
+- **格式不正确的 `<`**: 修复了在 `<code>` 或 `<pre>` 中的 `<` 被渲染为 `&LT` 的问题。这是一个上游问题，参见 [wilsonzlin/minify-html#109](https://github.com/wilsonzlin/minify-html/issues/109)。
+
 ## v2.10.0: 容器健康检查、特定于聊天的 #hashtag 和更多
 
 ### 亮点

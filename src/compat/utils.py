@@ -93,8 +93,8 @@ else:
 
 
 def _parsing_utils_html_validator_minify_preprocess(html: str, drop_sr_only: bool) -> str:
-    # fix malformed HTML first, since minify-html is not so robust
-    # (resulting in RecursionError or unexpected format while html_parser parsing the minified HTML)
+    # Fix malformed HTML, or else minify-html may produce infinite nesting elements, resulting in RecursionError or
+    # unexpected format when the minified HTML is parsed later.
     # https://github.com/wilsonzlin/minify-html/issues/86
     soup = BeautifulSoup(html, 'lxml')
     if drop_sr_only:
@@ -107,26 +107,44 @@ def _parsing_utils_html_validator_minify_preprocess(html: str, drop_sr_only: boo
 
 
 def parsing_utils_html_validator_minify(html: str) -> str:
-    contains_sr_only = 'sr-only' in html
-    preprocessed = False
-    if (
-            minify_html_onepass is None  # requires minify-html-onepass to workaround upstream issue
-            or
-            contains_sr_only  # clear sr-only first, otherwise minify-html cannot strip spaces around them
-    ):
-        html = _parsing_utils_html_validator_minify_preprocess(html, contains_sr_only)
+    preprocessed: bool = False
+    if 'sr-only' in html:
+        # Clear .sr-only elements first, otherwise minify-html cannot strip spaces around them.
+        # Invalid closing tags are also fixed during the preprocessing, so we can skip minify-html-onepass.
+        html = _parsing_utils_html_validator_minify_preprocess(html, True)
         preprocessed = True
-
-    if minify_html_onepass is not None:
+    elif minify_html_onepass is not None:
+        # This is a workaround for https://github.com/wilsonzlin/minify-html/issues/86#issuecomment-1237677552
         try:
-            # workaround for https://github.com/wilsonzlin/minify-html/issues/86#issuecomment-1237677552
-            # minify-html-onepass does not allow invalid closing tags
-            return minify_html_onepass(html)
+            # The result has no use since minify-html-onepass v0.16.0+ does not switch to WHATWG-compliant behavior like
+            # minify-html v0.16.0+.
+            # See also:
+            #   https://github.com/wilsonzlin/minify-html/issues/109
+            #   https://github.com/wilsonzlin/minify-html/issues/234
+            # Moreover, we need to pass some parameters to minify-html to tune its behavior, which is not supported by
+            # minify-html-onepass.
+            minify_html_onepass(html)
         except SyntaxError:
-            if not preprocessed:
-                html = _parsing_utils_html_validator_minify_preprocess(html, contains_sr_only)
+            pass
+        else:
+            # Happy path for valid HTML so that we can avoid unnecessary preprocessing.
+            preprocessed = True
 
-    return minify_html(html)
+    if not preprocessed:
+        # Fix invalid closing tags when minify_html_onepass() raised SyntaxError or when it is unavailable.
+        html = _parsing_utils_html_validator_minify_preprocess(html, False)
+
+    return minify_html(
+        html,
+        # These parameters are not necessary and are passed just in case.
+        # The only necessary parameter is `allow_optimal_entities=False`, which is added in v0.16.0 and defaults to
+        # False. There are also some optional but preferred parameters that become the defaults in v0.16.0+ as part of
+        # the efforts to make the library more compliant with WHATWG specifications. Since we are using v0.16.0+, we
+        # don't need to pass them explicitly.
+        keep_closing_tags=True,
+        keep_html_and_head_opening_tags=True,
+        keep_input_type_text_attr=True,
+    )
 
 
 def cached_async(cache, key=hashkey):

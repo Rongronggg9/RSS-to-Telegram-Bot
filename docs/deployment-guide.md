@@ -102,7 +102,7 @@ _Please note that if you deploy RSStT without using the above buttons, you must 
 |----------------------|-----------------------|-----------------|
 | **Operating system** | Linux, Windows, macOS | Linux           |
 | **Architecture**     | x86_64, arm64         | x86_64          |
-| **Python (CPython)** | 3.9                   | 3.12            |
+| **Python (CPython)** | 3.9                   | 3.13            |
 | **Free memory**      | 128MB                 | \> 384MB        |
 
 ### Prerequisites

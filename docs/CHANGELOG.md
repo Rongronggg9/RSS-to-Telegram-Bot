@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Highlights
+
+- **Support Python 3.13**: Officially supports Python 3.13. The official Docker image is now based on Python 3.13 as well.
+
 ### Bug fixes
 
 - **Malformed `<`**: Fixed an issue where `<` in `<code>` or `<pre>` was rendered as `&LT`. This was an upstream issue, see also [wilsonzlin/minify-html#109](https://github.com/wilsonzlin/minify-html/issues/109).

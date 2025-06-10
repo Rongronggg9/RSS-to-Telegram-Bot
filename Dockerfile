@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-FROM python:3.12-bookworm AS dep-builder-common
+FROM python:3.13-bookworm AS dep-builder-common
 
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -36,7 +36,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.12-bookworm AS dep-builder
+FROM python:3.13-bookworm AS dep-builder
 
 ENV PATH="/opt/venv/bin:$PATH"
 ARG EXP_REGEX='^([^~=<>]+)[^#]*#\s*(\1@.+)$'
@@ -88,7 +88,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.12-bookworm AS app-builder
+FROM python:3.13-bookworm AS app-builder
 
 WORKDIR /app
 
@@ -118,7 +118,7 @@ RUN \
 
 #-----------------------------------------------------------------------------------------------------------------------
 
-FROM python:3.12-slim-bookworm AS app
+FROM python:3.13-slim-bookworm AS app
 
 WORKDIR /app
 

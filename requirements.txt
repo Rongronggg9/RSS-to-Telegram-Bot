@@ -28,7 +28,7 @@ python-socks[asyncio]==2.7.1
 dnspython[idna]==2.7.0
 
 # utils
-yarl==1.19.0
+yarl==1.20.1
 propcache==0.3.2
 colorlog==6.9.0
 APScheduler==3.11.0

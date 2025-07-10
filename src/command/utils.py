@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 from typing import Union, Optional, AnyStr, Any
+from typing_extensions import Final
 from collections.abc import Callable
 
 import asyncio
@@ -236,6 +237,16 @@ async def unsub_all_and_leave_chat(user_id: hints.EntityLike):
         inner.sub.unsub_all(user_id),
         leave_chat(user_id),
     )
+
+
+async def deactivate_all_and_leave_chat(user_id: hints.EntityLike):
+    await asyncio.gather(
+        inner.utils.activate_or_deactivate_all_subs(user_id, activate=False),
+        leave_chat(user_id),
+    )
+
+
+default_leave_chat_helper: Final = deactivate_all_and_leave_chat
 
 
 def command_gatekeeper(
@@ -659,9 +670,9 @@ def command_gatekeeper(
                 elif isinstance(e, (EntitiesTooLongError, MessageTooLongError)):
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['message_too_long_prompt'])
                 elif isinstance(e, errors_collection.UserBlockedErrors):
-                    await unsub_all_and_leave_chat(chat_id)
+                    await default_leave_chat_helper(chat_id)
                 elif isinstance(e, BadRequestError) and e.message == 'TOPIC_CLOSED':
-                    await unsub_all_and_leave_chat(chat_id)
+                    await default_leave_chat_helper(chat_id)
                 else:
                     await respond_or_answer(event, 'ERROR: ' + i18n[lang]['uncaught_internal_error'])
             except (FloodError, MessageNotModifiedError, locks.ContextTimeoutError):

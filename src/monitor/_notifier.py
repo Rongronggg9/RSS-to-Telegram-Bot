@@ -15,10 +15,11 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Sequence, MutableMapping, Union, Final, ClassVar, Optional, Any, Callable
+from typing import Sequence, MutableMapping, Union, Final, ClassVar, Optional, Any, Callable, Awaitable
 
 import asyncio
 from collections import defaultdict, Counter
+from telethon import hints
 from telethon.errors import BadRequestError
 from traceback import format_exc
 
@@ -44,7 +45,6 @@ class Notifier:
     # it may cause memory leak, but they are too small that leaking thousands of that is still not a big deal!
     _on_blocked_lock_bucket: ClassVar[dict[int, asyncio.Lock]] = defaultdict(asyncio.Lock)
     _user_blocked_counter: ClassVar[Counter] = Counter()
-    _on_blocked_cb: Callable[[int], None] = default_leave_chat_helper
 
     def __init__(
             self,
@@ -52,6 +52,7 @@ class Notifier:
             subs: Sequence[db.Sub],
             entries: Optional[Sequence[MutableMapping]] = None,
             reason: Optional[Union[web.WebError, str]] = None,
+            on_blocked_cb: Callable[[hints.EntityLike], Awaitable[None]] = default_leave_chat_helper,
     ):
         if entries is not None and reason is not None:
             raise ValueError('entries and reason cannot be set at the same time')
@@ -59,6 +60,7 @@ class Notifier:
         self._subs: Final[set[db.Sub]] = set(subs)
         self._entries: Final[Optional[Sequence[MutableMapping]]] = entries
         self._reason: Final[Optional[Union[web.WebError, str]]] = reason
+        self._on_blocked_cb: Callable[[hints.EntityLike], Awaitable[None]] = on_blocked_cb
 
         self._entry_count: Final[int] = len(entries) if entries is not None else 0
         self._sub_count: Final[int] = len(subs)

@@ -32,7 +32,7 @@ yarl==1.20.1
 propcache==0.3.2
 colorlog==6.9.0
 APScheduler==3.11.0
-python-dotenv==1.1.0
+python-dotenv==1.1.1
 multidict==6.4.4
 asyncstdlib==3.13.1
 cachetools==6.1.0

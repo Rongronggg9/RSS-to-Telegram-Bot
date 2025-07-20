@@ -1,16 +1,16 @@
 {
     "l10n_info": {
-        "lang_code": "pt",
+        "lang_code": "pt-br",
         "iso_639_code": "pt",
-        "language_name": "Portuguese",
-        "lang_native_name": "Português",
-        "select_lang_prompt": "Por favor, selecione um idioma.",
+        "language_name": "Português (Brasil)",
+        "lang_native_name": "Português (Brasil)",
+        "select_lang_prompt": "Por favor, Selecione um idioma.",
         "welcome_prompt": "Bem-vindo ao RSS do Telegram Bot.",
-        "rsstt_slogan": "RSS para Telegram Bot, um robot de telegrama RSS que se preocupa com a sua experiência de leitura."
+        "rsstt_slogan": "RSS para Telegram Bot, um bot do telegrama de RSS que se preocupa com a sua experiência de leitura."
     },
     "l10n_sub_status": {
         "no_subscription": "Você não tem assinaturas",
-        "already_subscribed": "Já inscrevi",
+        "already_subscribed": "Já inscrito",
         "subscription_not_exist": "A assinatura não existe"
     },
     "l10n_error_reasons": {
@@ -23,9 +23,9 @@
         "operation_timeout_error": "Tempo limite de operação",
         "action_invalid": "Ação inválida",
         "sub_limit_reached": "Número máximo de assinaturas atingido",
-        "flood_wait_prompt": "Você está operando com muita freqüência que o bot ultrapassou o limite da taxa do Telegrama. Por favor, desacelere.",
-        "edit_conflict_prompt": "Você está operando com muita freqüência que a operação entra em conflito. Por favor, desacelere.",
-        "callback_already_running_prompt": "Você pediu outro comando. Por favor, tente novamente depois de terminar.",
+        "flood_wait_prompt": "Você está operando com muita frequência que o bot ultrapassou o limite da taxa do Telegrama. Por favor, desacelere.",
+        "edit_conflict_prompt": "Você está operando com muita frequência que a operação entra em conflito. Por favor, desacelere.",
+        "callback_already_running_prompt": "Você solicitou outro comando. Tente novamente após a conclusão.",
         "message_too_long_prompt": "O comando deveria ter sido executado com sucesso, mas a mensagem de retorno é muito longa para ser enviada."
     },
     "l10n_permission_denied_reasons": {
@@ -118,7 +118,7 @@
         "display_via": "Fonte",
         "display_via_-4": "Sem título de feed, URL simples no final",
         "display_via_-3": "Sem título de feed, link exibido como título de post",
-        "display_via_-2": "Desativado",
+        "display_via_-2": "Desabilitar completamente",
         "display_via_-1": "Sem título de feed, hiperlink no final",
         "display_via_0": "Título e link do feed",
         "display_via_1": "Título do feed e link exibidos como título da postagem",
@@ -139,7 +139,8 @@
         "use_user_default_button": "Usar meu padrão",
         "read_formatting_settings_guidebook_html": "<a href=\"%s\">Leia o manual de configurações de formatação aqui.</a>",
         "display_entry_tags_-1": "Desativado",
-        "display_entry_tags_1": "Ativado"
+        "display_entry_tags_1": "Ativado",
+        "display_entry_tags": "Hashtags da postagem (entrada do feed)"
     },
     "l10n_cmd_set_default": {
         "set_user_default_description": "Defina as definição padrão para assinaturas.\n\nAs definição não configuradas de uma assinatura voltarão às definição desta página. É útil se você quiser definir as mesmas definição para a maioria de suas assinaturas.",

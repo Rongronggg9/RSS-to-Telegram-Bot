@@ -172,7 +172,7 @@
         "all_subs_are_deactivated": "அனைத்து சந்தாக்களும் செயலிழக்கப்படுகின்றன."
     },
     "l10n_cmd_set_title": {
-        "cmd_set_title_usage_prompt_html": "கட்டளை பயன்பாடு: <code>/set_title sub_id தலைப்பு </code>\n\n குறிப்பு: தனிப்பயன் தலைப்பை அழிக்க <Code> தலைப்பு </code> ஐ விடுங்கள் (முன்பு அமைக்கப்பட்டால் மட்டுமே, இல்லையெனில் இந்த வரியில் கிடைக்கும்).",
+        "cmd_set_title_usage_prompt_html": "கட்டளை பயன்பாடு: <code>/set_title sub_id தலைப்பு </code>\n\n குறிப்பு: தனிப்பயன் தலைப்பை அழிக்க <code> தலைப்பு </code> ஐ விடுங்கள் (முன்பு அமைக்கப்பட்டால் மட்டுமே, இல்லையெனில் இந்த வரியில் கிடைக்கும்).",
         "set_title_success": "சந்தாவின் தனிப்பயன் தலைப்பு இதற்கு மாற்றப்பட்டுள்ளது: ",
         "set_title_success_cleared": "சந்தாவின் தனிப்பயன் தலைப்பு அழிக்கப்பட்டுள்ளது."
     },
@@ -214,7 +214,7 @@
         "set_user_state_as": "பயனர் நிலையை அமைக்கவும்",
         "reset_sub_limit_to_default": "சந்தா அளவு வரம்பை இயல்புநிலைக்கு மீட்டமைக்கவும்",
         "set_sub_limit_to": "சந்தா அளவு வரம்பை அமைக்கவும்…",
-        "cmd_set_sub_limit_prompt_html": "கட்டளை பயன்பாடு: <code>/set_sub_limit user_id subsctiont_quantity_limit </code>\n\n குறிப்பு: <code> சந்தா_ குவாண்டிட்டி_ லிமிட் </code> வரம்பற்ற ஒரு முழு எண்ணாக இருக்க வேண்டும்."
+        "cmd_set_sub_limit_prompt_html": "கட்டளை பயன்பாடு: <code>/set_sub_limit user_id subsctiont_quantity_limit </code>\n\n குறிப்பு: <code> சந்தா_ குவாண்டிட்டி_ லிமிட் </code> ஒரு முழு எண்ணாக இருக்க வேண்டும், <code>-1</code>வரம்பற்றது."
     },
     "l10n_cmd_descriptions": {
         "commands": "கட்டளைகள்",
@@ -234,6 +234,6 @@
         "cmd_description_test": "சோதனை (போட் மேலாளர் மட்டும்)",
         "cmd_description_set_option": "போட் விருப்பங்களை அமைக்கவும் (போட் மேலாளர் மட்டும்)",
         "cmd_description_user_info": "பயனர் தகவலைக் காண்க/மாற்றவும் (போட் மேலாளர் மட்டும்)",
-        "usage_in_channel_or_group_prompt_html": "<b> சேனல்/குழுவில் பயன்பாடு: </b>\n 1. உங்கள் சேனல்/குழுவில் போட் சேர்க்கவும்.\n 2 அ. சேனல்/குழுவில் </b> இல் நேரடியாக கட்டளைகளை அனுப்பவும்.\n 2 பி. அல்லது மாற்றாக, நீங்கள் <code>/sub @username https.\n ."
+        "usage_in_channel_or_group_prompt_html": "<b>சேனல்/குழுவில் பயன்பாடு:</b>\n1. உங்கள் சேனல்/குழுவில் போட் சேர்க்கவும்.\n2 அ. <b>சேனல்/குழுவில்</b>இல் நேரடியாகக் கட்டளைகளை அனுப்பவும்.\n2 பி. அல்லது மாற்றாக, நீங்கள் <code>/sub @username https://example.com</code> or <code>/sub -10010000000000 https://example.com</code> <b>in the private chat with the bot</b>.\n(<code>@username</code> is the channel/group's username, <code>@</code> is required; <code>-10010000000000</code> is the channel/group's ID, it must start with <code>-100</code>)"
     }
 }

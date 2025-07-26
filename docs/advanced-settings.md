@@ -41,6 +41,8 @@
 | `HTTP_TIMEOUT`              | HTTP request timeout in seconds                       | `60`                           | `12`                                                |
 | `HTTP_CONCURRENCY`          | HTTP request concurrency overall (0=unlimited)        | `0`                            | `1024`                                              |
 | `HTTP_CONCURRENCY_PER_HOST` | HTTP request concurrency per host (0=unlimited)       | `0`                            | `16`                                                |
+| `HTTP_MAX_LINE_SIZE`        | Maximum allowed size of lines in responses            | `32768`                        | `16384`                                             |
+| `HTTP_MAX_FIELD_SIZE`       | Maximum allowed size of header fields in responses    | `32768`                        | `16384`                                             |
 
 ### Misc settings
 

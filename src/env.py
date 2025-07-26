@@ -1,5 +1,5 @@
 #  RSS to Telegram Bot
-#  Copyright (C) 2020-2024  Rongrong <i@rong.moe>
+#  Copyright (C) 2020-2025  Rongrong <i@rong.moe>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -298,6 +298,8 @@ VERIFY_TLS: Final = __bool_parser(os.environ.get('VERIFY_TLS'), default_value=Tr
 HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
 HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)
 HTTP_CONCURRENCY_PER_HOST: Final = int(os.environ.get('HTTP_CONCURRENCY_PER_HOST') or 16)
+HTTP_MAX_LINE_SIZE: Final = int(os.environ.get('HTTP_MAX_LINE_SIZE') or 16384)
+HTTP_MAX_FIELD_SIZE: Final = int(os.environ.get('HTTP_MAX_FIELD_SIZE') or 16384)
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'

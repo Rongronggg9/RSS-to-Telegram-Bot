@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Union, Optional, AnyStr, ClassVar
+from typing import Union, Optional, AnyStr, ClassVar, Iterable
 from typing_extensions import Final
 
 import aiohttp
@@ -92,33 +92,48 @@ class YummyCookieJar(aiohttp.abc.AbstractCookieJar):
 
 
 class WebError(Exception):
-    def __init__(self, error_name: str, status: Union[int, str] = None, url: str = None,
-                 base_error: Exception = None, hide_base_error: bool = False, log_level: int = log.DEBUG):
+    @staticmethod
+    def _join_snips(sep: str, snips: Iterable[str]) -> str:
+        return sep.join(filter(None, snips))
+
+    def __init__(
+            self,
+            error_name: str,
+            status: Union[int, str] = None,
+            url: str = None,
+            base_error: Exception = None,
+            log_level: int = log.DEBUG,
+    ):
         super().__init__(error_name)
         self.error_name = error_name
         self.status = status
         self.url = url
         self.base_error = base_error
-        self.hide_base_error = hide_base_error
-        log_msg = f'Fetch failed ({error_name}'
-        log_msg += (f', {type(base_error).__name__}'
-                    if not hide_base_error and base_error and log_level < log.ERROR
-                    else '')
-        log_msg += f', {status}' if status else ''
-        log_msg += ')'
-        log_msg += f': {url}' if url else ''
-        logger.log(log_level,
-                   log_msg,
-                   exc_info=base_error if not hide_base_error and base_error and log_level >= log.ERROR else None)
+        self.detail = self._join_snips(', ', (
+            type(base_error).__name__ if base_error else None,
+            status,
+        ))
+        reason = self._join_snips(', ', (
+            error_name,
+            self.detail,
+        ))
+        log_msg = self._join_snips(': ', (
+            f'Fetch failed ({reason})',
+            url,
+        ))
+        logger.log(
+            log_level,
+            log_msg,
+            exc_info=base_error if log_level >= log.ERROR else None,
+        )
 
     def i18n_message(self, lang: str = None) -> str:
         error_key = self.error_name.lower().replace(' ', '_')
-        msg = f'ERROR: {i18n[lang][error_key]}'
-        if not self.hide_base_error and self.base_error:
-            msg += f' ({type(self.base_error).__name__})'
-        if self.status:
-            msg += f' ({self.status})'
-        return msg
+        return self._join_snips(' ', (
+            'ERROR:',
+            i18n[lang][error_key],
+            f'({self.detail})' if self.detail else None,
+        ))
 
     def __str__(self) -> str:
         return self.i18n_message()

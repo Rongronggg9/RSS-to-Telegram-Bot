@@ -6,6 +6,10 @@
 
 - **支持 Python 3.13**: 正式支持 Python 3.13。官方 Docker 镜像现在也基于 Python 3.13。
 
+### 增强
+
+- **次要的重构**: 重构了一些内部函数以提高性能、可读性和可维护性。
+
 ### Bug 修复
 
 - **格式不正确的 `<`**: 修复了在 `<code>` 或 `<pre>` 中的 `<` 被渲染为 `&LT` 的问题。这是一个上游问题，参见 [wilsonzlin/minify-html#109](https://github.com/wilsonzlin/minify-html/issues/109)。

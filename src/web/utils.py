@@ -1,5 +1,5 @@
 #  RSS to Telegram Bot
-#  Copyright (C) 2021-2024  Rongrong <i@rong.moe>
+#  Copyright (C) 2021-2025  Rongrong <i@rong.moe>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -124,7 +124,7 @@ class WebError(Exception):
         logger.log(
             log_level,
             log_msg,
-            exc_info=base_error if log_level >= log.ERROR else None,
+            exc_info=base_error if log_level >= log.ERROR or env.DEBUG else None,
         )
 
     def i18n_message(self, lang: str = None) -> str:

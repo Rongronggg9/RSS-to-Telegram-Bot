@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Set up QEMU
@@ -76,7 +76,7 @@ jobs:
     name: Update repository description on Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@v4
         with:

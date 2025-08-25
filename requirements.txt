@@ -8,7 +8,7 @@ feedparser==6.0.11  # feedparser@git+https://github.com/Rongronggg9/feedparser.g
 listparser[lxml]==0.20
 pillow==11.3.0
 beautifulsoup4==4.12.3
-lxml==5.4.0
+lxml==6.0.1
 rapidfuzz==3.13.0
 emoji==2.14.1
 minify-html==0.16.4

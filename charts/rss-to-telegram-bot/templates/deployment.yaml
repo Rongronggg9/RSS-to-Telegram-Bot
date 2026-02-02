@@ -24,7 +24,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: PORT
-              value: "{{ .Values.service.port }}"
+              value: "{{ .Values.port }}"
           envFrom:
             - secretRef:
                 name: {{ include "rss-to-telegram-bot.fullname" . }}
@@ -32,15 +32,11 @@ spec:
             - configMapRef:
                 name: {{ include "rss-to-telegram-bot.fullname" . }}
             {{- end }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
           {{- if .Values.healthCheck.enabled }}
           livenessProbe:
             httpGet:
               path: /
-              port: http
+              port: {{ .Values.port }}
             initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.timeoutSeconds }}
@@ -48,7 +44,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /
-              port: http
+              port: {{ .Values.port }}
             initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
             periodSeconds: {{ .Values.healthCheck.periodSeconds }}
             timeoutSeconds: {{ .Values.healthCheck.timeoutSeconds }}

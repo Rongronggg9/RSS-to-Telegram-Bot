@@ -100,8 +100,7 @@ def _get_connector(use_proxy: bool, family: int) -> aiohttp.BaseConnector:
 
 
 async def close_connector_pool() -> None:
-    for connector in _connector_pool.values():
-        await connector.close()
+    await asyncio.gather(*(c.close() for c in _connector_pool.values()), return_exceptions=True)
     _connector_pool.clear()
 
 

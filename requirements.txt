@@ -1,42 +1,42 @@
 # telegram and telegraph
-cryptg==0.5.0.post0
-telethon==1.40.0
-aiographfix==0.2.2
+cryptg>=0.5.2
+telethon>=1.42.0
+aiographfix>=0.2.2
 
 # feed parsing
-feedparser==6.0.11  # feedparser@git+https://github.com/Rongronggg9/feedparser.git@develop
-listparser[lxml]==0.20
-pillow==11.3.0
-beautifulsoup4==4.12.3
-lxml==5.4.0
-rapidfuzz==3.13.0
-emoji==2.14.1
-minify-html==0.16.4
-minify-html-onepass==0.16.4
-matplotlib==3.9.4
+feedparser>=6.0.12  # feedparser@git+https://github.com/Rongronggg9/feedparser.git@develop
+listparser[lxml] @ git+https://github.com/kurtmckee/listparser@main
+pillow>=12.1.1
+beautifulsoup4>=4.14.3
+lxml>=6.0.2
+rapidfuzz>=3.14.3
+emoji>=2.15.0
+minify-html>=0.18.1
+minify-html-onepass>=0.18.1
+matplotlib>=3.10.8
 
 # db
-asyncpg==0.30.0
-tortoise-orm[accel]==0.25.1
+asyncpg>=0.31.0
+tortoise-orm[accel]<1.0.0
 aerich==0.8.1
 
 # network
-aiohttp[speedups]==3.12.14
-aiohttp-socks==0.10.1
-aiohttp-retry==2.9.1
-python-socks[asyncio]==2.7.1
-dnspython[idna]==2.7.0
+aiohttp[speedups]>=3.13.3
+aiohttp-socks>=0.11.0
+aiohttp-retry>=2.9.1
+python-socks[asyncio]>=2.8.1
+dnspython[idna]>=2.8.0
 
 # utils
-yarl==1.20.1
-propcache==0.3.2
-colorlog==6.9.0
-APScheduler==3.11.0
-python-dotenv==1.1.1
-multidict==6.6.3
-asyncstdlib==3.13.1
-cachetools==6.1.0
-CJKwrap==2.2
-typing-extensions==4.14.1
-uvloop==0.21.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
-isal==1.7.2; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'
+yarl>=1.23.0
+propcache>=0.4.1
+colorlog>=6.10.1
+APScheduler>=3.11.2
+python-dotenv>=1.2.2
+multidict>=6.7.1
+asyncstdlib>=3.13.3
+cachetools>=7.0.5
+CJKwrap>=2.2
+typing-extensions>=4.15.0
+uvloop>=0.22.1; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'
+isal>=1.8.0; platform_machine=='x86_64' or platform_machine=='AMD64' or platform_machine=='aarch64'

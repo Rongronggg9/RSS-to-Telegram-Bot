@@ -1,0 +1,17 @@
+apiVersion: v2
+name: rss-to-telegram-bot
+description: A Helm chart for RSS-to-Telegram-Bot (RSStT)
+type: application
+version: 0.1.0
+appVersion: "2.10.0"
+home: https://github.com/Rongronggg9/RSS-to-Telegram-Bot
+sources:
+  - https://github.com/Rongronggg9/RSS-to-Telegram-Bot
+maintainers:
+  - name: Rongronggg9
+    url: https://github.com/Rongronggg9
+keywords:
+  - rss
+  - telegram
+  - bot
+  - feed

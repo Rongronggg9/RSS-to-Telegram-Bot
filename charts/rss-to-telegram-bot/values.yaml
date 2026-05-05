@@ -1,0 +1,70 @@
+# Default values for rss-to-telegram-bot
+
+replicaCount: 1
+
+image:
+  repository: rongronggg9/rss-to-telegram
+  pullPolicy: IfNotPresent
+  tag: "dev" # Use "latest" for stable version
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Required configuration
+config:
+  # Telegram bot token from @BotFather (required)
+  token: ""
+  # Telegram user ID of the manager (required), can be semicolon-separated list
+  manager: ""
+  # Telegraph API tokens (optional, space or newline separated)
+  telegraphToken: ""
+
+# Advanced settings (optional)
+advancedConfig:
+  # Database URL (default: sqlite in /app/config/db.sqlite3)
+  # For PostgreSQL: postgres://username:password@host:port/db_name
+  databaseUrl: ""
+  # Telegram API credentials (optional)
+  apiId: ""
+  apiHash: ""
+  # Proxy settings
+  tProxy: ""
+  rProxy: ""
+  # Other settings
+  multiuser: ""
+  cronSecond: ""
+  errorLoggingChat: ""
+  debug: ""
+
+# Port for health checks
+port: 8848
+
+# Persistence for SQLite database
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  existingClaim: ""
+
+# Resource limits
+resources:
+  limits:
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Pod configuration
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3

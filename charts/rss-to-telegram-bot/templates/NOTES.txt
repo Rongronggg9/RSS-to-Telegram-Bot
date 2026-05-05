@@ -1,0 +1,24 @@
+RSS-to-Telegram-Bot has been deployed!
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+{{- if not .Values.config.token }}
+
+WARNING: You have not set a Telegram bot token!
+Please update the release with your bot token:
+
+  helm upgrade {{ .Release.Name }} . --set config.token=YOUR_BOT_TOKEN --set config.manager=YOUR_TELEGRAM_ID
+
+{{- end }}
+
+To check the status of your deployment:
+
+  kubectl get pods -l "app.kubernetes.io/name={{ include "rss-to-telegram-bot.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -n {{ .Release.Namespace }}
+
+To view the logs:
+
+  kubectl logs -f deployment/{{ include "rss-to-telegram-bot.fullname" . }} -n {{ .Release.Namespace }}
+
+For more information, visit:
+  https://github.com/Rongronggg9/RSS-to-Telegram-Bot

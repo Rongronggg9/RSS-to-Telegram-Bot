@@ -18,6 +18,8 @@ matplotlib==3.9.4
 # db
 asyncpg==0.30.0
 tortoise-orm[accel]==0.25.1
+aiosqlite<0.22  # aiosqlite>=0.22 is incompatible with tortoise-orm==0.25.1 SQLite backend
+asyncclick<8.3; python_version < '3.11'  # asyncclick 8.3.0.3 misses its anyio dependency on Python 3.10
 aerich==0.8.1
 
 # network

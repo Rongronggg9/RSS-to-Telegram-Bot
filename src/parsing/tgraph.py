@@ -375,7 +375,7 @@ class TelegraphIfy:
         telegraph_account = apis.get_account()
         try:
             telegraph_page = await telegraph_account.create_page(
-                title=f'{self.telegraph_title[:60]}…' if len(self.telegraph_title) > 61 else self.telegraph_title,
+                title=f'{self.telegraph_title[:253]}…' if len(self.telegraph_title) > 254 else self.telegraph_title,
                 content=self.telegraph_html_content,
                 author_name=self.telegraph_author[:128],
                 author_url=self.telegraph_author_url[:512]

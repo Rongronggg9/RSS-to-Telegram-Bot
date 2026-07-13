@@ -243,3 +243,4 @@ icon/
 docker-compose*.yml
 docker-compose*.yaml
 .version
+.worktrees/

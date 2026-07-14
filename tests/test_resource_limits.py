@@ -115,3 +115,76 @@ async def test_timed_out_lease_remains_held_until_underlying_work_finishes() -> 
                 task.cancel()
             with suppress(asyncio.CancelledError):
                 await task
+
+
+@pytest.mark.unit
+async def test_run_with_lease_accepts_scheduled_task_and_holds_lease_until_settlement() -> None:
+    from src.locks import run_with_lease
+
+    semaphore = asyncio.Semaphore(1)
+    factory_called = asyncio.Event()
+    operation_started = asyncio.Event()
+    operation_release = asyncio.Event()
+    operation_settled = asyncio.Event()
+    contender_attempted = asyncio.Event()
+    contender_admitted = asyncio.Event()
+    contender_release = asyncio.Event()
+    factory_had_lease = False
+    underlying_task: asyncio.Task[str] | None = None
+    lease_task: asyncio.Task[str] | None = None
+    contender_task: asyncio.Task[None] | None = None
+
+    async def operation() -> str:
+        operation_started.set()
+        try:
+            await operation_release.wait()
+            return "settled"
+        finally:
+            operation_settled.set()
+
+    def factory() -> asyncio.Task[str]:
+        nonlocal factory_had_lease, underlying_task
+        factory_had_lease = semaphore.locked()
+        underlying_task = asyncio.create_task(operation())
+        factory_called.set()
+        return underlying_task
+
+    async def contend() -> None:
+        contender_attempted.set()
+        async with semaphore:
+            contender_admitted.set()
+            await contender_release.wait()
+
+    try:
+        lease_task = asyncio.create_task(run_with_lease(factory, semaphore))
+        await factory_called.wait()
+        await asyncio.sleep(0)
+
+        assert factory_had_lease
+        if lease_task.done():
+            await lease_task
+
+        await operation_started.wait()
+        assert semaphore.locked()
+        contender_task = asyncio.create_task(contend())
+        await contender_attempted.wait()
+        await asyncio.sleep(0)
+        assert not contender_admitted.is_set()
+
+        operation_release.set()
+        await operation_settled.wait()
+        assert await lease_task == "settled"
+        await contender_admitted.wait()
+        assert semaphore.locked()
+
+        contender_release.set()
+        await contender_task
+        assert not semaphore.locked()
+    finally:
+        operation_release.set()
+        contender_release.set()
+        for task in (contender_task, underlying_task, lease_task):
+            if task is not None and not task.done():
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task

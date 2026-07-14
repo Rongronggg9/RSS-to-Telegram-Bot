@@ -162,10 +162,15 @@ async def run_with_lease(
     semaphore: asyncio.Semaphore,
     timeout: float = None,
 ) -> T:
+    async def invoke_factory() -> T:
+        return await factory()
+
     await semaphore.acquire()
+    operation = invoke_factory()
     try:
-        task = env.loop.create_task(factory())
+        task = env.loop.create_task(operation)
     except BaseException:
+        operation.close()
         semaphore.release()
         raise
     _lease_tasks.add(task)

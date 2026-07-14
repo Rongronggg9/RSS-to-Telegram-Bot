@@ -77,21 +77,57 @@ ISOLATED_ENV_KEYS = (
     "MONITOR_CONCURRENCY",
 )
 
-_PROBE = """
+CONTAINMENT_ENV_NAMES = (
+    "HTTP_TIMEOUT",
+    "HTTP_CONCURRENCY",
+    "HTTP_CONCURRENCY_PER_HOST",
+    "HTTP_MAX_LINE_SIZE",
+    "HTTP_MAX_FIELD_SIZE",
+    "HTTP_MAX_COMPRESSED_BODY_BYTES",
+    "HTTP_MAX_DECOMPRESSED_BODY_BYTES",
+    "HTTP_MAX_REDIRECTS",
+    "PARSE_CONCURRENCY",
+    "FEED_MAX_ENTRIES",
+    "OPML_MAX_BYTES",
+    "OPML_MAX_OUTLINES",
+    "OPML_MAX_DEPTH",
+    "OPML_PARSE_TIMEOUT",
+    "SUBS_MAX_URLS_PER_REQUEST",
+    "SUBS_MAX_SUBSCRIPTIONS_PER_REQUEST",
+    "SUBS_CONCURRENCY",
+    "MANAGER_TEST_MAX_ENTRIES",
+    "MANAGER_TEST_CONCURRENCY",
+    "MONITOR_MAX_PENDING_TASKS",
+    "MONITOR_CONCURRENCY",
+)
+
+
+_PROBE = f"""
 import json
 import sys
 
 config_folder = sys.argv[1]
 sys.argv[:] = [sys.argv[0], "--config", config_folder]
-from src import env
+try:
+    from src import env
+except Exception as error:
+    payload = {{
+        "error_type": type(error).__name__,
+        "error_message": str(error),
+    }}
+else:
+    payload = {{
+        "config_folder_path": env.config_folder_path,
+        "DATABASE_URL": env.DATABASE_URL,
+        "DEFAULT_PROXY": env.DEFAULT_PROXY or None,
+        "R_PROXY": env.R_PROXY or None,
+    }}
+    payload.update({{
+        name: getattr(env, name, None)
+        for name in {CONTAINMENT_ENV_NAMES!r}
+    }})
 
-print(json.dumps({
-    "config_folder_path": env.config_folder_path,
-    "DATABASE_URL": env.DATABASE_URL,
-    "HTTP_TIMEOUT": env.HTTP_TIMEOUT,
-    "DEFAULT_PROXY": env.DEFAULT_PROXY or None,
-    "R_PROXY": env.R_PROXY or None,
-}))
+print(json.dumps(payload))
 """
 
 

@@ -18,10 +18,11 @@ Shared locks.
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Union
+from typing import Awaitable, Callable, Iterable, Iterator, TypeVar, Union
 from contextlib import AbstractAsyncContextManager
 
 import asyncio
+from itertools import islice
 from time import time
 from collections import defaultdict
 from functools import partial
@@ -29,7 +30,6 @@ from urllib.parse import urlparse
 
 from . import log, env
 from .errors_collection import ContextTimeoutError
-from .compat import nullcontext
 
 _USER_LIKE = Union[int, str]
 
@@ -132,23 +132,70 @@ async def user_flood_wait_background(user: _USER_LIKE, seconds: int) -> asyncio.
     return task
 
 
+T = TypeVar('T')
+
+
+def batches(items: Iterable[T], max_items: int) -> Iterator[tuple[T, ...]]:
+    iterator = iter(items)
+    while True:
+        batch = tuple(islice(iterator, max_items))
+        if not batch:
+            return
+        yield batch
+
+
+async def gather_factories(
+    factories: Iterable[Callable[[], Awaitable[T]]],
+    max_items: int,
+) -> tuple[T, ...]:
+    results: list[T] = []
+    for factory_batch in batches(factories, max_items):
+        results.extend(await asyncio.gather(*(factory() for factory in factory_batch)))
+    return tuple(results)
+
+
+_lease_tasks: set[asyncio.Task] = set()
+
+
+async def run_with_lease(
+    factory: Callable[[], Awaitable[T]],
+    semaphore: asyncio.Semaphore,
+    timeout: float = None,
+) -> T:
+    await semaphore.acquire()
+    try:
+        task = env.loop.create_task(factory())
+    except BaseException:
+        semaphore.release()
+        raise
+    _lease_tasks.add(task)
+
+    def release(completed: asyncio.Task[T]) -> None:
+        try:
+            if not completed.cancelled():
+                completed.exception()
+        finally:
+            semaphore.release()
+            _lease_tasks.discard(completed)
+
+    task.add_done_callback(release)
+    protected = asyncio.shield(task)
+    if timeout is None:
+        return await protected
+    return await asyncio.wait_for(protected, timeout)
+
+
+parse_semaphore = asyncio.BoundedSemaphore(env.PARSE_CONCURRENCY)
+monitor_semaphore = asyncio.BoundedSemaphore(env.MONITOR_CONCURRENCY)
+
+
 # ----- web locks -----
-overall_web_semaphore = (asyncio.BoundedSemaphore(env.HTTP_CONCURRENCY)
-                         if env.HTTP_CONCURRENCY > 0
-                         else nullcontext())
-
-if env.HTTP_CONCURRENCY_PER_HOST > 0:
-    _hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = \
-        defaultdict(partial(asyncio.BoundedSemaphore, env.HTTP_CONCURRENCY_PER_HOST))
+overall_web_semaphore = asyncio.BoundedSemaphore(env.HTTP_CONCURRENCY)
+_hostname_semaphore_bucket: defaultdict[str, asyncio.BoundedSemaphore] = defaultdict(
+    partial(asyncio.BoundedSemaphore, env.HTTP_CONCURRENCY_PER_HOST)
+)
 
 
-    def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:
-        hostname = urlparse(url).hostname if parse else url
-        return _hostname_semaphore_bucket[hostname]
-
-else:
-    _null_semaphore = nullcontext()
-
-
-    def hostname_semaphore(*_, **__) -> nullcontext:
-        return _null_semaphore
+def hostname_semaphore(url: str, parse: bool = True) -> asyncio.BoundedSemaphore:
+    hostname = urlparse(url).hostname if parse else url
+    return _hostname_semaphore_bucket[hostname]

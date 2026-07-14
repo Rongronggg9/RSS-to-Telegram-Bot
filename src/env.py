@@ -52,6 +52,19 @@ def __bool_parser(var: Optional[str], default_value: bool = False) -> bool:
     return default_value
 
 
+def __integer_setting(name: str, default: int, *, allow_zero: bool = False) -> int:
+    raw = os.environ.get(name)
+    try:
+        value = default if raw in (None, '') else int(raw)
+    except ValueError as error:
+        raise ValueError(f'{name} must be an integer') from error
+    minimum = 0 if allow_zero else 1
+    if value < minimum:
+        qualifier = 'non-negative' if allow_zero else 'positive'
+        raise ValueError(f'{name} must be a {qualifier} integer')
+    return value
+
+
 def __list_parser(var: Optional[str]) -> list[str]:
     return re.split(r'[\s,;，；]+', var.strip()) if var else []
 
@@ -296,10 +309,42 @@ IPV6_PRIOR: Final = __bool_parser(os.environ.get('IPV6_PRIOR'))
 VERIFY_TLS: Final = __bool_parser(os.environ.get('VERIFY_TLS'), default_value=True)
 
 HTTP_TIMEOUT: Final = int(os.environ.get('HTTP_TIMEOUT') or 12)
-HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)
-HTTP_CONCURRENCY_PER_HOST: Final = int(os.environ.get('HTTP_CONCURRENCY_PER_HOST') or 16)
-HTTP_MAX_LINE_SIZE: Final = int(os.environ.get('HTTP_MAX_LINE_SIZE') or 16384)
-HTTP_MAX_FIELD_SIZE: Final = int(os.environ.get('HTTP_MAX_FIELD_SIZE') or 16384)
+HTTP_CONCURRENCY: Final = __integer_setting('HTTP_CONCURRENCY', 1024)
+HTTP_CONCURRENCY_PER_HOST: Final = __integer_setting('HTTP_CONCURRENCY_PER_HOST', 16)
+HTTP_MAX_LINE_SIZE: Final = __integer_setting('HTTP_MAX_LINE_SIZE', 16384)
+HTTP_MAX_FIELD_SIZE: Final = __integer_setting('HTTP_MAX_FIELD_SIZE', 16384)
+HTTP_MAX_COMPRESSED_BODY_BYTES: Final = __integer_setting(
+    'HTTP_MAX_COMPRESSED_BODY_BYTES', 8 * 1024 * 1024
+)
+HTTP_MAX_DECOMPRESSED_BODY_BYTES: Final = __integer_setting(
+    'HTTP_MAX_DECOMPRESSED_BODY_BYTES', 32 * 1024 * 1024
+)
+HTTP_MAX_REDIRECTS: Final = __integer_setting(
+    'HTTP_MAX_REDIRECTS', 5, allow_zero=True
+)
+PARSE_CONCURRENCY: Final = __integer_setting('PARSE_CONCURRENCY', 4)
+FEED_MAX_ENTRIES: Final = __integer_setting('FEED_MAX_ENTRIES', 1000)
+OPML_MAX_BYTES: Final = __integer_setting('OPML_MAX_BYTES', 8 * 1024 * 1024)
+OPML_MAX_OUTLINES: Final = __integer_setting('OPML_MAX_OUTLINES', 5000)
+OPML_MAX_DEPTH: Final = __integer_setting('OPML_MAX_DEPTH', 32)
+OPML_PARSE_TIMEOUT: Final = __integer_setting('OPML_PARSE_TIMEOUT', 30)
+SUBS_MAX_URLS_PER_REQUEST: Final = __integer_setting(
+    'SUBS_MAX_URLS_PER_REQUEST', 100
+)
+SUBS_MAX_SUBSCRIPTIONS_PER_REQUEST: Final = __integer_setting(
+    'SUBS_MAX_SUBSCRIPTIONS_PER_REQUEST', 100
+)
+SUBS_CONCURRENCY: Final = __integer_setting('SUBS_CONCURRENCY', 8)
+MANAGER_TEST_MAX_ENTRIES: Final = __integer_setting(
+    'MANAGER_TEST_MAX_ENTRIES', 20
+)
+MANAGER_TEST_CONCURRENCY: Final = __integer_setting(
+    'MANAGER_TEST_CONCURRENCY', 4
+)
+MONITOR_MAX_PENDING_TASKS: Final = __integer_setting(
+    'MONITOR_MAX_PENDING_TASKS', 256
+)
+MONITOR_CONCURRENCY: Final = __integer_setting('MONITOR_CONCURRENCY', 64)
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'

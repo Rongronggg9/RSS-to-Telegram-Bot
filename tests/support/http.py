@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass
 
@@ -19,6 +21,7 @@ class QueuedResponse:
     status: int
     headers: Mapping[str, str]
     body: bytes
+    wait_for: asyncio.Event | None = None
 
 
 class LocalFeedServer:
@@ -33,9 +36,15 @@ class LocalFeedServer:
         status: int = 200,
         headers: Mapping[str, str] | None = None,
         body: bytes = b"",
+        wait_for: asyncio.Event | None = None,
     ) -> None:
         self._responses.append(
-            QueuedResponse(status=status, headers=headers or {}, body=body)
+            QueuedResponse(
+                status=status,
+                headers=headers or {},
+                body=body,
+                wait_for=wait_for,
+            )
         )
 
     @property
@@ -53,6 +62,8 @@ class LocalFeedServer:
         if not self._responses:
             raise RuntimeError("No local feed response was queued")
         response = self._responses.pop(0)
+        if response.wait_for is not None:
+            await response.wait_for.wait()
         return web.Response(
             status=response.status,
             headers=response.headers,

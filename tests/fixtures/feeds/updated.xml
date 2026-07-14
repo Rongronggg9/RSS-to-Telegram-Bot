@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Fixture Feed</title>
+    <link>https://example.test/</link>
+    <description>Deterministic feed characterization fixture.</description>
+    <item>
+      <guid isPermaLink="false">urn:fixture:new-2</guid>
+      <title>new-2</title>
+      <link>https://example.test/new-2</link>
+      <description>Description for new-2.</description>
+    </item>
+    <item>
+      <guid isPermaLink="false">urn:fixture:new-1</guid>
+      <title>new-1</title>
+      <link>https://example.test/new-1</link>
+      <description>Description for new-1.</description>
+    </item>
+    <item>
+      <guid isPermaLink="false">urn:fixture:old-2</guid>
+      <title>old-2</title>
+      <link>https://example.test/old-2</link>
+      <description>Description for old-2.</description>
+    </item>
+    <item>
+      <guid isPermaLink="false">urn:fixture:old-1</guid>
+      <title>old-1</title>
+      <link>https://example.test/old-1</link>
+      <description>Description for old-1.</description>
+    </item>
+  </channel>
+</rss>

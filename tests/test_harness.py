@@ -10,7 +10,11 @@ import pytest
 from tests.support.env_probe import run_env_probe
 from tests.support.http import LocalFeedServer
 from tests.support.models import create_active_subscription
-from tests.support.telegram import RecordingTelegram, SentTelegramMessage
+from tests.support.telegram import (
+    RecordingTelegram,
+    SentTelegramMessage,
+    recording_telegram as recording_telegram_fixture,
+)
 
 
 @pytest.mark.unit
@@ -108,6 +112,30 @@ async def test_local_feed_server_serves_fifo_responses_and_records_requests(
     ]
 
 
+@pytest.mark.http
+async def test_local_feed_server_waits_for_response_gate(
+    local_feed_server: LocalFeedServer,
+) -> None:
+    gate = asyncio.Event()
+    local_feed_server.enqueue(body=b"released", wait_for=gate)
+
+    async with aiohttp.ClientSession() as client:
+        request_task = asyncio.create_task(client.get(local_feed_server.feed_url))
+        try:
+            while not local_feed_server.requests:
+                await asyncio.sleep(0)
+            assert not request_task.done()
+            gate.set()
+            response = await request_task
+            async with response:
+                assert await response.read() == b"released"
+        finally:
+            gate.set()
+            if not request_task.done():
+                request_task.cancel()
+            await asyncio.gather(request_task, return_exceptions=True)
+
+
 @pytest.mark.telegram
 async def test_recording_telegram_captures_messages_without_delivery(
     recording_telegram: RecordingTelegram,
@@ -128,7 +156,70 @@ async def test_recording_telegram_captures_messages_without_delivery(
     )
     assert sent == expected
     assert recording_telegram.messages == [expected]
-    await recording_telegram.wait_for_message_count(1)
+
+
+@pytest.mark.telegram
+def test_recording_telegram_fixture_isolates_process_lifetime_state() -> None:
+    from src import locks
+    from src.monitor._notifier import Notifier
+    from src.parsing.message import MessageDispatcher
+
+    user_id = 7201
+    first_context_patch = pytest.MonkeyPatch()
+    first_context = recording_telegram_fixture.__wrapped__(first_context_patch)
+    next(first_context)
+    first_state = (
+        Notifier._on_blocked_lock_bucket,
+        Notifier._user_blocked_counter,
+        Notifier._stat,
+        MessageDispatcher.user_sending_lock,
+        locks._user_bucket,
+    )
+    try:
+        Notifier._on_blocked_lock_bucket[user_id]
+        Notifier._user_blocked_counter[user_id] += 1
+        Notifier._stat.start()
+        MessageDispatcher.user_sending_lock[user_id]
+        locks.user_msg_lock(user_id)
+
+        with pytest.raises(StopIteration):
+            next(first_context)
+        first_context_patch.undo()
+
+        second_context_patch = pytest.MonkeyPatch()
+        second_context = recording_telegram_fixture.__wrapped__(second_context_patch)
+        next(second_context)
+        second_state = (
+            Notifier._on_blocked_lock_bucket,
+            Notifier._user_blocked_counter,
+            Notifier._stat,
+            MessageDispatcher.user_sending_lock,
+            locks._user_bucket,
+        )
+        try:
+            assert all(
+                current is not previous
+                for current, previous in zip(second_state, first_state)
+            )
+            assert all(
+                user_id not in state
+                for state in (
+                    Notifier._on_blocked_lock_bucket,
+                    Notifier._user_blocked_counter,
+                    MessageDispatcher.user_sending_lock,
+                    locks._user_bucket,
+                )
+            )
+        finally:
+            with pytest.raises(StopIteration):
+                next(second_context)
+            second_context_patch.undo()
+    finally:
+        Notifier._on_blocked_lock_bucket.pop(user_id, None)
+        Notifier._user_blocked_counter.pop(user_id, None)
+        first_state[2].finish()
+        MessageDispatcher.user_sending_lock.pop(user_id, None)
+        locks._user_bucket.pop(user_id, None)
 
 
 @pytest.mark.unit

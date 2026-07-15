@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-
+from collections import deque
 from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass
 
@@ -28,7 +28,7 @@ class LocalFeedServer:
     def __init__(self, port: int) -> None:
         self.port = port
         self.requests: list[RecordedRequest] = []
-        self._responses: list[QueuedResponse] = []
+        self._responses: deque[QueuedResponse] = deque()
 
     def enqueue(
         self,
@@ -61,7 +61,7 @@ class LocalFeedServer:
         )
         if not self._responses:
             raise RuntimeError("No local feed response was queued")
-        response = self._responses.pop(0)
+        response = self._responses.popleft()
         if response.wait_for is not None:
             await response.wait_for.wait()
         return web.Response(

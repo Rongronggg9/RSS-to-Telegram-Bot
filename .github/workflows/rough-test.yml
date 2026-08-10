@@ -21,13 +21,13 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python 3.9
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         id: cp39
         with:
           python-version: '3.9'
           cache: 'pip'
       - name: Set up Python ${{ matrix.version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.version }}
           cache: 'pip'

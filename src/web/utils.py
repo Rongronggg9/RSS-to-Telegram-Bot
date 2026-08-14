@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
-from typing import Union, Optional, AnyStr, ClassVar, Iterable
+from typing import Any, Union, Optional, AnyStr, ClassVar, Iterable
 from typing_extensions import Final
 
 import aiohttp
@@ -89,6 +89,19 @@ class YummyCookieJar(aiohttp.abc.AbstractCookieJar):
     @property
     def quote_cookie(self) -> bool:
         return self.__real_cookie_jar.quote_cookie
+
+    @property
+    def cookies(self) -> Any:
+        # aiohttp>=3.14 added these as abstract members; delegate to the real jar
+        return self.__real_cookie_jar.cookies
+
+    @property
+    def host_only_cookies(self) -> Any:
+        return self.__real_cookie_jar.host_only_cookies
+
+    @property
+    def unsafe(self) -> bool:
+        return self.__real_cookie_jar.unsafe
 
 
 class WebError(Exception):

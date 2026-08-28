@@ -300,6 +300,7 @@ HTTP_CONCURRENCY: Final = int(os.environ.get('HTTP_CONCURRENCY') or 1024)
 HTTP_CONCURRENCY_PER_HOST: Final = int(os.environ.get('HTTP_CONCURRENCY_PER_HOST') or 16)
 HTTP_MAX_LINE_SIZE: Final = int(os.environ.get('HTTP_MAX_LINE_SIZE') or 16384)
 HTTP_MAX_FIELD_SIZE: Final = int(os.environ.get('HTTP_MAX_FIELD_SIZE') or 16384)
+DNS_CACHE_TTL: Final = int(os.environ.get('DNS_CACHE_TTL') or 10)
 
 # ----- img relay server config -----
 _img_relay_server = os.environ.get('IMG_RELAY_SERVER') or 'https://rsstt-img-relay.rongrong.workers.dev/'

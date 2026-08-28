@@ -23,7 +23,7 @@ asyncclick<8.3; python_version < '3.11'  # asyncclick 8.3.0.3 misses its anyio d
 aerich==0.8.1
 
 # network
-aiohttp[speedups]==3.12.14
+aiohttp[speedups]==3.14.3
 aiohttp-socks==0.10.1
 aiohttp-retry==2.9.1
 python-socks[asyncio]==2.7.1

@@ -60,6 +60,7 @@
 | `MULTIPROCESSING`             | Enable multiprocessing (up to `min(3, CPU_COUNT)`) or not? [^9]             | `1`                                           | `0`                                             |
 | `EXECUTOR_NICENESS_INCREMENT` | The niceness increment of subprocesses (if `MULTIPROCESSING=1`) and threads | `5`                                           | `2`                                             |
 | `DEBUG`                       | Enable debug logging or not?                                                | `1`                                           | `0`                                             |
+| `LOG_FILE`                    | Also write logs to this file [^14]                                    | `rsstt.log`                                   |                                                 |
 
 ## Manager options
 
@@ -86,3 +87,4 @@
 [^11]: The minimal monitoring interval a user can set for a subscription.
 [^12]: The bot manager will not be limited by this value.
 [^13]: Once reached the limit, no more subscriptions can be created. However, existing subscriptions will not be removed even if reaching the limit. As a bot manager, you can enable `MANAGER_PRIVILEGED` mode to manually unsubscribe their subscriptions.
+[^14]: A relative path is resolved against the config folder. The file is appended to and never rotated by the bot, so use an external tool such as `logrotate` to limit its size. If the file cannot be opened, the bot logs a warning and keeps logging to the console only.

@@ -80,6 +80,29 @@ MAX_TRIES: Final = 2
 
 contentDispositionFilenameParser = partial(re.compile(r'(?<=filename=")[^"]+(?=")').search, flags=re.I)
 
+_connector_pool: dict[tuple[bool, int], aiohttp.BaseConnector] = {}
+
+
+def _get_connector(use_proxy: bool, family: int) -> aiohttp.BaseConnector:
+    key = (use_proxy, family)
+    connector = _connector_pool.get(key)
+    if connector is not None and not connector.closed:
+        return connector
+    connector = (
+        ProxyConnector.from_url(PROXY, family=family, ssl=__SSL_CONTEXT,
+                                ttl_dns_cache=env.DNS_CACHE_TTL, limit=0)
+        if use_proxy
+        else aiohttp.TCPConnector(family=family, ssl=__SSL_CONTEXT,
+                                  ttl_dns_cache=env.DNS_CACHE_TTL, limit=0)
+    )
+    _connector_pool[key] = connector
+    return connector
+
+
+async def close_connector_pool() -> None:
+    await asyncio.gather(*(c.close() for c in _connector_pool.values()), return_exceptions=True)
+    _connector_pool.clear()
+
 
 async def __norm_callback(response: aiohttp.ClientResponse, decode: bool = False, max_size: Optional[int] = None,
                           intended_content_type: Optional[str] = None) -> Optional[AnyStr]:
@@ -179,6 +202,7 @@ async def _request(
     async def _fetch():
         async with aiohttp.ClientSession(
                 connector=proxy_connector,
+                connector_owner=False,
                 headers=_headers,
                 cookie_jar=YummyCookieJar()
         ) as session:
@@ -219,11 +243,7 @@ async def _request(
 
         if retry_in_v4_flag or tries > MAX_TRIES:
             socket_family = AF_INET
-        proxy_connector = (
-            ProxyConnector.from_url(PROXY, family=socket_family, ssl=__SSL_CONTEXT)
-            if use_proxy
-            else aiohttp.TCPConnector(family=socket_family, ssl=__SSL_CONTEXT)
-        )
+        proxy_connector = _get_connector(use_proxy, socket_family)
 
         try:
             async with semaphore_to_use:

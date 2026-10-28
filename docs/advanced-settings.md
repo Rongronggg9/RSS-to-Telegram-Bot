@@ -43,6 +43,7 @@
 | `HTTP_CONCURRENCY_PER_HOST` | HTTP request concurrency per host (0=unlimited)       | `0`                            | `16`                                                |
 | `HTTP_MAX_LINE_SIZE`        | Maximum allowed size of lines in responses            | `32768`                        | `16384`                                             |
 | `HTTP_MAX_FIELD_SIZE`       | Maximum allowed size of header fields in responses    | `32768`                        | `16384`                                             |
+| `DNS_CACHE_TTL`             | TTL for the DNS cache in seconds (0=disable)          | `60`                           | `10`                                                |
 
 ### Misc settings
 

@@ -47,6 +47,7 @@ from .i18n import i18n, ALL_LANGUAGES, get_commands_list
 from .parsing import tgraph
 from .helpers.bg import bg
 from .helpers.queue import queued
+from .web.req import close_connector_pool
 
 # log
 logger = log.getLogger('RSStT')
@@ -284,6 +285,7 @@ async def post():
         loop.create_task(tgraph.close()),
         loop.create_task(bg.close()),
         loop.create_task(queued.close()),
+        loop.create_task(close_connector_pool()),
     ]
     if scheduler.running:
         scheduler.shutdown(wait=False)

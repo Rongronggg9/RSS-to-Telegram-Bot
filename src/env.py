@@ -20,6 +20,7 @@ from typing_extensions import Final
 
 import asyncio
 import yarl
+import logging.handlers
 import os
 import sys
 import colorlog
@@ -369,6 +370,24 @@ __configure_logging(  # config twice to make .env file work
 )
 if DEBUG:
     logger.debug('DEBUG mode enabled')
+
+# a relative path is resolved against the config folder; an absolute one is kept as-is
+LOG_FILE: Final = os.path.join(config_folder_path, os.environ['LOG_FILE']) if os.environ.get('LOG_FILE') else None
+if LOG_FILE:
+    # noinspection PyBroadException
+    try:
+        # WatchedFileHandler reopens the file if it is moved, so external tools like logrotate work.
+        # Do not rotate in-process: the logger is shared with subprocesses when MULTIPROCESSING is enabled.
+        __file_handler = logging.handlers.WatchedFileHandler(LOG_FILE, encoding='utf-8')
+        __file_handler.setFormatter(logging.Formatter(
+            fmt='%(asctime)s:%(levelname)s:%(name)s - %(message)s',
+            datefmt='%Y-%m-%d-%H:%M:%S'
+        ))
+        logging.getLogger().addHandler(__file_handler)
+        del __file_handler
+        logger.info(f'Logging to file: {LOG_FILE}')
+    except Exception as e:
+        logger.warning(f'Failed to log to file "{LOG_FILE}" ({e}), continue with console logging only')
 
 # ----- environment config -----
 RAILWAY_STATIC_URL: Final = os.environ.get('RAILWAY_STATIC_URL')

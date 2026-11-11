@@ -211,7 +211,12 @@ def emojify(xml):
 # images with a side not longer than this (in pixels) are treated as emoticons rather than media
 EMOTICON_MAX_SIZE: Final[int] = 30
 
-DATA_URI_IMAGE_PATTERN = re.compile(r'data:image/[\w.+-]+(?:;[^,;]*)*;base64,(?P<data>.*)', re.IGNORECASE | re.DOTALL)
+# RFC 2397: data:[<mediatype>][;base64],<data>, where every mediatype parameter is attribute=value and ;base64 is the
+# only part without an `=`
+DATA_URI_IMAGE_PATTERN = re.compile(
+    r'data:image/(?P<subtype>[\w.+-]+)(?:;[^,;=]+=[^,;]*)*;base64,(?P<data>.*)',
+    re.IGNORECASE | re.DOTALL
+)
 
 
 def is_emoticon(tag: Tag, data_uri_is_emoticon: bool = True) -> bool:
@@ -247,12 +252,12 @@ def decode_data_uri_image(src: str) -> Optional[tuple[bytes, str]]:
         data = base64.b64decode(match['data'])
         with PILImage.open(BytesIO(data)) as image:
             width, height = image.size
-            image_format = image.format
     except Exception:  # invalid base64, unsupported (e.g. SVG) or corrupted image, decompression bomb, etc.
         return None
     if min(width, height) <= EMOTICON_MAX_SIZE:
         return None
-    return data, 'jpg' if image_format == 'JPEG' else (image_format or 'img').lower()
+    subtype = match['subtype'].lower()
+    return data, 'jpg' if subtype == 'jpeg' else subtype
 
 
 def _html_validator(html: str) -> str:

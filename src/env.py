@@ -372,7 +372,7 @@ if DEBUG:
     logger.debug('DEBUG mode enabled')
 
 # a relative path is resolved against the config folder; an absolute one is kept as-is
-LOG_FILE: Final = os.path.join(config_folder_path, os.environ['LOG_FILE']) if os.environ.get('LOG_FILE') else None
+LOG_FILE: Final = Path(config_folder_path) / os.environ['LOG_FILE'] if os.environ.get('LOG_FILE') else None
 if LOG_FILE:
     # noinspection PyBroadException
     try:

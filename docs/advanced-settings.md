@@ -60,7 +60,7 @@
 | `MULTIPROCESSING`             | Enable multiprocessing (up to `min(3, CPU_COUNT)`) or not? [^9]             | `1`                                           | `0`                                             |
 | `EXECUTOR_NICENESS_INCREMENT` | The niceness increment of subprocesses (if `MULTIPROCESSING=1`) and threads | `5`                                           | `2`                                             |
 | `DEBUG`                       | Enable debug logging or not?                                                | `1`                                           | `0`                                             |
-| `LOG_FILE`                    | Also write logs to this file [^14]                                    | `rsstt.log`                                   |                                                 |
+| `LOG_FILE`                    | Also write logs to this file [^14]                                          | `rsstt.log`                                   |                                                 |
 
 ## Manager options
 

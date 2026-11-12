@@ -512,4 +512,3 @@ async def cmd_set_hashtags(
         parse_mode='html',
         link_preview=False,
     )
-

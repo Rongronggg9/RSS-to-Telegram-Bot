@@ -28,7 +28,8 @@ from dataclasses import dataclass
 from .. import web, env
 from .medium import Video, Image, Media, Animation, Audio, UploadedImage
 from .html_node import *
-from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon
+from .utils import stripNewline, stripLineEnd, isAbsoluteHttpLink, resolve_relative_link, emojify, is_emoticon, \
+    decode_data_uri_image
 from ..aio_helper import run_async
 
 convert_table_to_png: Optional[Awaitable]
@@ -206,6 +207,13 @@ class Parser:
         if tag == 'img':
             src, srcset = soup.get('src'), soup.get('srcset')
             if not (src or srcset):
+                return None
+            decoded = None
+            if src and src.startswith('data:') and not is_emoticon(soup, data_uri_is_emoticon=False):
+                decoded = decode_data_uri_image(src)  # the image is embedded, upload it instead of fetching by URL
+            if decoded:
+                data, extension = decoded
+                self.media.add(UploadedImage(data, f'image.{extension}'))
                 return None
             if is_emoticon(soup):
                 alt = soup.get('alt')

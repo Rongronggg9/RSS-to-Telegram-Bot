@@ -17,13 +17,16 @@
 from __future__ import annotations
 from typing import Optional, Sequence, Union, Final, Iterable, Iterator
 
+import base64
 import re
 import string
 from contextlib import suppress
+from io import BytesIO
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from html import unescape
 from emoji import emojize
+from PIL import Image as PILImage
 from telethon.tl.types import TypeMessageEntity
 from functools import partial
 from urllib.parse import urljoin
@@ -205,7 +208,23 @@ def emojify(xml):
     )
 
 
-def is_emoticon(tag: Tag) -> bool:
+# images with a side not longer than this (in pixels) are treated as emoticons rather than media
+EMOTICON_MAX_SIZE: Final[int] = 30
+
+# RFC 2397: data:[<mediatype>][;base64],<data>, where every mediatype parameter is attribute=value and ;base64 is the
+# only part without an `=`
+DATA_URI_IMAGE_PATTERN = re.compile(
+    r'data:image/(?P<subtype>[\w.+-]+)(?:;[^,;=]+=[^,;]*)*;base64,(?P<data>.*)',
+    re.IGNORECASE | re.DOTALL
+)
+
+
+def is_emoticon(tag: Tag, data_uri_is_emoticon: bool = True) -> bool:
+    """
+    :param tag: an `img` tag
+    :param data_uri_is_emoticon: treat any image whose `src` is a `data:` URI as an emoticon (the image cannot be
+                                 fetched by URL, so its size is unknown). Pass False to decide it by other means.
+    """
     if tag.name != 'img':
         return False
     src = tag.get('src', '')
@@ -213,9 +232,32 @@ def is_emoticon(tag: Tag) -> bool:
     style, width, height = tag.get('style', ''), tag.get('width', ''), tag.get('height', '')
     width = int(width) if width and width.isdigit() else INT64_T_MAX
     height = int(height) if height and height.isdigit() else INT64_T_MAX
-    return (width <= 30 or height <= 30 or isSmallIcon(style)
+    return (width <= EMOTICON_MAX_SIZE or height <= EMOTICON_MAX_SIZE or isSmallIcon(style)
             or 'emoji' in _class or 'emoticon' in _class or (alt.startswith(':') and alt.endswith(':'))
-            or src.startswith('data:'))
+            or (data_uri_is_emoticon and src.startswith('data:')))
+
+
+def decode_data_uri_image(src: str) -> Optional[tuple[bytes, str]]:
+    """
+    Decode a base64 `data:image/*` URI.
+
+    :param src: the `src` of an `img` tag
+    :return: (image bytes, file extension), or None if it is not a decodable raster image larger than an emoticon
+    """
+    match = DATA_URI_IMAGE_PATTERN.fullmatch(src.strip())
+    if not match:
+        return None
+    # noinspection PyBroadException
+    try:
+        data = base64.b64decode(match['data'])
+        with PILImage.open(BytesIO(data)) as image:
+            width, height = image.size
+    except Exception:  # invalid base64, unsupported (e.g. SVG) or corrupted image, decompression bomb, etc.
+        return None
+    if min(width, height) <= EMOTICON_MAX_SIZE:
+        return None
+    subtype = match['subtype'].lower()
+    return data, 'jpg' if subtype == 'jpeg' else subtype
 
 
 def _html_validator(html: str) -> str:

@@ -190,7 +190,6 @@
     },
     "l10n_deactivation_notice": {
         "deactivation_notice": "订阅停用通知",
-        "deactivation_notice_chat_itself": "本聊天",
         "deactivation_notice_admin": "管理员 %d (私聊)",
         "redirected_notice_header_html": "此通知属于频道/群组 <code>%d</code>。如需重新启用订阅，请在此发送 <code>/activate_subs %d</code>。"
     },

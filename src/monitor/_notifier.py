@@ -289,8 +289,15 @@ class Notifier:
                     parse_mode='html',
                 )
                 return
+            except UserBlockedErrors as e:
+                # The admin has blocked the bot or deleted their account, so stop redirecting the notices.
+                await db.User.filter(id=sub.user_id, admin=notice_chat).update(admin=None)
+                logger.warning(
+                    f'Failed to send the deactivation notice of {sub.user_id} to {notice_chat}, '
+                    f'reset the notice chat and sending it to the chat itself instead: {e!r}'
+                )
             except Exception as e:
-                # The admin may have blocked the bot or deleted their account, fall back to the chat itself.
+                # Probably transient, keep the setting and fall back to the chat itself this time.
                 logger.warning(
                     f'Failed to send the deactivation notice of {sub.user_id} to {notice_chat}, '
                     f'sending it to the chat itself instead: {e!r}'

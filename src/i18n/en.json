@@ -190,7 +190,6 @@
     },
     "l10n_deactivation_notice": {
         "deactivation_notice": "Deactivation notices",
-        "deactivation_notice_chat_itself": "this chat",
         "deactivation_notice_admin": "admin %d (private)",
         "redirected_notice_header_html": "This notice is for the channel/group <code>%d</code>. To reactivate the subscription, send <code>/activate_subs %d</code> here."
     },

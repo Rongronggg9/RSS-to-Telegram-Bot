@@ -158,7 +158,7 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
                 + (
                     i18n[lang]['deactivation_notice_admin'] % sub_or_user.admin
                     if sub_or_user.admin
-                    else i18n[lang]['deactivation_notice_chat_itself']
+                    else await _get_chat_type(sub_or_user.id, lang)
                 ),
                 data=f'set_default=deactivation_notice{tail}',
             ),
@@ -463,6 +463,14 @@ async def set_sub_activate(sub: db.Sub) -> db.Sub:
     await activate_or_deactivate_sub(sub.user_id, sub, activate=not activated)
 
     return sub
+
+
+async def _get_chat_type(chat_id: int, lang: Optional[str]) -> str:
+    try:
+        entity = await env.bot.get_entity(chat_id)
+    except Exception:
+        return i18n[lang]['group']
+    return i18n[lang]['channel'] if getattr(entity, 'broadcast', False) else i18n[lang]['group']
 
 
 async def set_deactivation_notice_admin(user: db.User, admin: Optional[int]) -> db.User:

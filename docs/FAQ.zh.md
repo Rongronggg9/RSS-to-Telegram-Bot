@@ -45,7 +45,7 @@
 
 ### **Q**: 当 feed 持续更新失败时，订阅停用通知会发送到我的频道/群组。我可以私下接收它吗？
 
-**A**: 可以。在与 bot 的私聊中发送 `/set_notice_chat @username me` (也可以用以 `-100` 开头的频道/群组 ID 代替 `@username`)。此后，该频道/群组的订阅停用通知会发送给你，并附带重新启用订阅的命令。发送 `/set_notice_chat @username off` 即可重新将其发送到频道/群组。如果 bot 无法向你发送通知 (例如你屏蔽了 bot)，则会改为发送到频道/群组。
+**A**: 可以。为该频道/群组打开 `/set_default`：可以在与 bot 的私聊中发送 `/set_default @username` (也可以用以 `-100` 开头的频道/群组 ID 代替 `@username`)，也可以直接在频道/群组中发送，然后点击「订阅停用通知」。此后，该频道/群组的订阅停用通知会私聊发送给你，并附带重新启用订阅的命令。再次点击即可重新将其发送到频道/群组。请确保你已与 bot 开始私聊。如果 bot 无法向你发送通知 (例如你屏蔽了 bot)，则会改为发送到频道/群组。
 
 ### **Q**: 我的 bot 无响应。查看日志后发现 Telethon 在抱怨 "Server sent a very new message with ID..."，"Server replied with a wrong session ID..."，或者 "Could not find a matching Constructor ID for the TLObject..."。
 

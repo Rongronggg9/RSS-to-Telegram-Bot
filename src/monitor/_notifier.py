@@ -219,13 +219,13 @@ class Notifier:
 
         users: list[tuple[int, str, Optional[int]]] = await db.User.filter(
             id__in={sub.user_id for sub in subs}
-        ).values_list('id', 'lang', 'notice_chat')
+        ).values_list('id', 'lang', 'admin')
         user_id_lang_map: dict[int, str] = {user_id: lang for user_id, lang, _ in users}
-        # Channels/groups whose admin asked to receive deactivation notices in their private chat (/set_notice_chat).
+        # Channels/groups whose admin asked to receive deactivation notices in their private chat (/set_default).
         user_id_notice_chat_map: dict[int, int] = {
-            user_id: notice_chat
-            for user_id, _, notice_chat in users
-            if notice_chat and notice_chat != user_id
+            user_id: admin
+            for user_id, _, admin in users
+            if admin and admin != user_id
         }
         del users
         lang_msg_body_map: dict[str, str] = {

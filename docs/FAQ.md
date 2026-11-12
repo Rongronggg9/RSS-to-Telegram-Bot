@@ -45,7 +45,7 @@ A special case is that the bot will leave a topic group if the "General" topic i
 
 ### **Q**: When a feed keeps failing, the deactivation notice is posted in my channel/group. Can I receive it privately instead?
 
-**A**: Yes. Send `/set_notice_chat @username me` (or the channel/group's ID starting with `-100` instead of `@username`) in the private chat with the bot. From then on, deactivation notices of that channel/group are sent to you, together with the command to reactivate the subscription. Send `/set_notice_chat @username off` to send them to the channel/group again. If the bot cannot send the notice to you (e.g., you have blocked the bot), it falls back to the channel/group.
+**A**: Yes. Open `/set_default` for the channel/group, either as `/set_default @username` (or the channel/group's ID starting with `-100`) in the private chat with the bot, or in the channel/group itself, and press "Deactivation notices". From then on, deactivation notices of that channel/group are sent to you in private, together with the command to reactivate the subscription. Press it again to send them to the channel/group again. Make sure you have started a private chat with the bot. If the bot cannot send the notice to you (e.g., you have blocked the bot), it falls back to the channel/group.
 
 ### **Q**: My bot is not responding. I checked the log and saw Telethon complaining "Server sent a very new message with ID...", "Server replied with a wrong session ID...", or "Could not find a matching Constructor ID for the TLObject...".
 

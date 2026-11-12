@@ -154,6 +154,20 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
         ),
         (
             Button.inline(
+                f"{i18n[lang]['deactivation_notice']}: "
+                + (
+                    i18n[lang]['deactivation_notice_admin'] % sub_or_user.admin
+                    if sub_or_user.admin
+                    else i18n[lang]['deactivation_notice_chat_itself']
+                ),
+                data=f'set_default=deactivation_notice{tail}',
+            ),
+        )
+        # Only channels and groups (negative IDs) have admins to redirect the notices to.
+        if is_user and sub_or_user.id < 0
+        else None,
+        (
+            Button.inline(
                 f"{i18n[lang]['send_mode']}: "
                 + (FALLBACK_TO_USER_DEFAULT_EMOJI if send_mode_d else '')
                 + i18n[lang][f'send_mode_{send_mode}'],
@@ -449,6 +463,13 @@ async def set_sub_activate(sub: db.Sub) -> db.Sub:
     await activate_or_deactivate_sub(sub.user_id, sub, activate=not activated)
 
     return sub
+
+
+async def set_deactivation_notice_admin(user: db.User, admin: Optional[int]) -> db.User:
+    """Send the deactivation notices of a channel/group to `admin` in private, or to the chat itself if None."""
+    user.admin = admin
+    await user.save(update_fields=['admin'])
+    return user
 
 
 async def set_exhaustive_option(sub_or_user: Union[db.Sub, db.User], option: str) -> Union[db.Sub, db.User]:

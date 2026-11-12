@@ -160,8 +160,6 @@ async def pre():
                           events.NewMessage(pattern=construct_remote_command_matcher('/activate_subs')))
     bot.add_event_handler(partial(command.customization.cmd_activate_or_deactivate_subs, activate=False),
                           events.NewMessage(pattern=construct_remote_command_matcher('/deactivate_subs')))
-    bot.add_event_handler(command.customization.cmd_set_notice_chat,
-                          events.NewMessage(pattern=construct_remote_command_matcher('/set_notice_chat')))
     bot.add_event_handler(command.misc.cmd_lang,
                           events.NewMessage(pattern=construct_remote_command_matcher('/lang')))
     bot.add_event_handler(command.misc.cmd_version,

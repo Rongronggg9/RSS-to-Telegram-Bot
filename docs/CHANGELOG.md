@@ -8,7 +8,7 @@
 
 ### Enhancements
 
-- **Redirect deactivation notices of channels/groups**: When a feed fails too many times, its subscriptions are deactivated and a notice is sent to the subscribing chat. An admin of a channel/group can now send `/set_notice_chat @username me` in the private chat with the bot to receive these notices privately instead of posting them to the channel/group, and `/set_notice_chat @username off` to revert it. If the notice cannot be delivered to the admin, it is sent to the channel/group as before.
+- **Redirect deactivation notices of channels/groups**: When a feed fails too many times, its subscriptions are deactivated and a notice is sent to the subscribing chat. An admin of a channel/group can now press the new "Deactivation notices" button in `/set_default` (remotely as `/set_default @username` in the private chat with the bot, or in the channel/group itself) to receive these notices privately instead of posting them to the channel/group. Pressing it again reverts it. If the notice cannot be delivered to the admin, it is sent to the channel/group as before.
 - **Minor enhancements**: Some internal functions have been refined to enhance compatibility with various feeds. Two new environment variables have been added (`HTTP_MAX_LINE_SIZE` and `HTTP_MAX_FIELD_SIZE`, see [Advanced Settings](advanced-settings.md) for more details).
 - **Minor refactor**: Some internal functions have been refactored to improve performance, readability and maintainability.
 

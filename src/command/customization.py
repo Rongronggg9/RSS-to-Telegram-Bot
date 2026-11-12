@@ -22,7 +22,7 @@ from telethon import Button
 from . import inner, misc
 from .types import *
 from .utils import command_gatekeeper, parse_customization_callback_data, parse_callback_data_with_page, \
-    escape_html, parse_command_get_sub_or_user_and_param, get_callback_tail
+    escape_html, parse_command_get_sub_or_user_and_param, get_callback_tail, parse_command
 from .. import db, env
 from ..i18n import i18n
 
@@ -504,4 +504,41 @@ async def cmd_set_hashtags(
         buttons=(Button.inline(i18n[lang]['other_settings_button'], data=f'set={sub.id}' + callback_tail),),
         parse_mode='html',
         link_preview=False,
+    )
+
+
+@command_gatekeeper(only_manager=False)
+async def cmd_set_notice_chat(
+        event: TypeEventMsgHint,
+        *_,
+        lang: Optional[str] = None,
+        chat_id: Optional[int] = None,
+        **__,
+):  # command: /set_notice_chat @channel [me|off]
+    chat_id = chat_id or event.chat_id
+    # Only meaningful as a "remote" command, i.e., sent in the private chat with the bot while targeting a
+    # channel/group. Then `event.chat_id` is the private chat of the admin, the only chat we can safely redirect to,
+    # since the gatekeeper has already verified that the sender is an admin of the target chat.
+    if chat_id == event.chat_id:
+        await event.respond(i18n[lang]['cmd_set_notice_chat_usage_prompt_html'], parse_mode='html')
+        return
+
+    args = parse_command(event.raw_text)
+    param = args[1].lower() if len(args) > 1 else None
+    if param in {'me', 'off'}:
+        notice_chat = event.chat_id if param == 'me' else None
+        await db.User.filter(id=chat_id).update(notice_chat=notice_chat)
+        await event.respond(i18n[lang]['set_notice_chat_success_me' if notice_chat else 'set_notice_chat_success_off'])
+        return
+
+    notice_chat = await db.User.get_or_none(id=chat_id).values_list('notice_chat', flat=True)
+    if not notice_chat:
+        status = i18n[lang]['notice_chat_status_chat_itself']
+    elif notice_chat == event.chat_id:
+        status = i18n[lang]['notice_chat_status_you']
+    else:
+        status = i18n[lang]['notice_chat_status_other_html'] % notice_chat
+    await event.respond(
+        f"{status}\n\n{i18n[lang]['cmd_set_notice_chat_usage_prompt_html']}",
+        parse_mode='html',
     )

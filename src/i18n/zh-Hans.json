@@ -188,6 +188,15 @@
         "set_hashtags_success_cleared": "订阅的自定义 hashtag 已清除。",
         "set_hashtags_failure_too_many": "Hashtag 太多，请移除一些后重试。"
     },
+    "l10n_cmd_set_notice_chat": {
+        "cmd_set_notice_chat_usage_prompt_html": "命令用法 (在与 bot 的私聊中使用): <code>/set_notice_chat @username me</code> 或 <code>/set_notice_chat @username off</code>\n\n<code>me</code>: 将频道/群组的订阅停用通知发送给你，而不是发送到频道/群组。\n<code>off</code>: 重新将其发送到频道/群组 (默认)。\n(<code>@username</code> 是频道/群组的用户名，也可以是以 <code>-100</code> 开头的频道/群组 ID)",
+        "notice_chat_status_chat_itself": "此频道/群组的订阅停用通知会发送到频道/群组本身。",
+        "notice_chat_status_you": "此频道/群组的订阅停用通知会发送给你。",
+        "notice_chat_status_other_html": "此频道/群组的订阅停用通知会发送给另一位管理员 (<code>%d</code>)。",
+        "set_notice_chat_success_me": "此后，此频道/群组的订阅停用通知将发送给你。",
+        "set_notice_chat_success_off": "此后，此频道/群组的订阅停用通知将发送到频道/群组本身。",
+        "redirected_notice_header_html": "此通知属于频道/群组 <code>%d</code>。如需重新启用订阅，请在此发送 <code>/activate_subs %d</code>。"
+    },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "命令用法: <code>/test RSS_URL 条目编号起点(可选) 条目编号终点(可选)</code>",
         "cmd_set_option_usage_prompt_html": "命令用法: <code>/set_option 键 值</code>",

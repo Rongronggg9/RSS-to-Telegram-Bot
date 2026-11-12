@@ -188,6 +188,15 @@
         "set_hashtags_success_cleared": "The custom hashtags of the subscription has been cleared.",
         "set_hashtags_failure_too_many": "Too many hashtags. Please remove some hashtags and retry."
     },
+    "l10n_cmd_set_notice_chat": {
+        "cmd_set_notice_chat_usage_prompt_html": "Command usage (in the private chat with the bot): <code>/set_notice_chat @username me</code> or <code>/set_notice_chat @username off</code>\n\n<code>me</code>: send the subscription deactivation notices of the channel/group to you instead of the channel/group itself.\n<code>off</code>: send them to the channel/group itself again (default).\n(<code>@username</code> is the channel/group's username, it can also be the channel/group's ID starting with <code>-100</code>)",
+        "notice_chat_status_chat_itself": "Subscription deactivation notices of this channel/group are sent to the channel/group itself.",
+        "notice_chat_status_you": "Subscription deactivation notices of this channel/group are sent to you.",
+        "notice_chat_status_other_html": "Subscription deactivation notices of this channel/group are sent to another admin (<code>%d</code>).",
+        "set_notice_chat_success_me": "From now on, subscription deactivation notices of this channel/group will be sent to you.",
+        "set_notice_chat_success_off": "From now on, subscription deactivation notices of this channel/group will be sent to the channel/group itself.",
+        "redirected_notice_header_html": "This notice is for the channel/group <code>%d</code>. To reactivate the subscription, send <code>/activate_subs %d</code> here."
+    },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "Command usage: <code>/test RSS_URL entry_start_number(optional) entry_end_number(optional)</code>",
         "cmd_set_option_usage_prompt_html": "Command usage: <code>/set_option key value</code>",

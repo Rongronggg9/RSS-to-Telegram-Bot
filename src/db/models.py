@@ -51,6 +51,11 @@ class User(Model, Base):
         description='One of the admins of the channel or group, can be null if this "user" is not a channel or a group',
     )
     sub_limit = fields.SmallIntField(null=True, description='Subscription number limit')
+    notice_chat = fields.BigIntField(
+        null=True,
+        description='Where to send feed deactivation notices for this user, channel or group, '
+                    'null=the chat itself',
+    )
 
     subs: fields.ReverseRelation['Sub']
 

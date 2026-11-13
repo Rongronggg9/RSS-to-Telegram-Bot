@@ -1,0 +1,3 @@
+# test-only dependencies, not needed to run the bot
+-r requirements.txt
+pytest==8.4.2

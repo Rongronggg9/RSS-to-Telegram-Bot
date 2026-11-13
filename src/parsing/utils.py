@@ -17,13 +17,16 @@
 from __future__ import annotations
 from typing import Optional, Sequence, Union, Final, Iterable, Iterator
 
+import base64
 import re
 import string
 from contextlib import suppress
+from io import BytesIO
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from html import unescape
 from emoji import emojize
+from PIL import Image as PILImage
 from telethon.tl.types import TypeMessageEntity
 from functools import partial
 from urllib.parse import urljoin
@@ -205,7 +208,23 @@ def emojify(xml):
     )
 
 
-def is_emoticon(tag: Tag) -> bool:
+# images with a side not longer than this (in pixels) are treated as emoticons rather than media
+EMOTICON_MAX_SIZE: Final[int] = 30
+
+# RFC 2397: data:[<mediatype>][;base64],<data>, where every mediatype parameter is attribute=value and ;base64 is the
+# only part without an `=`
+DATA_URI_IMAGE_PATTERN = re.compile(
+    r'data:image/(?P<subtype>[\w.+-]+)(?:;[^,;=]+=[^,;]*)*;base64,(?P<data>.*)',
+    re.IGNORECASE | re.DOTALL
+)
+
+
+def is_emoticon(tag: Tag, data_uri_is_emoticon: bool = True) -> bool:
+    """
+    :param tag: an `img` tag
+    :param data_uri_is_emoticon: treat any image whose `src` is a `data:` URI as an emoticon (the image cannot be
+                                 fetched by URL, so its size is unknown). Pass False to decide it by other means.
+    """
     if tag.name != 'img':
         return False
     src = tag.get('src', '')
@@ -213,9 +232,32 @@ def is_emoticon(tag: Tag) -> bool:
     style, width, height = tag.get('style', ''), tag.get('width', ''), tag.get('height', '')
     width = int(width) if width and width.isdigit() else INT64_T_MAX
     height = int(height) if height and height.isdigit() else INT64_T_MAX
-    return (width <= 30 or height <= 30 or isSmallIcon(style)
+    return (width <= EMOTICON_MAX_SIZE or height <= EMOTICON_MAX_SIZE or isSmallIcon(style)
             or 'emoji' in _class or 'emoticon' in _class or (alt.startswith(':') and alt.endswith(':'))
-            or src.startswith('data:'))
+            or (data_uri_is_emoticon and src.startswith('data:')))
+
+
+def decode_data_uri_image(src: str) -> Optional[tuple[bytes, str]]:
+    """
+    Decode a base64 `data:image/*` URI.
+
+    :param src: the `src` of an `img` tag
+    :return: (image bytes, file extension), or None if it is not a decodable raster image larger than an emoticon
+    """
+    match = DATA_URI_IMAGE_PATTERN.fullmatch(src.strip())
+    if not match:
+        return None
+    # noinspection PyBroadException
+    try:
+        data = base64.b64decode(match['data'])
+        with PILImage.open(BytesIO(data)) as image:
+            width, height = image.size
+    except Exception:  # invalid base64, unsupported (e.g. SVG) or corrupted image, decompression bomb, etc.
+        return None
+    if min(width, height) <= EMOTICON_MAX_SIZE:
+        return None
+    subtype = match['subtype'].lower()
+    return data, 'jpg' if subtype == 'jpeg' else subtype
 
 
 def _html_validator(html: str) -> str:
@@ -392,7 +434,7 @@ def copy_entities(entities: Sequence[TypeMessageEntity]) -> list[TypeMessageEnti
 
 
 def compare_entity(a: TypeMessageEntity, b: TypeMessageEntity, ignore_position: bool = False) -> bool:
-    if type(a) is type(b):
+    if type(a) is not type(b):
         return False
 
     a_dict = a.to_dict()
@@ -410,25 +452,19 @@ def merge_contiguous_entities(entities: Sequence[TypeMessageEntity]) -> list[Typ
     if len(entities) < 2:
         return list(entities)
 
-    merged_entities = []
-    entities = sort_entities(entities)
-    while entities:
-        entity = entities.pop(0)
-        start_pos = entity.offset
-        end_pos = entity.offset + entity.length
-        for contiguous_entity in (_entity
-                                  for _entity in entities
-                                  if (
-                                          (start_pos <= _entity.offset <= end_pos
-                                           or _entity.offset <= start_pos <= _entity.offset + _entity.length)
-                                          and compare_entity(entity, _entity, ignore_position=True)
-                                  )):
-            new_start_pos = min(start_pos, contiguous_entity.offset)
-            new_end_pos = max(end_pos, contiguous_entity.offset + contiguous_entity.length)
-            entity = copy_entity(entity)
-            entity.offset = new_start_pos
-            entity.length = new_end_pos - new_start_pos
-        merged_entities.append(entity)
+    merged_entities: list[TypeMessageEntity] = []
+    # sorted by offset, so an entity can only extend a merged one that starts at or before it
+    for entity in sort_entities(entities):
+        for i, merged in enumerate(merged_entities):
+            merged_end = merged.offset + merged.length
+            if entity.offset <= merged_end and compare_entity(merged, entity, ignore_position=True):
+                if entity.offset + entity.length > merged_end:
+                    merged = copy_entity(merged)
+                    merged.length = entity.offset + entity.length - merged.offset
+                    merged_entities[i] = merged
+                break
+        else:
+            merged_entities.append(entity)
     return merged_entities
 
 

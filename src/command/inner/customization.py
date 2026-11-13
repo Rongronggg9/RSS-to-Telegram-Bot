@@ -37,7 +37,7 @@ SUB_OPTIONS_EXHAUSTIVE_VALUES = {
     "display_via": (0, 1, -3, -1, -4, -2),
     "display_title": (0, 1, -1),
     "display_entry_tags": (1, -1),
-    "title_underline": (1, -1),
+    "display_title_underline": (1, -1),
     "style": (0, 1)
 }
 
@@ -77,7 +77,7 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
     is_user = isinstance(sub_or_user, db.User)
     if is_user:
         interval_d = length_limit_d = notify_d = send_mode_d = link_preview_d = display_media_d = display_author_d = \
-            display_via_d = display_title_d = display_entry_tags_d = title_underline_d = style_d = False
+            display_via_d = display_title_d = display_entry_tags_d = display_title_underline_d = style_d = False
         all_default = None
     else:
         if not isinstance(sub_or_user.user, db.User):
@@ -92,11 +92,11 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
         display_via_d = sub_or_user.display_via == -100
         display_title_d = sub_or_user.display_title == -100
         display_entry_tags_d = sub_or_user.display_entry_tags == -100
-        title_underline_d = sub_or_user.title_underline == -100
+        display_title_underline_d = sub_or_user.display_title_underline == -100
         style_d = sub_or_user.style == -100
         all_default = all((interval_d, length_limit_d, notify_d, send_mode_d, link_preview_d, display_media_d,
-                           display_author_d, display_via_d, display_title_d, display_entry_tags_d, title_underline_d,
-                           style_d))
+                           display_author_d, display_via_d, display_title_d, display_entry_tags_d,
+                           display_title_underline_d, style_d))
     interval = sub_or_user.user.interval if interval_d else sub_or_user.interval
     length_limit = sub_or_user.user.length_limit if length_limit_d else sub_or_user.length_limit
     notify = sub_or_user.user.notify if notify_d else sub_or_user.notify
@@ -107,7 +107,8 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
     display_via = sub_or_user.user.display_via if display_via_d else sub_or_user.display_via
     display_title = sub_or_user.user.display_title if display_title_d else sub_or_user.display_title
     display_entry_tags = sub_or_user.user.display_entry_tags if display_entry_tags_d else sub_or_user.display_entry_tags
-    title_underline = sub_or_user.user.title_underline if title_underline_d else sub_or_user.title_underline
+    display_title_underline = (sub_or_user.user.display_title_underline if display_title_underline_d
+                               else sub_or_user.display_title_underline)
     style = sub_or_user.user.style if style_d else sub_or_user.style
     buttons = (
         (
@@ -210,13 +211,13 @@ async def get_customization_buttons(sub_or_user: Union[db.Sub, db.User],
         ),
         (
             Button.inline(
-                f"{i18n[lang]['title_underline']}: "
-                + (FALLBACK_TO_USER_DEFAULT_EMOJI if title_underline_d else '')
-                + i18n[lang][f'title_underline_{title_underline}'],
+                f"{i18n[lang]['display_title_underline']}: "
+                + (FALLBACK_TO_USER_DEFAULT_EMOJI if display_title_underline_d else '')
+                + i18n[lang][f'display_title_underline_{display_title_underline}'],
                 data=(
-                    f'set_default=title_underline{tail}'
+                    f'set_default=display_title_underline{tail}'
                     if is_user
-                    else f'set={sub_or_user.id},title_underline|{page}{tail}'
+                    else f'set={sub_or_user.id},display_title_underline|{page}{tail}'
                 ),
             ),
         ),

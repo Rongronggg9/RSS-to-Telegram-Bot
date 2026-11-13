@@ -8,7 +8,7 @@
 
 ### Enhancements
 
-- **Underline post title option**: A new formatting option, **Underline post title**, lets you turn the underline of post titles off (see [Formatting Settings](formatting-settings.md)). It is enabled by default, so the existing look is unchanged. Existing databases are upgraded automatically.
+- **Underline post title option**: A new formatting option, **Underline post title**, lets you turn the underline of post titles off (see [Formatting Settings](formatting-settings.md)). It is enabled by default, so the existing look is unchanged.
 - **Minor enhancements**: Some internal functions have been refined to enhance compatibility with various feeds. Two new environment variables have been added (`HTTP_MAX_LINE_SIZE` and `HTTP_MAX_FIELD_SIZE`, see [Advanced Settings](advanced-settings.md) for more details).
 - **Minor refactor**: Some internal functions have been refactored to improve performance, readability and maintainability.
 

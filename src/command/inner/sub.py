@@ -124,6 +124,7 @@ async def sub(user_id: int,
                     'display_via': -100,
                     'display_title': -100,
                     'display_entry_tags': -100,
+                    'display_title_underline': -100,
                     'style': -100,
                     'display_media': -100
                 }

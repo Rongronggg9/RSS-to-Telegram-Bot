@@ -43,6 +43,10 @@
 
 一个特例是，如果「General」话题被关闭，bot 将退出话题群组。这是在话题群组完全受支持之前的一个临时限制。
 
+### **Q**: 当 feed 持续更新失败时，订阅停用通知会发送到我的频道/群组。我可以私下接收它吗？
+
+**A**: 可以。为该频道/群组打开 `/set_default`：可以在与 bot 的私聊中发送 `/set_default @username` (也可以用以 `-100` 开头的频道/群组 ID 代替 `@username`)，也可以直接在频道/群组中发送，然后点击「订阅停用通知」。此后，该频道/群组的订阅停用通知会私聊发送给你，并附带重新启用订阅的命令。再次点击即可重新将其发送到频道/群组。请确保你已与 bot 开始私聊。如果 bot 无法向你发送通知 (例如你屏蔽了 bot)，则会改为发送到频道/群组。
+
 ### **Q**: 我的 bot 无响应。查看日志后发现 Telethon 在抱怨 "Server sent a very new message with ID..."，"Server replied with a wrong session ID..."，或者 "Could not find a matching Constructor ID for the TLObject..."。
 
 **A**: Telethon 正保护您免受潜在的攻击。欲知详情，请参阅 [Telethon FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean)。如果你确信问题并非由攻击引起，而只是由错误的配置引发，且 bot 并非部署于 PaaS 平台上（如 Heroku, Railway），你可以通过停止 RSStT，删除会话文件（`config/bot.session`），然后重启 RSStT 以解决这个问题。

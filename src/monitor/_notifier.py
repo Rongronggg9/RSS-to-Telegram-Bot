@@ -217,9 +217,17 @@ class Notifier:
         if not subs:  # nobody has subbed it or no active sub exists
             return
 
-        user_id_lang_map: dict[int, str] = dict(
-            await db.User.filter(id__in={sub.user_id for sub in subs}).values_list('id', 'lang')
-        )
+        users: list[tuple[int, str, Optional[int]]] = await db.User.filter(
+            id__in={sub.user_id for sub in subs}
+        ).values_list('id', 'lang', 'admin')
+        user_id_lang_map: dict[int, str] = {user_id: lang for user_id, lang, _ in users}
+        # Channels/groups whose admin asked to receive deactivation notices in their private chat (/set_default).
+        user_id_notice_chat_map: dict[int, int] = {
+            user_id: admin
+            for user_id, _, admin in users
+            if admin and admin != user_id
+        }
+        del users
         lang_msg_body_map: dict[str, str] = {
             lang: '\n'.join((
                 i18n[lang]['feed_deactivated_warn'],
@@ -240,9 +248,9 @@ class Notifier:
         feed_description = f'{feed.id}: {feed.link}'
         del reason
 
-        _do_send: BatchTimeout[[db.Sub, str], None]
-        async with BatchTimeout[[db.Sub, str], None](
-                func=self._do_send,
+        _do_send: BatchTimeout[[db.Sub, str, Optional[int], str], None]
+        async with BatchTimeout[[db.Sub, str, Optional[int], str], None](
+                func=self._do_send_deactivation_notice,
                 timeout=TIMEOUT,
                 loop=env.loop,
                 on_success=self._on_subtask_deactivated,
@@ -257,11 +265,46 @@ class Notifier:
                     post=(
                             f'<a href="{feed.link}">{escape_html(sub.title or feed.title)}</a>\n' +
                             lang_msg_body_map[user_id_lang_map[sub.user_id]]
-                    )
+                    ),
+                    notice_chat=user_id_notice_chat_map.get(sub.user_id),
+                    lang=user_id_lang_map[sub.user_id],
                 )
-            del sub, subs, feed, user_id_lang_map, lang_msg_body_map
+            del sub, subs, feed, user_id_lang_map, user_id_notice_chat_map, lang_msg_body_map
 
         logger.debug(f'Deactivated {sub_count} subs: {feed_description}')
+
+    async def _do_send_deactivation_notice(
+            self,
+            sub: db.Sub,
+            post: str,
+            notice_chat: Optional[int],
+            lang: str,
+    ) -> None:
+        if notice_chat:
+            self._stat.start()
+            try:
+                await env.bot.send_message(
+                    notice_chat,
+                    i18n[lang]['redirected_notice_header_html'] % (sub.user_id, sub.user_id) + '\n\n' + post,
+                    parse_mode='html',
+                )
+                return
+            except UserBlockedErrors as e:
+                # The admin has blocked the bot or deleted their account, so stop redirecting the notices.
+                await db.User.filter(id=sub.user_id, admin=notice_chat).update(admin=None)
+                logger.warning(
+                    f'Failed to send the deactivation notice of {sub.user_id} to {notice_chat}, '
+                    f'reset the notice chat and sending it to the chat itself instead: {e!r}'
+                )
+            except Exception as e:
+                # Probably transient, keep the setting and fall back to the chat itself this time.
+                logger.warning(
+                    f'Failed to send the deactivation notice of {sub.user_id} to {notice_chat}, '
+                    f'sending it to the chat itself instead: {e!r}'
+                )
+            finally:
+                self._stat.finish()
+        await self._do_send(sub, post)
 
     async def _do_send(self, sub: db.Sub, post: Union[str, Post]) -> None:
         self._stat.start()

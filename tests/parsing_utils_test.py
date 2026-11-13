@@ -53,8 +53,10 @@ def test_merge_tags_keeps_order_and_drops_duplicates():
 
 def test_decode_data_uri_image():
     data, ext = utils.decode_data_uri_image(_png_data_uri(64, 48))
+    with Image.open(BytesIO(data)) as image:
+        size = image.size
     assert ext == 'png'
-    assert Image.open(BytesIO(data)).size == (64, 48)
+    assert size == (64, 48)
 
 
 @pytest.mark.parametrize('src', [

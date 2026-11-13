@@ -434,7 +434,7 @@ def copy_entities(entities: Sequence[TypeMessageEntity]) -> list[TypeMessageEnti
 
 
 def compare_entity(a: TypeMessageEntity, b: TypeMessageEntity, ignore_position: bool = False) -> bool:
-    if type(a) is type(b):
+    if type(a) is not type(b):
         return False
 
     a_dict = a.to_dict()
@@ -452,25 +452,19 @@ def merge_contiguous_entities(entities: Sequence[TypeMessageEntity]) -> list[Typ
     if len(entities) < 2:
         return list(entities)
 
-    merged_entities = []
-    entities = sort_entities(entities)
-    while entities:
-        entity = entities.pop(0)
-        start_pos = entity.offset
-        end_pos = entity.offset + entity.length
-        for contiguous_entity in (_entity
-                                  for _entity in entities
-                                  if (
-                                          (start_pos <= _entity.offset <= end_pos
-                                           or _entity.offset <= start_pos <= _entity.offset + _entity.length)
-                                          and compare_entity(entity, _entity, ignore_position=True)
-                                  )):
-            new_start_pos = min(start_pos, contiguous_entity.offset)
-            new_end_pos = max(end_pos, contiguous_entity.offset + contiguous_entity.length)
-            entity = copy_entity(entity)
-            entity.offset = new_start_pos
-            entity.length = new_end_pos - new_start_pos
-        merged_entities.append(entity)
+    merged_entities: list[TypeMessageEntity] = []
+    # sorted by offset, so an entity can only extend a merged one that starts at or before it
+    for entity in sort_entities(entities):
+        for i, merged in enumerate(merged_entities):
+            merged_end = merged.offset + merged.length
+            if entity.offset <= merged_end and compare_entity(merged, entity, ignore_position=True):
+                if entity.offset + entity.length > merged_end:
+                    merged = copy_entity(merged)
+                    merged.length = entity.offset + entity.length - merged.offset
+                    merged_entities[i] = merged
+                break
+        else:
+            merged_entities.append(entity)
     return merged_entities
 
 

@@ -82,6 +82,7 @@ async def callback_set(
     display_via: -2=completely disable, -1=disable but display link, 0=auto, 1=force display
     display_title: -1=disable, 0=auto, 1=force display
     display_entry_tags: -1=disable, 1=force display
+    title_underline: -1=disable, 1=enable
     style: 0=RSStT, 1=flowerss
     """
     chat_id = chat_id or event.chat_id
@@ -211,7 +212,7 @@ async def callback_reset(
         sub.interval = None
         update_interval_flag = True
     sub.length_limit = sub.notify = sub.send_mode = sub.link_preview = sub.display_author = sub.display_media = \
-        sub.display_title = sub.display_entry_tags = sub.display_via = sub.style = -100
+        sub.display_title = sub.display_entry_tags = sub.title_underline = sub.display_via = sub.style = -100
     await sub.save()
     if update_interval_flag:
         await inner.utils.update_interval(sub)
@@ -259,12 +260,12 @@ async def callback_reset_all(
             tasks.append(inner.utils.update_interval(sub))
         sub.interval = None
         sub.length_limit = sub.notify = sub.send_mode = sub.link_preview = sub.display_author = sub.display_media = \
-            sub.display_title = sub.display_entry_tags = sub.display_via = sub.style = -100
+            sub.display_title = sub.display_entry_tags = sub.title_underline = sub.display_via = sub.style = -100
     await db.Sub.bulk_update(
         subs,
         (
             'interval', 'length_limit', 'notify', 'send_mode', 'link_preview', 'display_author', 'display_media',
-            'display_title', 'display_entry_tags', 'display_via', 'style',
+            'display_title', 'display_entry_tags', 'title_underline', 'display_via', 'style',
         )
     )
     for task in tasks:

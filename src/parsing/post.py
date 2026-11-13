@@ -92,6 +92,7 @@ class Post:
             display_via=sub.display_via if sub.display_via != -100 else user.display_via,
             display_title=sub.display_title if sub.display_title != -100 else user.display_title,
             display_entry_tags=sub.display_entry_tags if sub.display_entry_tags != -100 else user.display_entry_tags,
+            title_underline=sub.title_underline if sub.title_underline != -100 else user.title_underline,
             style=sub.style if sub.style != -100 else user.style,
             display_media=sub.display_media if sub.display_media != -100 else user.display_media,
             silent=not (sub.notify if sub.notify != -100 else user.notify)
@@ -108,6 +109,7 @@ class Post:
                                   display_via: int = 0,
                                   display_title: int = 0,
                                   display_entry_tags: int = -1,
+                                  title_underline: int = 1,
                                   style: int = 0,
                                   display_media: int = 0,
                                   silent: bool = False):
@@ -125,6 +127,7 @@ class Post:
         :param display_via: -2=completely disable, -1=disable but display link, 0=auto, 1=force display
         :param display_title: -1=disable, 0=auto, 1=force display
         :param display_entry_tags: -1=disable, 1=force display
+        :param title_underline: -1=disable, 1=enable
         :param style: 0=RSStT, 1=flowerss
         :param display_media: -1=disable, 0=enable
         :param silent: whether to send with notification sound
@@ -141,6 +144,7 @@ class Post:
                                                                  display_via=display_via,
                                                                  display_title=display_title,
                                                                  display_entry_tags=display_entry_tags,
+                                                                 title_underline=title_underline,
                                                                  style=style,
                                                                  display_media=display_media)
 
@@ -204,5 +208,6 @@ class Post:
                 display_media=user.display_media,
                 silent=not user.notify,
                 display_entry_tags=user.display_entry_tags,
+                title_underline=user.title_underline,
             )
         return await self.send_formatted_post_according_to_sub(sub=sub)

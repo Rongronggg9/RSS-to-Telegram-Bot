@@ -562,7 +562,7 @@ class PostFormatter:
                     dup_medium.chosen_url = enclosure.url
                     continue
                 if not utils.isAbsoluteHttpLink(enclosure.url):
-                    if parsed.parser.soup.findAll('a', href=enclosure.url):
+                    if parsed.parser.soup.find_all('a', href=enclosure.url):
                         continue  # the link is not an HTTP link and is already appearing in the post
                     else:
                         medium = File(enclosure.url)

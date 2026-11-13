@@ -122,12 +122,12 @@ class Parser:
             return None
 
         if tag == 'table':
-            rows = soup.findAll('tr')
+            rows = soup.find_all('tr')
             if not rows:
                 return None
             rows_content = []
             for i, row in enumerate(rows):
-                columns = row.findAll(('td', 'th'))
+                columns = row.find_all(('td', 'th'))
                 if len(rows) > 1 and len(columns) > 1:  # allow single-row or single-column tables
                     if env.TABLE_TO_IMAGE:
                         self.media.add(UploadedImage(convert_table_to_png(str(soup)), 'table.png'))
@@ -311,7 +311,7 @@ class Parser:
 
         if (ordered := tag == 'ol') or tag in ('ul', 'menu', 'dir'):
             texts = []
-            list_items = soup.findAll('li', recursive=False)
+            list_items = soup.find_all('li', recursive=False)
             if not list_items:
                 return None
             for list_item in list_items:

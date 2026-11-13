@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-24.04, macos-latest, windows-latest ]
     name: Python ${{ matrix.version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -37,8 +37,14 @@ jobs:
           set -eux
           python3 -m pip install --upgrade pip wheel setuptools
           pip install -r requirements.txt
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -eux
+          pip install -r requirements-dev.txt
+          python3 -m pytest -q tests
       - name: Setup PostgreSQL
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           set -eux
@@ -72,14 +78,14 @@ jobs:
           set -eux
           python3 -m rsstt
       - name: Test RSS-to-Telegram-Bot (PostgreSQL)
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           set -eux
           cp .env_postgresql .env
           python3 -u telegramRSSbot.py
       - name: Test RSS-to-Telegram-Bot as a Python package (PostgreSQL)
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           set -eux
@@ -93,7 +99,7 @@ jobs:
           ./scripts/aerich_helper.py -v heads
           ./scripts/aerich_helper.py -v upgrade True
       - name: Test scripts/aerich_helper.py (PostgreSQL)
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           set -eux
@@ -115,7 +121,7 @@ jobs:
           pip install -qr requirements.txt
           python3 -u telegramRSSbot.py
       - name: Test aerich migration upgrade (PostgreSQL)
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           set -eux

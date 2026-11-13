@@ -11,9 +11,20 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 16
+    groups:
+      # Minor and patch bumps land together in one PR. Major bumps still get
+      # their own PR since they tend to need code or migration changes.
+      pip-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "dev"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 16
+    groups:
+      github-actions:
+        patterns:
+          - "*"

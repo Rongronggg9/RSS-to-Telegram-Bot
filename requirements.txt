@@ -37,7 +37,7 @@ APScheduler==3.11.0
 python-dotenv==1.1.1
 multidict==6.7.1
 asyncstdlib==3.13.1
-cachetools==6.1.0
+cachetools==7.3.0
 CJKwrap==2.2
 typing-extensions==4.16.0
 uvloop==0.21.0; sys_platform!='win32' and sys_platform!='cygwin' and sys_platform!='cli'

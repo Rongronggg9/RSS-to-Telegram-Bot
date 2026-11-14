@@ -23,7 +23,7 @@ import asyncio
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from bs4.element import SoupStrainer
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, urlunsplit
 from cachetools import TTLCache
 from os import path
 
@@ -360,6 +360,7 @@ FeedLinkTypeMatcher = re.compile(r'(application|text)/(rss|rdf|atom)(\+xml)?', r
 FeedLinkHrefMatcher = re.compile(r'(rss|rdf|atom)', re.I)
 FeedAHrefMatcher = re.compile(r'/(feed|rss|atom)(\.(xml|rss|atom))?$', re.I)
 FeedATextMatcher = re.compile(r'([^a-zA-Z]|^)(rss|atom)([^a-zA-Z]|$)', re.I)
+WpLinkHrefMatcher = re.compile(r'/wp-(content|includes|json)/', re.I)
 
 
 async def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
@@ -386,6 +387,18 @@ async def feed_sniffer(url: str, html: AnyStr) -> Optional[str]:
     )
     if links:
         feed_url = urljoin(url, links[0]['href'])
+        FeedSnifferCache[url] = feed_url
+        return feed_url
+    parsed_url = urlsplit(url)
+    base_path = parsed_url.path.rstrip('/')
+    if (
+            not base_path.endswith('/feed')
+            and (
+                soup.find(attrs={'href': WpLinkHrefMatcher})
+                or soup.find(name='link', attrs={'rel': 'https://api.w.org/'})
+            )
+    ):
+        feed_url = urlunsplit((parsed_url.scheme, parsed_url.netloc, f'{base_path}/feed', '', ''))
         FeedSnifferCache[url] = feed_url
         return feed_url
     return None

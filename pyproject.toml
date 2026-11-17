@@ -1,3 +1,25 @@
 [build-system]
 requires = ["setuptools>=42", "wheel", "setuptools-declarative-requirements"]
 build-backend = "setuptools.build_meta"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+markers = [
+    "unit: deterministic helper or configuration behavior without an external service",
+    "http: local aiohttp or raw TCP behavior; public network access is forbidden",
+    "sqlite: real temporary SQLite database behavior",
+    "postgres: PostgreSQL behavior requiring TEST_POSTGRES_DSN",
+    "migration: automatic startup migration behavior",
+    "telegram: recording Telegram boundary behavior",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true

@@ -64,9 +64,12 @@ def test_lists(html, expected):
     ('<q>q</q>', '“q”'),
     ('<q cite="https://c.example/">q</q>', '“<a href="https://c.example/">q</a>”'),
     ('<pre><code class="language-py">x = 1</code></pre>', '<pre><code class="language-py">x = 1</code></pre>'),
-    # only a language-* class is kept as the code language
+    # a language-* class is the code language, whatever other classes come with it
     ('<code class="highlight language-py">x</code>', '<code class="language-py">x</code>'),
-    ('<code class="highlight">x</code>', '<code>x</code>'),
+    # a lone bare class names the language
+    ('<code class="py">x</code>', '<code class="language-py">x</code>'),
+    # several classes and none of them language-* is ambiguous
+    ('<code class="highlight other">x</code>', '<code>x</code>'),
     ('<code>c</code>', '<code>c</code>'),
 ])
 def test_quotes_and_code(html, expected):

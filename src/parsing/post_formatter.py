@@ -138,6 +138,7 @@ class PostFormatter:
                                  display_via: int = 0,
                                  display_title: int = 0,
                                  display_entry_tags: int = -1,
+                                 display_title_underline: int = 1,
                                  style: int = 0,
                                  display_media: int = 0) -> Optional[tuple[str, bool, bool]]:
         """
@@ -154,6 +155,7 @@ class PostFormatter:
             -1=disable but display link at the end, 0=feed title and link, 1=feed title and link as post title
         :param display_title: -1=disable, 0=auto, 1=force display
         :param display_entry_tags: -1=disable, 1=force display
+        :param display_title_underline: -1=disable, 1=force display
         :param style: 0=RSStT, 1=flowerss
         :param display_media: -1=disable, 0=enable
         :return: (formatted post, need media, need linkpreview)
@@ -166,6 +168,7 @@ class PostFormatter:
                                NO_FEED_TITLE_BUT_BARE_LINK, FEED_TITLE_AND_LINK, FEED_TITLE_AND_LINK_AS_POST_TITLE}
         assert display_title in {DISABLE, AUTO, FORCE_DISPLAY}
         assert display_entry_tags in {DISABLE, FORCE_DISPLAY}
+        assert display_title_underline in {DISABLE, FORCE_DISPLAY}
         assert display_media in {DISABLE, AUTO, ONLY_MEDIA_NO_CONTENT}
         assert style in {RSSTT, FLOWERSS}
 
@@ -173,7 +176,8 @@ class PostFormatter:
         tags = tags or []
 
         param_hash = f'{sub_title}|{tags}|{send_mode}|{length_limit}|{link_preview}|' \
-                     f'{display_author}|{display_via}|{display_title}|{display_entry_tags}|{display_media}|{style}'
+                     f'{display_author}|{display_via}|{display_title}|{display_entry_tags}|{display_title_underline}|' \
+                     f'{display_media}|{style}'
 
         if param_hash in self.__param_to_option_cache:
             option_hash = self.__param_to_option_cache[param_hash]
@@ -245,6 +249,9 @@ class PostFormatter:
             if self.tags_escaped:
                 tags = utils.merge_tags(tags, self.tags_escaped) if tags else self.tags_escaped
 
+        # ---- determine title_underline ----
+        title_underline = display_title_underline == FORCE_DISPLAY
+
         # ---- determine message_style ----
         if style == FLOWERSS:
             message_style = FLOWERSS_STYLE
@@ -276,7 +283,8 @@ class PostFormatter:
                                                            via_type=via_type,
                                                            need_author=need_author,
                                                            message_type=NORMAL_MESSAGE,
-                                                           message_style=message_style)
+                                                           message_style=message_style,
+                                                           title_underline=title_underline)
             normal_msg_len = get_plain_text_length(normal_msg_post)
             if (
                     (
@@ -333,7 +341,8 @@ class PostFormatter:
         # ---- determine need_link_preview ----
         need_link_preview = link_preview != DISABLE and (link_preview == FORCE_ENABLE or message_type != NORMAL_MESSAGE)
 
-        option_hash = f'{sub_title}|{tags}|{title_type}|{via_type}|{need_author}|{message_type}|{message_style}'
+        option_hash = f'{sub_title}|{tags}|{title_type}|{via_type}|{need_author}|{message_type}|{message_style}|' \
+                      f'{title_underline}'
         self.__param_to_option_cache[param_hash] = option_hash
 
         if option_hash in self.__post_bucket:
@@ -366,7 +375,8 @@ class PostFormatter:
                                                 via_type=via_type,
                                                 need_author=need_author,
                                                 message_type=message_type,
-                                                message_style=message_style)
+                                                message_style=message_style,
+                                                title_underline=title_underline)
             self.__post_bucket[option_hash] = post, need_media, need_link_preview
             return post, need_media, need_link_preview
 
@@ -377,7 +387,8 @@ class PostFormatter:
                                    via_type: TypeViaType,
                                    need_author: bool,
                                    message_type: TypeMessageType,
-                                   message_style: TypeMessageStyle) -> tuple[str, str]:
+                                   message_style: TypeMessageStyle,
+                                   title_underline: bool = True) -> tuple[str, str]:
         # RSStT style:
         # {title}
         # {hashtag}  (* optional)
@@ -390,6 +401,7 @@ class PostFormatter:
         #   POST_TITLE_NO_LINK: <b><u>Title</u></b>
         #   NO_POST_TITLE: (* nothing)
         #   TELEGRAPH_MESSAGE || POST_TITLE_W_LINK: <b><u>Title (* text link)</u></b>
+        #   (* <u> is omitted if title_underline is False)
         #
         # via:
         #   FEED_TITLE_VIA: via Feed Title (* text link if possible)
@@ -414,6 +426,7 @@ class PostFormatter:
         #   LINK_MESSAGE || POST_TITLE_W_LINK: <b><u>Title (* text link)</u></b>
         #   POST_TITLE_NO_LINK: <b><u>Title</u></b>
         #   NO_POST_TITLE: (* nothing)
+        #   (* <u> is omitted if title_underline is False)
         #
         # sourcing:
         #   TELEGRAPH_MESSAGE && NO_VIA: Telegraph (* text link)
@@ -423,6 +436,10 @@ class PostFormatter:
 
         feed_title = sub_title or self.feed_title
         title = self.title or 'Untitled'
+
+        def format_title(node: Union[str, Text]) -> str:
+            node = Underline(node) if title_underline else node
+            return Bold(node).get_html()
 
         # ---- hashtags ----
         tags_html = Text('#' + ' #'.join(tags)).get_html() if tags else None
@@ -440,7 +457,7 @@ class PostFormatter:
                 title_text = Text(title)
             else:  # NO_TITLE
                 title_text = None
-            title_html = Bold(Underline(title_text)).get_html() if title_text else None
+            title_html = format_title(title_text) if title_text else None
 
             # ---- via ----
             if via_type == FEED_TITLE_VIA_W_LINK:
@@ -477,9 +494,9 @@ class PostFormatter:
 
             # ---- title ----
             if title_type == POST_TITLE_W_LINK:
-                title_html = Bold(Underline(Link(title, param=self.link))).get_html()
+                title_html = format_title(Link(title, param=self.link))
             elif title_type == POST_TITLE_NO_LINK:
-                title_html = Bold(Underline(title)).get_html()
+                title_html = format_title(title)
             else:  # NO_TITLE
                 title_html = None
 
@@ -521,14 +538,16 @@ class PostFormatter:
                                 via_type: TypeViaType,
                                 need_author: bool,
                                 message_type: TypeMessageType,
-                                message_style: TypeMessageStyle) -> str:
+                                message_style: TypeMessageStyle,
+                                title_underline: bool = True) -> str:
         header, footer = self.get_post_header_and_footer(sub_title=sub_title,
                                                          tags=tags,
                                                          title_type=title_type,
                                                          via_type=via_type,
                                                          need_author=need_author,
                                                          message_type=message_type,
-                                                         message_style=message_style)
+                                                         message_style=message_style,
+                                                         title_underline=title_underline)
         content = self.parsed_html if message_type == NORMAL_MESSAGE else ''
         return (
                 header

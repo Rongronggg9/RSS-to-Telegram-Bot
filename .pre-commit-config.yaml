@@ -53,6 +53,7 @@ repos:
       - id: mixed-line-ending
         args: [ "--fix=lf" ]
       - id: name-tests-test
+        exclude: ^tests/support/
       # unneeded
       #- id: no-commit-to-branch
       # messing up commits made by weblate

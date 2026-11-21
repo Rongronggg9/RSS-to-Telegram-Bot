@@ -43,6 +43,10 @@ Make sure to grant the bot enough permission (sending messages) in channel/group
 
 A special case is that the bot will leave a topic group if the "General" topic is closed. This is a temporary limitation before topic groups are fully supported.
 
+### **Q**: When a feed keeps failing, the deactivation notice is posted in my channel/group. Can I receive it privately instead?
+
+**A**: Yes. Open `/set_default` for the channel/group, either as `/set_default @username` (or the channel/group's ID starting with `-100`) in the private chat with the bot, or in the channel/group itself, and press "Deactivation notices". From then on, deactivation notices of that channel/group are sent to you in private, together with the command to reactivate the subscription. Press it again to send them to the channel/group again. Make sure you have started a private chat with the bot. If the bot cannot send the notice to you (e.g., you have blocked the bot), it falls back to the channel/group.
+
 ### **Q**: My bot is not responding. I checked the log and saw Telethon complaining "Server sent a very new message with ID...", "Server replied with a wrong session ID...", or "Could not find a matching Constructor ID for the TLObject...".
 
 **A:** Telethon is protecting you from potential attacks. For details, please refer to [Telethon FAQ](https://docs.telethon.dev/en/stable/quick-references/faq.html#what-does-server-sent-a-very-new-message-with-id-mean). If you believe that it is caused by misconfiguration instead of attacks, and the bot is not deployed on a PaaS platform (e.g. Heroku, Railway), you may stop RSStT, delete the session file (`config/bot.session`), and restart it to solve the problem.

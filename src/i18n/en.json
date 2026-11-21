@@ -188,6 +188,11 @@
         "set_hashtags_success_cleared": "The custom hashtags of the subscription has been cleared.",
         "set_hashtags_failure_too_many": "Too many hashtags. Please remove some hashtags and retry."
     },
+    "l10n_deactivation_notice": {
+        "deactivation_notice": "Deactivation notices",
+        "deactivation_notice_admin": "admin %d (private)",
+        "redirected_notice_header_html": "This notice is for the channel/group <code>%d</code>. To reactivate the subscription, send <code>/activate_subs %d</code> here."
+    },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "Command usage: <code>/test RSS_URL entry_start_number(optional) entry_end_number(optional)</code>",
         "cmd_set_option_usage_prompt_html": "Command usage: <code>/set_option key value</code>",

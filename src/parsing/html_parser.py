@@ -181,15 +181,12 @@ class Parser:
 
         if tag == 'code':
             class_ = soup.get('class')
-            if isinstance(class_, list):
-                try:
-                    class_ = next(filter(lambda x: x.startswith('language-'), class_))
-                except StopIteration:
-                    class_ = None
-            elif class_ and isinstance(class_, str) and not class_.startswith('language-'):
-                class_ = f'language-{class_}'
-            else:
-                class_ = None
+            # bs4 returns the classes as a list, a string is only seen for a hand-built tag
+            classes = class_.split() if isinstance(class_, str) else list(class_ or [])
+            class_ = next(filter(lambda x: x.startswith('language-'), classes), None)
+            if class_ is None and len(classes) == 1:
+                # a lone bare class names the language, e.g. <code class="py">
+                class_ = f'language-{classes[0]}'
             return Code(await self._parse_item(soup.children), param=class_)
 
         if tag == 'br':

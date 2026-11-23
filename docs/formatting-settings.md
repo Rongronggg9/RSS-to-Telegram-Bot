@@ -33,6 +33,9 @@
     - **<ins>Auto</ins>**: display the post title only when it is not auto-filled _(e.g., some routes of [RSSHub](https://github.com/DIYGod/RSSHub) will autofill the title)_
     - **Enable**: always display post title _(the post must have a title)_
     - **Disable**: never display post title
+- **Underline post title**:
+    - **<ins>Enable</ins>**: display the post title in bold and underlined
+    - **Disable**: display the post title in bold only, without the underline
 - **Source**:
     - **<ins>Feed title and link</ins>**: display a link to the post and the feed title. If **style** is **RSStT**, they will be displayed together as a text link at the end of the message. _(note that if the link does not exist, only the feed title will be displayed)_
     - **Feed title and link displayed as post title**: display the link and post title together as a text link at the beginning of the message, but not to omit the feed title _(note that if the link does not exist, only the post title will be displayed)_

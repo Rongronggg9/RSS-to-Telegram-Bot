@@ -109,6 +109,7 @@ async def callback_set(
                     and (isinstance(param, int) or param == 'default')
             )
             or (action == 'activate' and not set_user_default)
+            or (action == 'deactivation_notice' and set_user_default)
             or action in inner.customization.SUB_OPTIONS_EXHAUSTIVE_VALUES
     ):
         if action == 'interval' and (isinstance(param, int) or param == 'default'):
@@ -117,6 +118,12 @@ async def callback_set(
             await inner.customization.set_length_limit(sub_or_user, param if param != 'default' else -100)
         elif action == 'activate' and not set_user_default:
             await inner.customization.set_sub_activate(sub_or_user)
+        elif action == 'deactivation_notice' and set_user_default:
+            # Toggle between the channel/group itself and the admin who pressed the button. A callback query always
+            # comes from a real user, and the gatekeeper has checked that they are an admin of the target chat.
+            await inner.customization.set_deactivation_notice_admin(
+                sub_or_user, None if sub_or_user.admin else event.sender_id
+            )
         elif (
                 action == 'display_media'
                 and not set_user_default

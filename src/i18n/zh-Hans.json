@@ -188,6 +188,11 @@
         "set_hashtags_success_cleared": "订阅的自定义 hashtag 已清除。",
         "set_hashtags_failure_too_many": "Hashtag 太多，请移除一些后重试。"
     },
+    "l10n_deactivation_notice": {
+        "deactivation_notice": "订阅停用通知",
+        "deactivation_notice_admin": "管理员 %d (私聊)",
+        "redirected_notice_header_html": "此通知属于频道/群组 <code>%d</code>。如需重新启用订阅，请在此发送 <code>/activate_subs %d</code>。"
+    },
     "l10n_administration": {
         "cmd_test_usage_prompt_html": "命令用法: <code>/test RSS_URL 条目编号起点(可选) 条目编号终点(可选)</code>",
         "cmd_set_option_usage_prompt_html": "命令用法: <code>/set_option 键 值</code>",

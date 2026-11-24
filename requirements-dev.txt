@@ -1,5 +1,5 @@
 # test-only dependencies, not needed to run the bot
 -r requirements.txt
 pytest==8.4.2
-pytest-asyncio==1.2.0
-coverage==7.10.7
+pytest-asyncio==1.5.0
+coverage==7.16.2
